@@ -6,27 +6,11 @@
 void
 Castro::sum_integrated_quantities ()
 {
-#ifndef SGS
-    if (verbose <= 0) return;
-#endif
-
     int finest_level = parent->finestLevel();
     Real time        = state[State_Type].curTime();
     Real mass        = 0.0;
     Real xmom        = 0.0;
     Real rho_E       = 0.0;
-#ifdef SGS
-    Real dt_crse     = parent->dtLevel(0);
-    Real rho_e       = 0.0;
-    Real rho_K       = 0.0;
-    Real Etot        = 0.0;
-    Real delta_E     = 0.0;
-    Real delta_K     = 0.0;
-    Real prod_sgs    = 0.0;
-    Real diss_sgs    = 0.0;
-    Real turb_src    = 0.0;
-    Real rms_mach    = 0.0;
-#endif
     Real com_xloc     = 0.0;
     Real mass_lower_x = 0.0;
     Real mass_upper_x = 0.0;
@@ -35,8 +19,6 @@ Castro::sum_integrated_quantities ()
     Real com_xvel     = 0.0;
 #if (BL_SPACEDIM>=2)
     Real ymom        = 0.0;
-    Real mass_lower_y = 0.0;
-    Real mass_upper_y = 0.0;
     Real com_yloc_l   = 0.0;
     Real com_yloc_u   = 0.0;
     Real com_yloc    = 0.0;
@@ -44,8 +26,6 @@ Castro::sum_integrated_quantities ()
 #endif
 #if (BL_SPACEDIM==3)
     Real zmom        = 0.0;
-    Real mass_lower_z = 0.0;
-    Real mass_upper_z = 0.0;
     Real com_zloc_l   = 0.0;
     Real com_zloc_u   = 0.0;
     Real com_zloc    = 0.0;
@@ -66,58 +46,28 @@ Castro::sum_integrated_quantities ()
        if (show_center_of_mass) {
 	 com_xloc      += ca_lev.locWgtSum("density", time, 0);
          mass_lower_x  += ca_lev.volWgtSumOneSide("density", time, 0, 0);
-         mass_upper_x  += ca_lev.volWgtSumOneSide("density", time, 0, 1);
-         com_xloc_l    += ca_lev.locWgtSumOneSide("density", time, 0, 0);
-         com_xloc_u    += ca_lev.locWgtSumOneSide("density", time, 0, 1);
+         mass_upper_x  += ca_lev.volWgtSumOneSide("density", time, 1, 0);
+         com_xloc_l    += ca_lev.locWgtSumOneSide("density", time, 0, 0, 0);
+         com_xloc_u    += ca_lev.locWgtSumOneSide("density", time, 0, 1, 0);
        }
 #if (BL_SPACEDIM>=2)
        ymom     += ca_lev.volWgtSum("ymom", time);
        if (show_center_of_mass) {
          com_yloc      += ca_lev.locWgtSum("density", time, 1);
-         mass_lower_y  += ca_lev.volWgtSumOneSide("density", time, 1, 0);
-         mass_upper_y  += ca_lev.volWgtSumOneSide("density", time, 1, 1);
-         com_yloc_l    += ca_lev.locWgtSumOneSide("density", time, 1, 0);
-         com_yloc_u    += ca_lev.locWgtSumOneSide("density", time, 1, 1);
+         com_yloc_l    += ca_lev.locWgtSumOneSide("density", time, 1, 0, 0);
+         com_yloc_u    += ca_lev.locWgtSumOneSide("density", time, 1, 1, 0);
        }
 #endif
 #if (BL_SPACEDIM==3)
        zmom     += ca_lev.volWgtSum("zmom", time);
        if (show_center_of_mass) {
          com_zloc      += ca_lev.locWgtSum("density", time, 2);
-         mass_lower_z  += ca_lev.volWgtSumOneSide("density", time, 2, 0);
-         mass_upper_z  += ca_lev.volWgtSumOneSide("density", time, 2, 1);
-         com_zloc_l    += ca_lev.locWgtSumOneSide("density", time, 2, 0);
-         com_zloc_u    += ca_lev.locWgtSumOneSide("density", time, 2, 1);
+         com_zloc_l    += ca_lev.locWgtSumOneSide("density", time, 2, 0, 0);
+         com_zloc_u    += ca_lev.locWgtSumOneSide("density", time, 2, 1, 0);
        }
 #endif
-        rho_E    += ca_lev.volWgtSum("rho_E", time);
-
-#ifdef SGS
-        Real  cur_time = state[SGS_Type].curTime();
-        Real prev_time = state[SGS_Type].prevTime();
-
-        rho_e    += ca_lev.volWgtSum("rho_e", time);
-        rho_K    += ca_lev.volWgtSum("rho_K", time);
-
-        delta_E  += ca_lev.volWgtSum("rho_E", cur_time);
-        delta_E  -= ca_lev.volWgtSum("rho_E", prev_time);
-
-        delta_K  += ca_lev.volWgtSum("rho_K", cur_time);
-        delta_K  -= ca_lev.volWgtSum("rho_K", prev_time);
-
-        rms_mach  += ca_lev.volWgtSquaredSum("MachNumber", time);
-
-        prod_sgs += 0.5 * ca_lev.volWgtSum("prod_sgs", prev_time) * dt_crse;
-        prod_sgs += 0.5 * ca_lev.volWgtSum("prod_sgs",  cur_time) * dt_crse;
-        diss_sgs += 0.5 * ca_lev.volWgtSum("diss_sgs", prev_time) * dt_crse;
-        diss_sgs += 0.5 * ca_lev.volWgtSum("diss_sgs",  cur_time) * dt_crse;
-        turb_src += 0.5 * ca_lev.volWgtSum("turb_src", prev_time) * dt_crse;
-        turb_src += 0.5 * ca_lev.volWgtSum("turb_src",  cur_time) * dt_crse;
-
-        sum_turb_src = sum_turb_src + turb_src;
-#endif
     }
- 
+
     if (verbose > 0 && ParallelDescriptor::IOProcessor())
     {
         std::cout << '\n';
@@ -130,56 +80,8 @@ Castro::sum_integrated_quantities ()
         std::cout << "TIME= " << time << " ZMOM        = "   << zmom     << '\n';
 #endif
         std::cout << "TIME= " << time << " RHO*E       = "   << rho_E     << '\n';
-#ifdef SGS
-        std::cout << "TIME= " << time << " RHO*K       = "   << rho_K     << '\n';
-        Etot     = rho_E + rho_K;
-        std::cout << "TIME= " << time << " TOTAL E     = "   << Etot      << '\n';
-        std::cout << "TIME= " << time << " DELTA E     = "   << delta_E   << '\n';
-        std::cout << "TIME= " << time << " DELTA K     = "   << delta_K   << '\n';
-        std::cout << "TIME= " << time << " DELTA TOT   = "   << delta_K+delta_E   << '\n';
-        std::cout << "TIME= " << time << " PROD_SGS    = "   << prod_sgs  << '\n';
-        std::cout << "TIME= " << time << " DISS_SGS    = "   << diss_sgs  << '\n';
-        std::cout << "TIME= " << time << " TURB_SRC    = "   << turb_src  << '\n';
-        std::cout << "TIME= " << time << " DE+DK-TURB_SRC = "   << delta_E+delta_K-turb_src  << '\n';
 
-	std::ostream& data_log1 = parent->DataLog(0);
-	std::ostream& data_log2 = parent->DataLog(1);
-
-        if (time == 0.0) {
-           data_log1 << std::setw(14) <<  "      time    ";
-           data_log1 << std::setw(14) <<  "        rho_E ";
-           data_log1 << std::setw(14) <<  "        rho_K ";
-           data_log1 << std::setw(14) <<  "        rho_e ";
-           data_log1 << std::setw(16) <<  "  Etot-sum_turb  ";
-           data_log1 << std::setw(14) <<  "      rms_mach" << std::endl;
-        }
-
-        // Write the quantities at this time
-        data_log1 << std::setw(14) <<  time;
-        data_log1 << std::setw(14) <<  std::setprecision(6) << rho_E;
-        data_log1 << std::setw(14) <<  std::setprecision(6) << rho_K;
-        data_log1 << std::setw(14) <<  std::setprecision(6) << rho_e;
-        data_log1 << std::setw(16) <<  std::setprecision(10) << Etot-sum_turb_src;
-        data_log1 << std::setw(14) <<  std::setprecision(6) << rms_mach << std::endl;
-
-        // Write the quantities that represent changes from prev_time to cur_time
-        if (time == 0.0) {
-           data_log2 << std::setw(14) <<  "      time    ";
-           data_log2 << std::setw(14) <<  "      delta_E ";
-           data_log2 << std::setw(14) <<  "      delta_K ";
-           data_log2 << std::setw(14) <<  "      prod_sgs";
-           data_log2 << std::setw(14) <<  "      diss_sgs";
-           data_log2 << std::setw(14) <<  "      turb_src" << std::endl;
-        }
-
-        data_log2 << std::setw(14) <<  std::setprecision(6) << time;
-        data_log2 << std::setw(14) <<  std::setprecision(6) << delta_E;
-        data_log2 << std::setw(14) <<  std::setprecision(6) << delta_K;
-        data_log2 << std::setw(14) <<  std::setprecision(6) << prod_sgs;
-        data_log2 << std::setw(14) <<  std::setprecision(6) << diss_sgs;
-        data_log2 << std::setw(14) <<  std::setprecision(6) << turb_src << std::endl;
-
-#endif
+        
         if (show_center_of_mass) {
            com_xloc = com_xloc / mass;
            com_xloc_l = com_xloc_l / mass_lower_x;
@@ -191,8 +93,8 @@ Castro::sum_integrated_quantities ()
            std::cout << "TIME= " << time << " CENTER OF MASS X-VEL = " << com_xvel  << '\n';
 #if (BL_SPACEDIM>=2)
            com_yloc = com_yloc / mass;
-           com_yloc_l = com_yloc_l / mass_lower_y;
-           com_yloc_u = com_yloc_u / mass_upper_y;
+           com_yloc_l = com_yloc_l / mass_lower_x;
+           com_yloc_u = com_yloc_u / mass_upper_x;
            com_yvel = ymom / mass;
            std::cout << "TIME= " << time << " CENTER OF MASS Y-LOC = " << com_yloc  << '\n';
 	   std::cout << "TIME= " << time << " LOWER CENTER OF MASS Y-LOC = " << com_yloc_l << '\n';
@@ -201,8 +103,8 @@ Castro::sum_integrated_quantities ()
 #endif
 #if (BL_SPACEDIM==3)
            com_zloc = com_zloc / mass;
-           com_zloc_l = com_zloc_l / mass_lower_z;
-           com_zloc_u = com_zloc_u / mass_upper_z;
+           com_zloc_l = com_zloc_l / mass_lower_x;
+           com_zloc_u = com_zloc_u / mass_upper_x;
            com_zvel = zmom / mass;
            std::cout << "TIME= " << time << " CENTER OF MASS Z-LOC = " << com_zloc  << '\n';
 	   std::cout << "TIME= " << time << " LOWER CENTER OF MASS Z-LOC = " << com_zloc_l << '\n';
@@ -418,11 +320,12 @@ Castro::locWgtSum (const std::string& name,
 Real
 Castro::volWgtSumOneSide (const std::string& name,
                           Real               time, 
-                          int                idir,
-                          int                side)
+                          int                side,
+                          int                bdir)
 {
     // This function is a clone of volWgtSum except it computes the result only on half of the domain.
     // The lower half corresponds to side == 0 and the upper half corresponds to side == 1.
+    // The argument bdir gives the direction along which to bisect.
     // ONLY WORKS IN THREE DIMENSIONS.
 
     Real        sum     = 0.0;
@@ -460,9 +363,9 @@ Castro::volWgtSumOneSide (const std::string& name,
         const int* hi   = box.hiVect();
 
         int hiLeft[3]       = { *hi, *(hi+1), *(hi+2) };
-        hiLeft[idir]        = *(domhi+idir) / 2;
+        hiLeft[bdir]        = *(domhi+bdir) / 2;
         int loRight[3]      = { *lo, *(lo+1), *(lo+2) };
-        loRight[idir]       = *(domhi+idir) / 2 + 1;
+        loRight[bdir]       = *(domhi+bdir) / 2 + 1;
 
         const int* hiLeftPtr  = hiLeft;
         const int* loRightPtr = loRight;
@@ -472,16 +375,16 @@ Castro::volWgtSumOneSide (const std::string& name,
         // whatever quantity is passed in, not strictly the "mass".
         //
         
-        if ( side == 0 && *(lo + idir) <= *(hiLeftPtr + idir) ) {
-          if ( *(hi + idir) <= *(hiLeftPtr + idir) )
+        if ( side == 0 && *(lo + bdir) <= *(hiLeftPtr + bdir) ) {
+          if ( *(hi + bdir) <= *(hiLeftPtr + bdir) )
             BL_FORT_PROC_CALL(CA_SUMMASS,ca_summass)
               (BL_TO_FORTRAN(fab),lo,hi,dx,&s);
           else
             BL_FORT_PROC_CALL(CA_SUMMASS,ca_summass)
               (BL_TO_FORTRAN(fab),lo,hiLeftPtr,dx,&s);
 	}  
-        else if ( side == 1 && *(hi + idir) >= *(loRightPtr + idir) ) {
-          if ( *(lo + idir) >= *(loRightPtr + idir) )
+        else if ( side == 1 && *(hi + bdir) >= *(loRightPtr + bdir) ) {
+          if ( *(lo + bdir) >= *(loRightPtr + bdir) )
             BL_FORT_PROC_CALL(CA_SUMMASS,ca_summass)
               (BL_TO_FORTRAN(fab),lo,hi,dx,&s);
           else
@@ -504,10 +407,13 @@ Real
 Castro::locWgtSumOneSide (const std::string& name,
                           Real               time,
                           int                idir, 
-                          int                side)
+                          int                side,
+                          int                bdir)
 {
   // This function is a clone of locWgtSum except that it only sums over one half of the domain.
   // The lower half corresponds to side == 0, and the upper half corresponds to side == 1.
+  // The argument idir (x == 0, y == 1, z == 2) gives the direction to location weight by,
+  // and the argument bdir gives the direction along which to bisect.
   // ONLY WORKS IN THREE DIMENSIONS.
 
     Real sum            = 0.0;
@@ -545,9 +451,9 @@ Castro::locWgtSumOneSide (const std::string& name,
         const int* hi   = box.hiVect();
 
         int hiLeft[3]       = { *hi, *(hi+1), *(hi+2) };
-        hiLeft[idir]        = *(domhi+idir) / 2;
+        hiLeft[bdir]        = *(domhi+bdir) / 2;
         int loRight[3]      = { *lo, *(lo+1), *(lo+2) };
-        loRight[idir]       = (*(domhi+idir) / 2) + 1;
+        loRight[bdir]       = (*(domhi+bdir) / 2) + 1;
 
         const int* hiLeftPtr  = hiLeft;
         const int* loRightPtr = loRight;
@@ -557,16 +463,16 @@ Castro::locWgtSumOneSide (const std::string& name,
         // whatever quantity is passed in, not strictly the "mass".
         // 
         
-        if ( (side == 0) && (*(lo + idir) <= *(hiLeftPtr + idir)) ) {
-          if ( *(hi + idir) <= *(hiLeftPtr + idir) )
+        if ( (side == 0) && (*(lo + bdir) <= *(hiLeftPtr + bdir)) ) {
+          if ( *(hi + bdir) <= *(hiLeftPtr + bdir) )
             BL_FORT_PROC_CALL(CA_SUMLOCMASS,ca_sumlocmass)
               (BL_TO_FORTRAN(fab),lo,hi,geom.ProbLo(),dx,&s,idir);
           else
             BL_FORT_PROC_CALL(CA_SUMLOCMASS,ca_sumlocmass)
               (BL_TO_FORTRAN(fab),lo,hiLeftPtr,geom.ProbLo(),dx,&s,idir);
 	}  
-        else if ( (side == 1) && (*(hi + idir) >= *(loRightPtr + idir)) ) {
-          if ( *(lo + idir) >= *(loRightPtr + idir) )
+        else if ( (side == 1) && (*(hi + bdir) >= *(loRightPtr + bdir)) ) {
+          if ( *(lo + bdir) >= *(loRightPtr + bdir) )
             BL_FORT_PROC_CALL(CA_SUMLOCMASS,ca_sumlocmass)
               (BL_TO_FORTRAN(fab),lo,hi,geom.ProbLo(),dx,&s,idir);
           else
