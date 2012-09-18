@@ -10,107 +10,175 @@ Castro::sum_integrated_quantities ()
     Real time        = state[State_Type].curTime();
     Real mass        = 0.0;
     Real xmom        = 0.0;
-    Real rho_E       = 0.0;
-    Real com_xloc     = 0.0;
-    Real mass_lower_x = 0.0;
-    Real mass_upper_x = 0.0;
-    Real com_xloc_l   = 0.0;
-    Real com_xloc_u   = 0.0;
-    Real com_xvel     = 0.0;
-#if (BL_SPACEDIM>=2)
     Real ymom        = 0.0;
-    Real com_yloc_l   = 0.0;
-    Real com_yloc_u   = 0.0;
-    Real com_yloc    = 0.0;
-    Real com_yvel    = 0.0;
-#endif
-#if (BL_SPACEDIM==3)
     Real zmom        = 0.0;
+    Real rho_E       = 0.0;
+
+    Real com_xloc     = 0.0;
+    Real mass_left    = 0.0;
+    Real mass_right   = 0.0;
+    Real com_xloc_l   = 0.0;
+    Real com_xloc_r   = 0.0;
+    Real com_xvel     = 0.0;
+
+    Real com_yloc_l   = 0.0;
+    Real com_yloc_r   = 0.0;
+    Real com_yloc     = 0.0;
+    Real com_yvel     = 0.0;
+
     Real com_zloc_l   = 0.0;
-    Real com_zloc_u   = 0.0;
-    Real com_zloc    = 0.0;
-    Real com_zvel    = 0.0;
-#endif
+    Real com_zloc_r   = 0.0;
+    Real com_zloc     = 0.0;
+    Real com_zvel     = 0.0;
+
+    int datawidth     = 14;
+    int dataprecision = 6;
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
-        Castro& ca_lev = getLevel(lev);
 
-        mass     += ca_lev.volWgtSum("density", time);
-        xmom     += ca_lev.volWgtSum("xmom", time);
-#if (BL_SPACEDIM == 2)
-       if (Geometry::IsRZ()) 
-          xmom = 0.;
-#endif
+      // Get the current level from Castro
 
-       if (show_center_of_mass) {
-	 com_xloc      += ca_lev.locWgtSum("density", time, 0);
-         mass_lower_x  += ca_lev.volWgtSumOneSide("density", time, 0, 0);
-         mass_upper_x  += ca_lev.volWgtSumOneSide("density", time, 1, 0);
-         com_xloc_l    += ca_lev.locWgtSumOneSide("density", time, 0, 0, 0);
-         com_xloc_u    += ca_lev.locWgtSumOneSide("density", time, 0, 1, 0);
-       }
-#if (BL_SPACEDIM>=2)
-       ymom     += ca_lev.volWgtSum("ymom", time);
-       if (show_center_of_mass) {
-         com_yloc      += ca_lev.locWgtSum("density", time, 1);
-         com_yloc_l    += ca_lev.locWgtSumOneSide("density", time, 1, 0, 0);
-         com_yloc_u    += ca_lev.locWgtSumOneSide("density", time, 1, 1, 0);
-       }
-#endif
-#if (BL_SPACEDIM==3)
-       zmom     += ca_lev.volWgtSum("zmom", time);
-       if (show_center_of_mass) {
-         com_zloc      += ca_lev.locWgtSum("density", time, 2);
-         com_zloc_l    += ca_lev.locWgtSumOneSide("density", time, 2, 0, 0);
-         com_zloc_u    += ca_lev.locWgtSumOneSide("density", time, 2, 1, 0);
-       }
-#endif
+      Castro& ca_lev = getLevel(lev);
+
+      // Calculate total mass, momentum and energy of system.
+
+      mass     += ca_lev.volWgtSum("density", time);
+
+      xmom     += ca_lev.volWgtSum("xmom", time);
+      ymom     += ca_lev.volWgtSum("ymom", time);
+      zmom     += ca_lev.volWgtSum("zmom", time);
+
+      rho_E    += ca_lev.volWgtSum("rho_E", time);
+
+      // If castro.show_center_of_mass == 1 in the inputs file, calculate center of mass quantities. 
+
+      if (show_center_of_mass) {
+        com_xloc      += ca_lev.locWgtSum("density", time, 0);
+        mass_left     += ca_lev.volWgtSumOneSide("density", time, 0, 0);
+        mass_right    += ca_lev.volWgtSumOneSide("density", time, 1, 0);
+        com_xloc_l    += ca_lev.locWgtSumOneSide("density", time, 0, 0, 0);
+        com_xloc_r    += ca_lev.locWgtSumOneSide("density", time, 0, 1, 0);
+
+        com_yloc      += ca_lev.locWgtSum("density", time, 1);
+        com_yloc_l    += ca_lev.locWgtSumOneSide("density", time, 1, 0, 0);
+        com_yloc_r    += ca_lev.locWgtSumOneSide("density", time, 1, 1, 0);
+
+        com_zloc      += ca_lev.locWgtSum("density", time, 2);
+        com_zloc_l    += ca_lev.locWgtSumOneSide("density", time, 2, 0, 0);
+        com_zloc_r    += ca_lev.locWgtSumOneSide("density", time, 2, 1, 0);
+      }
+        
     }
+
+    // Complete calculations for COM quantities
+
+    if (show_center_of_mass) {
+      com_xloc = com_xloc / mass;
+      com_xloc_l = com_xloc_l / mass_left;
+      com_xloc_r = com_xloc_r / mass_right;
+      com_xvel = xmom / mass;
+
+      com_yloc = com_yloc / mass;
+      com_yloc_l = com_yloc_l / mass_left;
+      com_yloc_r = com_yloc_r / mass_right;
+      com_yvel = ymom / mass;
+
+      com_zloc = com_zloc / mass;
+      com_zloc_l = com_zloc_l / mass_left;
+      com_zloc_r = com_zloc_r / mass_right;
+      com_zvel = zmom / mass;
+    }
+
+    // Write data out to the log. Check if data log exists first.
+
+    std::ostream& data_log1 = parent->DataLog(0);
+
+    if ( data_log1.good() ) {
+
+      // Write header row
+
+      if (time == 0.0) {
+        data_log1 << std::setw(datawidth) << "     TIME    ";
+        data_log1 << std::setw(datawidth) << " MASS        ";
+        data_log1 << std::setw(datawidth) << " XMOM        ";
+        data_log1 << std::setw(datawidth) << " YMOM        ";
+        data_log1 << std::setw(datawidth) << " ZMOM        ";
+        data_log1 << std::setw(datawidth) << " RHO*E       ";
+        if (show_center_of_mass) {
+          data_log1 << std::setw(datawidth) << "  X COM       ";
+          data_log1 << std::setw(datawidth) << "  Y COM       ";
+          data_log1 << std::setw(datawidth) << "  Z COM       ";
+          data_log1 << std::setw(datawidth) << "  LEFT MASS   ";
+          data_log1 << std::setw(datawidth) << "  RIGHT MASS  ";
+          data_log1 << std::setw(datawidth) << "  LEFT X COM  ";
+          data_log1 << std::setw(datawidth) << "  RIGHT X COM ";
+          data_log1 << std::setw(datawidth) << "  LEFT Y COM  ";
+          data_log1 << std::setw(datawidth) << "  RIGHT Y COM ";
+          data_log1 << std::setw(datawidth) << "  LEFT Z COM  ";
+          data_log1 << std::setw(datawidth) << "  RIGHT Z COM ";
+        } 
+        data_log1 << std::endl;
+      }
+
+      // Write data for the present time
+
+      data_log1 << std::fixed;
+
+      data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << time;
+
+      data_log1 << std::scientific;
+
+      data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
+      data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << xmom;
+      data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << ymom;
+      data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << zmom;
+      data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rho_E;
+      if (show_center_of_mass) {
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xloc;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yloc;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zloc;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_left;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_right;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xloc_l;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xloc_r;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yloc_l;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yloc_r;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zloc_l;
+        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zloc_r;
+      }
+      data_log1 << std::endl;
+
+    }
+        
+    // If castro.v == 1, then write out the fundamental quantities to stdout
+    // If castro.show_center_of_mass == 1, then also write out the center of mass quantities
 
     if (verbose > 0 && ParallelDescriptor::IOProcessor())
     {
         std::cout << '\n';
         std::cout << "TIME= " << time << " MASS        = "   << mass  << '\n';
         std::cout << "TIME= " << time << " XMOM        = "   << xmom     << '\n';
-#if (BL_SPACEDIM>=2)
         std::cout << "TIME= " << time << " YMOM        = "   << ymom     << '\n';
-#endif
-#if (BL_SPACEDIM==3)
         std::cout << "TIME= " << time << " ZMOM        = "   << zmom     << '\n';
-#endif
         std::cout << "TIME= " << time << " RHO*E       = "   << rho_E     << '\n';
-
-        
+      
         if (show_center_of_mass) {
-           com_xloc = com_xloc / mass;
-           com_xloc_l = com_xloc_l / mass_lower_x;
-           com_xloc_u = com_xloc_u / mass_upper_x;
-           com_xvel = xmom / mass;
-           std::cout << "TIME= " << time << " CENTER OF MASS X-LOC = " << com_xloc  << '\n';
-	   std::cout << "TIME= " << time << " LOWER CENTER OF MASS X-LOC = " << com_xloc_l << '\n';
-	   std::cout << "TIME= " << time << " UPPER CENTER OF MASS X-LOC = " << com_xloc_u << '\n';
-           std::cout << "TIME= " << time << " CENTER OF MASS X-VEL = " << com_xvel  << '\n';
-#if (BL_SPACEDIM>=2)
-           com_yloc = com_yloc / mass;
-           com_yloc_l = com_yloc_l / mass_lower_x;
-           com_yloc_u = com_yloc_u / mass_upper_x;
-           com_yvel = ymom / mass;
-           std::cout << "TIME= " << time << " CENTER OF MASS Y-LOC = " << com_yloc  << '\n';
-	   std::cout << "TIME= " << time << " LOWER CENTER OF MASS Y-LOC = " << com_yloc_l << '\n';
-	   std::cout << "TIME= " << time << " UPPER CENTER OF MASS Y-LOC = " << com_yloc_u << '\n';
-           std::cout << "TIME= " << time << " CENTER OF MASS Y-VEL = " << com_yvel  << '\n';
-#endif
-#if (BL_SPACEDIM==3)
-           com_zloc = com_zloc / mass;
-           com_zloc_l = com_zloc_l / mass_lower_x;
-           com_zloc_u = com_zloc_u / mass_upper_x;
-           com_zvel = zmom / mass;
-           std::cout << "TIME= " << time << " CENTER OF MASS Z-LOC = " << com_zloc  << '\n';
-	   std::cout << "TIME= " << time << " LOWER CENTER OF MASS Z-LOC = " << com_zloc_l << '\n';
-	   std::cout << "TIME= " << time << " UPPER CENTER OF MASS Z-LOC = " << com_zloc_u << '\n';
-           std::cout << "TIME= " << time << " CENTER OF MASS Z-VEL = " << com_zvel  << '\n';
-#endif
+           std::cout << "TIME= " << time << " CENTER OF MASS X-LOC       = " << com_xloc   << '\n';
+	   std::cout << "TIME= " << time << " LEFT  CENTER OF MASS X-LOC = " << com_xloc_l << '\n';
+	   std::cout << "TIME= " << time << " RIGHT CENTER OF MASS X-LOC = " << com_xloc_r << '\n';
+           std::cout << "TIME= " << time << " CENTER OF MASS X-VEL       = " << com_xvel   << '\n';
+
+           std::cout << "TIME= " << time << " CENTER OF MASS Y-LOC       = " << com_yloc   << '\n';
+	   std::cout << "TIME= " << time << " LEFT  CENTER OF MASS Y-LOC = " << com_yloc_l << '\n';
+	   std::cout << "TIME= " << time << " RIGHT CENTER OF MASS Y-LOC = " << com_yloc_r << '\n';
+           std::cout << "TIME= " << time << " CENTER OF MASS Y-VEL       = " << com_yvel   << '\n';
+
+           std::cout << "TIME= " << time << " CENTER OF MASS Z-LOC       = " << com_zloc   << '\n';
+	   std::cout << "TIME= " << time << " LEFT  CENTER OF MASS Z-LOC = " << com_zloc_l << '\n';
+	   std::cout << "TIME= " << time << " RIGHT CENTER OF MASS Z-LOC = " << com_zloc_r << '\n';
+           std::cout << "TIME= " << time << " CENTER OF MASS Z-VEL       = " << com_zvel   << '\n';
+
         }
 	std::cout<<'\n';
     }
