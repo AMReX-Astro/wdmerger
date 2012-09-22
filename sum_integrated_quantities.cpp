@@ -92,10 +92,12 @@ Castro::sum_integrated_quantities ()
 
     // Write data out to the log. Check if data log exists first.
 
-    std::ostream& data_log1 = parent->DataLog(0);
 
-    if ( data_log1.good() ) {
-
+    if ( ParallelDescriptor::IOProcessor() )
+    {
+      std::ostream& data_log1 = parent->DataLog(0);
+      if ( data_log1.good() )
+      {
       // Write header row
 
       if (time == 0.0) {
@@ -148,6 +150,7 @@ Castro::sum_integrated_quantities ()
         data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zloc_r;
       }
       data_log1 << std::endl;
+      }
 
     }
         
