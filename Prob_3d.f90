@@ -5,6 +5,7 @@
      use bl_constants_module
      use fundamental_constants_module
      use eos_module
+     use com
 
      implicit none
 
@@ -248,6 +249,10 @@
      y_cen_B = center(2)
      z_cen_B = center(3)
 
+     ! Initialize COM quantities
+
+     call com_save(mass_A,mass_B,x_cen_A,x_cen_B,y_cen_A,y_cen_B,z_cen_A,z_cen_B)
+     
 
    end subroutine PROBINIT
 
