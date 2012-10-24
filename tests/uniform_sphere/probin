@@ -1,0 +1,11 @@
+&fortin
+
+  model_name = "uniform_WD"
+
+/
+
+&extern
+
+  use_eos_coulomb = F
+
+/
