@@ -14,7 +14,7 @@ real    :: wd_rad
 
 open (unit = lun, file="uniform_WD")
 
-write (lun,*) "# npts = ", npts
+write (lun,*) "# npts = ", 2*npts
 write (lun,*) "# num of variables = ", nvars
 write (lun,*) "# density"
 write (lun,*) "# temperature"
@@ -28,12 +28,19 @@ wd_rad = 9.0e9
 mass = 0.6 * 1.99e33
 volume = (4.0/3.0) * pi * (wd_rad)**3
 
-do i = 1,npts
+do i = 1,2*npts
+
   radius = (1.0*i) * wd_rad / (1.0*npts)
-  density = mass / volume
+  if ( i <= npts ) then
+    density = mass / volume
+  else
+    density = 1.0e-6
+  endif
   temperature = 1.0e7
   pressure = 1.0e15
+
   write (10,*) radius, density, temperature, pressure, He4, C12, O16, Fe56
+
 enddo
 
 end program
