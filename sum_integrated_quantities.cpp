@@ -10,9 +10,7 @@ Castro::sum_integrated_quantities ()
     int finest_level  = parent->finestLevel();
     Real time         = state[State_Type].curTime();
     Real mass         = 0.0;
-    Real xmom         = 0.0;
-    Real ymom         = 0.0;
-    Real zmom         = 0.0;
+    Real momentum[3]  = {0.0, 0.0, 0.0};
     Real rho_E        = 0.0;
     Real rho_e        = 0.0;
     Real rho_phi      = 0.0;
@@ -20,7 +18,6 @@ Castro::sum_integrated_quantities ()
     Real gravitational_energy = 0.0; 
     Real kinetic_energy       = 0.0; 
     Real internal_energy      = 0.0; 
-    Real rotational_energy    = 0.0; 
     Real total_energy         = 0.0; 
 
     Real angular_momentum[3]  = {0.0, 0.0, 0.0};
@@ -28,39 +25,24 @@ Castro::sum_integrated_quantities ()
     Real m_r_squared[3]       = {0.0, 0.0, 0.0};
 
     Real omega[3] = {0.0, 0.0, 2.0*3.1415926*rotational_frequency};
+    Real dL           = 0.0;
 
     Real mass_left    = 0.0;
     Real mass_right   = 0.0;
 
-    Real com_xloc     = 0.0;
-    Real com_xloc_l   = 0.0;
-    Real com_xloc_r   = 0.0;
-    Real com_xvel     = 0.0;
-    Real com_xvel_l   = 0.0;
-    Real com_xvel_r   = 0.0; 
+    Real com[3]       = {0.0, 0.0, 0.0};
+    Real com_l[3]     = {0.0, 0.0, 0.0};
+    Real com_r[3]     = {0.0, 0.0, 0.0};
 
-    Real com_yloc     = 0.0;
-    Real com_yloc_l   = 0.0;
-    Real com_yloc_r   = 0.0;
-    Real com_yvel     = 0.0;
-    Real com_yvel_l   = 0.0;
-    Real com_yvel_r   = 0.0;
+    Real com_vel[3]   = {0.0, 0.0, 0.0};
+    Real com_vel_l[3] = {0.0, 0.0, 0.0};
+    Real com_vel_r[3] = {0.0, 0.0, 0.0};
 
-    Real com_zloc     = 0.0;
-    Real com_zloc_l   = 0.0;
-    Real com_zloc_r   = 0.0;
-    Real com_zvel     = 0.0;
-    Real com_zvel_l   = 0.0;
-    Real com_zvel_r   = 0.0;
-
-    int endOfStep     =   1;
+    std::string name1; 
+    std::string name2;
 
     int datawidth     =  14;
     int dataprecision =   6;
-
-    const int* eos_ptr = &endOfStep;
-
-    BL_FORT_PROC_CALL(GET_EOS,get_eos)(eos_ptr);    
     
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -73,9 +55,9 @@ Castro::sum_integrated_quantities ()
 
       mass     += ca_lev.volWgtSum("density", time);
 
-      xmom     += ca_lev.volWgtSum("xmom", time);
-      ymom     += ca_lev.volWgtSum("ymom", time);
-      zmom     += ca_lev.volWgtSum("zmom", time);
+      momentum[0]     += ca_lev.volWgtSum("xmom", time);
+      momentum[1]     += ca_lev.volWgtSum("ymom", time);
+      momentum[2]     += ca_lev.volWgtSum("zmom", time);
 
       rho_E    += ca_lev.volWgtSum("rho_E", time);
       rho_e    += ca_lev.volWgtSum("rho_e", time);
@@ -89,8 +71,6 @@ Castro::sum_integrated_quantities ()
         
         int index1 = (i+1) % 3; 
         int index2 = (i+2) % 3;
-        std::string name1; 
-        std::string name2;
         switch (i) {
           case 0 :
             name1 = "ymom"; name2 = "zmom"; break;
@@ -102,73 +82,67 @@ Castro::sum_integrated_quantities ()
 
         moment_of_inertia[i] += m_r_squared[index1] + m_r_squared[index2];
 
-        angular_momentum[i]  += ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
-       
-        // Add rotational source term to angular momentum and energy
+        dL = ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
+
+        angular_momentum[i]  += dL;
+
+	// Add cross term to rotational energy == omega dot L
 
         if ( do_rotation )
-          for ( int i = 0; i <= 2; i++ ) {
-            angular_momentum[i] += moment_of_inertia[i] * omega[i];
-            rotational_energy   += (1.0/2.0) * moment_of_inertia[i] * omega[i] * omega[i];
-          }
+          kinetic_energy     += omega[i] * dL;
+
       }
   
- 
+      // Add rotational source term to angular momentum (I * omega) and energy (0.5 * I * omega**2)
+        
+      if ( do_rotation )
+        for ( int i = 0; i <= 2; i++ ) {
+          angular_momentum[i] += moment_of_inertia[i] * omega[i];
+          kinetic_energy      += (1.0/2.0) * moment_of_inertia[i] * omega[i] * omega[i];
+        }
+      
       // Calculate center of mass quantities.
 
-      mass_left   += ca_lev.volWgtSumOneSide("density", time, 0, 0);
-      mass_right  += ca_lev.volWgtSumOneSide("density", time, 1, 0);
+      mass_left    += ca_lev.volWgtSumOneSide("density", time, 0, 0);
+      mass_right   += ca_lev.volWgtSumOneSide("density", time, 1, 0);
 
-      com_xloc    += ca_lev.locWgtSum("density", time, 0);
-      com_xloc_l  += ca_lev.locWgtSumOneSide("density", time, 0, 0, 0);
-      com_xloc_r  += ca_lev.locWgtSumOneSide("density", time, 0, 1, 0);
-      com_xvel_l  += ca_lev.volWgtSumOneSide("xmom",    time, 0, 0);
-      com_xvel_r  += ca_lev.volWgtSumOneSide("xmom",    time, 1, 0);
+      for ( int i = 0; i <= 2; i++ ) {
+        switch ( i ) {
+	  case 0 : 
+            name1 = "xmom"; break;
+          case 1 :
+            name1 = "ymom"; break;
+          case 2 :
+            name1 = "zmom"; break;
+	}   
 
-      com_yloc    += ca_lev.locWgtSum("density", time, 1);
-      com_yloc_l  += ca_lev.locWgtSumOneSide("density", time, 1, 0, 0);
-      com_yloc_r  += ca_lev.locWgtSumOneSide("density", time, 1, 1, 0);
-      com_yvel_l  += ca_lev.volWgtSumOneSide("ymom",    time, 0, 0);
-      com_yvel_r  += ca_lev.volWgtSumOneSide("ymom",    time, 1, 0);
-
-      com_zloc    += ca_lev.locWgtSum("density", time, 2);
-      com_zloc_l  += ca_lev.locWgtSumOneSide("density", time, 2, 0, 0);
-      com_zloc_r  += ca_lev.locWgtSumOneSide("density", time, 2, 1, 0);
-      com_zvel_l  += ca_lev.volWgtSumOneSide("zmom",    time, 0, 0);
-      com_zvel_r  += ca_lev.volWgtSumOneSide("zmom",    time, 1, 0);
+        com[i]       += ca_lev.locWgtSum("density", time, i);
+        com_l[i]     += ca_lev.locWgtSumOneSide("density", time, i, 0, 0);
+        com_r[i]     += ca_lev.locWgtSumOneSide("density", time, i, 1, 0);
+        com_vel_l[i] += ca_lev.volWgtSumOneSide(name1,    time, 0, 0);
+        com_vel_r[i] += ca_lev.volWgtSumOneSide(name1,    time, 1, 0);
+      }
     }
         
     // Complete calculations for COM quantities
 
-    com_xloc     = com_xloc / mass;
-    com_xloc_l   = com_xloc_l / mass_left;
-    com_xloc_r   = com_xloc_r / mass_right;
-    com_xvel_l   = com_xvel_l / mass_left;
-    com_yvel_r   = com_xvel_r / mass_right;
-    com_xvel     = xmom / mass;
-
-    com_yloc     = com_yloc / mass;
-    com_yloc_l   = com_yloc_l / mass_left;
-    com_yloc_r   = com_yloc_r / mass_right;
-    com_zvel_l   = com_yvel_l / mass_left;
-    com_zvel_r   = com_yvel_r / mass_right;
-    com_yvel     = ymom / mass;
-
-    com_zloc     = com_zloc / mass;
-    com_zloc_l   = com_zloc_l / mass_left;
-    com_zloc_r   = com_zloc_r / mass_right;
-    com_zvel_l   = com_zvel_l / mass_left;
-    com_zvel_r   = com_zvel_r / mass_right;
-    com_zvel     = zmom / mass;
+    for ( int i = 0; i <= 2; i++ ) {
+      com[i]       = com[0] / mass;
+      com_l[i]     = com_l[0] / mass_left;
+      com_r[i]     = com_r[0] / mass_right;
+      com_vel_l[i] = com_vel_l[0] / mass_left;
+      com_vel_r[i] = com_vel_r[0] / mass_right;
+      com_vel[i]   = momentum[i] / mass;
+    } 
 
     const Real* ml = &mass_left;
     const Real* mr = &mass_right;
-    const Real* cxl = &com_xloc_l;
-    const Real* cxr = &com_xloc_r;
-    const Real* cyl = &com_yloc_l;
-    const Real* cyr = &com_yloc_r;
-    const Real* czl = &com_zloc_l;
-    const Real* czr = &com_zloc_r;
+    const Real* cxl = &com_l[0];
+    const Real* cxr = &com_r[0];
+    const Real* cyl = &com_l[1];
+    const Real* cyr = &com_r[1];
+    const Real* czl = &com_l[2];
+    const Real* czr = &com_r[2];
 
     BL_FORT_PROC_CALL(COM_SAVE,com_save)
       (ml, mr, cxl, cxr, cyl, cyr, czl, czr);
@@ -177,8 +151,8 @@ Castro::sum_integrated_quantities ()
 
     gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
     internal_energy = rho_e;
-    kinetic_energy = rho_E - rho_e;
-    total_energy = gravitational_energy + internal_energy + kinetic_energy + rotational_energy; 
+    kinetic_energy += rho_E - rho_e;
+    total_energy = gravitational_energy + internal_energy + kinetic_energy; 
     
     // Write data out to the log.
 
@@ -198,7 +172,6 @@ Castro::sum_integrated_quantities ()
         data_log1 << std::setw(datawidth) << " KIN. ENERGY ";
         data_log1 << std::setw(datawidth) << " GRAV. ENERGY";
         data_log1 << std::setw(datawidth) << " INT. ENERGY ";
-        data_log1 << std::setw(datawidth) << " ROT. ENERGY ";
         data_log1 << std::setw(datawidth) << " TOTAL ENERGY";
         data_log1 << std::setw(datawidth) << " ANG. MOM. X ";
         data_log1 << std::setw(datawidth) << " ANG. MOM. Y ";
@@ -229,7 +202,6 @@ Castro::sum_integrated_quantities ()
 
       // Write data for the present time
 
-      if ( endOfStep || time == 0.0 ) {
 	data_log1 << std::fixed;
 
 	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << time;
@@ -237,41 +209,39 @@ Castro::sum_integrated_quantities ()
 	data_log1 << std::scientific;
 
 	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << xmom;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << ymom;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << zmom;
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
 	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << kinetic_energy;
 	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << gravitational_energy;
         data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << internal_energy;
-        data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rotational_energy;
         data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << total_energy;
         data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[0];
         data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1]; 
         data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[2];
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xloc;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yloc;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zloc;
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[2];
 	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_left;
 	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_right;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xloc_l;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xloc_r;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yloc_l;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yloc_r;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zloc_l;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zloc_r;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xvel;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yvel;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zvel;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xvel_l;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_xvel_r;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yvel_l;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_yvel_r;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zvel_l;
-	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_zvel_r;
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_l[0];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_r[0];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_l[1];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_r[1];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_l[2];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_r[2];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_l[0];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_r[0];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_l[1];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_r[1];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_l[2];
+	data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_r[2];
 	
 	data_log1 << std::endl;
-      }
-
+        
     }
 }
 
