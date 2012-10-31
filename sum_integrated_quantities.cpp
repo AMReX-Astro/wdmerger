@@ -24,8 +24,8 @@ Castro::sum_integrated_quantities ()
     Real moment_of_inertia[3] = {0.0, 0.0, 0.0};
     Real m_r_squared[3]       = {0.0, 0.0, 0.0};
 
-    Real omega[3] = {0.0, 0.0, 2.0*3.1415926*rotational_frequency};
-    Real dL           = 0.0;
+    Real omega[3]     = {0.0, 0.0, 2.0*3.1415926*rotational_frequency};
+    Real delta_L[3]   = {0.0, 0.0, 0.0};
 
     Real mass_left    = 0.0;
     Real mass_right   = 0.0;
@@ -33,7 +33,8 @@ Castro::sum_integrated_quantities ()
     Real com[3]       = {0.0, 0.0, 0.0};
     Real com_l[3]     = {0.0, 0.0, 0.0};
     Real com_r[3]     = {0.0, 0.0, 0.0};
-
+    Real delta_com[3] = {0.0, 0.0, 0.0};
+ 
     Real com_vel[3]   = {0.0, 0.0, 0.0};
     Real com_vel_l[3] = {0.0, 0.0, 0.0};
     Real com_vel_r[3] = {0.0, 0.0, 0.0};
@@ -51,56 +52,6 @@ Castro::sum_integrated_quantities ()
 
       Castro& ca_lev = getLevel(lev);
 
-      // Calculate total mass, momentum and energy of system.
-
-      mass     += ca_lev.volWgtSum("density", time);
-
-      momentum[0]     += ca_lev.volWgtSum("xmom", time);
-      momentum[1]     += ca_lev.volWgtSum("ymom", time);
-      momentum[2]     += ca_lev.volWgtSum("zmom", time);
-
-      rho_E    += ca_lev.volWgtSum("rho_E", time);
-      rho_e    += ca_lev.volWgtSum("rho_e", time);
-      
-      rho_phi  += ca_lev.volProductSum("density", "phi", time);
-
-      for ( int i = 0; i <= 2; i++ )
-        m_r_squared[i] += ca_lev.locSquaredSum("density", time, i);
-      
-      for ( int i = 0; i <= 2; i++ ) {
-        
-        int index1 = (i+1) % 3; 
-        int index2 = (i+2) % 3;
-        switch (i) {
-          case 0 :
-            name1 = "ymom"; name2 = "zmom"; break;
-          case 1 :
-            name1 = "zmom"; name2 = "xmom"; break;
-          case 2 :
-            name1 = "xmom"; name2 = "ymom"; break;
-        }
-
-        moment_of_inertia[i] += m_r_squared[index1] + m_r_squared[index2];
-
-        dL = ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
-
-        angular_momentum[i]  += dL;
-
-	// Add cross term to rotational energy == omega dot L
-
-        if ( do_rotation )
-          kinetic_energy     += omega[i] * dL;
-
-      }
-  
-      // Add rotational source term to angular momentum (I * omega) and energy (0.5 * I * omega**2)
-        
-      if ( do_rotation )
-        for ( int i = 0; i <= 2; i++ ) {
-          angular_momentum[i] += moment_of_inertia[i] * omega[i];
-          kinetic_energy      += (1.0/2.0) * moment_of_inertia[i] * omega[i] * omega[i];
-        }
-      
       // Calculate center of mass quantities.
 
       mass_left    += ca_lev.volWgtSumOneSide("density", time, 0, 0);
@@ -116,14 +67,87 @@ Castro::sum_integrated_quantities ()
             name1 = "zmom"; break;
 	}   
 
-        com[i]       += ca_lev.locWgtSum("density", time, i);
+        delta_com[i]  = ca_lev.locWgtSum("density", time, i);
+        com[i]       += delta_com[i];
+
         com_l[i]     += ca_lev.locWgtSumOneSide("density", time, i, 0, 0);
         com_r[i]     += ca_lev.locWgtSumOneSide("density", time, i, 1, 0);
         com_vel_l[i] += ca_lev.volWgtSumOneSide(name1,    time, 0, 0);
         com_vel_r[i] += ca_lev.volWgtSumOneSide(name1,    time, 1, 0);
       }
+
+      // Calculate total mass, momentum and energy of system.
+
+      mass     += ca_lev.volWgtSum("density", time);
+
+      momentum[0]     += ca_lev.volWgtSum("xmom", time);
+      momentum[1]     += ca_lev.volWgtSum("ymom", time);
+      momentum[2]     += ca_lev.volWgtSum("zmom", time);
+
+      rho_E    += ca_lev.volWgtSum("rho_E", time);
+      rho_e    += ca_lev.volWgtSum("rho_e", time);
+
+      if ( do_grav )      
+        rho_phi  += ca_lev.volProductSum("density", "phi", time);
+
+      // Calculate total angular momentum of system using L = r x p
+
+      for ( int i = 0; i <= 2; i++ )
+        m_r_squared[i] = ca_lev.locSquaredSum("density", time, i);
+      
+      for ( int i = 0; i <= 2; i++ ) {
+
+        int index1 = (i+1) % 3; 
+        int index2 = (i+2) % 3;
+
+        switch (i) {
+          case 0 :
+            name1 = "ymom"; name2 = "zmom"; break;
+          case 1 :
+            name1 = "zmom"; name2 = "xmom"; break;
+          case 2 :
+            name1 = "xmom"; name2 = "ymom"; break;
+        }
+
+        moment_of_inertia[i] = m_r_squared[index1] + m_r_squared[index2];
+
+        delta_L[i] = ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
+
+        angular_momentum[i]  += delta_L[i];
+
+      }
+
+      // Add rotation source terms
+
+      if ( do_rotation ) {
+        for ( int i = 0; i <= 2; i++ ) {
+	  
+          // Rotational energy == omega dot L + 0.5 * I * omega**2
+
+          kinetic_energy     += omega[i] * delta_L[i] + (1.0/2.0) * moment_of_inertia[i] * omega[i] * omega[i];
+
+	  // Angular momentum == (I * omega); missing a cross term which is irrelevant 
+	  // since omega has only one non-zero entry.
+
+          angular_momentum[i] += moment_of_inertia[i] * omega[i];
+
+	  // Momentum == omega x (rho * r)
+
+          int index1 = (i+1) % 3; 
+          int index2 = (i+2) % 3;
+
+          momentum[i] += omega[index1]*delta_com[index2] - omega[index2]*delta_com[index1];
+
+        }
+      } 
+ 
     }
-        
+
+
+
+
+
+
     // Complete calculations for COM quantities
 
     for ( int i = 0; i <= 2; i++ ) {
@@ -147,12 +171,23 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(COM_SAVE,com_save)
       (ml, mr, cxl, cxr, cyl, cyr, czl, czr);
 
+
+
+
+
+
+
     // Complete calculations for energy
 
     gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
     internal_energy = rho_e;
     kinetic_energy += rho_E - rho_e;
     total_energy = gravitational_energy + internal_energy + kinetic_energy; 
+
+
+
+
+
     
     // Write data out to the log.
 
