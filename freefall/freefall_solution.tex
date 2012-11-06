@@ -1,0 +1,61 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{parskip}
+
+\begin{document}
+
+  \begin{center}
+    \textbf{Solution of the Two-Body Free Fall Problem}\\
+    \textbf{November 5, 2012}
+  \end{center}
+
+  Suppose two particles are initially at rest, at locations $x_A$ and $x_B$. The particles have masses $M_A$ and $M_B$, respectively. Here I provide the analytical solution for the free fall. The center of mass of this system stays stationaary in this problem, since there are no external forces. Therefore, if I denote by $r(t)$ the present separation of the two particles, the equation of motion is
+  \begin{equation}
+    \ddot{r}(t) = - \frac{GM}{r^2},
+  \end{equation}
+  where $M$ is the total mass of the system $M = M_A + M_B$ and the initial condition is $r_0 = x_{A0} + x_{B0}$.
+
+  This can be solved by recognizing that
+  \begin{equation}
+    \frac{d^2 r}{dt^2} = \frac{dv}{dt} = v(r) \frac{dv(r)}{dr}
+  \end{equation}
+  where $v(r)$ is the instantaneous velocity at particle separation $r(t)$. The equation of motion is then separable:
+  \begin{align}
+    v\, dv &= -GM \frac{dr}{r^2} \\
+    \Rightarrow \frac{1}{2}v(r)^2 &= -GM\int_{r_0}^r \frac{dr}{r^2} \\
+                                  &= GM\left[ \frac{1}{r} - \frac{1}{r_0} \right] \\
+    \Rightarrow v(r) &= \sqrt{\frac{2GM}{r_0} \left[\frac{r_0}{r} - 1\right]}.
+  \end{align}
+  Since $v(r) = dr / dt$, this equation is also separable:
+  \begin{align}
+    t(r) = \sqrt{\frac{r_0}{2GM}}\int_{r_0}^r \frac{dr}{\sqrt{\frac{r_0}{r} - 1}}.
+  \end{align}
+  Here I use the variable substitution
+  \begin{equation}
+    u(r) = \frac{r}{r_0}; \quad u(r_0) = 1; \quad du = \frac{1}{r_0} dr.
+  \end{equation}
+  Then the integral takes the form
+  \begin{align}
+    t(r) &= \sqrt{\frac{r_0^3}{2GM}}\int_{1}^{r/r_0} \frac{du}{\sqrt{\frac{1}{u}-1}}.
+  \end{align}
+  Here a trigonometric substitution makes sense:
+  \begin{equation}
+    u(\theta) = \text{cos}^2(\theta); \quad \theta(u = 1) = 0; \quad du = 2\,\text{cos}(\theta)\, \text{sin}(\theta)\, d\theta
+  \end{equation}
+  Then, using the trigonometric identity
+  \[
+    \frac{1}{\text{cos}^2(\theta)} - 1 = \text{tan}^2(\theta),
+  \]
+  the integral gets transformed into the final form
+  \begin{align}
+    t(r) &= 2\sqrt{\frac{r_0^3}{2GM}} \int_{0}^{\theta(r)} d\theta\, \frac{\text{sin}(\theta)\, \text{cos}(\theta)}{\text{tan}(\theta)} \\
+         &= 2\sqrt{\frac{r_0^3}{2GM}} \int_{0}^{\theta(r)} d\theta\, \text{cos}^2(\theta) \\
+         &= \sqrt{\frac{r_0^3}{2GM}} \bigg[ \theta + \text{sin}(\theta)\, \text{cos}(\theta) \bigg]_0^{\theta(r)} \\
+         &= \sqrt{\frac{r_0^3}{2GM}} \bigg[ \theta + \text{cos}(\theta)\, \sqrt{1 - \text{cos}^2(\theta)} \bigg]_0^{\theta(r)} \\
+         &= \sqrt{\frac{r_0^3}{2GM}} \left[ \text{arccos}\left(\sqrt{\frac{r}{r_0}}\right) + \sqrt{\frac{r}{r_0} \left(1 - \frac{r}{r_0}\right)}\ \right].
+  \end{align}
+
+\end{document}
