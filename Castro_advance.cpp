@@ -243,7 +243,7 @@ Castro::advance_hydro (Real time,
            const int* eosPtr = &eos;
            BL_FORT_PROC_CALL(SET_EOS,set_eos)(eosPtr);
           
-           sum_integrated_quantities();
+           center_of_mass();
 
            gravity->solve_for_old_phi(level,*gravity->get_phi_prev(level),
                                       gravity->get_grad_phi_prev(level),fill_interior);
@@ -822,7 +822,7 @@ Castro::advance_hydro (Real time,
             const int* eosPtr = &eos;
             BL_FORT_PROC_CALL(SET_EOS,set_eos)(eosPtr);
 
-            sum_integrated_quantities();
+            center_of_mass();
 
             // Here we use the "old" phi from the current time step as a guess for this solve
 	    MultiFab::Copy(*gravity->get_phi_curr(level),*gravity->get_phi_prev(level),0,0,1,0);
