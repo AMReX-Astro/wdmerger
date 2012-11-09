@@ -1,5 +1,5 @@
 subroutine sponge(uout,uout_l1,uout_l2,uout_l3,&
-                  uout_h1,uout_h2,uout_h3,lo,hi,dt, &
+                  uout_h1,uout_h2,uout_h3,lo,hi,time,dt, &
                   dx,dy,dz,domlo,domhi)
 
   use bl_constants_module, ONLY: M_PI, HALF, ZERO, ONE
@@ -11,7 +11,7 @@ subroutine sponge(uout,uout_l1,uout_l2,uout_l3,&
   integer          :: uout_l1,uout_l2,uout_l3,uout_h1,uout_h2,uout_h3
   double precision :: uout(uout_l1:uout_h1,uout_l2:uout_h2,&
        uout_l3:uout_h3,NVAR)
-  double precision :: dt
+  double precision :: time, dt
   double precision :: dx, dy, dz, domlo(3), domhi(3)
   
   double precision :: xx, yy, zz
