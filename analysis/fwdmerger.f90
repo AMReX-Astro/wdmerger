@@ -201,7 +201,7 @@ program fwdmerger
                             (dx(1)/rr)*(dx(2)/rr)*(dx(3)/rr)
 
                     potential_energy = potential_energy + &
-                         p(ii,jj,kk,dens_comp) * p(ii,jj,kk,phi_comp) * &
+                         0.5_dp_t*p(ii,jj,kk,dens_comp) * p(ii,jj,kk,phi_comp) * &
                             (dx(1)/rr)*(dx(2)/rr)*(dx(3)/rr)
 
                     internal_energy = internal_energy + &
