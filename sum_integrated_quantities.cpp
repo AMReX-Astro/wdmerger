@@ -699,7 +699,7 @@ Castro::volProductSum (const std::string& name1,
             for (int ii = 0; ii < isects.size(); ii++)
             {
                 fab1.setVal(0,isects[ii].second,0,fab1.nComp());
-                fab2.setVal(0,isects[ii].second,0,fab1.nComp());
+                fab2.setVal(0,isects[ii].second,0,fab2.nComp());
             }
         }
         Real s = 0.0;
