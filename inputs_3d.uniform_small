@@ -2,6 +2,9 @@
 
 max_step = 10000
 
+castro.print_energy_diagnostics = 1
+castro.print_fortran_warnings   = 0
+
 geometry.is_periodic = 0 0 0
 
 geometry.coord_sys = 0
