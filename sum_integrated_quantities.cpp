@@ -2,6 +2,7 @@
 
 #include <Castro.H>
 #include <Castro_F.H>
+#include <Geometry.H>
 
 void
 Castro::sum_integrated_quantities ()
@@ -148,11 +149,13 @@ Castro::sum_integrated_quantities ()
 
 
     // Complete calculations for COM quantities
+    Real center = 0.0;
 
     for ( int i = 0; i <= 2; i++ ) {
+      center = 0.5*(Geometry::ProbLo(i) + Geometry::ProbHi(i));
       com[i]       = com[0] / mass;
-      com_l[i]     = com_l[0] / mass_left;
-      com_r[i]     = com_r[0] / mass_right;
+      com_l[i]     = com_l[0] / mass_left + center; 
+      com_r[i]     = com_r[0] / mass_right + center;
       com_vel_l[i] = com_vel_l[0] / mass_left;
       com_vel_r[i] = com_vel_r[0] / mass_right;
       com_vel[i]   = momentum[i] / mass;
