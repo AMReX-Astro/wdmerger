@@ -721,6 +721,9 @@
               end if
 
               do i = p_l1,p_h1
+
+                 ! on the boundaries, we want to set phi on the
+                 ! boundary itself, not the cell-center
                  if (i .gt. domhi(1)) then
                     x = problo(1) + (dble(i  )       ) * dx(1) 
                  else if (i .lt. domlo(1)) then
@@ -730,48 +733,17 @@
                  end if
 
 
-                 !! this interior stuff isn't right for the double monopole
-                 r     = sqrt( x**2 + y**2 + z**2 )
-                 index = int(r/dr)
-
-                 if (index .gt. numpts_1d-1) then
-                    print *,'PUT_RADIAL_PHI: INDEX TOO BIG ',index,' > ',numpts_1d-1
-                    print *,'AT (i,j) ',i,j,k
-                    print *,'R / DR IS ',r,dr
-                    call bl_error("Error:: Gravity_3d.f90 :: ca_put_radial_phi")
-                 end if
+                 ! this interior stuff isn't right for the double
+                 ! monopole.  It just points the two point monopoles
+                 ! in the domain.  It does not take into account that
+                 ! the individual stars are extended.
 
                  if ( (fill_interior .eq. 1) ) then
-                    cen = (dble(index)+0.5d0)*dr
-                    xi  = r - cen
-                    if (index == 0) then
-                       !
-                       ! Linear interpolation or extrapolation
-                       !
-                       slope      = ( radial_phi(index+1) - radial_phi(index) ) / dr
-                       phi(i,j,k) = radial_phi(index) + slope * xi
-                    else if (index == numpts_1d-1) then
-                       !
-                       ! Linear interpolation or extrapolation
-                       !
-                       slope      = ( radial_phi(index) - radial_phi(index-1) ) / dr
-                       phi(i,j,k) = radial_phi(index) + slope * xi
-                    else
-                       !
-                       ! Quadratic interpolation
-                       !
-                       p_hi = radial_phi(index+1)
-                       p_md = radial_phi(index  )
-                       p_lo = radial_phi(index-1)
-                       phi(i,j,k) = &
-                            ( p_hi -  2.d0*p_md + p_lo)*xi**2/(2.d0*dr**2) + &
-                            ( p_hi       - p_lo      )*xi   /(2.d0*dr   ) + &
-                            (-p_hi + 26.d0*p_md - p_lo)/24.d0
-                       minvar     = min(p_md, min(p_lo,p_hi))
-                       maxvar     = max(p_md, max(p_lo,p_hi))
-                       phi(i,j,k) = max(phi(i,j,k),minvar)
-                       phi(i,j,k) = min(phi(i,j,k),maxvar)
-                    end if
+
+                    r1 = sqrt( (x-com_xloc_l)**2 + (y-com_yloc_l)**2 + (z-com_zloc_l)**2 )
+                    r2 = sqrt( (x-com_xloc_r)**2 + (y-com_yloc_r)**2 + (z-com_zloc_r)**2 )
+                    phi(i,j,k) = Gconst*mass_left/r1 + Gconst*mass_right/r2
+
                  end if
 
                  ! Fill boundary conditions based on a two monopole approximation to the gravity field.
