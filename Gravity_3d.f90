@@ -704,31 +704,33 @@
         !
         do k = p_l3,p_h3
            if (k .gt. domhi(3)) then
-              z = problo(3) + (dble(k  )       ) * dx(3) - center(3)
+              z = problo(3) + (dble(k  )       ) * dx(3) 
            else if (k .lt. domlo(3)) then
-              z = problo(3) + (dble(k+1)       ) * dx(3) - center(3)
+              z = problo(3) + (dble(k+1)       ) * dx(3) 
            else 
-              z = problo(3) + (dble(k  )+0.50d0) * dx(3) - center(3)
+              z = problo(3) + (dble(k  )+0.50d0) * dx(3) 
            end if
 
            do j = p_l2,p_h2
               if (j .gt. domhi(2)) then
-                 y = problo(2) + (dble(j  )       ) * dx(2) - center(2)
+                 y = problo(2) + (dble(j  )       ) * dx(2) 
               else if (j .lt. domlo(2)) then
-                 y = problo(2) + (dble(j+1)       ) * dx(2) - center(2)
+                 y = problo(2) + (dble(j+1)       ) * dx(2) 
               else 
-                 y = problo(2) + (dble(j  )+0.50d0) * dx(2) - center(2)
+                 y = problo(2) + (dble(j  )+0.50d0) * dx(2) 
               end if
 
               do i = p_l1,p_h1
                  if (i .gt. domhi(1)) then
-                    x = problo(1) + (dble(i  )       ) * dx(1) - center(1)
+                    x = problo(1) + (dble(i  )       ) * dx(1) 
                  else if (i .lt. domlo(1)) then
-                    x = problo(1) + (dble(i+1)       ) * dx(1) - center(1)
+                    x = problo(1) + (dble(i+1)       ) * dx(1) 
                  else 
-                    x = problo(1) + (dble(i  )+0.50d0) * dx(1) - center(1)
+                    x = problo(1) + (dble(i  )+0.50d0) * dx(1) 
                  end if
 
+
+                 !! this interior stuff isn't right for the double monopole
                  r     = sqrt( x**2 + y**2 + z**2 )
                  index = int(r/dr)
 
