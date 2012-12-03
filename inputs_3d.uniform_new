@@ -1,6 +1,7 @@
 # ------------------  INPUTS TO MAIN PROGRAM  -------------------
 
 max_step = 10000
+stop_time = 10.0
 
 castro.print_energy_diagnostics = 1
 castro.print_fortran_warnings   = 0
@@ -37,6 +38,8 @@ castro.do_sponge = 0
 castro.allow_negative_energy = 0
 
 castro.ppm_type = 1
+castro.ppm_reference = 1
+castro.use_colglaz = 0
 
 castro.do_rotation = 1
 castro.rotational_frequency = 0.01
