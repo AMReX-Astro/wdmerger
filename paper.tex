@@ -82,13 +82,14 @@ The presence of $q_i$ in this expression serves as a reference state.
 The idea is that the error in the characteristic projection of the
 jump (due to the nonlinearity) is minimized if we pick a suitable
 reference state, since we only care about the jumps carried to the
-interface over the timestep.  The original Castro implementation used
-the cell-average quantity.  Experiments found that this is ill-behaved
-in the presence of strong shocks (especially at low resolution). For
-the present work, we switch the reference state to the jump carried by the 
-fastest wave moving toward the interface, $\mathcal{I}_+(\sigma_3)$ in this
-case, where the $3$ here means the wave associated with the $u + c$ eigenvalue.
-This is in agreement with \citet{ppmunsplit} (eq. 90).  This makes our
+interface over the timestep \citep{colellaglaz1985}.  The original
+Castro implementation used the cell-average quantity.  Experiments
+found that this is ill-behaved in the presence of strong shocks
+(especially at low resolution). For the present work, we switch the
+reference state to the jump carried by the fastest wave moving toward
+the interface, $\mathcal{I}_+(\sigma_3)$ in this case, where the $3$
+here means the wave associated with the $u + c$ eigenvalue.  This is
+in agreement with \citet{ppmunsplit} (eq. 90).  This makes our
 expression appear as:
 \begin{equation}
 q_{i+1/2,L}^{n+1/2} = \mathcal{I}_+(\sigma_3) -
