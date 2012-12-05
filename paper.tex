@@ -98,14 +98,39 @@ q_{i+1/2,L}^{n+1/2} = \mathcal{I}_+(\sigma_3) -
        \right ] r^{(\nu)}
 \end{equation}
 
-
-
+We also modify slightly the correction done to the gravitational
+source terms after integrating the system in time.  In the original
+Castro paper (Eqs. 19 and 20), the state after the conservative update
+due to fluxes and external sources (other than gravity) was
+represented with the superscript `$(2,\star)$'.  The gravitational
+sources were then corrected, making them centered in time, yielding
+the final state at the end of the hydrodynamics step, indicated with
+the superscript `$(2)$'.  This appeared as:
+\begin{eqnarray}
+(\rho {\bf u})^{(2)} &=& (\rho {\bf u})^{(2,\star)} +
+   \frac{\Delta t}{2} \left [ (\rho {\bf g})^{(2,\star)} - 
+                              (\rho {\bf g})^{(1)} \right ]\\
+(\rho E)^{(2)} &=& (\rho E)^{(2,\star)} +
+   \frac{\Delta t}{2} \left [ (\rho {\bf u\cdot g})^{(2,\star)} - 
+                              (\rho {\bf u\cdot g})^{(1)} \right ]
+\end{eqnarray}
+Here we make the subtle change of using the corrected ${\bf u}$ in the
+correction to the energy.  So our new energy correction equation appears as:
+\begin{equation}
+(\rho E)^{(2)} = (\rho E)^{(2,\star)} +
+   \frac{\Delta t}{2} \left [ (\rho {\bf u\cdot g})^{(2)} - 
+                              (\rho {\bf u\cdot g})^{(1)} \right ]
+\end{equation}
+Both of these are second-order accurate, but we've found that the latter
+is slightly better for conserving energy.
 
 boundary conditions
 
 initial models
 
 AMR
+
+rotation
 
 
 %==========================================================================
