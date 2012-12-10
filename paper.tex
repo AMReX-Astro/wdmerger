@@ -162,7 +162,15 @@ the system. This differential equation has a closed-form solution for
 the evolution time as a function of separation:
 \begin{equation}
   t(r) = \sqrt{\frac{r_0^3}{2GM}} \left[ \text{arccos}\left(\sqrt{\frac{r}{r_0}}\,\right) + \sqrt{\frac{r}{r_0} \left(1 - \frac{r}{r_0}\right)}\ \right]. \label{analyticalFreeFall}
-\end{equation} \MarginPar{is there a reference for this? or did you derive it?}
+\end{equation}\MarginPar{This result is derived in the freefall directory; I have edited the text to make it clear how I arrived at this result.}
+This result can be derived by recognizing that
+\[
+  t(r) = \int_{r_0}^r \frac{dr}{v(r)}
+\]
+and inserting the velocity as a function of radial separation,
+\[
+  v(r) = \sqrt{\frac{2GM}{r_0}\left(\frac{r_0}{r} - 1\right)}.
+\]
 We determine the initial separation to be consistent with the
 simulation performed in Section \ref{Sec:Kepler}; that is, we select
 an initial orbital period and use Kepler's third law to calculate the
@@ -191,7 +199,11 @@ radial separation reaches that value (at that point, the stars will no
 longer be in free-fall due to physical contact). Since the elapsed
 time goes roughly as the square root of the distance for small $r$, we
 consider the evolution terminated when $t = 0.99\, t_{\text{ff}}$. The
-results of our simulation are shown in Figure \ref{Fig:Free Fall}.
+results of our simulation are shown in Figure \ref{Fig:Free Fall}. The
+positions of the two stars are determined by calculating the center of
+mass of the right $(x > 0)$ and left $(x < 0)$ sides of the domain at 
+the end of each time step, and treating the centers of mass as the 
+respective location of the two stars.
 
 \begin{figure}
   \centering
