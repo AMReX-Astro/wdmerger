@@ -19,6 +19,7 @@
      namelist /fortin/ &
           model_A_name, model_B_name, &
           period, &
+          nsub, &
           denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
@@ -73,6 +74,7 @@
      model_A_name = "A"
      model_B_name = "B"
 
+     nsub = 1
 
      ! read namelists -- override the defaults
      untin = 9 
@@ -192,7 +194,7 @@
      endif
 
      ! compute the radius of model B
-     radius_B= -1.0d0
+     radius_B = -1.0d0
      do i = 1, npts_model_B
         if (model_B_state(i,idens_model) <= 1.1*dens_ambient) then
            radius_B = model_B_r(i)
@@ -289,7 +291,7 @@
           UEDEN, UEINT, UFS
      use network, only : nspec
      use bl_constants_module
-     use model_parser_module, only: idens_model, itemp_model, ispec_model
+     use model_parser_module, only: idens_model, ipres_model, ispec_model
 
      implicit none
 
@@ -299,83 +301,99 @@
      double precision :: xlo(3), xhi(3), time, delta(3)
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
-     double precision :: x,y,z
-     double precision :: pres
+     double precision :: xl,yl,zl,xx,yy,zz
+     double precision :: pres, pres_zone
      double precision :: dist_A, dist_B
 
-     integer :: i,j,k,n
+     integer :: i,j,k,ii,jj,kk,n
 
 
      do k = lo(3), hi(3)   
-        z = xlo(3) + delta(3)*(dble(k-lo(3)) + HALF) 
+        zl = xlo(3) + delta(3)*dble(k-lo(3)) 
 
         do j = lo(2), hi(2)     
-           y = xlo(2) + delta(2)*(dble(j-lo(2)) + HALF) 
+           yl = xlo(2) + delta(2)*dble(j-lo(2))
 
            do i = lo(1), hi(1)   
-              x = xlo(1) + delta(1)*(dble(i-lo(1)) + HALF) 
+              xl = xlo(1) + delta(1)*dble(i-lo(1))
 
-              dist_A = sqrt((x - x_cen_A)**2 + &
-                            (y - y_cen_A)**2 + &
-                            (z - z_cen_A)**2)
+              state(i,j,k,URHO) = 0.0d0
+              pres_zone = 0.0d0
+              state(i,j,k,UFS:UFS-1+nspec) = 0.0d0
 
-              dist_B = sqrt((x - x_cen_B)**2 + &
-                            (y - y_cen_B)**2 + &
-                            (z - z_cen_B)**2)
+              do kk = 0, nsub-1
+                 zz = zl + dble(kk + HALF)*delta(3)/nsub
 
-              ! are we "inside" star A?
-              if (dist_A < radius_A) then
+                 do jj = 0, nsub-1
+                    yy = yl + dble(jj + HALF)*delta(2)/nsub
 
-                 state(i,j,k,URHO) = &
-                      interpolate(dist_A,npts_model_A, &
-                                  model_A_r,model_A_state(:,idens_model))
+                    do ii = 0, nsub-1
+                       xx = xl + dble(ii + HALF)*delta(1)/nsub
 
-                 state(i,j,k,UTEMP) = &
-                      interpolate(dist_A,npts_model_A, &
-                                  model_A_r,model_A_state(:,itemp_model))
+                       dist_A = sqrt((xx - x_cen_A)**2 + &
+                                     (yy - y_cen_A)**2 + &
+                                     (zz - z_cen_A)**2)
 
-                 do n = 1, nspec
-                    state(i,j,k,UFS-1+n) = &
-                         interpolate(dist_A,npts_model_A, &
-                                     model_A_r,model_A_state(:,ispec_model-1+n))
+                       dist_B = sqrt((xx - x_cen_B)**2 + &
+                                     (yy - y_cen_B)**2 + &
+                                     (zz - z_cen_B)**2)
+
+                       ! are we "inside" star A?
+                       if (dist_A < radius_A) then
+
+                          state(i,j,k,URHO) = state(i,j,k,URHO) + &
+                               interpolate(dist_A,npts_model_A, &
+                                           model_A_r,model_A_state(:,idens_model))
+
+                          pres_zone = pres_zone + &
+                               interpolate(dist_A,npts_model_A, &
+                                           model_A_r,model_A_state(:,ipres_model))
+
+                          do n = 1, nspec
+                             state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
+                                  interpolate(dist_A,npts_model_A, &
+                                              model_A_r,model_A_state(:,ispec_model-1+n))
+                          enddo
+
+
+                       ! inside B?
+                       else if (dist_B < radius_B) then
+
+                          state(i,j,k,URHO) = state(i,j,k,URHO) + &
+                               interpolate(dist_B,npts_model_B, &
+                                           model_B_r,model_B_state(:,idens_model))
+
+                          pres_zone = pres_zone + &
+                               interpolate(dist_B,npts_model_B, &
+                                           model_B_r,model_B_state(:,ipres_model))
+
+                          do n = 1, nspec
+                             state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
+                                  interpolate(dist_B,npts_model_B, &
+                                              model_B_r,model_B_state(:,ispec_model-1+n))
+                          enddo
+
+                       ! ambient medium
+                       else
+                          state(i,j,k,URHO) = state(i,j,k,URHO) + dens_ambient
+                          pres_zone = pres_zone + pres_ambient
+                          state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec) + xn_ambient(:)
+
+                       endif
+
+                    enddo
                  enddo
+              enddo
 
+              ! normalize
+              state(i,j,k,URHO) = state(i,j,k,URHO)/(nsub*nsub*nsub)
+              pres_zone = pres_zone/(nsub*nsub*nsub)
+              state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec)/(nsub*nsub*nsub)
+              state(i,j,k,UTEMP) = 1.e7
 
-              ! inside B?
-              else if (dist_B < radius_B) then
-
-                 state(i,j,k,URHO) = &
-                      interpolate(dist_B,npts_model_B, &
-                                  model_B_r,model_B_state(:,idens_model))
-
-                 state(i,j,k,UTEMP) = &
-                      interpolate(dist_B,npts_model_B, &
-                                  model_B_r,model_B_state(:,itemp_model))
-
-                 do n = 1, nspec
-                    state(i,j,k,UFS-1+n) = &
-                         interpolate(dist_B,npts_model_B, &
-                                     model_B_r,model_B_state(:,ispec_model-1+n))
-                 enddo
-
-              ! ambient medium
-              else
-                 state(i,j,k,URHO)  = dens_ambient
-                 state(i,j,k,UTEMP) = temp_ambient
-                 state(i,j,k,UFS:UFS-1+nspec) = xn_ambient(:)
-
-              endif
-
-           enddo
-        enddo
-     enddo
-
-     ! thermodynamics
-     do k = lo(3), hi(3)
-        do j = lo(2), hi(2)
-           do i = lo(1), hi(1)
-              call eos_given_RTX(state(i,j,k,UEINT),pres,state(i,j,k,URHO), &
-                                 state(i,j,k,UTEMP),state(i,j,k,UFS:UFS-1+nspec))
+              ! thermodynamics
+              call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
+                                 pres_zone,state(i,j,k,UFS:UFS-1+nspec))
 
               state(i,j,k,UEDEN) = state(i,j,k,URHO) * state(i,j,k,UEINT)
               state(i,j,k,UEINT) = state(i,j,k,URHO) * state(i,j,k,UEINT)

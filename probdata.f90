@@ -32,6 +32,8 @@ module probdata_module
   double precision, save :: xn_ambient(nspec)
   double precision, save :: eint_ambient, pres_ambient
 
+  integer, save :: nsub
+
   ! grid info
   double precision, save ::  center(3)
 
