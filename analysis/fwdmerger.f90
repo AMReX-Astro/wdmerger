@@ -231,9 +231,10 @@ program fwdmerger
   ! we already normalized the kinetic energy by multiplying 
   ! each zone by dV
 
-100 format(1x, 4(g20.10))
+100 format(1x, 5(g20.10))
 
-  write (*, 100) pf%tm, kinetic_energy, internal_energy, potential_energy
+  write (*, 100) pf%tm, kinetic_energy, internal_energy, -potential_energy, &
+       kinetic_energy + internal_energy - potential_energy
 
 
   call destroy(pf)
