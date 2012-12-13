@@ -81,8 +81,8 @@ contains
                SrW = rho * grav(i,j,k,3)
 
                ! rotation
-               SrU = SrU + 2.d0*uin(i,j,k,UMY)*omega + rho*omega**2*x
-               SrV = SrV - 2.d0*uin(i,j,k,UMX)*omega + rho*omega**2*y
+               !SrU = SrU + 2.d0*uin(i,j,k,UMY)*omega + rho*omega**2*x
+               !SrV = SrV - 2.d0*uin(i,j,k,UMX)*omega + rho*omega**2*y
 
                ! update the momenta
                uout(i,j,k,UMX)   = uout(i,j,k,UMX) + SrU * dt
@@ -98,7 +98,7 @@ contains
                      uin(i,j,k,UMZ) * grav(i,j,k,3)
 
                ! rotation
-               SrE = SrE + omega**2*(uin(i,j,k,UMX)*x + uin(i,j,k,UMY)*y)
+               !SrE = SrE + omega**2*(uin(i,j,k,UMX)*x + uin(i,j,k,UMY)*y)
 
                uout(i,j,k,UEDEN) = uout(i,j,k,UEDEN) + SrE * dt
 
@@ -164,6 +164,8 @@ end module grav_sources_module
       endif
 
       problo(:) = 0.0d0
+
+      print *, 'in corrgsrc, rot_freq = ', rot_freq
 
       do k = lo(3),hi(3)
          z = problo(3) + dx(3)*(float(k)+0.5d0) - center(3)
