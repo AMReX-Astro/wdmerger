@@ -205,21 +205,6 @@ mass of the right $(x > 0)$ and left $(x < 0)$ sides of the domain at
 the end of each time step, and treating the centers of mass as the 
 respective location of the two stars.
 
-\begin{figure}
-  \centering
-  \includegraphics[scale=2.0]{freefall/plot_freefall}
-  \caption{Time evolution of two initially stationary white dwarfs,
-    mutually attracted to each other by the gravitational force. The
-    horizontal axis gives the separation of the white dwarfs, scaled
-    to the initial separation, and the vertical axis gives the elapsed
-    time of the simulation, scaled to the total elapsed time
-    necessarily. The solid curve shows the analytical result,
-    calculated from Newtonian mechanics, and the circles show the
-    samples from the time evolution with CASTRO. The agreement between
-    theory and simulation is excellent, even for a simulation with
-    modest resolution.}
-  \label{Fig:Free Fall}
-\end{figure}
 
 \subsection{Keplerian Orbit}\label{Sec:Kepler}
 
@@ -236,6 +221,37 @@ respective location of the two stars.
 
 \bibliographystyle{apj}
 \bibliography{ws}
+
+\clearpage
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=1.0]{reference}
+  \caption{Solution to Sod's problem with the original reference state and the
+    new reference state, as compared to the exact solution.  We note that the
+    new reference state shows a slightly sharper shock and contact, but also has
+    a dip at the tail of the rarefaction.}
+  \label{Fig:sod}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=2.0]{freefall/plot_freefall}
+  \caption{Time evolution of two initially stationary white dwarfs,
+    mutually attracted to each other by the gravitational force. The
+    horizontal axis gives the separation of the white dwarfs, scaled
+    to the initial separation, and the vertical axis gives the elapsed
+    time of the simulation, scaled to the total elapsed time
+    necessarily. The solid curve shows the analytical result,
+    calculated from Newtonian mechanics, and the circles show the
+    samples from the time evolution with CASTRO. The agreement between
+    theory and simulation is excellent, even for a simulation with
+    modest resolution.}
+  \label{Fig:Free Fall}
+\end{figure}
+
 
 \end{document}
 
