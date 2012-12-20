@@ -162,7 +162,7 @@ the system. This differential equation has a closed-form solution for
 the evolution time as a function of separation:
 \begin{equation}
   t(r) = \sqrt{\frac{r_0^3}{2GM}} \left[ \text{arccos}\left(\sqrt{\frac{r}{r_0}}\,\right) + \sqrt{\frac{r}{r_0} \left(1 - \frac{r}{r_0}\right)}\ \right]. \label{analyticalFreeFall}
-\end{equation}\MarginPar{This result is derived in the freefall directory; I have edited the text to make it clear how I arrived at this result.}
+\end{equation}\MarginPar{This result is derived in the freefall directory.}
 This result can be derived by recognizing that
 \[
   t(r) = \int_{r_0}^r \frac{dr}{v(r)}
@@ -175,9 +175,9 @@ We determine the initial separation to be consistent with the
 simulation performed in Section \ref{Sec:Kepler}; that is, we select
 an initial orbital period and use Kepler's third law to calculate the
 radius of a circular orbit with that period. We select an initial
-orbital period of 200 s for this simulation, so that the separation is
+orbital period of 100 s for this simulation, so that the separation is
 \[
-  r_0 = 5.73 \times 10^{9}\ \text{cm}.
+  r_0 = 3.61 \times 10^{9}\ \text{cm}.
 \]
 We chose a relatively low resolution simulation to demonstrate the
 capabilities of CASTRO even while using modest resources. The
