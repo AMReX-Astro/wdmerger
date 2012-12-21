@@ -61,22 +61,22 @@ The original implementation of the PPM prediction in Castro takes the
 form:
 \begin{equation}
 q_{i+1/2,L}^{n+1/2} = q_i -
-   \sum_{\nu;\lambda^{(\nu)}\ge 0} l^{(\nu)} \cdot \left [
-        q_i - \mathcal{I}_+(\sigma_\nu)
-       \right ] r^{(\nu)}
+   \sum_{\nu;\lambda_i^{(\nu)}\ge 0} l_i^{(\nu)} \cdot \left [
+        q_i - \mathcal{I}_+^{(\nu)}(q_i)
+       \right ] r_i^{(\nu)}
 \end{equation}
 where $q$ is the vector of primitive variables, with $q_i$
-representing the average in the cell, $l$ and $r$ are the left and
-right eigenvectors with eigenvalue $\lambda$.  The sum is over all the
-waves that result from the characteristic structure of the problem,
-but designed such that only waves moving toward the interface
-contribute to the interface value, $q_{i+1/2,L}^{n+1/2}$.  Finally,
-$\mathcal{I}_+(\sigma_\nu)$ is the jump carried to the right interface
-of the cell by the wave $\nu$, constructed by averaging under the
-parabolic interpolant in the cell all information that can reach the
-interface over the timestep, with $\sigma$ representing the fraction
-of the zone crossed by the wave denoted by $\nu$ during the timestep.
-The reader is referred to \citet{ppmunsplit} for further defaults.
+representing the average in the cell, $l^{(\nu)}$ and $r^{(\nu)}$ are
+the left and right eigenvectors with eigenvalue $\lambda^{(\nu)}$,
+with $\nu$ the index of the characteristic wave of the system.  The
+sum is over all the waves that result from the characteristic
+structure of the problem, but designed such that only waves moving
+toward the interface contribute to the interface value,
+$q_{i+1/2,L}^{n+1/2}$.  Finally, $\mathcal{I}_+^{(\nu)}(q)$ is the
+average under the parabolic profile of quantity $q$ of all the information
+that can reach the right interface of the zone $i$ as carried by the wave
+$\nu$.   The reader is referred to
+\citet{ppmunsplit} for further defaults.
 
 The presence of $q_i$ in this expression serves as a reference state.
 The idea is that the error in the characteristic projection of the
@@ -86,17 +86,28 @@ interface over the timestep \citep{colellaglaz1985}.  The original
 Castro implementation used the cell-average quantity.  Experiments
 found that this is ill-behaved in the presence of strong shocks
 (especially at low resolution). For the present work, we switch the
-reference state to the jump carried by the fastest wave moving toward
-the interface, $\mathcal{I}_+(\sigma_3)$ in this case, where the $3$
-here means the wave associated with the $u + c$ eigenvalue.  This is
+reference state to
+\begin{equation}
+\tilde{q}_L = \left \{ \begin{array}{cc}
+       \mathcal{I}_+^{(+)}(q_i) & \mathrm{if~} u + c > 0 \\
+       q_i                    & \mathrm{otherwise}
+\end{array}
+\right .
+\end{equation}
+where the $(+)$ superscript here means the fastest wave moving to the right
+(the $u+c$ eigenvalue).   This is simply the average under the largest
+portion of the parabolic profile that could possible reach the interface 
+over the timestep.  This is
 in agreement with \citet{ppmunsplit} (eq. 90).  This makes our
 expression appear as:
 \begin{equation}
-q_{i+1/2,L}^{n+1/2} = \mathcal{I}_+(\sigma_3) -
-   \sum_{\nu;\lambda^{(\nu)}\ge 0} l^{(\nu)} \cdot \left [
-        \mathcal{I}_+(\sigma_3)  - \mathcal{I}_+(\sigma_\nu)
-       \right ] r^{(\nu)}
+q_{i+1/2,L}^{n+1/2} = \tilde{q}_L -
+   \sum_{\nu;\lambda_i^{(\nu)}\ge 0} l_i^{(\nu)} \cdot \left [
+        \tilde{q_i}  - \mathcal{I}^{(\nu)}_+(q_i)
+       \right ] r_i^{(\nu)}
 \end{equation}
+This change can be used in the public version of Castro by setting
+{\tt castro.ppm\_reference = 1}.
 
 We also modify slightly the correction done to the gravitational
 source terms after integrating the system in time.  In the original
@@ -122,7 +133,9 @@ correction to the energy.  So our new energy correction equation appears as:
                               (\rho {\bf u\cdot g})^{(1)} \right ]
 \end{equation}
 Both of these are second-order accurate, but we've found that the latter
-is slightly better for conserving energy.
+is slightly better for conserving energy.  This change can be used in the
+public version of Castro by setting {\tt castro.grav\_source\_type = 2}.
+
 
 boundary conditions
 
