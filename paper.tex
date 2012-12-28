@@ -140,8 +140,29 @@ Both of these are second-order accurate, but we've found that the latter
 is slightly better for conserving energy.  This change can be used in the
 public version of Castro by setting {\tt castro.grav\_source\_type = 2}.
 
+We note a few additional differences between the original PPM
+implementation of \citet{ppm} and Castro.  In the original
+implementation, the gravitational source term was included in the
+characteristic projection.  Here, we follow \citet{ppmunsplit} and add
+it afterwards.  In our experiments, projecting the source term did not
+make a noticable difference in the energy conservation of the
+solution.  Finally, the PPM paper uses an edge-centered gravitational
+acceleration in the prediction, whereas we use a cell-centered one.
+Both are second-order accurate.  In the unsplit implementation, there
+is an additional freedom that comes into play---do we add the source
+terms to the normal predictor before or after using it to construct
+the transverse flux differences?  Our experiments showed no
+substantial difference with either variant.  We add the sources only
+at the final construction of the interface states.
 
-boundary conditions
+The boundary conditions on the hyperbolic system are simply
+zero-gradient.  Using AMR, we make the coarse grid very large, so as
+to place the boundaries far from the region of interest.  For the
+gravity solve, we would like isolated boundary conditions.  Here we
+experiment with using two monopoles (one for each star).  The
+individual potentials are summed and this is evaluated on the physical
+boundary to set Dirichlet conditions for the Poisson solve.
+
 
 initial models
 
