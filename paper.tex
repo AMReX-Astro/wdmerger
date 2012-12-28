@@ -28,7 +28,8 @@
 %==========================================================================
 % Title
 %==========================================================================
-\title{Double White Dwarf Mergers with CASTRO\\ I. Methodology and Code Validation}
+\title{Double White Dwarf Mergers with CASTRO\\ I. Methodology and Code 
+       Verification}
 
 \shorttitle{DWD Mergers. I. Methodology}
 \shortauthors{Max}
@@ -38,10 +39,11 @@
 % Abstract
 %==========================================================================
 \begin{abstract}
-Notes on WD mergers
+We describe our numerical methodology for modeling double white dwarf
+systems with the AMR hydrodynamics code Castro.
+
 \end{abstract}
-\keywords{hydrodynamics - methods: numerical - nuclear reactions, 
-          nucleosynthesis, abundances - supernovae: general - white dwarfs}
+\keywords{hydrodynamics - methods: numerical - supernovae: general - white dwarfs}
 
 %==========================================================================
 % Introduction
@@ -55,10 +57,13 @@ Notes on WD mergers
 %==========================================================================
 \section{Numerical Methodology}\label{sec:Numerical Methodology}
 
-We use the Castro code as described in \citet{castro}.  For all the runs,
-the PPM reconstruction is done, using the original limiters \citep{ppm}.
-The original implementation of the PPM prediction in Castro takes the
-form:
+\subsection{Hydrodynamics and Gravity}
+
+We use the Castro code as described in \citet{castro}.  For all the
+runs, the PPM reconstruction is done, using the original limiters for
+the parabolic profiles \citep{ppm}.  We modify the prediction of the
+interface states slightly.  The original implementation of the PPM
+prediction in Castro takes the form:
 \begin{equation}
 q_{i+1/2,L}^{n+1/2} = q_i -
    \sum_{\nu;\lambda_i^{(\nu)}\ge 0} l_i^{(\nu)} \cdot \left [
@@ -164,11 +169,16 @@ individual potentials are summed and this is evaluated on the physical
 boundary to set Dirichlet conditions for the Poisson solve.
 
 
-initial models
-
 AMR
 
 rotation
+
+
+\subsection{Initial Models and Microphysics}
+
+initial models
+
+EOS
 
 
 %==========================================================================
@@ -245,6 +255,17 @@ respective location of the two stars.
 
 
 \subsection{Keplerian Orbit}\label{Sec:Kepler}
+
+should show:
+
+effect of resolution
+
+inertial vs. rotating frame
+
+effect of ppm\_reference and gravity update type
+
+effect of boundary conditions (size of domain and James vs.\ double monopole)
+
 
 %==========================================================================
 % Conclusions
