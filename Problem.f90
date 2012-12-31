@@ -30,6 +30,8 @@ subroutine problem_checkpoint(int_dir_name, len)
   write (un,100) com_yloc_l, com_yloc_r
   write (un,100) com_zloc_l, com_zloc_r
 
+  close (un)
+
 end subroutine problem_checkpoint
 
 
@@ -63,5 +65,7 @@ subroutine problem_restart(int_dir_name, len)
   read (un,100) com_xloc_l, com_xloc_r
   read (un,100) com_yloc_l, com_yloc_r
   read (un,100) com_zloc_l, com_zloc_r
+
+  close (un)
 
 end subroutine problem_restart
