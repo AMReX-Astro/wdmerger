@@ -20,6 +20,7 @@
           model_A_name, model_B_name, &
           period, &
           nsub, &
+          inertial, &
           denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
@@ -75,6 +76,8 @@
      model_B_name = "B"
 
      nsub = 1
+
+     inertial = .false.
 
      ! read namelists -- override the defaults
      untin = 9 
@@ -407,7 +410,43 @@
      enddo
 
      ! Initial velocities = 0
+
      state(:,:,:,UMX:UMZ) = ZERO
+
+     ! If we're in the inertial reference frame, 
+     ! set counter-clockwise rigid body rotation
+
+     if ( inertial ) then
+
+       do k = lo(3), hi(3)
+
+         do j = lo(2), hi(2)
+           yy = xlo(2) + dble(j - lo(2) + HALF)*delta(2) - center(2)
+             
+           do i = lo(1), hi(1)
+             xx = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
+
+             ! x velocity is -omega * r * sin(theta) == -omega * y
+
+             state(i,j,k,UMX) = state(i,j,k,URHO) * (-2.0d0 * M_PI / period) * yy
+           
+             ! y velocity is +omega * r * cos(theta) == +omega * x
+
+             state(i,j,k,UMY) = state(i,j,k,URHO) * ( 2.0d0 * M_PI / period) * xx
+
+             ! Add corresponding kinetic energy
+
+             state(i,j,k,UEDEN) = state(i,j,k,UEDEN) + &
+               ( state(i,j,k,UMX)**2 + state(i,j,k,UMY)**2 ) / &
+               ( 2.0 * state(i,j,k,URHO) )
+
+           enddo
+
+         enddo
+       
+       enddo
+
+     endif
 
    end subroutine ca_initdata
 

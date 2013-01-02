@@ -34,6 +34,8 @@ module probdata_module
 
   integer, save :: nsub
 
+  logical, save :: inertial
+
   ! grid info
   double precision, save ::  center(3)
 
