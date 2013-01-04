@@ -10,7 +10,7 @@ Castro::sum_integrated_quantities ()
     int finest_level  = parent->finestLevel();
     Real time         = state[State_Type].curTime();
     Real mass         = 0.0;
-    Real momentum[3]  = {0.0, 0.0, 0.0};
+    Real momentum[3]  = { 0.0 };
     Real rho_E        = 0.0;
     Real rho_e        = 0.0;
     Real rho_phi      = 0.0;
@@ -18,29 +18,32 @@ Castro::sum_integrated_quantities ()
     Real gravitational_energy = 0.0; 
     Real kinetic_energy       = 0.0; 
     Real internal_energy      = 0.0; 
-    Real total_energy         = 0.0; 
+    Real total_energy         = 0.0;
 
-    Real angular_momentum[3]  = {0.0, 0.0, 0.0};
-    Real moment_of_inertia[3] = {0.0, 0.0, 0.0};
-    Real m_r_squared[3]       = {0.0, 0.0, 0.0};
+    Real angular_momentum[3]     = { 0.0 };
+    Real moment_of_inertia[3][3] = { 0.0 };
+    Real m_r_squared[3]          = { 0.0 };
 
-    Real omega[3]     = {0.0, 0.0, 2.0*3.1415926*rotational_frequency};
-    Real delta_L[3]   = {0.0, 0.0, 0.0};
+    Real omega[3]     = { 0.0, 0.0, 2.0*3.14159265358979*rotational_frequency };
+    Real L_grid[3]    = { 0.0 };
 
     Real mass_left    = 0.0;
     Real mass_right   = 0.0;
 
-    Real com[3]       = {0.0, 0.0, 0.0};
-    Real com_l[3]     = {0.0, 0.0, 0.0};
-    Real com_r[3]     = {0.0, 0.0, 0.0};
-    Real delta_com[3] = {0.0, 0.0, 0.0};
+    Real com[3]       = { 0.0 };
+    Real com_l[3]     = { 0.0 };
+    Real com_r[3]     = { 0.0 };
+    Real delta_com[3] = { 0.0 };
  
-    Real com_vel[3]   = {0.0, 0.0, 0.0};
-    Real com_vel_l[3] = {0.0, 0.0, 0.0};
-    Real com_vel_r[3] = {0.0, 0.0, 0.0};
+    Real com_vel[3]   = { 0.0 };
+    Real com_vel_l[3] = { 0.0 };
+    Real com_vel_r[3] = { 0.0 };
 
     std::string name1; 
     std::string name2;
+
+    int index1;
+    int index2;
 
     int datawidth     =  14;
     int dataprecision =   6;
@@ -87,18 +90,16 @@ Castro::sum_integrated_quantities ()
       rho_E    += ca_lev.volWgtSum("rho_E", time);
       rho_e    += ca_lev.volWgtSum("rho_e", time);
 
-      if ( do_grav )      
+      if ( do_grav ) {
         rho_phi  += ca_lev.volProductSum("density", "phi", time);
+      }
 
-      // Calculate total angular momentum of system using L = r x p
-
-      for ( int i = 0; i <= 2; i++ )
-        m_r_squared[i] = ca_lev.locSquaredSum("density", time, i);
+      // Calculate total angular momentum on the grid using L = r x p
       
       for ( int i = 0; i <= 2; i++ ) {
 
-        int index1 = (i+1) % 3; 
-        int index2 = (i+2) % 3;
+        index1 = (i+1) % 3; 
+        index2 = (i+2) % 3;
 
         switch (i) {
           case 0 :
@@ -109,34 +110,52 @@ Castro::sum_integrated_quantities ()
             name1 = "xmom"; name2 = "ymom"; break;
         }
 
-        moment_of_inertia[i] = m_r_squared[index1] + m_r_squared[index2];
+        L_grid[i] = ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
 
-        delta_L[i] = ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
-
-        angular_momentum[i]  += delta_L[i];
+        angular_momentum[i]  += L_grid[i];
 
       }
 
       // Add rotation source terms
 
       if ( do_rotation ) {
+
+        // Construct (symmetric) moment of inertia tensor
+
+	for ( int i = 0; i <= 2; i++ ) {
+          m_r_squared[i] = ca_lev.locWgtSum2D("density", time, i, i);
+        }
+
         for ( int i = 0; i <= 2; i++ ) {
-	  
-          // Rotational energy == omega dot L + 0.5 * I * omega**2
+	  for ( int j = 0; j <= 2; j++ ) {
+            if ( i <= j ) {
+              if ( i != j ) 
+                moment_of_inertia[i][j] = -ca_lev.locWgtSum2D("density", time, i, j);
+              else
+                moment_of_inertia[i][j] = m_r_squared[(i+1)%3] + m_r_squared[(i+2)%3];
+            }
+	    else
+              moment_of_inertia[i][j] = moment_of_inertia[j][i];
+          }
+        }
 
-          kinetic_energy     += omega[i] * delta_L[i] + (1.0/2.0) * moment_of_inertia[i] * omega[i] * omega[i];
+        for ( int i = 0; i <= 2; i++ ) {
 
-	  // Angular momentum == (I * omega); missing a cross term which is irrelevant 
-	  // since omega has only one non-zero entry.
+	  // Momentum source from motion IN rotating frame == omega x (rho * r)
 
-          angular_momentum[i] += moment_of_inertia[i] * omega[i];
+          momentum[i] += omega[(i+1)%3]*delta_com[(i+2)%3] - omega[(i+2)%3]*delta_com[(i+1)%3];
 
-	  // Momentum == omega x (rho * r)
+          // Rotational energy from motion IN rotating frame == omega dot L_grid
 
-          int index1 = (i+1) % 3; 
-          int index2 = (i+2) % 3;
+          kinetic_energy     += omega[i] * L_grid[i];
 
-          momentum[i] += omega[index1]*delta_com[index2] - omega[index2]*delta_com[index1];
+	  // Now add quantities due to motion OF rotating frame
+
+	  for ( int j = 0; j <=2; j++ ) {
+            angular_momentum[i] += moment_of_inertia[i][j] * omega[j];
+
+            kinetic_energy += (1.0/2.0) * omega[i] * moment_of_inertia[i][j] * omega[j];
+          }
 
         }
       } 
@@ -145,19 +164,17 @@ Castro::sum_integrated_quantities ()
 
 
 
-
-
-
     // Complete calculations for COM quantities
+
     Real center = 0.0;
 
     for ( int i = 0; i <= 2; i++ ) {
       center = 0.5*(Geometry::ProbLo(i) + Geometry::ProbHi(i));
-      com[i]       = com[0] / mass;
-      com_l[i]     = com_l[0] / mass_left + center; 
-      com_r[i]     = com_r[0] / mass_right + center;
-      com_vel_l[i] = com_vel_l[0] / mass_left;
-      com_vel_r[i] = com_vel_r[0] / mass_right;
+      com[i]       = com[i] / mass + center;
+      com_l[i]     = com_l[i] / mass_left + center; 
+      com_r[i]     = com_r[i] / mass_right + center;
+      com_vel_l[i] = com_vel_l[i] / mass_left;
+      com_vel_r[i] = com_vel_r[i] / mass_right;
       com_vel[i]   = momentum[i] / mass;
     } 
 
@@ -175,19 +192,12 @@ Castro::sum_integrated_quantities ()
 
 
 
-
-
-
-
     // Complete calculations for energy
 
     gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
     internal_energy = rho_e;
     kinetic_energy += rho_E - rho_e;
     total_energy = gravitational_energy + internal_energy + kinetic_energy; 
-
-
-
 
 
     
