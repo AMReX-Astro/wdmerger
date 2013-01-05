@@ -21,7 +21,7 @@ subroutine problem_checkpoint(int_dir_name, len)
   enddo
 
   un = unit_new()
-  open (unit=un, file=trim(dir)//"/COM", status="new")
+  open (unit=un, file=trim(dir)//"/COM", status="unknown")
 
 100 format(1x, g30.20, 1x, g30.20)
 
