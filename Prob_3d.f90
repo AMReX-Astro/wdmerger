@@ -21,6 +21,7 @@
           period, &
           nsub, &
           inertial, &
+          damping, damping_alpha, &
           denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &

@@ -34,7 +34,12 @@ module probdata_module
 
   integer, save :: nsub
 
+  ! inertial reference frame flag
   logical, save :: inertial
+
+  ! damping
+  logical, save :: damping
+  double precision :: damping_alpha
 
   ! grid info
   double precision, save ::  center(3)

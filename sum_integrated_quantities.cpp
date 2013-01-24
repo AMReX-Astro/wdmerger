@@ -47,7 +47,7 @@ Castro::sum_integrated_quantities ()
 
     int datawidth     =  14;
     int dataprecision =   6;
-    
+
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
@@ -60,7 +60,7 @@ Castro::sum_integrated_quantities ()
       mass_left    += ca_lev.volWgtSumOneSide("density", time, 0, 0);
       mass_right   += ca_lev.volWgtSumOneSide("density", time, 1, 0);
 
-      for ( int i = 0; i <= 2; i++ ) {
+      for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
         switch ( i ) {
 	  case 0 : 
             name1 = "xmom"; break;
@@ -85,7 +85,9 @@ Castro::sum_integrated_quantities ()
 
       momentum[0]     += ca_lev.volWgtSum("xmom", time);
       momentum[1]     += ca_lev.volWgtSum("ymom", time);
+#if (BL_SPACEDIM == 3)
       momentum[2]     += ca_lev.volWgtSum("zmom", time);
+#endif
 
       rho_E    += ca_lev.volWgtSum("rho_E", time);
       rho_e    += ca_lev.volWgtSum("rho_e", time);
@@ -95,7 +97,8 @@ Castro::sum_integrated_quantities ()
       }
 
       // Calculate total angular momentum on the grid using L = r x p
-      
+
+#if (BL_SPACEDIM == 3)      
       for ( int i = 0; i <= 2; i++ ) {
 
         index1 = (i+1) % 3; 
@@ -115,6 +118,9 @@ Castro::sum_integrated_quantities ()
         angular_momentum[i]  += L_grid[i];
 
       }
+#elif (BL_SPACEDIM == 2)
+	L_grid[2] = ca_lev.locWgtSum("ymom", time, 0) - ca_lev.locWgtSum("xmom", time, 1);
+#endif
 
       // Add rotation source terms
 
@@ -122,15 +128,17 @@ Castro::sum_integrated_quantities ()
 
         // Construct (symmetric) moment of inertia tensor
 
-	for ( int i = 0; i <= 2; i++ ) {
+	for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
           m_r_squared[i] = ca_lev.locWgtSum2D("density", time, i, i);
         }
 
         for ( int i = 0; i <= 2; i++ ) {
 	  for ( int j = 0; j <= 2; j++ ) {
             if ( i <= j ) {
-              if ( i != j ) 
-                moment_of_inertia[i][j] = -ca_lev.locWgtSum2D("density", time, i, j);
+              if ( i != j )  {
+                if ( ( i < BL_SPACEDIM ) && ( j < BL_SPACEDIM ) ) // Protect against computing z direction sum in 2D
+                  moment_of_inertia[i][j] = -ca_lev.locWgtSum2D("density", time, i, j);
+              }
               else
                 moment_of_inertia[i][j] = m_r_squared[(i+1)%3] + m_r_squared[(i+2)%3];
             }
