@@ -92,9 +92,11 @@ Castro::sum_integrated_quantities ()
       rho_E    += ca_lev.volWgtSum("rho_E", time);
       rho_e    += ca_lev.volWgtSum("rho_e", time);
 
+#ifdef GRAVITY
       if ( do_grav ) {
         rho_phi  += ca_lev.volProductSum("density", "phi", time);
       }
+#endif
 
       // Calculate total angular momentum on the grid using L = r x p
 
