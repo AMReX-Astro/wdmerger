@@ -216,6 +216,9 @@ Castro::sum_integrated_quantities ()
     if ( ParallelDescriptor::IOProcessor() )
     {
 
+      // The data log is only defined on the IO processor
+      // for parallel runs, so the stream should only be opened inside.
+
       std::ostream& data_log1 = parent->DataLog(0);
       if ( data_log1.good() ) {
 
