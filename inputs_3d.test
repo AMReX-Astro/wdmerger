@@ -66,7 +66,7 @@ amr.plot_int        = 20      # number of timesteps between plotfiles
 amr.v               = 1       # control verbosity in Amr.cpp
 castro.v            = 0       # control verbosity in Castro.cpp
 
-amr.probin_file = probin
+amr.probin_file = probin.test
 
 amr.derive_plot_vars = ALL
 
