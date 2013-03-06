@@ -7,14 +7,14 @@ geometry.is_periodic = 0 0 0
 geometry.coord_sys = 0
 
 geometry.prob_lo   =  0.    0.    0.
-geometry.prob_hi   =  4.e10 4.e10 4.e10
+geometry.prob_hi   =  1.e10 1.e10 1.e10
 
-amr.n_cell         = 48 48 48
+amr.n_cell         = 64 64 64
 
 amr.max_grid_size   = 32
 amr.blocking_factor = 8
 
-amr.max_level      = 2       # maximum level number allowed
+amr.max_level      = 1       # maximum level number allowed
 
 castro.lo_bc       =  2 2 2
 castro.hi_bc       =  2 2 2
@@ -33,20 +33,23 @@ castro.do_sponge = 0
 castro.allow_negative_energy = 0
 
 castro.ppm_type = 1
+castro.ppm_reference = 1
+castro.use_colglaz = 0
+castro.grav_source_type = 2
 
 castro.do_rotation = 1
-castro.rotational_frequency = 0.005
+castro.rotational_frequency = 0.01
 
 
 gravity.gravity_type = PoissonGrav
 
 castro.dt_cutoff      = 5.e-20  # level 0 timestep below which we halt
-castro.cfl            = 0.7     # cfl number for hyperbolic system
+castro.cfl            = 0.5     # cfl number for hyperbolic system
 castro.init_shrink    = 0.1     # scale back initial timestep by this factor
 castro.change_max     = 1.1     # factor by which dt is allowed to change each timestep
-castro.sum_interval   = 0       # timesteps between computing and printing volume averages
+castro.sum_interval   = 1       # timesteps between computing and printing volume averages
 
-amr.ref_ratio       = 4 2 2 2 2 # refinement ratio
+amr.ref_ratio       = 4 4 4 4 2 # refinement ratio
 amr.regrid_int      = 2         # how often to regrid
 amr.n_error_buf     = 2 2 2 2 2 # number of buffer cells in error est (should be 
                                 # same as regrid_int--doesn't depend on ref_ratio)
@@ -66,5 +69,7 @@ castro.v            = 0       # control verbosity in Castro.cpp
 amr.probin_file = probin
 
 amr.derive_plot_vars = ALL
+
+amr.data_log = wdmerger_diag.out
 
 castro.plot_phiGrav = 1
