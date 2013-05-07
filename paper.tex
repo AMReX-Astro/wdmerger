@@ -111,6 +111,15 @@ q_{i+1/2,L}^{n+1/2} = \tilde{q}_L -
         \tilde{q_i}  - \mathcal{I}^{(\nu)}_+(q_i)
        \right ] r_i^{(\nu)}
 \end{equation}
+The final change is that now we can no longer simply multiply
+$\tilde{q_i} - \mathcal{I}^{(\nu)}_+(q_i)$ by the flattening
+parameter, $\chi$, but instead blend the traced state with the cell
+centered state as:
+  \begin{equation}
+  q_{i+1/2,\{L,R\}}^{n+1/2} \leftarrow (1 - \chi) q_i + \chi q_{i+1/2,\{L,R\}}^{n+1/2}
+  \end{equation}
+This is the same prescription used in the \cite{ppm}.
+
 This change can be used in the public version of Castro by setting
 {\tt castro.ppm\_reference = 1}.  Figure~\ref{Fig:sod} shows the
 solution to the Sod problem using the old and new reference states.
