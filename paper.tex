@@ -190,6 +190,15 @@ initial models
 EOS
 
 
+\subsection{Gravity}
+
+To properly describe the gravitational potential for the system, we need 
+isolated boundary conditions.
+
+Figure~\ref{fig:2levgrav} shows the sequence of updates for $\phi$
+on a 2-level grid.
+
+
 %==========================================================================
 % Test Problems
 %==========================================================================
@@ -320,6 +329,15 @@ No. DE-AC02-05CH11231.
     exact solution.  We note that the new reference state shows a
     slightly sharper shock and contact, but also has a dip at the tail
     of the rarefaction.}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+  \centering
+  \includegraphics[width=3.1in]{nested2}\hspace{1em}
+  \includegraphics[width=3.1in]{nested3}
+  \caption{\label{fig:2levgrav} Schematic showing the solve for $\phi$ for a 2-level grid.}
 \end{figure}
 
 \clearpage
