@@ -156,13 +156,12 @@ public version of Castro by setting {\tt castro.grav\_source\_type = 2}.
 
 We note a few additional differences between the original PPM
 implementation of \citet{ppm} and Castro.  In the original
-implementation, the gravitational source term was included in the
-characteristic projection.  Here, we follow \citet{ppmunsplit} and add
+implementation, the gravitational was reconstructed as a parabola,
+and this was traced under to find the forcing that affects the interface
+for each wave.   Here, we follow \citet{ppmunsplit} and add   \MarginPar{we have a version that does the tracing---are we using it?  But there is a $\Delta t/2$ difference still}
 it afterwards.  In our experiments, projecting the source term did not
 make a noticable difference in the energy conservation of the
-solution.  Finally, the PPM paper uses an edge-centered gravitational
-acceleration in the prediction, whereas we use a cell-centered one.
-Both are second-order accurate.  In the unsplit implementation, there
+solution.  In the unsplit implementation, there
 is an additional freedom that comes into play---do we add the source
 terms to the normal predictor before or after using it to construct
 the transverse flux differences?  Our experiments showed no
@@ -171,11 +170,10 @@ at the final construction of the interface states.
 
 The boundary conditions on the hyperbolic system are simply
 zero-gradient.  Using AMR, we make the coarse grid very large, so as
-to place the boundaries far from the region of interest.  For the
-gravity solve, we would like isolated boundary conditions.  Here we
-experiment with using two monopoles (one for each star).  The
-individual potentials are summed and this is evaluated on the physical
-boundary to set Dirichlet conditions for the Poisson solve.
+to place the boundaries far from the region of interest.  We further
+make the restriction that only level-0 (coarse) grids can touch the
+domain boundary.
+
 
 
 AMR
@@ -191,6 +189,12 @@ EOS
 
 
 \subsection{Gravity}
+
+For the
+gravity solve, we would like isolated boundary conditions.  Here we
+experiment with using two monopoles (one for each star).  The
+individual potentials are summed and this is evaluated on the physical
+boundary to set Dirichlet conditions for the Poisson solve.
 
 To properly describe the gravitational potential for the system, we need 
 isolated boundary conditions.  The adaptive gravity solve in Castro 
