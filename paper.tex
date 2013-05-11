@@ -193,7 +193,11 @@ EOS
 \subsection{Gravity}
 
 To properly describe the gravitational potential for the system, we need 
-isolated boundary conditions.
+isolated boundary conditions.  The adaptive gravity solve in Castro 
+is described in \cite{castro}, and consists of both level and composite
+solves, and a final synchronization at the end.  To implement isolated
+boundary conditions, we make the simplying assumption that only level
+0 grids will touch the boundary of our computational domain.
 
 Figure~\ref{fig:2levgrav} shows the sequence of updates for $\phi$
 on a 2-level grid.
