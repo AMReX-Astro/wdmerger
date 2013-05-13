@@ -27,17 +27,17 @@ Castro::sum_integrated_quantities ()
     Real omega[3]     = { 0.0, 0.0, 2.0*3.14159265358979*rotational_frequency };
     Real L_grid[3]    = { 0.0 };
 
-    Real mass_left    = 0.0;
-    Real mass_right   = 0.0;
+    Real mass_p    = 0.0;
+    Real mass_s    = 0.0;
 
     Real com[3]       = { 0.0 };
-    Real com_l[3]     = { 0.0 };
-    Real com_r[3]     = { 0.0 };
+    Real com_p[3]     = { 0.0 };
+    Real com_s[3]     = { 0.0 };
     Real delta_com[3] = { 0.0 };
  
     Real com_vel[3]   = { 0.0 };
-    Real com_vel_l[3] = { 0.0 };
-    Real com_vel_r[3] = { 0.0 };
+    Real com_vel_p[3] = { 0.0 };
+    Real com_vel_s[3] = { 0.0 };
 
     std::string name1; 
     std::string name2;
@@ -57,8 +57,8 @@ Castro::sum_integrated_quantities ()
 
       // Calculate center of mass quantities.
 
-      mass_left    += ca_lev.volWgtSumOneSide("density", time, 0, 0);
-      mass_right   += ca_lev.volWgtSumOneSide("density", time, 1, 0);
+      mass_p    += ca_lev.volWgtSumOneSide("density", time, 0, 0);
+      mass_s    += ca_lev.volWgtSumOneSide("density", time, 1, 0);
 
       for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
         switch ( i ) {
@@ -73,10 +73,10 @@ Castro::sum_integrated_quantities ()
         delta_com[i]  = ca_lev.locWgtSum("density", time, i);
         com[i]       += delta_com[i];
 
-        com_l[i]     += ca_lev.locWgtSumOneSide("density", time, i, 0, 0);
-        com_r[i]     += ca_lev.locWgtSumOneSide("density", time, i, 1, 0);
-        com_vel_l[i] += ca_lev.volWgtSumOneSide(name1,    time, 0, 0);
-        com_vel_r[i] += ca_lev.volWgtSumOneSide(name1,    time, 1, 0);
+        com_p[i]     += ca_lev.locWgtSumOneSide("density", time, i, 0, 0);
+        com_s[i]     += ca_lev.locWgtSumOneSide("density", time, i, 1, 0);
+        com_vel_p[i] += ca_lev.volWgtSumOneSide(name1,    time, 0, 0);
+        com_vel_s[i] += ca_lev.volWgtSumOneSide(name1,    time, 1, 0);
       }
 
       // Calculate total mass, momentum and energy of system.
@@ -181,24 +181,24 @@ Castro::sum_integrated_quantities ()
     for ( int i = 0; i <= 2; i++ ) {
       center = 0.5*(Geometry::ProbLo(i) + Geometry::ProbHi(i));
       com[i]       = com[i] / mass + center;
-      com_l[i]     = com_l[i] / mass_left + center; 
-      com_r[i]     = com_r[i] / mass_right + center;
-      com_vel_l[i] = com_vel_l[i] / mass_left;
-      com_vel_r[i] = com_vel_r[i] / mass_right;
+      com_p[i]     = com_p[i] / mass_p + center; 
+      com_s[i]     = com_s[i] / mass_s + center;
+      com_vel_p[i] = com_vel_p[i] / mass_p;
+      com_vel_s[i] = com_vel_s[i] / mass_s;
       com_vel[i]   = momentum[i] / mass;
     } 
 
-    const Real* ml = &mass_left;
-    const Real* mr = &mass_right;
-    const Real* cxl = &com_l[0];
-    const Real* cxr = &com_r[0];
-    const Real* cyl = &com_l[1];
-    const Real* cyr = &com_r[1];
-    const Real* czl = &com_l[2];
-    const Real* czr = &com_r[2];
+    const Real* mp  = &mass_p;
+    const Real* ms  = &mass_s;
+    const Real* cxp = &com_p[0];
+    const Real* cxs = &com_s[0];
+    const Real* cyp = &com_p[1];
+    const Real* cys = &com_s[1];
+    const Real* czp = &com_p[2];
+    const Real* czs = &com_s[2];
 
     BL_FORT_PROC_CALL(COM_SAVE,com_save)
-      (ml, mr, cxl, cxr, cyl, cyr, czl, czr);
+      (mp, ms, cxp, cxs, cyp, cys, czp, czs);
 
 
 
@@ -283,23 +283,23 @@ Castro::sum_integrated_quantities ()
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_left;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_right;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_l[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_r[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_l[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_r[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_l[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_r[2];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_p;
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_s;
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[0];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[0];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[1];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[1];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[2];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[2];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_l[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_r[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_l[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_r[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_l[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_r[2];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_p[0];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_s[0];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_p[1];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_s[1];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_p[2];
+	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel_s[2];
 	
 	  data_log1 << std::endl;
         

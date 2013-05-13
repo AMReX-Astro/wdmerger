@@ -1,62 +1,31 @@
 module com
 
-  double precision, save :: mass_left, mass_right
-  double precision, save :: com_xloc_l, com_xloc_r
-  double precision, save :: com_yloc_l, com_yloc_r
-  double precision, save :: com_zloc_l, com_zloc_r
+  double precision,               save :: mass_p,    mass_s
+  double precision, dimension(3), save :: com_loc_p, com_loc_s
 
   real, save :: time = 0.0
 
-  integer, save :: endOfStep = 0
-
 end module com
 
-subroutine com_save(ml,mr,cxl,cxr,cyl,cyr,czl,czr)
+subroutine com_save(mp,ms,cxp,cxs,cyp,cys,czp,czs)
 
   use com
 
   implicit none
 
-  double precision :: ml, mr
-  double precision :: cxl, cxr
-  double precision :: cyl, cyr
-  double precision :: czl, czr
+  double precision, intent(in) :: mp,  ms
+  double precision, intent(in) :: cxp, cxs
+  double precision, intent(in) :: cyp, cys
+  double precision, intent(in) :: czp, czs
 
-  mass_left = ml
-  mass_right = mr
-  com_xloc_l = cxl
-  com_xloc_r = cxr
-  com_yloc_l = cyl
-  com_yloc_r = cyr
-  com_zloc_l = czl
-  com_zloc_r = czr
+  mass_p       = mp
+  mass_s       = ms
+  com_loc_p(1) = cxp
+  com_loc_s(1) = cxs
+  com_loc_p(2) = cyp
+  com_loc_s(2) = cys
+  com_loc_p(3) = czp
+  com_loc_s(3) = czs
 
 end subroutine com_save
 
-
-
-subroutine set_eos(eos)
-
-  use com
-
-  implicit none
-
-  integer :: eos
-
-  endOfStep = eos
-
-end subroutine set_eos
-
-
-
-subroutine get_eos(eos)
-
-  use com
-
-  implicit none
-
-  integer :: eos
-
-  eos = endOfStep
-
-end subroutine get_eos

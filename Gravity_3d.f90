@@ -732,34 +732,17 @@
                     x = problo(1) + (dble(i  )+0.50d0) * dx(1) 
                  end if
 
-
-                 ! this interior stuff isn't right for the double
-                 ! monopole.  It just points the two point monopoles
-                 ! in the domain.  It does not take into account that
-                 ! the individual stars are extended.
-
-                 if ( (fill_interior .eq. 1) ) then
-
-                    r1 = sqrt( (x-com_xloc_l)**2 + (y-com_yloc_l)**2 + (z-com_zloc_l)**2 )
-                    r2 = sqrt( (x-com_xloc_r)**2 + (y-com_yloc_r)**2 + (z-com_zloc_r)**2 )
-                    phi(i,j,k) = Gconst*mass_left/r1 + Gconst*mass_right/r2
-
-                 end if
-
                  ! Fill boundary conditions based on a two monopole approximation to the gravity field.
                  ! Potential is positive (opposite to usual physics convention).
 
                  if ( i.lt.domlo(1).or.i.gt.domhi(1)  .or. &
                       j.lt.domlo(2).or.j.gt.domhi(2)  .or. &
-                      k.lt.domlo(3).or.k.gt.domhi(3)  ) then  
+                      k.lt.domlo(3).or.k.gt.domhi(3)  .or. &
+                      fill_interior .eq. 1) then  
 
-                      ! If this is the first time step, then COM quantities will not have been calculated
-                      ! using sum_integrated_quantities yet, so use the values from probdata_module
-                      ! based on the initialization of the state.
-
-                        r1 = sqrt( (x-com_xloc_l)**2 + (y-com_yloc_l)**2 + (z-com_zloc_l)**2 )
-                        r2 = sqrt( (x-com_xloc_r)**2 + (y-com_yloc_r)**2 + (z-com_zloc_r)**2 )
-                        phi(i,j,k) = Gconst*mass_left/r1 + Gconst*mass_right/r2
+                        r1 = sqrt( (x-com_loc_p(1))**2 + (y-com_loc_p(2))**2 + (z-com_loc_p(3))**2 )
+                        r2 = sqrt( (x-com_loc_s(1))**2 + (y-com_loc_s(2))**2 + (z-com_loc_s(3))**2 )
+                        phi(i,j,k) = Gconst*mass_p/r1 + Gconst*mass_s/r2
  
                  end if
               enddo
