@@ -45,8 +45,8 @@ Castro::sum_integrated_quantities ()
     int index1;
     int index2;
 
-    int datawidth     =  14;
-    int dataprecision =   6;
+    int datawidth     =  23;
+    int dataprecision =  15;
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -225,38 +225,38 @@ Castro::sum_integrated_quantities ()
         // Write header row
 
         if (time == 0.0) {
-          data_log1 << std::setw(datawidth) << "#    TIME    ";
-          data_log1 << std::setw(datawidth) << " MASS        ";
-          data_log1 << std::setw(datawidth) << " XMOM        ";
-          data_log1 << std::setw(datawidth) << " YMOM        ";
-          data_log1 << std::setw(datawidth) << " ZMOM        ";
-          data_log1 << std::setw(datawidth) << " KIN. ENERGY ";
-          data_log1 << std::setw(datawidth) << " GRAV. ENERGY";
-          data_log1 << std::setw(datawidth) << " INT. ENERGY ";
-          data_log1 << std::setw(datawidth) << " TOTAL ENERGY";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. X ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Y ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Z ";
-          data_log1 << std::setw(datawidth) << "  X COM       ";
-          data_log1 << std::setw(datawidth) << "  Y COM       ";
-          data_log1 << std::setw(datawidth) << "  Z COM       ";
-          data_log1 << std::setw(datawidth) << "  LEFT MASS   ";
-          data_log1 << std::setw(datawidth) << "  RIGHT MASS  ";
-          data_log1 << std::setw(datawidth) << "  LEFT X COM  ";
-          data_log1 << std::setw(datawidth) << "  RIGHT X COM ";
-          data_log1 << std::setw(datawidth) << "  LEFT Y COM  ";
-          data_log1 << std::setw(datawidth) << "  RIGHT Y COM ";
-          data_log1 << std::setw(datawidth) << "  LEFT Z COM  ";
-          data_log1 << std::setw(datawidth) << "  RIGHT Z COM ";
-          data_log1 << std::setw(datawidth) << "  X VEL       ";
-          data_log1 << std::setw(datawidth) << "  Y VEL       ";
-          data_log1 << std::setw(datawidth) << "  Z VEL       ";
-          data_log1 << std::setw(datawidth) << "  LEFT X VEL  ";
-          data_log1 << std::setw(datawidth) << "  RIGHT X VEL ";
-          data_log1 << std::setw(datawidth) << "  LEFT Y VEL  ";
-          data_log1 << std::setw(datawidth) << "  RIGHT Y VEL ";
-          data_log1 << std::setw(datawidth) << "  LEFT Z VEL  ";
-          data_log1 << std::setw(datawidth) << "  RIGHT Z VEL ";
+          data_log1 << std::setw(datawidth) << "#     TIME             ";
+          data_log1 << std::setw(datawidth) << "  MASS                 ";
+          data_log1 << std::setw(datawidth) << "  XMOM                 ";
+          data_log1 << std::setw(datawidth) << "  YMOM                 ";
+          data_log1 << std::setw(datawidth) << "  ZMOM                 ";
+          data_log1 << std::setw(datawidth) << "  KINETIC ENERGY       ";
+          data_log1 << std::setw(datawidth) << "  POTENTIAL ENERGY     ";
+          data_log1 << std::setw(datawidth) << "  INTERNAL ENERGY      ";
+          data_log1 << std::setw(datawidth) << "  TOTAL ENERGY         ";
+          data_log1 << std::setw(datawidth) << "  ANGULAR MOMENTUM X   ";
+          data_log1 << std::setw(datawidth) << "  ANGULAR MOMENTUM Y   ";
+          data_log1 << std::setw(datawidth) << "  ANGULAR MOMENTUM Z   ";
+          data_log1 << std::setw(datawidth) << "  X COM                ";
+          data_log1 << std::setw(datawidth) << "  Y COM                ";
+          data_log1 << std::setw(datawidth) << "  Z COM                ";
+          data_log1 << std::setw(datawidth) << "  PRIMARY MASS         ";
+          data_log1 << std::setw(datawidth) << "  SECONDARY MASS       ";
+          data_log1 << std::setw(datawidth) << "  PRIMARY X COM        ";
+          data_log1 << std::setw(datawidth) << "  SECONDARY X COM      ";
+          data_log1 << std::setw(datawidth) << "  PRIMARY Y COM        ";
+          data_log1 << std::setw(datawidth) << "  SECONDARY Y COM      ";
+          data_log1 << std::setw(datawidth) << "  PRIMARY Z COM        ";
+          data_log1 << std::setw(datawidth) << "  SECONDARY Z COM      ";
+          data_log1 << std::setw(datawidth) << "  X VELOCITY           ";
+          data_log1 << std::setw(datawidth) << "  Y VELOCITY           ";
+          data_log1 << std::setw(datawidth) << "  Z VELOCITY           ";
+          data_log1 << std::setw(datawidth) << "  PRIMARY X VELOCITY   ";
+          data_log1 << std::setw(datawidth) << "  SECONDARY X VELOCITY ";
+          data_log1 << std::setw(datawidth) << "  PRIMARY Y VELOCITY   ";
+          data_log1 << std::setw(datawidth) << "  SECONDARY Y VELOCITY ";
+          data_log1 << std::setw(datawidth) << "  PRIMARY Z VELOCITY   ";
+          data_log1 << std::setw(datawidth) << "  SECONDARY Z VELOCITY ";
          
           data_log1 << std::endl;
         }

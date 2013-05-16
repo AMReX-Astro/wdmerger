@@ -5,7 +5,7 @@
      use bl_constants_module
      use fundamental_constants_module
      use eos_module
-     use com
+     use com, only: mass_p, mass_s, com_loc_p, com_loc_s
 
      implicit none
 
@@ -17,7 +17,7 @@
      integer :: i
 
      namelist /fortin/ &
-          model_A_name, model_B_name, &
+          model_P_name, model_S_name, &
           period, &
           nsub, &
           inertial, &
@@ -35,6 +35,13 @@
      double precision :: r_l, r_r
      double precision :: a
      double precision :: length
+
+     ! Temporary storage variables in case we need to switch the primary and secondary.
+
+     double precision, allocatable :: temp_model_state(:,:), temp_model_r(:)
+     double precision   :: temp_mass
+     integer            :: temp_npts
+     character (len=80) :: temp_name
 
      integer :: ioproc
 
@@ -73,8 +80,8 @@
      max_tempgrad_lev = -1
 
      period = 1.0
-     model_A_name = "A"
-     model_B_name = "B"
+     model_P_name = "P"
+     model_S_name = "S"
 
      nsub = 1
 
@@ -93,90 +100,130 @@
      center(3) = HALF*(problo(3)+probhi(3))
 
      
-     ! read in model A
-     call read_model_file(model_A_name)
+     ! read in model for the primary WD
+     call read_model_file(model_P_name)
      
-     ! copy the data over to A's arrays
-     allocate(model_A_r(npts_model))
-     allocate(model_A_state(npts_model, nvars_model))
+     ! copy the data over to P's arrays
+     allocate(model_P_r(npts_model))
+     allocate(model_P_state(npts_model, nvars_model))
 
-     model_A_r(:) = model_r(:)
-     model_A_state(:,:) = model_state(:,:)
-     npts_model_A = npts_model
+     model_P_r(:) = model_r(:)
+     model_P_state(:,:) = model_state(:,:)
+     npts_model_P = npts_model
 
      call close_model_file()
 
-     ! compute the mass of model A
-     mass_A = ZERO
-     do i = 1, npts_model_A-1
+     ! compute the mass of the primary
+     mass_p_initial = ZERO
+     do i = 1, npts_model_P-1
         if (i == 1) then
            r_l = ZERO
         else
-           r_l = HALF*(model_A_r(i) + model_A_r(i-1))
+           r_l = HALF*(model_P_r(i) + model_P_r(i-1))
         endif
 
-        r_r = HALF*(model_A_r(i) + model_A_r(i+1))
+        r_r = HALF*(model_P_r(i) + model_P_r(i+1))
 
-        mass_A = mass_A + FOUR3RD*M_PI*(r_r - r_l)* &
-             (r_r**2 + r_l*r_r + r_l**2)*model_A_state(i,idens_model)
+        mass_p_initial = mass_p_initial + FOUR3RD*M_PI*(r_r - r_l)* &
+             (r_r**2 + r_l*r_r + r_l**2)*model_P_state(i,idens_model)
 
      enddo
 
 
-     ! read in model B
-     call read_model_file(model_B_name)
+     ! read in model for the secondary WD
+     call read_model_file(model_S_name)
      
      ! copy the data over to B's arrays
-     allocate(model_B_r(npts_model))
-     allocate(model_B_state(npts_model, nvars_model))
+     allocate(model_S_r(npts_model))
+     allocate(model_S_state(npts_model, nvars_model))
 
-     model_B_r(:) = model_r(:)
-     model_B_state(:,:) = model_state(:,:)
-     npts_model_B = npts_model
+     model_S_r(:) = model_r(:)
+     model_S_state(:,:) = model_state(:,:)
+     npts_model_S = npts_model
 
      call close_model_file()
 
-     ! compute the mass of model B
-     mass_B = ZERO
-     do i = 1, npts_model_B-1
+     ! Compute the mass of the secondary WD.
+
+     mass_s_initial = ZERO
+     do i = 1, npts_model_S-1
         if (i == 1) then
            r_l = ZERO
         else
-           r_l = HALF*(model_B_r(i) + model_B_r(i-1))
+           r_l = HALF*(model_S_r(i) + model_S_r(i-1))
         endif
 
-        r_r = HALF*(model_B_r(i) + model_B_r(i+1))
+        r_r = HALF*(model_S_r(i) + model_S_r(i+1))
 
-        mass_B = mass_B + FOUR3RD*M_PI*(r_r - r_l)* &
-             (r_r**2 + r_l*r_r + r_l**2)*model_B_state(i,idens_model)
+        mass_s_initial = mass_s_initial + FOUR3RD*M_PI*(r_r - r_l)* &
+             (r_r**2 + r_l*r_r + r_l**2)*model_S_state(i,idens_model)
 
      enddo
 
+     ! We want the primary WD to be more massive. If what we're calling
+     ! the primary ends up being less massive, switch the stars and all
+     ! the relevant data.
+
+     if ( mass_p < mass_s ) then
+
+       if (ioproc == 1) then
+         print *, "Primary mass is less than secondary mass; switching the stars."
+       endif
+
+       allocate(temp_model_r(npts_model_p))
+       allocate(temp_model_state(npts_model_p,nvars_model))
+
+       temp_model_state(:,:) = model_P_state(:,:)
+       temp_model_r(:)       = model_P_r(:)
+ 
+       model_P_state(:,:) = model_S_state(:,:)
+       model_P_r(:)       = model_S_r(:)
+
+       model_S_state(:,:) = temp_model_state(:,:)
+       model_S_r(:)       = temp_model_r(:)
+
+       deallocate(temp_model_r)
+       deallocate(temp_model_state)
+
+       temp_mass = mass_p
+       mass_p_initial = mass_s_initial
+       mass_s_initial = temp_mass
+
+       temp_npts = npts_model_p
+       npts_model_p = npts_model_s
+       npts_model_s = temp_npts
+
+       temp_name = model_p_name
+       model_p_name = model_s_name
+       model_s_name = temp_name
+
+     endif
+     
      if (ioproc == 1) then
-        print *, "mass of model A = ", mass_A
-        print *, "mass of model B = ", mass_B
+        print *, "Mass of the primary = ",   mass_p
+        print *, "Mass of the secondary = ", mass_s
      endif
 
 
      ! check that the cutoff densities match
-     if (model_B_state(npts_model_B,idens_model) /= &
-         model_A_state(npts_model_A,idens_model)) then
-        call bl_error("ERROR: cutoff densities for models A and B don't agree")
+     if (model_S_state(npts_model_S,idens_model) /= &
+         model_P_state(npts_model_P,idens_model)) then
+        call bl_error("ERROR: Cutoff densities for primary and secondary models do not agree.")
      endif
 
-     dens_ambient = model_B_state(npts_model_B,idens_model)
+     dens_ambient = model_S_state(npts_model_S,idens_model)
 
      ! check that the cutoff temperature match
-     if (model_B_state(npts_model_B,itemp_model) /= &
-         model_A_state(npts_model_A,itemp_model)) then
-        call bl_error("ERROR: cutoff temps for models A and B don't agree")
+     if (model_S_state(npts_model_S,itemp_model) /= &
+         model_P_state(npts_model_P,itemp_model)) then
+        call bl_error("ERROR: Cutoff temperatures for primary and secondary models do not agree.")
      endif
 
-     temp_ambient = model_B_state(npts_model_B,itemp_model)
+     temp_ambient = model_S_state(npts_model_S,itemp_model)
 
 
      ! ambient X
-     xn_ambient(:) = model_B_state(npts_model_B,ispec_model:ispec_model-1+nspec)
+     xn_ambient(:) = model_S_state(npts_model_S,ispec_model:ispec_model-1+nspec)
 
 
      ! get the rest of the ambient thermodynamic state
@@ -184,82 +231,84 @@
                         temp_ambient,xn_ambient)
 
 
-     ! compute the radius of model A
-     radius_A = -1.0d0
-     do i = 1, npts_model_A
-        if (model_A_state(i,idens_model) <= 1.1*dens_ambient) then
-           radius_A = model_A_r(i)
+     ! compute the radius of the primary
+     radius_P_initial = -1.0d0
+     do i = 1, npts_model_P
+        if (model_P_state(i,idens_model) <= 1.1*dens_ambient) then
+           radius_P_initial = model_P_r(i)
            exit
         endif
      enddo
 
-     if (radius_A < 0.0d0) then
-        call bl_error("ERROR: unable to compute radius of model A")
+     if (radius_P_initial < 0.0d0) then
+        call bl_error("ERROR: unable to compute radius of the primary")
      endif
 
-     ! compute the radius of model B
-     radius_B = -1.0d0
-     do i = 1, npts_model_B
-        if (model_B_state(i,idens_model) <= 1.1*dens_ambient) then
-           radius_B = model_B_r(i)
+     ! compute the radius of the secondary
+     radius_S_initial = -1.0d0
+     do i = 1, npts_model_S
+        if (model_S_state(i,idens_model) <= 1.1*dens_ambient) then
+           radius_S_initial = model_S_r(i)
            exit
         endif
      enddo
 
-     if (radius_B < ZERO) then
-        call bl_error("ERROR: unable to compute radius of model B")
+     if (radius_S_initial < ZERO) then
+        call bl_error("ERROR: unable to compute radius of the secondary")
      endif
 
      
-     ! orbital properties
-     ! Kepler tells us the separation
-     a = (Gconst*(mass_A + mass_B)*period**2/(FOUR*M_PI**2))**THIRD
+     ! Orbital properties
 
-     ! semi-major axes
-     a_B = a/(ONE + mass_B/mass_A)
-     a_A = (mass_B/mass_A)*a_B
+     ! Kepler's third law tells us the separation
+     a = (Gconst*(mass_P_initial + mass_s_initial)*period**2/(FOUR*M_PI**2))**THIRD
+
+     ! Semi-major axes
+     a_S_initial = a/(ONE + mass_S_initial/mass_P_initial)
+     a_P_initial = (mass_S_initial/mass_P_initial)*a_S_initial
 
      if (ioproc == 1) then
         print *, "a = ", a
-        print *, "(a_A, a_B) = ", a_A, a_B
+        print *, "(a_P, a_S) = ", a_P_initial, a_S_initial
      endif
 
-     ! make sure the stars are not touching
-     if (radius_A + radius_B > a) then
-        call bl_error("ERROR: stars are touching!")
+     ! Make sure the stars are not touching.
+     if (radius_P_initial + radius_S_initial > a) then
+        call bl_error("ERROR: Stars are touching!")
      endif
-
 
      ! make sure the domain is big enough
 
      ! for simplicity, make sure the x and y sizes are 2x the greatest a + R
-     length = max(a_A + radius_A, a_B + radius_B)
+     length = max(a_P_initial + radius_P_initial, a_S_initial + radius_S_initial)
      if (length > HALF*(probhi(1) - problo(1)) .or. &
          length > HALF*(probhi(2) - problo(2))) then
-        call bl_error("ERROR: domain width too small", length)
+        call bl_error("ERROR: The domain width is too small to include the stars (along their axis).")
      endif
 
      ! for the height, let's take 2x the radius
-     if (TWO*max(radius_A,radius_B) > HALF*(probhi(3) - problo(3))) then
-        call bl_error("ERROR: domain height too small")
+     if (TWO*max(radius_P_initial, radius_S_initial) > HALF*(probhi(3) - problo(3))) then
+        call bl_error("ERROR: The domain height is too small to include the stars (perpendicular to their axis).")
      endif
 
      
      ! star center positions -- we'll put them in the midplane on the
      ! x-axis, with the CM at the center of the domain
-     x_cen_A = center(1) - a_A
-     y_cen_A = center(2)
-     z_cen_A = center(3)
+     center_P_initial(1) = center(1) - a_P_initial
+     center_P_initial(2) = center(2)
+     center_P_initial(3) = center(3)
 
-     x_cen_B = center(1) + a_B
-     y_cen_B = center(2)
-     z_cen_B = center(3)
+     center_S_initial(1) = center(1) + a_S_initial
+     center_S_initial(2) = center(2)
+     center_S_initial(3) = center(3)
 
      ! Initialize COM quantities
 
-     call com_save(mass_A,mass_B,x_cen_A,x_cen_B,y_cen_A,y_cen_B,z_cen_A,z_cen_B)
+     mass_p = mass_P_initial
+     mass_s = mass_S_initial
+     com_loc_p = center_P_initial
+     com_loc_s = center_S_initial
      
-
    end subroutine PROBINIT
 
 
@@ -307,7 +356,7 @@
 
      double precision :: xl,yl,zl,xx,yy,zz
      double precision :: pres, pres_zone
-     double precision :: dist_A, dist_B
+     double precision :: dist_P, dist_S
 
      integer :: i,j,k,ii,jj,kk,n
 
@@ -334,47 +383,47 @@
                     do ii = 0, nsub-1
                        xx = xl + dble(ii + HALF)*delta(1)/nsub
 
-                       dist_A = sqrt((xx - x_cen_A)**2 + &
-                                     (yy - y_cen_A)**2 + &
-                                     (zz - z_cen_A)**2)
+                       dist_P = sqrt(( xx - center_P_initial(1) )**2 + &
+                                     ( yy - center_P_initial(2) )**2 + &
+                                     ( zz - center_P_initial(3) )**2)
 
-                       dist_B = sqrt((xx - x_cen_B)**2 + &
-                                     (yy - y_cen_B)**2 + &
-                                     (zz - z_cen_B)**2)
+                       dist_S = sqrt(( xx - center_S_initial(1) )**2 + &
+                                     ( yy - center_S_initial(2) )**2 + &
+                                     ( zz - center_S_initial(3) )**2)
 
-                       ! are we "inside" star A?
-                       if (dist_A < radius_A) then
+                       ! Are we inside the primary WD?
+                       if (dist_P < radius_P_initial) then
 
                           state(i,j,k,URHO) = state(i,j,k,URHO) + &
-                               interpolate(dist_A,npts_model_A, &
-                                           model_A_r,model_A_state(:,idens_model))
+                               interpolate(dist_P,npts_model_P, &
+                                           model_P_r,model_P_state(:,idens_model))
 
                           pres_zone = pres_zone + &
-                               interpolate(dist_A,npts_model_A, &
-                                           model_A_r,model_A_state(:,ipres_model))
+                               interpolate(dist_P,npts_model_P, &
+                                           model_P_r,model_P_state(:,ipres_model))
 
                           do n = 1, nspec
                              state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
-                                  interpolate(dist_A,npts_model_A, &
-                                              model_A_r,model_A_state(:,ispec_model-1+n))
+                                  interpolate(dist_P,npts_model_P, &
+                                              model_P_r,model_P_state(:,ispec_model-1+n))
                           enddo
 
 
-                       ! inside B?
-                       else if (dist_B < radius_B) then
+                       ! Are we inside the secondary WD?
+                       else if (dist_S < radius_S_initial) then
 
                           state(i,j,k,URHO) = state(i,j,k,URHO) + &
-                               interpolate(dist_B,npts_model_B, &
-                                           model_B_r,model_B_state(:,idens_model))
+                               interpolate(dist_S,npts_model_S, &
+                                           model_S_r,model_S_state(:,idens_model))
 
                           pres_zone = pres_zone + &
-                               interpolate(dist_B,npts_model_B, &
-                                           model_B_r,model_B_state(:,ipres_model))
+                               interpolate(dist_S,npts_model_S, &
+                                           model_S_r,model_S_state(:,ipres_model))
 
                           do n = 1, nspec
                              state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
-                                  interpolate(dist_B,npts_model_B, &
-                                              model_B_r,model_B_state(:,ispec_model-1+n))
+                                  interpolate(dist_S,npts_model_S, &
+                                              model_S_r,model_S_state(:,ispec_model-1+n))
                           enddo
 
                        ! ambient medium
