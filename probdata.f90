@@ -17,16 +17,16 @@ module probdata_module
   integer         , save ::  max_raderr_lev,   max_radgrad_lev
   
   ! model info
-  character (len=80), save :: model_A_name
-  character (len=80), save :: model_B_name
+  character (len=80), save :: model_P_name
+  character (len=80), save :: model_S_name
   
-  double precision, allocatable, save :: model_A_r(:), model_A_state(:,:)
-  double precision, allocatable, save :: model_B_r(:), model_B_state(:,:)
+  double precision, allocatable, save :: model_P_r(:), model_P_state(:,:)
+  double precision, allocatable, save :: model_S_r(:), model_S_state(:,:)
   
-  integer, save :: npts_model_A, npts_model_B
+  integer, save :: npts_model_P, npts_model_S
   
-  double precision, save :: mass_A, mass_B
-  double precision, save :: radius_A, radius_B
+  double precision, save :: mass_P_initial, mass_S_initial
+  double precision, save :: radius_P_initial, radius_S_initial
   
   double precision, save :: dens_ambient, temp_ambient
   double precision, save :: xn_ambient(nspec)
@@ -38,7 +38,7 @@ module probdata_module
   logical, save :: inertial
 
   ! damping
-  logical, save :: damping
+  logical, save    :: damping
   double precision :: damping_alpha
 
   ! grid info
@@ -46,9 +46,8 @@ module probdata_module
 
   ! binary properties
   double precision, save :: period
-  double precision, save :: a_A, a_B
+  double precision, save :: a_P_initial, a_S_initial
   
-  double precision, save :: x_cen_A, y_cen_A, z_cen_A
-  double precision, save :: x_cen_B, y_cen_B, z_cen_B
+  double precision, dimension(3), save :: center_P_initial, center_S_initial
   
 end module probdata_module
