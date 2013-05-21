@@ -200,8 +200,8 @@
      endif
      
      if (ioproc == 1) then
-        print *, "Mass of the primary = ",   mass_p
-        print *, "Mass of the secondary = ", mass_s
+        print *, "Mass of the primary = ",   mass_p_initial
+        print *, "Mass of the secondary = ", mass_s_initial
      endif
 
 
