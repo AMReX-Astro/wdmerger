@@ -72,7 +72,7 @@ amr.v               = 1       # control verbosity in Amr.cpp
 castro.v            = 1       # control verbosity in Castro.cpp
 mg.v                = 0       # Turn off multigrid verbosity
 
-amr.probin_file = probin
+amr.probin_file = probin.pakmor
 
 amr.derive_plot_vars = ALL
 
