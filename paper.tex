@@ -57,7 +57,7 @@ systems with the AMR hydrodynamics code Castro.
 %==========================================================================
 \section{Numerical Methodology}\label{sec:Numerical Methodology}
 
-\subsection{Hydrodynamics and Gravity}
+\subsection{Hydrodynamics}
 
 We use the Castro code as described in \citet{castro}.  For all the
 runs, the PPM reconstruction is done, using the original limiters for
@@ -198,7 +198,7 @@ and we note that the sign convention used in CASTRO is opposite to that commonly
 
 The white dwarf merger problem falls into a class of problems with ``isolated'' boundary conditions, where we assume that all of the mass in the system is enclosed within the physical domain. Analytically, the Poisson equation is customarily solved by assuming that the potential vanishes as one gets very far away from the region of non-zero mass density. However, on a finite computational domain this assumption does not hold in general: there will be some non-zero value of the gravitational potential on the boundaries of the domain. In principle, the Dirichlet boundary values can be computed by doing a direct sum of the mass distribution for each zone outside the domain:
 \begin{equation}
-  \left. \Phi(\mathbf{x}) \right|_{\text{boundary}} = \sum_{\text{i, j, k}} \frac{G \rho_{\text{ijk}}}{|\mathbf{x} - \mathbf{x}_{\text{ijk}}|}\, \Delta V_{\text{ijk}}.
+  \left. \Phi(\mathbf{x}) \right|_{\text{boundary}} = G\, \sum_{\text{i, j, k}} \frac{G \rho_{\text{ijk}}}{|\mathbf{x} - \mathbf{x}_{\text{ijk}}|}\, \Delta V_{\text{ijk}}.
 \end{equation}
 If there are $N$ zones per spatial dimension, then there are $\mathcal{O}(N^2)$ boundary zones, and each boundary zone requires a sum over $N^3$ zones, so the direct computation of the boundary conditions is an $\mathcal{O}(N^5)$ operation. However, in a typical simulation we place the boundaries of the domain far away from the region containing most of the mass, so that they do not contaminate the hydrodynamics in the region of interest at the center of the domain. As a result, a common approach is to make some approximation for the mass distribution on the domain that results in a more tractable summation scheme. 
 
@@ -225,7 +225,7 @@ Here the $P_{l}^{m}$ are the associated Legendre polynomials and the $P_l$ are t
 \end{equation}
 The modified multipole moments are:
 \begin{align}
-  Q_l^{(0)}   &= \int P_l(\text{cos}\, \theta^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime) d^3 x^\prime \\
+  Q_l^{(0)}   &= \int P_l(\text{cos}\, \theta^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
   Q_{lm}^{(C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
   Q_{lm}^{(S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime.
 \end{align}
