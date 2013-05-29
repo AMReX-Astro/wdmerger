@@ -85,7 +85,6 @@ VPATH_LOCATIONS += $(Fmlocs)
 FINCLUDE_LOCATIONS += $(Fmincs)
 
 programs += fwdmerger
-programs += phi_slices
 
 all: $(pnames)
 
