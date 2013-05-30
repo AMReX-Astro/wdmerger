@@ -25,9 +25,9 @@ program fwdmerger
 
   real(kind=dp_t), pointer :: p(:,:,:,:)
 
-  real(kind=dp_t) :: kinetic_energy, potential_energy, internal_energy
+  real(kind=dp_t) :: kinetic_energy, potential_energy, internal_energy, mach_number, max_mach, rad_star,xyz_rad
 
-  integer :: dens_comp, rhoe_comp, u_comp, v_comp, w_comp, phi_comp
+  integer :: dens_comp, rhoe_comp, u_comp, v_comp, w_comp, phi_comp, mach_comp
 
   real(kind=dp_t) :: f_rotate
 
@@ -89,6 +89,9 @@ program fwdmerger
 
   ! gravitational potential
   phi_comp = plotfile_var_index(pf, "phiGrav")
+  
+  !Mach Number
+  mach_comp = plotfile_var_index(pf, "MachNumber")
 
 
 
@@ -131,6 +134,10 @@ program fwdmerger
   kinetic_energy = ZERO
   internal_energy = ZERO
   potential_energy = ZERO
+  mach_number = ZERO
+  max_mach = ZERO
+  !Radius of the star. Model radius for secondary is 7.60156250e8, Model radius for primary is 9.69531250e8
+  rad_star = 7.60156250e8
 
   imask(:,:,:) = .true.
 
@@ -208,9 +215,19 @@ program fwdmerger
                          p(ii,jj,kk,rhoe_comp) * &
                          (dx(1)/rr)*(dx(2)/rr)*(dx(3)/rr)
 
+                    
+                    mach_number = p(ii,jj,kk,mach_comp)
+                    xyz_rad = sqrt((xx-xctr)**2 + (yy-yctr)**2 + (zz-zctr)**2)
+                    if (mach_number > max_mach) then
+                       if (xyz_rad <= rad_star) then
+                          max_mach = mach_number
+                       endif
+                    endif
+
                     imask(ii*r1:(ii+1)*r1-1, &
                           jj*r1:(jj+1)*r1-1, &
                           kk*r1:(kk+1)*r1-1) = .false.
+                    
                  end if
 
               end do
@@ -234,7 +251,7 @@ program fwdmerger
 100 format(1x, 5(g20.10))
 
   write (*, 100) pf%tm, kinetic_energy, internal_energy, -potential_energy, &
-       kinetic_energy + internal_energy - potential_energy
+       kinetic_energy + internal_energy - potential_energy, max_mach
 
 
   call destroy(pf)
