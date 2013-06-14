@@ -1,0 +1,11 @@
+if [ -f results/bc_results.txt ]; then
+  rm results/bc_results.txt
+fi
+
+cd results
+for dir in {0..50}
+do
+  if [ -d $dir/ ]; then
+    echo $dir $( ../analysis/fwdbcs.Linux.gfortran.exe true/plt00001 $dir/plt00001 | awk '{ print $NF }' ) $(grep -m 1 "fill_multipole_BCs" $dir/info.out | awk '{ print $NF }' ) >> bc_results.txt
+  fi
+done
