@@ -2,6 +2,7 @@
 
 #include <Castro.H>
 #include <Castro_F.H>
+#include <Gravity.H>
 #include <Geometry.H>
 
 void
@@ -71,7 +72,7 @@ Castro::sum_integrated_quantities ()
       rho_e    += ca_lev.volWgtSum("rho_e", time);
 
 #ifdef GRAVITY
-      if ( do_grav ) {
+      if ( do_grav && gravity->get_gravity_type() == "PoissonGrav") {
         rho_phi  += ca_lev.volProductSum("density", "phi", time);
       }
 #endif
