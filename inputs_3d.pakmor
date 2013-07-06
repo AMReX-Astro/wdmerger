@@ -47,6 +47,7 @@ castro.rotational_frequency = 0.025
 castro.show_center_of_mass = 1
 
 gravity.gravity_type = PoissonGrav
+gravity.max_multipole_order = 6
 
 castro.dt_cutoff      = 5.e-20  # level 0 timestep below which we halt
 castro.cfl            = 0.5     # cfl number for hyperbolic system
