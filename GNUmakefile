@@ -17,7 +17,7 @@ USE_GRAV   = TRUE
 USE_REACT  = FALSE
 USE_MODELPARSER  = TRUE
 USE_ROTATION = TRUE
-
+#USE_TRACING = TRUE
 
 # This sets the EOS directory in $(CASTRO_DIR)/EOS
 EOS_dir     := helmeos
