@@ -21,6 +21,7 @@
           period, &
           nsub, &
           inertial, &
+          interp_temp, &
           damping, damping_alpha, &
           denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
@@ -86,6 +87,8 @@
      nsub = 1
 
      inertial = .false.
+
+     interp_temp = .false.
 
      ! read namelists -- override the defaults
      untin = 9 
@@ -344,7 +347,7 @@
           UEDEN, UEINT, UFS
      use network, only : nspec
      use bl_constants_module
-     use model_parser_module, only: idens_model, ipres_model, ispec_model
+     use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
 
      implicit none
 
@@ -355,7 +358,7 @@
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
      double precision :: xl,yl,zl,xx,yy,zz
-     double precision :: pres, pres_zone
+     double precision :: pres_zone, temp_zone
      double precision :: dist_P, dist_S
 
      integer :: i,j,k,ii,jj,kk,n
@@ -372,6 +375,7 @@
 
               state(i,j,k,URHO) = 0.0d0
               pres_zone = 0.0d0
+              temp_zone = 0.0d0
               state(i,j,k,UFS:UFS-1+nspec) = 0.0d0
 
               do kk = 0, nsub-1
@@ -398,9 +402,17 @@
                                interpolate(dist_P,npts_model_P, &
                                            model_P_r,model_P_state(:,idens_model))
 
-                          pres_zone = pres_zone + &
-                               interpolate(dist_P,npts_model_P, &
-                                           model_P_r,model_P_state(:,ipres_model))
+                          if (interp_temp) then
+                             temp_zone = temp_zone + &
+                                  interpolate(dist_P,npts_model_P, &
+                                              model_P_r,model_P_state(:,itemp_model))
+
+                          else
+                             pres_zone = pres_zone + &
+                                  interpolate(dist_P,npts_model_P, &
+                                              model_P_r,model_P_state(:,ipres_model))
+
+                          endif
 
                           do n = 1, nspec
                              state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
@@ -416,9 +428,17 @@
                                interpolate(dist_S,npts_model_S, &
                                            model_S_r,model_S_state(:,idens_model))
 
-                          pres_zone = pres_zone + &
-                               interpolate(dist_S,npts_model_S, &
-                                           model_S_r,model_S_state(:,ipres_model))
+                          if (interp_temp) then
+                             temp_zone = temp_zone + &
+                                  interpolate(dist_S,npts_model_S, &
+                                              model_S_r,model_S_state(:,itemp_model))
+
+                          else
+                             pres_zone = pres_zone + &
+                                  interpolate(dist_S,npts_model_S, &
+                                              model_S_r,model_S_state(:,ipres_model))
+
+                          endif
 
                           do n = 1, nspec
                              state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
@@ -426,10 +446,15 @@
                                               model_S_r,model_S_state(:,ispec_model-1+n))
                           enddo
 
+
                        ! ambient medium
                        else
                           state(i,j,k,URHO) = state(i,j,k,URHO) + dens_ambient
-                          pres_zone = pres_zone + pres_ambient
+                          if (interp_temp) then
+                             temp_zone = temp_zone + temp_ambient
+                          else
+                             pres_zone = pres_zone + pres_ambient
+                          endif
                           state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec) + xn_ambient(:)
 
                        endif
@@ -441,12 +466,18 @@
               ! normalize
               state(i,j,k,URHO) = state(i,j,k,URHO)/(nsub*nsub*nsub)
               pres_zone = pres_zone/(nsub*nsub*nsub)
+              temp_zone = temp_zone/(nsub*nsub*nsub)
               state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec)/(nsub*nsub*nsub)
               state(i,j,k,UTEMP) = 1.e7
 
               ! thermodynamics
-              call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
-                                 pres_zone,state(i,j,k,UFS:UFS-1+nspec))
+              if (interp_temp) then
+                 call eos_given_RTX(state(i,j,k,UEINT),pres_zone,state(i,j,k,URHO),state(i,j,k,UTEMP), &
+                                      state(i,j,k,UFS:UFS-1+nspec))
+              else
+                 call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
+                                      pres_zone,state(i,j,k,UFS:UFS-1+nspec))
+              endif
 
               state(i,j,k,UEDEN) = state(i,j,k,URHO) * state(i,j,k,UEINT)
               state(i,j,k,UEINT) = state(i,j,k,URHO) * state(i,j,k,UEINT)

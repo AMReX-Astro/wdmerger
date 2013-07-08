@@ -32,6 +32,8 @@ module probdata_module
   double precision, save :: xn_ambient(nspec)
   double precision, save :: eint_ambient, pres_ambient
 
+  logical, save :: interp_temp
+
   integer, save :: nsub
 
   ! inertial reference frame flag
