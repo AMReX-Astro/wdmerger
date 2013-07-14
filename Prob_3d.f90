@@ -463,20 +463,23 @@
                  enddo
               enddo
 
+
               ! normalize
               state(i,j,k,URHO) = state(i,j,k,URHO)/(nsub*nsub*nsub)
               pres_zone = pres_zone/(nsub*nsub*nsub)
               temp_zone = temp_zone/(nsub*nsub*nsub)
               state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec)/(nsub*nsub*nsub)
-              state(i,j,k,UTEMP) = 1.e7
 
               ! thermodynamics
               if (interp_temp) then
+                 state(i,j,k,UTEMP) = temp_zone
                  call eos_given_RTX(state(i,j,k,UEINT),pres_zone,state(i,j,k,URHO),state(i,j,k,UTEMP), &
                                       state(i,j,k,UFS:UFS-1+nspec))
               else
+
                  call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
                                       pres_zone,state(i,j,k,UFS:UFS-1+nspec))
+
               endif
 
               state(i,j,k,UEDEN) = state(i,j,k,URHO) * state(i,j,k,UEINT)
