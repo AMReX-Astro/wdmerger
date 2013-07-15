@@ -52,15 +52,17 @@ subroutine Simulation_init()
   real, parameter :: fourthirds = 4./3.
   real, parameter :: third = 1./3.
   real, save :: newton ! Newton's gravity
-  real, save :: period ! Binary Period
+!  real, save :: period ! Binary Period
 !fix below
-  period = 40.0
+!  period = 40.0
 
   !--------------------------------------------------------
   !  initialize runtime parameters and some other constants
   !--------------------------------------------------------
   call RuntimeParameters_get( 'initialWDpFile', initialWDpFileName)
   call RuntimeParameters_get( 'initialWDsFile', initialWDsFileName)
+
+  call RuntimeParameters_get( 'binary_period', sim_binaryPeriod)
 
   call RuntimeParameters_get('dens_fluff', sim_densFluff)
   call RuntimeParameters_get('temp_fluff', sim_tempFluff)
@@ -173,8 +175,7 @@ subroutine Simulation_init()
   !----------------------------------------------------------
 
   ! separation
-  sim_wd_sep = (newton*(sim_wdp_mass + sim_wds_mass)*period**2/(4.0*PI**2))**third
-  !period is the rotation period 
+  sim_wd_sep = (newton*(sim_wdp_mass + sim_wds_mass)*sim_binaryPeriod**2/(4.0*PI**2))**third
   
   ! semimajor axes
   sim_wds_a = sim_wd_sep/(1.0 + sim_wds_mass/sim_wdp_mass)

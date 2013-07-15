@@ -51,6 +51,10 @@ subroutine Simulation_initBlock(blockID)
   real, dimension(EOS_NUM) :: state, unburned_state, nse_state
   integer :: n
   real :: radius_s, radius_p, ign_dist, idistsq, min_distsq
+
+! rotation variables
+  real :: velx, vely
+
   real :: P_l, P_lm1, hold, flame_radius, costheta
   real :: theta
   integer :: l
@@ -129,6 +133,11 @@ subroutine Simulation_initBlock(blockID)
            unburned_state(EOS_ZBAR) = ye_f/yi_f
 
 !           print *, unburned_state(EOS_ABAR), unburned_state(EOS_ZBAR)
+
+!   now the velocity from the initial period.
+!
+           velx = jCoords(j)*(-2.0*PI/sim_binaryPeriod)
+           vely = iCoords(i)*(2.0*PI/sim_binaryPeriod)
 
            if (.not. sim_ignite) then
               ! no burned material, only unburned
@@ -271,8 +280,8 @@ subroutine Simulation_initBlock(blockID)
 
            call Grid_putPointData(blockId, CENTER, ENUC_VAR, EXTERIOR, cell, enuc)
 
-           call Grid_putPointData(blockId, CENTER, VELX_VAR, EXTERIOR, cell, 0.0)
-           call Grid_putPointData(blockId, CENTER, VELY_VAR, EXTERIOR, cell, 0.0)
+           call Grid_putPointData(blockId, CENTER, VELX_VAR, EXTERIOR, cell, velx)
+           call Grid_putPointData(blockId, CENTER, VELY_VAR, EXTERIOR, cell, vely)
            call Grid_putPointData(blockId, CENTER, VELZ_VAR, EXTERIOR, cell, 0.0)
 
            !  usually I would just call the EOS, but we happen to have all this data

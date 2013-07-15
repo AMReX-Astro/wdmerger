@@ -15,6 +15,8 @@ module Simulation_data
 
   real, save :: sim_densFluff, sim_tempFluff, sim_xc12Fluff, sim_xne22Fluff
 
+  real, save :: sim_binaryPeriod
+
   logical, save :: sim_ignite
 
   logical, save :: sim_ignitionFile

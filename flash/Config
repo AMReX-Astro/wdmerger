@@ -56,6 +56,12 @@ PARAMETER     sim_turbfield_zmin REAL     -2048e5
 PARAMETER     sim_turbfield_zmax REAL     2048e5
 
 #
+# period of WD binary
+#
+
+PARAMETER     binary_period         REAL     40.0
+
+#
 # ambient medium outside star
 #
 # dens_fluff = density of the fluff
