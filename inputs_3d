@@ -18,11 +18,7 @@ amr.n_cell         = 64 64 64
 amr.max_grid_size   = 32
 amr.blocking_factor = 8
 
-<<<<<<< HEAD
-amr.max_level      = 2       # maximum level number allowed
-=======
 amr.max_level      = 1       # maximum level number allowed
->>>>>>> 264c382cd115b65765539a94c74496c8788700af
 
 castro.lo_bc       =  2 2 2
 castro.hi_bc       =  2 2 2
@@ -45,10 +41,6 @@ castro.ppm_reference = 1
 castro.use_colglaz = 0
 castro.grav_source_type = 2
 castro.ppm_trace_grav = 1
-<<<<<<< HEAD
-
-=======
->>>>>>> 264c382cd115b65765539a94c74496c8788700af
 
 castro.do_rotation = 1
 castro.rotational_frequency = 0.01
@@ -64,7 +56,7 @@ castro.init_shrink    = 0.1     # scale back initial timestep by this factor
 castro.change_max     = 1.1     # factor by which dt is allowed to change each timestep
 castro.sum_interval   = 1       # timesteps between computing and printing volume averages
 
-amr.ref_ratio       = 4 2 4 4 4 4 # refinement ratio
+amr.ref_ratio       = 4 4 4 4 4 # refinement ratio
 amr.regrid_int      = 2         # how often to regrid
 amr.n_error_buf     = 2 2 2 2 2 # number of buffer cells in error est (should be 
                                 # same as regrid_int--doesn't depend on ref_ratio)
@@ -76,7 +68,7 @@ amr.checkpoint_files_output = 1
 amr.check_file      = chk     # root name of checkpoint file
 amr.check_int       = 50      # number of timesteps between checkpoints
 amr.plot_file       = plt     # root name of plot file
-amr.plot_int        = 5      # number of timesteps between plotfiles
+amr.plot_int        = 50      # number of timesteps between plotfiles
 
 amr.v               = 1       # control verbosity in Amr.cpp
 castro.v            = 1       # control verbosity in Castro.cpp
