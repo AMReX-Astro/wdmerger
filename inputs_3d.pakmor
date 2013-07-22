@@ -18,7 +18,7 @@ amr.n_cell         = 64 64 64
 amr.max_grid_size   = 16 16 32 32
 amr.blocking_factor = 8
 
-amr.max_level      = 2       # maximum level number allowed
+amr.max_level      = 1       # maximum level number allowed
 
 castro.lo_bc       =  2 2 2
 castro.hi_bc       =  2 2 2
@@ -36,7 +36,7 @@ castro.do_sponge = 0
 
 castro.allow_negative_energy = 0
 
-castro.ppm_type = 1
+castro.ppm_type = 0
 castro.ppm_reference = 1
 castro.use_colglaz = 0
 castro.grav_source_type = 2
