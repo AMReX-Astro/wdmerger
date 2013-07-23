@@ -13,7 +13,7 @@ plotFileNumber		= 0
 particleFileNumber	= 0
 
 # dump checkpoint files every trstrt seconds
-checkpointFileIntervalTime			= 0.1
+checkpointFileIntervalTime			= 0.005
 # dump plot files every tplot seconds
 plotFileIntervalTime			= 0.005
 
@@ -87,15 +87,14 @@ fl_fsQuenchDens1	= 1.e7
 # initial model
 #########
 
-##initialWDFile = "cc_Tc_7e8_rhoc_22e8_C_50_Ne_02_linear_wd_plain.dat"
-initialWDpFile = "cc_7e8_linear_wd_plain.dat"
-initialWDsFile = "cc_7e8_linear_wd_plain.dat"
+initialWDpFile = "sub_chandra.M_WD-0.90.hse.CO.100.00km.flash"
+initialWDsFile = "sub_chandra.M_WD-0.81.hse.CO.100.00km.flash"
 
 # density, temperature and composition of the fluff
-dens_fluff		= 1.e-3
-temp_fluff		= 3.e7
+dens_fluff		= 1.e-4
+temp_fluff		= 1.e7
 xc12_fluff		= 0.5e0
-xne22_fluff		= 0.02e0
+xne22_fluff		= 0.00e0
 
 rep_ne_frac		= 0.02
 
@@ -128,12 +127,12 @@ refNogenLevel      = 9
 # physical domain
 geometry		= "cartesian"
 
-xmin			= -65536.e5
-xmax			=  65536.e5
-ymin			= -65536.e5
-ymax			=  65536.e5
-zmin			= -65536.e5
-zmax			=  65536.e5
+xmin			= -5.12e9
+xmax			=  5.12e9
+ymin			= -5.12e9
+ymax			=  5.12e9
+zmin			= -5.12e9
+zmax			=  5.12e9
 
 nblockx			= 1
 nblocky			= 1
@@ -181,11 +180,11 @@ tstep_change_factor     = 1.2e0
 # floor values
 
 # set to 1/5 of dens_fluff
-smlrho			= 2.e-4
+smlrho			= 2.e-5
 
 small			= 1.e-100
 smalle			= 1.e-100
-smallt			= 1.e6
+smallt			= 1.e4
 smallu			= 1.e-10
 smallp			= 1.e15
 smallx			= 1.e-100
@@ -196,4 +195,4 @@ eintSwitch		= 0.e0
 use_steepening	  	= .false.
 hybrid_riemann	  	= .true.
 eos_fluff_dens          = 10.0
-
+eos_coulombMult         = 0.e0

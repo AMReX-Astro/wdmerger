@@ -93,23 +93,15 @@ subroutine Simulation_initBlock(blockID)
 
            !-----------------------------------------------
            !  determine state of material at this radius if unburned
-           !  from external 1-d hyrdostatic model
+           !  from external 1-d hydrostatic model
            !-----------------------------------------------
 
      ! calculate distances from centers of two stars
-     ! assume primary is centered at (sim_wdp_a,0,0)
-     ! assume secondary is centered at (-sim_wds_a,0,0)
+     ! assume primary is centered at (-sim_wdp_a,0,0)
+     ! assume secondary is centered at (sim_wds_a,0,0)
 
-           radius_p = (iCoords(i) - sim_wdp_a)**2
-           radius_s = (iCoords(i) + sim_wds_a)**2
-           if (NDIM >= 2) radius_p = radius_p + jCoords(j)**2
-           if (NDIM == 3) radius_p = radius_p + kCoords(k)**2
-           if (NDIM >= 2) radius_s = radius_s + jCoords(j)**2
-           if (NDIM == 3) radius_s = radius_s + kCoords(k)**2
-           radius_p = sqrt(radius_p)
-           radius_s = sqrt(radius_s)
-!acc      write(6,*)'icoords(i) sim_wdp_a, radius p =',iCoords(i),sim_wdp_a, radius_p
-!acc      write(6,*)'icoords(i) sim_wds_a, radius s =',iCoords(i),sim_wds_a, radius_s
+           radius_p = ( (iCoords(i) + sim_wdp_a)**2 + jCoords(j)**2 + kCoords(k)**2 )**0.5d0
+           radius_s = ( (iCoords(i) - sim_wds_a)**2 + jCoords(j)**2 + kCoords(k)**2 )**0.5d0
 
         !first set everything to fluff
            call sim_interpolate1dWd(radius_p, deltas(IAXIS), unburned_state(EOS_DENS), unburned_state(EOS_TEMP), xc12initial, &

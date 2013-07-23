@@ -20,7 +20,7 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
                               sim_wds_dens_tab, sim_wds_temp_tab, sim_wds_c12_tab, &
                               sim_wds_ne22_tab, sim_wds_dr_inv, sim_wds_npnts, &
                               sim_densFluff, sim_tempFluff, sim_xc12Fluff, &
-                              sim_xne22Fluff
+                              sim_xne22Fluff, sim_wdp_radius, sim_wds_radius
 
   implicit none
 
@@ -33,19 +33,17 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
   real :: vol, mass, masstemp, massc12, massne22
   integer :: imin, imax, i
 
-! yes this is ugly....
-
-  if (nstar.eq.0) then 
+  ! Populate the whole grid with the fluff.
+  if (nstar .eq. 0) then 
      dens = sim_densFluff
      temp = sim_tempFluff
      xc12 = sim_xc12Fluff
      xne22= sim_xne22Fluff
-!     print *, 'fluff', dens, temp, xc12, xne22
      return
-  else if (nstar.eq.1) then 
 
-!     print *, radius, dr
-!acc     write(6,*)'interpolating within star 1 radius dr =', radius, dr
+  ! For the primary WD, fill all zones within its radius.
+
+  else if (nstar .eq. 1) then 
 
      ! want to construct a mapping that is direct if the grids are the same, and
      ! otherwise averages the cells in a reasonable way
@@ -62,14 +60,10 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
         left_edge = 0.0
         right_edge = 1.0
      endif
-     ! above use fluff
-!acc above includes other star. Don't set fluff here.
-     if (floor(left_edge) >= sim_wdp_npnts) then
-!        dens = sim_densFluff
-!        temp = sim_tempFluff
-!        xc12 = sim_xc12Fluff
-!        xne22= sim_xne22Fluff
-!     print *, 'fluff', dens, temp, xc12, xne22
+     
+     ! If we're outside of the star, do nothing.
+
+     if ( radius >= sim_wdp_radius ) then
         return
      endif
 
@@ -78,30 +72,19 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
      masstemp = 0.0
      massc12  = 0.0
      massne22 = 0.0
-     if ( right_edge > real(sim_wdp_npnts) ) then
-!acc     write(6,*)'within primary star!'
-        shellvol = right_edge**3 - sim_wdp_npnts**3
-        
-        vol = vol + shellvol
-        mass = mass + sim_densFluff*shellvol
-        masstemp = masstemp + sim_densFluff*sim_tempFluff*shellvol
-        massc12  = massc12  + sim_densFluff*sim_xc12Fluff*shellvol
-        massne22 = massne22 + sim_densFluff*sim_xne22Fluff*shellvol
-     endif
 
      ! sum through cells in 1-d grid that this region overlaps
      imin = max(0, floor(left_edge))
      imax = min(sim_wdp_npnts-1, floor(right_edge))
-!     print *, left_edge, right_edge
-!     print *, imin, imax
+
      do i = imin, imax
         ! average over just the portion of this cell which overlaps the averaging region
         shell_left = max(real(i), left_edge)
         shell_right = min(real(i+1), right_edge)
-!        print *, shell_left, shell_right
         ! assume 1d profile has spherecial geometry to do mass averages
 !        shellvol = (shell_right-shell_left)*0.25*(shell_right+shell_left)**2 ! * 4*pi
-        shellvol = shell_right**3-shell_left**3
+        !shellvol = (4.0d0 * pi / 3.0d0) * shell_right**3 - (4.0d0 * pi / 3.0d0) * shell_left**3
+        shellvol = shell_right**3 - shell_left**3
 
         vol  = vol  + shellvol
         mass = mass + sim_wdp_dens_tab(i+1)*shellvol
@@ -114,11 +97,7 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
      xc12 = massc12/mass
      xne22 = massne22/mass
 
-!     print *, 'primary interp',dens, temp, xc12, xne22
-
-  else if (nstar.eq.2) then
-
-!     print *, radius, dr
+  else if (nstar .eq. 2) then
 
      ! want to construct a mapping that is direct if the grids are the same, and
      ! otherwise averages the cells in a reasonable way
@@ -135,14 +114,8 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
         left_edge = 0.0
         right_edge = 1.0
      endif
-     ! above use fluff
-!acc above includes other star. Don't set fluff here.
-     if (floor(left_edge) >= sim_wds_npnts) then
-!        dens = sim_densFluff
-!        temp = sim_tempFluff
-!        xc12 = sim_xc12Fluff
-!        xne22= sim_xne22Fluff
-!     print *, 'fluff', dens, temp, xc12, xne22
+
+     if ( radius >= sim_wds_radius ) then
         return
      endif
 
@@ -151,30 +124,19 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
      masstemp = 0.0
      massc12  = 0.0
      massne22 = 0.0
-     if ( right_edge > real(sim_wds_npnts) ) then
-!acc     write(6,*)'within secondary star!'
-        shellvol = right_edge**3 - sim_wds_npnts**3
-        
-        vol = vol + shellvol
-        mass = mass + sim_densFluff*shellvol
-        masstemp = masstemp + sim_densFluff*sim_tempFluff*shellvol
-        massc12  = massc12  + sim_densFluff*sim_xc12Fluff*shellvol
-        massne22 = massne22 + sim_densFluff*sim_xne22Fluff*shellvol
-     endif
 
      ! sum through cells in 1-d grid that this region overlaps
      imin = max(0, floor(left_edge))
      imax = min(sim_wds_npnts-1, floor(right_edge))
-!     print *, left_edge, right_edge
-!     print *, imin, imax
+
      do i = imin, imax
         ! average over just the portion of this cell which overlaps the averaging region
         shell_left = max(real(i), left_edge)
         shell_right = min(real(i+1), right_edge)
-!        print *, shell_left, shell_right
         ! assume 1d profile has spherecial geometry to do mass averages
 !        shellvol = (shell_right-shell_left)*0.25*(shell_right+shell_left)**2 ! * 4*pi
-        shellvol = shell_right**3-shell_left**3
+        !shellvol = (4.0d0 * pi / 3.0d0) * shell_right**3 - (4.0d0 * pi / 3.0d0) * shell_left**3
+        shellvol = shell_right**3 - shell_left**3
 
         vol  = vol  + shellvol
         mass = mass + sim_wds_dens_tab(i+1)*shellvol
@@ -186,8 +148,6 @@ subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
      temp = masstemp/mass
      xc12 = massc12/mass
      xne22 = massne22/mass
-
-!     print *, dens, temp, xc12, xne22
 
   endif
 

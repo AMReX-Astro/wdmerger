@@ -1,4 +1,4 @@
-!!****if* source/Simulation/SimulationMain/Flame3StageNoise_cleanup/Simulation_init
+!!***
 !!
 !! NAME
 !!
@@ -41,11 +41,12 @@ subroutine Simulation_init()
   character(len=4096) :: ignitionFileName
   character(len=80) :: reportbuf
   integer :: istat, i
-  real :: lastradius, radius
+  real :: radius, r_l, r_r
   integer :: ignfileunit=2
 
   integer :: try, l
   logical :: accept, ignitionFile
+  logical :: found_radius
   real    :: u, v, r
   real    :: deltaplus, deltaminus, costheta, P_lm1, P_l, hold
 
@@ -91,13 +92,19 @@ subroutine Simulation_init()
   ! only need to get width of artificial flame once
   call Flame_getWidth(sim_laminarWidth)
 
+  call Driver_getMype(MESH_COMM, sim_meshMe)
+
   !--------------------------------------------------------
   !  read in 1d initial wd profile
   !--------------------------------------------------------
 
-  ! First primary
-  write(6,*)'reading primary wd file'
-  call Logfile_stampMessage('[Simulation_init] Reading initial 1-d WD profile,primary')
+  ! First we'll read in the file for the primary WD.
+
+  if (sim_meshMe == MASTER_PE) then
+    write(6,*) 'Reading primary WD file'
+  endif
+
+  call Logfile_stampMessage('[Simulation_init] Reading initial 1-d WD profile, primary')
   open(unit=2,file=initialWDpFileName,status='OLD',iostat=istat)
   if (istat /= 0) call Driver_abortFlash('Unable to open initial WD profile, primary')
 
@@ -105,35 +112,59 @@ subroutine Simulation_init()
   read(2,*)
   read(2,*) sim_wdp_npnts
 
+  allocate(sim_wdp_rad_tab(sim_wdp_npnts),STAT=istat)
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wdp_dens_tab(sim_wdp_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wdp_temp_tab(sim_wdp_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wdp_c12_tab(sim_wdp_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wdp_ne22_tab(sim_wdp_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
 
+  r_l = 0.0
+  r_r = 0.0
   radius = 0.0
-  lastradius = 0.0
   sim_wdp_mass = 0.0
+  found_radius = .false.
 
   do i = 1, sim_wdp_npnts
-     lastradius = radius
-     read(2,*) radius, sim_wdp_dens_tab(i), sim_wdp_temp_tab(i), sim_wdp_c12_tab(i), sim_wdp_ne22_tab(i)
-     sim_wdp_mass = sim_wdp_mass + (radius - lastradius)*(radius**2 + radius*lastradius + &
-                                                            lastradius**2)*sim_wdp_dens_tab(i) 
+     read(2,*) sim_wdp_rad_tab(i), sim_wdp_dens_tab(i), sim_wdp_temp_tab(i), sim_wdp_c12_tab(i), sim_wdp_ne22_tab(i)
+  enddo
+
+  do i = 1, sim_wdp_npnts-1
+
+     if ( i /= 1 ) then
+       r_l = 0.5 * ( sim_wdp_rad_tab(i) + sim_wdp_rad_tab(i-1) )
+     endif
+
+     r_r = 0.5 * ( sim_wdp_rad_tab(i) + sim_wdp_rad_tab(i+1) )
+
+     sim_wdp_mass = sim_wdp_mass + (r_r - r_l)*(r_r**2 + r_r*r_l + r_l**2)*sim_wdp_dens_tab(i) 
+
+     ! Determine the radius of the primary by finding when it comes close to the fluff density.
+
+     if ( (sim_wdp_dens_tab(i) <= 1.10d0 * sim_densFluff) .and. (.not. found_radius) ) then
+       sim_wdp_radius = sim_wdp_rad_tab(i)
+       found_radius = .true.
+     endif
+
   enddo
   close(2)
-  sim_wdp_radius = radius
   sim_wdp_mass = sim_wdp_mass*fourthirds*PI
-  sim_wdp_dr_inv = 1.0/ (radius - lastradius)
+  sim_wdp_dr_inv = 1.0 / (r_r - r_l)
 
-  write(6,*)'mass of primary =',sim_wdp_mass
+  if (sim_meshMe == MASTER_PE) then
+    write(6,*) 'Mass of primary =', sim_wdp_mass
+  endif
 
   ! now secondary
 
-  write(6,*)'reading secondary wd file'
+  if (sim_meshMe == MASTER_PE) then
+    write(6,*) 'Reading secondary WD file'
+  endif
+
   call Logfile_stampMessage('[Simulation_init] Reading initial 1-d WD profile,secondary')
   open(unit=2,file=initialWDsFileName,status='OLD',iostat=istat)
   if (istat /= 0) call Driver_abortFlash('Unable to open initial WD profile, secondary')
@@ -141,51 +172,76 @@ subroutine Simulation_init()
   ! eat header
   read(2,*)
   read(2,*) sim_wds_npnts
-!acc  read(2,*) sim_wds_mass
 
+  allocate(sim_wds_rad_tab(sim_wds_npnts),STAT=istat)
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wds_dens_tab(sim_wds_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wds_temp_tab(sim_wds_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wds_c12_tab(sim_wds_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
   allocate(sim_wds_ne22_tab(sim_wds_npnts),STAT=istat)
-    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for inital WD")
+    if (istat /= 0) call Driver_abortFlash("Cannot allocate space for initial WD")
 
+  r_l = 0.0
+  r_r = 0.0
   radius = 0.0
-  lastradius = 0.0
   sim_wds_mass = 0.0
+  found_radius = .false.
 
   do i = 1, sim_wds_npnts
-     lastradius = radius
-     read(2,*) radius, sim_wds_dens_tab(i), sim_wds_temp_tab(i), sim_wds_c12_tab(i), sim_wds_ne22_tab(i)
-     sim_wds_mass = sim_wds_mass + (radius - lastradius)*(radius**2 + radius*lastradius + &
-                                                            lastradius**2)*sim_wds_dens_tab(i) 
+     read(2,*) sim_wds_rad_tab(i), sim_wds_dens_tab(i), sim_wds_temp_tab(i), sim_wds_c12_tab(i), sim_wds_ne22_tab(i)
+  enddo
+
+  do i = 1, sim_wds_npnts-1
+
+     if ( i /= 1 ) then
+       r_l = 0.5 * ( sim_wds_rad_tab(i) + sim_wds_rad_tab(i-1) )
+     endif
+
+     r_r = 0.5 * ( sim_wds_rad_tab(i) + sim_wds_rad_tab(i+1) )
+
+     sim_wds_mass = sim_wds_mass + (r_r - r_l)*(r_r**2 + r_r*r_l + r_l**2)*sim_wds_dens_tab(i) 
+
+     ! Determine the radius of the secondary by finding when it comes close to the fluff density.
+
+     if ( (sim_wds_dens_tab(i) <= 1.10d0 * sim_densFluff) .and. (.not. found_radius) ) then
+       sim_wds_radius = sim_wds_rad_tab(i)
+       found_radius = .true.
+     endif
+
   enddo
   close(2)
-  sim_wds_radius = radius
   sim_wds_mass = sim_wds_mass*fourthirds*PI
-  sim_wds_dr_inv = 1.0/ (radius - lastradius)
+  sim_wds_dr_inv = 1.0 / (r_r - r_l)
 
-  write(6,*)'mass of primary =',sim_wdp_mass
+
+  if (sim_meshMe == MASTER_PE) then
+    write(6,*) 'Mass of secondary =', sim_wds_mass
+  endif
 
   !----------------------------------------------------------
-  ! Now solve the Kepler problem for the configurations of the stars
-  ! borrowed from Max's Castro approach
+  ! Now solve the Kepler problem for the configurations of the stars.
+  ! This is in line with how this is solved in the wdmerger problem for CASTRO.
   !----------------------------------------------------------
 
-  ! separation
+  ! Orbital separation a = ( G * M * P**2 / (4 * pi**2) )**3
   sim_wd_sep = (newton*(sim_wdp_mass + sim_wds_mass)*sim_binaryPeriod**2/(4.0*PI**2))**third
   
-  ! semimajor axes
-  sim_wds_a = sim_wd_sep/(1.0 + sim_wds_mass/sim_wdp_mass)
+  ! Semimajor axes
+  sim_wds_a = sim_wd_sep / (1.0 + sim_wds_mass/sim_wdp_mass)
   sim_wdp_a = (sim_wds_mass/sim_wdp_mass)*sim_wds_a
 
-  print *, 'semimajors: primary secondary', sim_wds_a, sim_wdp_a
+  if (sim_meshMe == MASTER_PE) then
+    print *, 'Semimajor axis: '          , sim_wd_sep
+    print *, 'Primary semimajor axis: '  , sim_wdp_a
+    print *, 'Secondary semimajor axis: ', sim_wds_a
+  endif
 
   ! Make sure the stars are not touching.
   if (sim_wdp_radius + sim_wds_radius > sim_wd_sep) then
-    call Driver_abortFlash('stars are touching')
+    call Driver_abortFlash('Stars are touching.')
   endif
   
   ! add check to see if grid is big enough here?
