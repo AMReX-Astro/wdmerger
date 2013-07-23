@@ -1,6 +1,6 @@
 # ------------------  INPUTS TO MAIN PROGRAM  -------------------
 
-max_step = 10
+max_step = 100
 
 geometry.is_periodic = 0 0 0
 
@@ -33,6 +33,10 @@ castro.do_sponge = 0
 castro.allow_negative_energy = 0
 
 castro.ppm_type = 1
+castro.ppm_reference = 1
+castro.use_colglaz = 0
+castro.grav_source_type = 2
+castro.ppm_trace_grav = 1
 
 castro.do_rotation = 0
 castro.rotational_frequency = 0.005
