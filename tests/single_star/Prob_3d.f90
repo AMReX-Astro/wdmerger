@@ -67,6 +67,7 @@
 
      model_name = "A"
 
+
      ! read namelists -- override the defaults
      untin = 9 
      open(untin,file=probin(1:namlen),form='formatted',status='old')
