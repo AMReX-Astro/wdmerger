@@ -82,6 +82,7 @@ fl_fsQuench		= .true.
 fl_fsQuenchDens0	= 5.e6
 fl_fsQuenchDens1	= 1.e7
 
+fl_fsusetfi = .false.
 
 #########
 # initial model
@@ -89,6 +90,8 @@ fl_fsQuenchDens1	= 1.e7
 
 initialWDpFile = "sub_chandra.M_WD-0.90.hse.CO.100.00km.flash"
 initialWDsFile = "sub_chandra.M_WD-0.81.hse.CO.100.00km.flash"
+#initialWDpFile = "cc_7e8_linear_wd_plain.dat"
+#initialWDsFile = "cc_7e8_linear_wd_plain.dat"
 
 # density, temperature and composition of the fluff
 dens_fluff		= 1.e-4
@@ -96,7 +99,7 @@ temp_fluff		= 1.e7
 xc12_fluff		= 0.5e0
 xne22_fluff		= 0.00e0
 
-rep_ne_frac		= 0.02
+rep_ne_frac		= 0.00
 
 #########
 # refinement
@@ -140,8 +143,8 @@ nblockz			= 1
 
 # max and min levels of refinement
 # with nxb=16, level 1km resolution is level 13
-lrefine_min		= 5
-lrefine_max		= 5 
+lrefine_min		= 3
+lrefine_max		= 3
 
 # boundary conditions for the whole star
 xl_boundary_type	= "diode"
@@ -153,7 +156,6 @@ zr_boundary_type        = "diode"
 
 grav_boundary_type	= "isolated"
 mpole_lmax		= 6
-
 
 # particles
 pt_numParticlesWanted	= 100000
@@ -192,7 +194,7 @@ smallx			= 1.e-100
 # misc
 
 eintSwitch		= 0.e0
-use_steepening	  	= .false.
+#use_steepening	  	= .false.
 hybrid_riemann	  	= .true.
 eos_fluff_dens          = 10.0
 eos_coulombMult         = 0.e0

@@ -152,6 +152,10 @@ subroutine Simulation_init()
 
   enddo
   close(2)
+
+  if ( .not. found_radius ) then
+    sim_wdp_radius = sim_wdp_rad_tab(sim_wdp_npnts)
+  endif
   sim_wdp_mass = sim_wdp_mass*fourthirds*PI
   sim_wdp_dr_inv = 1.0 / (r_r - r_l)
 
@@ -213,6 +217,11 @@ subroutine Simulation_init()
 
   enddo
   close(2)
+
+  if ( .not. found_radius ) then
+    sim_wds_radius = sim_wds_rad_tab(sim_wds_npnts)
+  endif
+
   sim_wds_mass = sim_wds_mass*fourthirds*PI
   sim_wds_dr_inv = 1.0 / (r_r - r_l)
 
