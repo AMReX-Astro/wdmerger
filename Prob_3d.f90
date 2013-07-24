@@ -477,6 +477,9 @@
                                       state(i,j,k,UFS:UFS-1+nspec))
               else
 
+                 ! we need an initial guess for the temperature -- it will be overwritten on output
+                 state(i,j,k,UTEMP) = 1.d5
+
                  call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
                                       pres_zone,state(i,j,k,UFS:UFS-1+nspec))
 
