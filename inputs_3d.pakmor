@@ -40,6 +40,7 @@ castro.ppm_type = 1
 castro.ppm_reference = 1
 castro.use_colglaz = 0
 castro.grav_source_type = 2
+castro.ppm_trace_grav = 1
 
 castro.do_rotation = 1
 castro.rotational_frequency = 0.025
@@ -50,7 +51,7 @@ gravity.gravity_type = PoissonGrav
 gravity.max_multipole_order = 6
 
 castro.dt_cutoff      = 5.e-20  # level 0 timestep below which we halt
-castro.cfl            = 0.5     # cfl number for hyperbolic system
+castro.cfl            = 0.7     # cfl number for hyperbolic system
 castro.init_shrink    = 0.1     # scale back initial timestep by this factor
 castro.change_max     = 1.1     # factor by which dt is allowed to change each timestep
 castro.sum_interval   = 1       # timesteps between computing and printing volume averages
