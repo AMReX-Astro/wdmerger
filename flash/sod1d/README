@@ -1,0 +1,7 @@
+# This is a 1D version of the standard Sod shock tube problem,
+# implemented in FLASH version 4.0. It is designed to use the
+# Helmholtz EOS. To install this, create a directory in 
+# flash/source/Simulation/SimulationMain and put these files in there,
+# then setup the problem as usual from the main flash directory.
+# The main inputs are sim_rhoLeft, sim_TLeft and sim_uLeft,
+# as well as the corresponding quantities on the right side.
