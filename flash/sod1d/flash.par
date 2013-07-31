@@ -55,14 +55,12 @@ eintSwitch     = 1.e-4
 plot_var_1 = "dens"
 plot_var_2 = "pres"
 plot_var_3 = "temp"
+plot_var_4 = "velx"
 
 #    AMR refinement parameters  
 lrefine_min     = 4
 lrefine_max     = 4
 refine_var_1    = "dens"
-
-#eosmode = dens_temp
-#eosmodeinit = dens_temp
 
 
 ## -------------------------------------------------------------##
