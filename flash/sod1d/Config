@@ -3,7 +3,7 @@
 
 REQUIRES Driver
 #REQUIRES physics/Hydro
-REQUIRES physics/Hydro/HydroMain/split/PPM
+REQUIRES physics/Hydro/HydroMain/unsplit/PPM
 REQUIRES physics/Eos/EosMain/Helmholtz
 
 D sim_rhoLeft Density in the left part of the grid 
@@ -24,5 +24,6 @@ PARAMETER sim_uLeft	REAL    0.
 D sim_uRight fluid velocity in the right part of the grid 
 PARAMETER sim_uRight	REAL    0.       
 
-#SPECIES C12
+
+SPECIES C12
 

@@ -57,10 +57,13 @@ plot_var_2 = "pres"
 plot_var_3 = "temp"
 
 #    AMR refinement parameters  
-lrefine_min     = 10
-lrefine_max     = 10
+lrefine_min     = 4
+lrefine_max     = 4
 refine_var_1    = "dens"
- 
+
+#eosmode = dens_temp
+#eosmodeinit = dens_temp
+
 
 ## -------------------------------------------------------------##
 ##  SWITCHES SPECIFIC TO THE UNSPLIT HYDRO SOLVER               ##

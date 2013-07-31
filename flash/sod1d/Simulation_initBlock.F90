@@ -151,6 +151,8 @@ subroutine Simulation_initBlock(blockID)
            state(EOS_ABAR) = 12.0d0
            state(EOS_ZBAR) = 6.0d0
 
+           !state(EOS_DENS) = 1.0e4
+           !state(EOS_TEMP) = 1.0e6
            axis(IAXIS) = i
 
            !put in value of default species
@@ -171,7 +173,7 @@ subroutine Simulation_initBlock(blockID)
            state(EOS_EKIN) = 0.5 * (velxZone**2)
  
            call Eos(MODE_DENS_TEMP,1,state,[1.0d0])
-
+!           call Eos(MODE_DENS_TEMP,1,state)
            enerZone = state(EOS_EINT) + state(EOS_EKIN)
            
            ! store the variables in the current zone via Grid put methods
