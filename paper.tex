@@ -77,7 +77,13 @@ AMR
 rotation
 
 
-\subsection{Initial Models and Microphysics}
+\subsection{Microphysics}
+
+EOS (no Coulomb corrections)
+
+
+
+\subsection{Initial Models}
 
 
 We generate initial models by integrating the equation of hydrostatic
@@ -99,8 +105,11 @@ the central density needed to yield the desired total mass.  Finally,
 we generate the initial model at the same resolution as the finest
 grid in our simulation.
 
-EOS (no Coulomb corrections)
-
+We map the 1-d model onto the 3-d Cartesian grid by taking density,
+temperature, and composition as the independent variables,
+interpolating these to the cell-centers, and then calling the equation
+of state to initialize the remaining terms.  The velocity is taken to
+be zero in the rotating frame initially.
 
 \subsection{Gravity}
 
