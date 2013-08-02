@@ -79,9 +79,27 @@ rotation
 
 \subsection{Initial Models and Microphysics}
 
-initial models
 
-EOS
+We generate initial models by integrating the equation of hydrostatic
+equilibrium, taking the temperature and composition to be constant,
+and using the general stellar equation of state.  This results in
+a single nonlinear equation to find the density in a zone given the
+conditions in the zone beneath it:
+\begin{equation}
+\frac{p(\rho_{i+1}) - p_i}{\Delta x} = \frac{1}{2} (\rho_i + \rho_{i+1}) g_{i+1/2}
+\end{equation}
+This is solved via Newton iteration to give $\rho_{i+1}$.  Here, $g_{i+1/2}$
+is the gravitational acceleration at the interface between zones $i$ and $i+1$,
+found by simply adding up all the mass from zones $1, \ldots, i$ to get the
+enclosed mass, $M_{i+1/2}$, and then $g_{i+1/2} = GM_{i+1/2}/r_{i+1/2}^2$.
+
+To start the integration off, we need a central density.  We guess at
+this, and then iterate over the entire integration procedure to find
+the central density needed to yield the desired total mass.  Finally,
+we generate the initial model at the same resolution as the finest
+grid in our simulation.
+
+EOS (no Coulomb corrections)
 
 
 \subsection{Gravity}
