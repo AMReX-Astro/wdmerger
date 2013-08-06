@@ -1,0 +1,201 @@
+
+#####
+# I/O
+#####
+
+# names of files
+basenm			= "wdwd_"
+
+restart			= .false.
+
+checkpointFileNumber    = 0
+plotFileNumber		= 0
+particleFileNumber	= 0
+
+# dump checkpoint files every trstrt seconds
+checkpointFileIntervalTime			= 0.005
+# dump plot files every tplot seconds
+plotFileIntervalTime			= 0.005
+
+particleFileIntervalTime	= 0.005
+
+# go for nend steps or tmax seconds, whichever comes first
+nend			= 999999
+# runlength is chosen to end just before star expands beyond grid
+tmax			= 0.2e0
+
+corners			= .false.
+
+# variables for plotting
+plot_var_1		= "dens"
+plot_var_2		= "temp"
+plot_var_3		= "pres"
+plot_var_4		= "fldt"
+plot_var_5		= "enuc"
+plot_var_6		= "flam"
+plot_var_7		= "phfa"
+plot_var_8		= "phaq"
+plot_var_9		= "phqn"
+
+
+particle_attribute_1 	= "dens"
+particle_attribute_2 	= "temp"
+particle_attribute_3 	= "pres"
+particle_attribute_4 	= "flam"
+particle_attribute_5 	= "phfa"
+particle_attribute_6 	= "phaq"
+particle_attribute_7 	= "phqn"
+particle_attribute_8 	= "ye"
+
+
+##################
+# ignition parameters
+##################
+
+# use C reaction in addition to flame?
+bn_thermalReact         = .false.
+
+# ignition specific
+# size of spherical region set as burned material
+# at time zero
+ignite			= .false.
+r_match			= 16e5
+z_match			= 40e5
+
+
+#################
+# flame
+#################
+
+# artificial flame parameters
+fl_epsilon_0            = 1.e-3
+fl_epsilon_1            = 1.e-3
+fl_kpp_fact             = 1.309e0
+fl_b                    = 3.2e0
+
+# turbulent flame speed parameters
+# turbulent flame speed is
+# 0.5*sqrt(A g dx* fl_fsM)
+fl_fsM			= 0.04
+# flame quenching at low densities
+fl_fsQuench		= .true.
+fl_fsQuenchDens0	= 5.e6
+fl_fsQuenchDens1	= 1.e7
+
+fl_fsusetfi = .false.
+useBurn = .false.
+#########
+# initial model
+#########
+
+initialWDpFile = "sub_chandra.M_WD-0.90.hse.CO.100.00km.flash"
+initialWDsFile = "sub_chandra.M_WD-0.81.hse.CO.100.00km.flash"
+#initialWDpFile = "cc_7e8_linear_wd_plain.dat"
+#initialWDsFile = "cc_7e8_linear_wd_plain.dat"
+
+# density, temperature and composition of the fluff
+dens_fluff		= 1.e-4
+temp_fluff		= 1.e7
+xc12_fluff		= 0.5e0
+xne22_fluff		= 0.00e0
+
+rep_ne_frac		= 0.00
+
+#########
+# refinement
+#########
+
+# use custom refinement criteria
+refine_var_1            = "dens"
+refine_cutoff_1         = 0.1
+derefine_cutoff_1       = 0.0375
+
+refine_var_2            = "phfa"
+#refine_var_3           = "velx"
+#refine_var_4           = "none"
+
+refFluffDensThresh = 1.e3
+refFluffMargin = 0.2
+refFluffLevel  = 1
+
+refNogenEnucThresh = 1e18
+refNogenFldtThresh = 0.02
+refNogenMargin     = 0.5
+refNogenLevel      = 9
+
+#################
+# mesh definition
+#################
+
+# physical domain
+geometry		= "cartesian"
+
+xmin			= -5.12e9
+xmax			=  5.12e9
+ymin			= -5.12e9
+ymax			=  5.12e9
+zmin			= -5.12e9
+zmax			=  5.12e9
+
+nblockx			= 1
+nblocky			= 1
+nblockz			= 1
+
+# max and min levels of refinement
+# with nxb=16, level 1km resolution is level 13
+lrefine_min		= 4
+lrefine_max		= 4
+
+# boundary conditions for the whole star
+xl_boundary_type	= "diode"
+xr_boundary_type	= "diode"
+yl_boundary_type        = "diode"
+yr_boundary_type        = "diode"
+zl_boundary_type        = "diode"
+zr_boundary_type        = "diode"
+
+grav_boundary_type	= "isolated"
+mpole_lmax		= 6
+
+# particles
+pt_numParticlesWanted	= 100000
+pt_maxPerProc 		= 100000
+
+##########
+# timestep
+##########
+
+# CFL limit
+cfl			= 0.7e0
+cfl_ini			= 0.1e0
+
+# initial and minimum
+dtinit			= 1.e-2
+dtmin			= 1.e-20
+#dtmax			= 8.e-4
+tstep_change_factor     = 1.2e0
+
+#############
+# miscellaneous
+#############
+
+# floor values
+
+# set to 1/5 of dens_fluff
+smlrho			= 2.e-5
+
+small			= 1.e-100
+smalle			= 1.e-100
+smallt			= 1.e4
+smallu			= 1.e-10
+smallp			= 1.e6
+smallx			= 1.e-100
+
+# misc
+
+eintSwitch		= 0.e0
+use_steepening	  	= .false.
+hybrid_riemann	  	= .true.
+eos_fluff_dens          = 10.0
+#eos_coulombMult         = 0.e0
+#eos_coulombMult         = 1.e0

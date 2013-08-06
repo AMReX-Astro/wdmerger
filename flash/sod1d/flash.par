@@ -1,0 +1,95 @@
+#	Runtime parameters for the Sod shock-tube problem.
+
+#	Parameters for initial model
+
+#		Density, pressure, and velocity on either side of interface
+
+sim_rhoLeft	= 1.0e7
+sim_rhoRight	= 1.0e6
+sim_TLeft	= 1.0e8
+sim_TRight	= 1.0e6
+sim_uLeft	= 0.
+sim_uRight	= 0.
+
+#	Computational volume parameters
+
+#		Grid dimensionality and geometry
+
+geometry = cartesian
+
+#		Size of computational volume
+
+xmin		= 0.
+xmax		= 1.0e6
+
+#		Boundary conditions
+
+xl_boundary_type = "outflow"
+xr_boundary_type = "outflow"
+
+#	Simulation (grid, time, I/O) parameters
+
+cfl		= 0.7
+basenm          = "sod_"
+restart         = .false.
+
+#	checkpoint file output parameters
+checkpointFileIntervalTime = 1.e-4
+checkpointFileIntervalStep = 0
+checkpointFileNumber = 0
+
+#	plotfile output parameters
+plotfileIntervalTime = 1.e-4
+plotfileIntervalStep = 0
+plotfileNumber = 0
+
+nend            = 1000
+tmax            = 8.e-4
+dtmax           = 1.e-5
+
+run_comment     = "Sod problem, general EOS"
+log_file        = "sod.log"
+eintSwitch     = 1.e-4
+
+
+plot_var_1 = "dens"
+plot_var_2 = "pres"
+plot_var_3 = "temp"
+plot_var_4 = "velx"
+
+#    AMR refinement parameters  
+lrefine_min     = 4
+lrefine_max     = 4
+refine_var_1    = "dens"
+
+
+## -------------------------------------------------------------##
+##  SWITCHES SPECIFIC TO THE UNSPLIT HYDRO SOLVER               ##
+#	I. INTERPOLATION SCHEME:
+order		= 2      # Interpolation order (first/second/third/fifth order)
+slopeLimiter    = "mc"   # Slope limiters (minmod, mc, vanLeer, hybrid, limited)
+LimitedSlopeBeta= 1.     # Slope parameter for the "limited" slope by Toro
+charLimiting	= .true. # Characteristic limiting vs. Primitive limiting
+
+use_avisc	= .false. # use artificial viscosity (originally for PPM)
+#cvisc		= 0.1     # coefficient for artificial viscosity
+use_flattening	= .false. # use flattening (dissipative) (originally for PPM)
+use_steepening	= .false. # use contact steepening (originally for PPM)
+use_upwindTVD	= .false. # use upwind biased TVD slope for PPM (need nguard=6)
+
+#	II. RIEMANN SOLVERS:
+RiemannSolver	= "Roe"       # Roe, HLL, HLLC, LLF, Marquina
+entropy         = .false.     # Entropy fix for the Roe solver
+
+#	III. STRONG SHOCK HANDELING SCHEME:
+shockDetect	= .false.     # Shock Detect for numerical stability
+## -------------------------------------------------------------##
+
+## ---------------------------------------------------------------##
+##  SWITCHES SPECIFIC TO THE SUPER-TIME-STEPPING (STS) ALGORITHM  ##
+##  NOTE: For details on using STS runtime parameters, please     ##
+##        refer to user's guide (Driver chapter).                 ##
+useSTS                  = .false.
+nstepTotalSTS           = 5
+nuSTS                   = 0.2
+## ---------------------------------------------------------------##

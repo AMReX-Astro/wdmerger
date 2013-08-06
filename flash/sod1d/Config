@@ -1,0 +1,29 @@
+#	Configuration file for the Sod shock-tube problem
+#	(Sod, G. A., 1978, J. Comp. Phys., 27, 1)
+
+REQUIRES Driver
+#REQUIRES physics/Hydro
+REQUIRES physics/Hydro/HydroMain/unsplit/PPM
+REQUIRES physics/Eos/EosMain/Helmholtz
+
+D sim_rhoLeft Density in the left part of the grid 
+PARAMETER sim_rhoLeft	REAL    1.       [0 to ]
+
+D sim_rhoRight Density in the right part of the grid 
+PARAMETER sim_rhoRight	REAL    0.125    [0 to ]
+
+D sim_pLeft Pressure  in the left part of the grid 
+PARAMETER sim_TLeft	REAL    1.       [0 to ]
+
+D sim_pRight Pressure  in the righ part of the grid 
+PARAMETER sim_TRight	REAL    0.1      [0 to ]
+
+D sim_uLeft fluid velocity in the left part of the grid 
+PARAMETER sim_uLeft	REAL    0.       
+
+D sim_uRight fluid velocity in the right part of the grid 
+PARAMETER sim_uRight	REAL    0.       
+
+
+SPECIES C12
+
