@@ -46,24 +46,17 @@ subroutine Simulation_initBlock(blockID)
   real, allocatable, dimension(:) :: iCoords, jCoords, kCoords
   real, dimension(MDIM) :: deltas
 
-  real, dimension(EOS_NUM) :: state, unburned_state, nse_state
+  real, dimension(EOS_NUM) :: state
   integer :: n
   real :: radius_s, radius_p, ign_dist, idistsq, min_distsq
 
-! rotation variables
-  real :: velx, vely
+  real, dimension(SPECIES_BEGIN:SPECIES_END) :: massFraction
 
-  real :: P_l, P_lm1, hold, flame_radius, costheta
-  real :: theta
-  integer :: l
-  real :: fsurf_distance
-  real :: flam, xc12initial, xne22initial, ye, dyi_qn, dqbar_qn
-  real :: yi
-  real :: qbar_nse
-  real :: ye_f, ye_a, yi_f, yi_a, qbar_f, qbar_a
-  real :: enuc
+  real :: velx, vely, velz
 
-  real :: cgsMeVperAmu = 9.6485e17
+  real :: xc12initial, xne22initial
+
+  real :: game
 
 !==============================================================================
 
@@ -94,34 +87,39 @@ subroutine Simulation_initBlock(blockID)
            !  from external 1-d hydrostatic model
            !-----------------------------------------------
 
-     ! calculate distances from centers of two stars
-     ! assume primary is centered at (-sim_wdp_a,0,0)
-     ! assume secondary is centered at (sim_wds_a,0,0)
+           ! calculate distances from centers of two stars
+           ! assume primary is centered at (-sim_wdp_a,0,0)
+           ! assume secondary is centered at (sim_wds_a,0,0)
 
            radius_p = ( (iCoords(i) + sim_wdp_a)**2 + jCoords(j)**2 + kCoords(k)**2 )**0.5d0
            radius_s = ( (iCoords(i) - sim_wds_a)**2 + jCoords(j)**2 + kCoords(k)**2 )**0.5d0
 
-        !first set everything to fluff
-           call sim_interpolate1dWd(radius_p, deltas(IAXIS), unburned_state(EOS_DENS), unburned_state(EOS_TEMP), xc12initial, &
-                                     xne22initial, 0) !primary
+           ! First set everything to fluff.
+           call sim_interpolate1dWd(radius_p, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
+                                     xne22initial, 0)
 
-        !then if within the two stars, interpolate and set values.
-           call sim_interpolate1dWd(radius_p, deltas(IAXIS), unburned_state(EOS_DENS), unburned_state(EOS_TEMP), xc12initial, &
-                                     xne22initial, 1) !primary
-           call sim_interpolate1dWd(radius_s, deltas(IAXIS), unburned_state(EOS_DENS), unburned_state(EOS_TEMP), xc12initial, &
-                                     xne22initial, 2) !secondary
+           ! Then if within the two stars, interpolate and set values.
+           call sim_interpolate1dWd(radius_p, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
+                                     xne22initial, 1) ! Primary
+           call sim_interpolate1dWd(radius_s, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
+                                     xne22initial, 2) ! Secondary
 
-           unburned_state(EOS_ABAR) = 1.0d0 / ( (1.0d0 / 12.0d0) + (1.0d0 / 16.0d0) )
-           unburned_state(EOS_ZBAR) = 1.0d0 / ( (1.0d0 / 6.0d0) + (1.0d0 / 8.0d0) )
+           ! Now calculate the rotational velocity from the initial period.
 
-!           print *, unburned_state(EOS_ABAR), unburned_state(EOS_ZBAR)
-!   now the velocity from the initial period.
-!
            velx = jCoords(j)*(-2.0*PI/sim_binaryPeriod)
-           vely = iCoords(i)*(2.0*PI/sim_binaryPeriod)
+           vely = iCoords(i)*( 2.0*PI/sim_binaryPeriod)
+           velz = sim_smallu
 
-              state(:) = unburned_state(:)
-              call Eos(MODE_DENS_TEMP, 1, state, [0.5d0, 0.5d0])
+           ! Fill the mass fraction arrays.
+
+           massFraction(:) = sim_smallx
+           massFraction(C12_SPEC)  = max(xc12initial, sim_smallx)
+           massFraction(NE22_SPEC) = max(xne22initial, sim_smallx)
+           massFraction(O16_SPEC)  = max(1.0d0 - xc12initial - xne22initial, sim_smallx)
+
+           call Eos(MODE_DENS_TEMP, 1, state, massFraction)
+
+           GAME = state(EOS_PRES)/(state(EOS_DENS)*state(EOS_EINT))+1.0
 
            !-----------------------------------------------
            !  Now store all this info on the grid
@@ -134,16 +132,18 @@ subroutine Simulation_initBlock(blockID)
 
            call Grid_putPointData(blockId, CENTER, VELX_VAR, EXTERIOR, cell, velx)
            call Grid_putPointData(blockId, CENTER, VELY_VAR, EXTERIOR, cell, vely)
-           call Grid_putPointData(blockId, CENTER, VELZ_VAR, EXTERIOR, cell, 0.0)
+           call Grid_putPointData(blockId, CENTER, VELZ_VAR, EXTERIOR, cell, velz)
 
-           !  usually I would just call the EOS, but we happen to have all this data
-           !  so we'll just put it in.
-           call Grid_putPointData(blockId, CENTER, ENER_VAR, EXTERIOR, cell, state(EOS_EINT))
+           call Grid_putPointData(blockId, CENTER, ENER_VAR, EXTERIOR, cell, state(EOS_EINT) + 0.5 * (velx**2 + vely**2 + velz**2) )
            call Grid_putPointData(blockId, CENTER, EINT_VAR, EXTERIOR, cell, state(EOS_EINT))
            call Grid_putPointData(blockId, CENTER, PRES_VAR, EXTERIOR, cell, state(EOS_PRES))
            call Grid_putPointData(blockId, CENTER, GAMC_VAR, EXTERIOR, cell, state(EOS_GAMC))
-           call Grid_putPointData(blockId, CENTER, GAME_VAR, EXTERIOR, cell, &
-                                       state(EOS_PRES)/(state(EOS_DENS)*state(EOS_EINT))+1.0)
+           call Grid_putPointData(blockId, CENTER, GAME_VAR, EXTERIOR, cell, GAME)
+
+           do n = SPECIES_BEGIN, SPECIES_END
+             call Grid_putPointData(blockId, CENTER, n, EXTERIOR, cell, massFraction(n))
+           enddo
+
         enddo
      enddo
   enddo
