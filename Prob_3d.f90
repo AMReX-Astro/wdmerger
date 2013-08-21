@@ -363,7 +363,8 @@
 
      integer :: i,j,k,ii,jj,kk,n
 
-
+     !$OMP PARALLEL DO PRIVATE(i, j, k, xl, yl, zl, xx, yy, zz) &
+     !$OMP PRIVATE(pres_zone, temp_zone, dist_P, dist_S)
      do k = lo(3), hi(3)   
         zl = xlo(3) + delta(3)*dble(k-lo(3)) 
 
@@ -477,9 +478,6 @@
                                       state(i,j,k,UFS:UFS-1+nspec))
               else
 
-                 ! we need an initial guess for the temperature -- it will be overwritten on output
-                 state(i,j,k,UTEMP) = 1.d5
-
                  call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
                                       pres_zone,state(i,j,k,UFS:UFS-1+nspec))
 
@@ -495,6 +493,7 @@
            enddo
         enddo
      enddo
+     !$OMP END PARALLEL DO
 
      ! Initial velocities = 0
 
@@ -504,7 +503,8 @@
      ! set counter-clockwise rigid body rotation
 
      if ( inertial ) then
-
+ 
+       !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy)
        do k = lo(3), hi(3)
 
          do j = lo(2), hi(2)
@@ -532,6 +532,7 @@
          enddo
        
        enddo
+       !$OMP END PARALLEL DO
 
      endif
 
@@ -559,6 +560,7 @@
 
      integer i, j, k, n
      double precision :: vx, vy, vz
+     double precision :: xx, yy
 
      do n = 1,NVAR
         call filcc(adv(adv_l1,adv_l2,adv_l3,n), &
@@ -573,14 +575,28 @@
      if (adv_l1 < domlo(1)) then
         do k = adv_l3, adv_h3
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, domlo(1)-1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                 vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                 vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -600,14 +616,28 @@
      if (adv_h1 > domhi(1)) then
         do k = adv_l3, adv_h3
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = domhi(1)+1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
-                 vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
-                 vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -627,14 +657,28 @@
      if (adv_l2 < domlo(2)) then
         do k = adv_l3, adv_h3
            do j = adv_l2, domlo(2)-1
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
-                 vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
-                 vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -654,14 +698,28 @@
      if (adv_h2 > domhi(2)) then
         do k = adv_l3, adv_h3
            do j = domhi(2)+1, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
-                 vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
-                 vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -681,14 +739,28 @@
      if (adv_l3 < domlo(3)) then
         do k = adv_l3, domlo(3)-1
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
-                 vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
-                 vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -708,14 +780,28 @@
      if (adv_h3 > domhi(3)) then
         do k = domhi(3)+1, adv_h3
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
-                 vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
-                 vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
