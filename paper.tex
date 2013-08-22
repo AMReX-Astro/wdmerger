@@ -21,6 +21,13 @@
 \newcommand{\MarginPar}[1]{\marginpar{\vskip-\baselineskip\raggedright\tiny\sffamily\hrule\smallskip{\color{red}#1}\par\smallskip\hrule}}
 
 
+\newcommand{\evm}{{(-)}}
+\newcommand{\evz}{{(\circ)}}
+\newcommand{\evp}{{(+)}}
+\newcommand{\enu}{{(\nu)}}
+
+
+
 \newcommand{\msolar}{\mathrm{M}_\odot}
 
 \begin{document}
@@ -336,6 +343,8 @@ that can reach the right interface of the zone $i$ as carried by the wave
 $\nu$.   The reader is referred to
 \citet{ppmunsplit} for further defaults.
 
+\subsection{Reference States}
+
 The presence of $q_i$ in this expression serves as a reference state.
 The idea is that the error in the characteristic projection of the
 jump (due to the nonlinearity) is minimized if we pick a suitable
@@ -373,12 +382,16 @@ centered state as:
   \end{equation}
 This is the same prescription used in the \cite{ppm}.
 
-This change is now the default in the public version of Castro.
+This change is now the default in the public version of Castro,
+and can be controlled with the parameter {\tt castro.ppm\_reference}.
 Figure~\ref{Fig:sod} shows the
 solution to the Sod problem using the old and new reference states.
 We see that the shock and contact are slightly sharper with this new
 reference state, but also there is a slight dip at the tail of the
 rarefaction with the new method.
+
+
+\subsection{Gravity Source Correction}
 
 We also modify slightly the correction done to the gravitational
 source terms after integrating the system in time.  In the original
@@ -403,23 +416,66 @@ correction to the energy.  So our new energy correction equation appears as:
    \frac{\Delta t}{2} \left [ (\rho {\bf u\cdot g})^{(2)} - 
                               (\rho {\bf u\cdot g})^{(1)} \right ]
 \end{equation}
-Both of these are second-order accurate, but we've found that the latter
-is slightly better for conserving energy.  This change can be used in the
-public version of Castro by setting {\tt castro.grav\_source\_type = 2}.
+Both of these are second-order accurate, but we've found that the
+latter is slightly better for conserving energy.  This change is now
+the default in the public version of Castro (it can be controlled by
+{\tt castro.grav\_source\_type}.
+
+\subsection{Gravity Tracing}
 
 We note a few additional differences between the original PPM
-implementation of \citet{ppm} and Castro.  In the original
-implementation, the gravitational was reconstructed as a parabola,
-and this was traced under to find the forcing that affects the interface
-for each wave.   Here, we follow \citet{ppmunsplit} and add   \MarginPar{we have a version that does the tracing---are we using it?  But there is a $\Delta t/2$ difference still}
-it afterwards.  In our experiments, projecting the source term did not
-make a noticable difference in the energy conservation of the
-solution.  In the unsplit implementation, there
-is an additional freedom that comes into play---do we add the source
-terms to the normal predictor before or after using it to construct
-the transverse flux differences?  Our experiments showed no
-substantial difference with either variant.  We add the sources only
-at the final construction of the interface states.
+implementation of \citet{ppm} and Castro.  In the original PPM
+implementation, the gravitational was reconstructed as a parabola, and
+this was traced under to find the forcing that affects the interface
+for each wave.  Castro followed \citet{ppmunsplit} which instead adds
+$(\Delta t/2)g$ to the interface states at the end of the
+reconstruction.  In the current implementation, we do the original
+parabolic reconstruction and characteristic tracing of the gravitation
+source.  Our system with the source appears as:
+\begin{equation}
+q_t + A(q) q_x = G
+\end{equation}
+where $G = (0, g, 0)^T$---i.e. the gravitational source only affects
+$u$, not $\rho$ or $p$.  Note that in the PPM paper, they put $G$ on 
+the lefthand side of the primitive variable equation, so our signs are
+opposite.  Our projections are now:
+\begin{equation}
+\sum_{\nu; \lambda^\enu \ge 0}l^\enu \cdot (\tilde{q} - \mathcal{I}^\enu_+(q) - \tfrac{\Delta t}{2} G) r^\enu
+\end{equation}
+for the left state, and
+\begin{equation}
+\sum_{\nu; \lambda^\enu \le 0} l^\enu \cdot (\tilde{q} - \mathcal{I}^\enu_-(q) - \tfrac{\Delta t}{2} G) r^\enu 
+\end{equation}
+for the right state.  Since $G$ is only non-zero for velocity, only
+the velocity changes.  Writing out the sum (and performing the vector products), we
+get:
+\begin{eqnarray}
+u_{i+1/2,L}^{n+1/2} =
+   \tilde{u}_+ 
+  &-& \frac{1}{2} \left [
+      \left (\tilde{u}_+ - \mathcal{I}_+^\evm(u) - \frac{\Delta t}{2} \mathcal{I}^\evm_+(g) \right ) - 
+       \frac{\tilde{p}_+ - \mathcal{I}_+^\evm(p)}{C} \right ] \nonumber \\
+  &-& \frac{1}{2} \left [
+      \left (\tilde{u}_+ - \mathcal{I}_+^\evp(u) - \frac{\Delta t}{2} \mathcal{I}^\evp_+(g) \right ) +
+       \frac{\tilde{p}_+ - \mathcal{I}_+^\evp(p)}{C} \right ]
+\end{eqnarray}
+These differ from the expression in the PPM paper, where $\Delta t G$,
+not $\Delta t/2 G$ is used in the projection, however we believe that
+the factor of $1/2$ is correct.  To see this, notice that if both
+waves are moving toward the interface, then the source term that is
+added to the interface state is $(\Delta t/4) (\mathcal{I}_+^\evm(g) +
+\mathcal{I}_+^\evp(g))$ for the left state, which reduces to $(\Delta
+t/2) g$ for constant g---this matches the result from Taylor
+expanding to the interface at the half-time (as in \citealt{ppmunsplit}).
+
+There is one additional effect of this change---now the gravitational
+source is seen by all Riemann solves (including the transverse solves)
+whereas previously it was only added to the final unsplit interface
+states.  Both methods are second-order accurate.
+
+The tracing of gravity can be controlled in the public version of Castro
+with the parmeter {\tt castro.ppm\_trace\_grav}.
+
 
 
 \clearpage
