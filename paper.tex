@@ -355,6 +355,7 @@ found that this is ill-behaved in the presence of strong shocks
 (especially at low resolution). For the present work, we switch the
 reference state to
 \begin{equation}
+\label{eq:refchoice}
 \tilde{q}_L = \left \{ \begin{array}{cc}
        \mathcal{I}_+^{(+)}(q_i) & \mathrm{if~} u + c > 0 \\
        q_i                    & \mathrm{otherwise}
@@ -368,6 +369,7 @@ over the timestep.  This is
 in agreement with \citet{ppmunsplit} (eq. 90).  This makes our
 expression appear as:
 \begin{equation}
+\label{eq:ppmstatel}
 q_{i+1/2,L}^{n+1/2} = \tilde{q}_L -
    \sum_{\nu;\lambda_i^{(\nu)}\ge 0} l_i^{(\nu)} \cdot \left [
         \tilde{q}_L  - \mathcal{I}^{(\nu)}_+(q_i)
@@ -389,6 +391,64 @@ solution to the Sod problem using the old and new reference states.
 We see that the shock and contact are slightly sharper with this new
 reference state, but also there is a slight dip at the tail of the
 rarefaction with the new method.
+
+It is instructive to look at the effect of the reference state choice.
+First, consider one of the variables present in one-dimensional flow
+(density, velocity in the normal direction, and pressure).  Here we
+our reference state is as in Eq.~\ref{eq:refchoice} and we have.
+Ignoring flattening, if there are no waves moving toward our
+interface, then Eq.~\ref{eq:ppmstatel} reduces to:
+\begin{equation}
+q_{i+1/2,L}^{n+1/2} = \tilde{q}_L = q_i
+\end{equation}
+If instead only the fastest wave is moving toward the interface, then
+only the term corresponding to the fastest wave in the sum will be
+added in Eq.~\ref{eq:ppmstatel}, but our choice of reference state makes
+that term 0 by design, and our interface state is:
+\begin{equation}
+q_{i+1/2,L}^{n+1/2} = \tilde{q}_L = \mathcal{I}_+^{+}(q_i)
+\end{equation}
+This is the desired behavior for each of these cases. 
+
+The details of the reference state for passively advected quantities 
+(which includes the transverse velocities in the 1-d tracing) is not
+typically discussed.  If we use the same idea of the reference state as
+in Eq.~\ref{eq:refchoice}, and consider a quantity $\xi$ which should only
+jump across the contact, then our interface state becomes:
+\begin{equation}
+\xi_{i+1/2,L}^{n+1/2} = \tilde{\xi}_L -
+  \underbrace{l_i^\evz \cdot \left [
+        \tilde{\xi}_L  - \mathcal{I}^\evz_+(\xi_i)
+       \right ] r_i^\evz}_{\text{only if~$u \ge 0$}}
+\end{equation}
+Again, ignoring flattening, if $u \ge 0$, then we have
+\begin{equation}
+\xi_{i+1/2,L}^{n+1/2} = \tilde{\xi}_L -
+  \left (\tilde{\xi}_L  - \mathcal{I}^\evz_+(\xi_i) \right ) = \mathcal{I}^\evz_+(\xi_i)
+\end{equation}
+(where we used the fact that the eigenvectors are normalized to 1 and
+don't mix in any other states when dealing with passive terms).  This
+is the expected behavior---we see a state that is traced only by the
+contact wave.  However, if $u < 0$ but $u + c \ge 0$, then we instead get:
+\begin{equation}
+\xi_{i+1/2,L}^{n+1/2} = \tilde{\xi}_L = \mathcal{I}^\evp_+(\xi_i)
+\end{equation}
+Here we used the same definition of the reference state and see that our
+interface state sees the profile traced under the fastest wave, not the
+contact.  This is not the correct behavior for a passively-advected
+quantity.  
+
+The fix for passively-advected quantities is to simply ignore the 
+idea of a reference state and just test on the speed of the contact
+itself, setting:
+\begin{equation}
+\xi_{i+1/2,L}^{n+1/2} = \left \{ \begin{array}{cc}
+       \mathcal{I}_+^\evz(\xi_i) & \mathrm{if~} u  > 0 \\
+       \xi_i                    & \mathrm{otherwise}
+\end{array}
+\right .
+\end{equation}
+
 
 
 \subsection{Gravity Source Correction}
