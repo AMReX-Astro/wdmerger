@@ -632,9 +632,9 @@
 
                  else
 
-                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                   vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
+                   vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
+                   vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
  
                  endif
 
@@ -673,9 +673,9 @@
 
                  else
 
-                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                   vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
+                   vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
+                   vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
  
                  endif
 
@@ -714,9 +714,9 @@
 
                  else
 
-                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                   vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
+                   vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
+                   vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
  
                  endif
 
@@ -755,9 +755,9 @@
 
                  else
 
-                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                   vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
+                   vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
+                   vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
  
                  endif
 
@@ -796,9 +796,9 @@
 
                  else
 
-                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                   vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
+                   vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
+                   vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
  
                  endif
 
