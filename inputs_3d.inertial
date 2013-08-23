@@ -43,7 +43,7 @@ castro.grav_source_type = 2
 castro.ppm_trace_grav = 1
 castro.ppm_temp_fix = 1
 
-castro.do_rotation = 1
+castro.do_rotation = 0
 castro.rotational_frequency = 0.025
 
 castro.show_center_of_mass = 1
@@ -75,7 +75,7 @@ amr.v               = 1       # control verbosity in Amr.cpp
 castro.v            = 1       # control verbosity in Castro.cpp
 mg.v                = 0       # Turn off multigrid verbosity
 
-amr.probin_file = probin.pakmor
+amr.probin_file = probin.inertial
 
 amr.derive_plot_vars = ALL
 

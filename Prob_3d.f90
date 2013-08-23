@@ -4,6 +4,7 @@
      use model_parser_module
      use bl_constants_module
      use fundamental_constants_module
+     use meth_params_module, only: small_temp, small_pres, small_dens
      use eos_module
      use com, only: mass_p, mass_s, com_loc_p, com_loc_s
 
@@ -46,10 +47,10 @@
 
      integer :: ioproc
 
-     ! for outputting -- determine if we are the IO processor
+     ! For outputting -- determine if we are the IO processor
      call bl_pd_is_ioproc(ioproc)
 
-     ! build "probin" filename -- the name of file containing fortin namelist.
+     ! Build "probin" filename -- the name of file containing fortin namelist.
      if (namlen .gt. maxlen) then
         call bl_error("ERROR: probin file name too long")
      end if
@@ -59,7 +60,7 @@
      end do
 
 
-     ! set namelist defaults
+     ! Set namelist defaults
      denerr = 1.d20
      dengrad = 1.d20
      max_denerr_lev = 10
@@ -90,23 +91,22 @@
 
      interp_temp = .false.
 
-     ! read namelists -- override the defaults
+     ! Read namelists -- override the defaults
      untin = 9 
      open(untin,file=probin(1:namlen),form='formatted',status='old')
      read(untin,fortin)
      close(unit=untin)
 
 
-     ! grid geometry
+     ! Grid geometry
      center(1) = HALF*(problo(1)+probhi(1))
      center(2) = HALF*(problo(2)+probhi(2))
      center(3) = HALF*(problo(3)+probhi(3))
 
-     
-     ! read in model for the primary WD
+     ! Read in model for the primary WD
      call read_model_file(model_P_name)
      
-     ! copy the data over to P's arrays
+     ! Copy the data over to P's arrays
      allocate(model_P_r(npts_model))
      allocate(model_P_state(npts_model, nvars_model))
 
@@ -116,7 +116,7 @@
 
      call close_model_file()
 
-     ! compute the mass of the primary
+     ! Compute the mass of the primary
      mass_p_initial = ZERO
      do i = 1, npts_model_P-1
         if (i == 1) then
@@ -133,10 +133,10 @@
      enddo
 
 
-     ! read in model for the secondary WD
+     ! Read in model for the secondary WD
      call read_model_file(model_S_name)
      
-     ! copy the data over to B's arrays
+     ! Copy the data over to B's arrays
      allocate(model_S_r(npts_model))
      allocate(model_S_state(npts_model, nvars_model))
 
@@ -208,7 +208,7 @@
      endif
 
 
-     ! check that the cutoff densities match
+     ! Check that the cutoff densities match
      if (model_S_state(npts_model_S,idens_model) /= &
          model_P_state(npts_model_P,idens_model)) then
         call bl_error("ERROR: Cutoff densities for primary and secondary models do not agree.")
@@ -216,7 +216,7 @@
 
      dens_ambient = model_S_state(npts_model_S,idens_model)
 
-     ! check that the cutoff temperature match
+     ! Check that the cutoff temperature match
      if (model_S_state(npts_model_S,itemp_model) /= &
          model_P_state(npts_model_P,itemp_model)) then
         call bl_error("ERROR: Cutoff temperatures for primary and secondary models do not agree.")
@@ -225,16 +225,22 @@
      temp_ambient = model_S_state(npts_model_S,itemp_model)
 
 
-     ! ambient X
+     ! Ambient X
      xn_ambient(:) = model_S_state(npts_model_S,ispec_model:ispec_model-1+nspec)
 
 
-     ! get the rest of the ambient thermodynamic state
+     ! Given the inputs of small_dens and small_temp, figure out small_pres.
+     ! Use the ambient gas composition (we don't need to worry about saving
+     ! our result in eint_ambient since it will be reset in the next call).
+
+     call eos_given_RTX(eint_ambient,small_pres,small_dens, &
+                        small_temp,xn_ambient)
+
+     ! Get the rest of the ambient thermodynamic state
      call eos_given_RTX(eint_ambient,pres_ambient,dens_ambient, &
                         temp_ambient,xn_ambient)
 
-
-     ! compute the radius of the primary
+     ! Compute the radius of the primary
      radius_P_initial = -1.0d0
      do i = 1, npts_model_P
         if (model_P_state(i,idens_model) <= 1.1*dens_ambient) then
@@ -280,22 +286,22 @@
         call bl_error("ERROR: Stars are touching!")
      endif
 
-     ! make sure the domain is big enough
+     ! Make sure the domain is big enough
 
-     ! for simplicity, make sure the x and y sizes are 2x the greatest a + R
+     ! For simplicity, make sure the x and y sizes are 2x the greatest a + R
      length = max(a_P_initial + radius_P_initial, a_S_initial + radius_S_initial)
      if (length > HALF*(probhi(1) - problo(1)) .or. &
          length > HALF*(probhi(2) - problo(2))) then
         call bl_error("ERROR: The domain width is too small to include the stars (along their axis).")
      endif
 
-     ! for the height, let's take 2x the radius
+     ! For the height, let's take 2x the radius
      if (TWO*max(radius_P_initial, radius_S_initial) > HALF*(probhi(3) - problo(3))) then
         call bl_error("ERROR: The domain height is too small to include the stars (perpendicular to their axis).")
      endif
 
      
-     ! star center positions -- we'll put them in the midplane on the
+     ! Star center positions -- we'll put them in the midplane on the
      ! x-axis, with the CM at the center of the domain
      center_P_initial(1) = center(1) - a_P_initial
      center_P_initial(2) = center(2)
@@ -363,7 +369,8 @@
 
      integer :: i,j,k,ii,jj,kk,n
 
-
+     !$OMP PARALLEL DO PRIVATE(i, j, k, xl, yl, zl, xx, yy, zz) &
+     !$OMP PRIVATE(pres_zone, temp_zone, dist_P, dist_S)
      do k = lo(3), hi(3)   
         zl = xlo(3) + delta(3)*dble(k-lo(3)) 
 
@@ -477,9 +484,6 @@
                                       state(i,j,k,UFS:UFS-1+nspec))
               else
 
-                 ! we need an initial guess for the temperature -- it will be overwritten on output
-                 state(i,j,k,UTEMP) = 1.d5
-
                  call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
                                       pres_zone,state(i,j,k,UFS:UFS-1+nspec))
 
@@ -495,6 +499,7 @@
            enddo
         enddo
      enddo
+     !$OMP END PARALLEL DO
 
      ! Initial velocities = 0
 
@@ -504,7 +509,8 @@
      ! set counter-clockwise rigid body rotation
 
      if ( inertial ) then
-
+ 
+       !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy)
        do k = lo(3), hi(3)
 
          do j = lo(2), hi(2)
@@ -532,6 +538,7 @@
          enddo
        
        enddo
+       !$OMP END PARALLEL DO
 
      endif
 
@@ -559,6 +566,7 @@
 
      integer i, j, k, n
      double precision :: vx, vy, vz
+     double precision :: xx, yy
 
      do n = 1,NVAR
         call filcc(adv(adv_l1,adv_l2,adv_l3,n), &
@@ -573,14 +581,28 @@
      if (adv_l1 < domlo(1)) then
         do k = adv_l3, adv_h3
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, domlo(1)-1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                 vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                 vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -600,14 +622,28 @@
      if (adv_h1 > domhi(1)) then
         do k = adv_l3, adv_h3
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = domhi(1)+1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
-                 vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
-                 vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
+                   vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
+                   vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -627,14 +663,28 @@
      if (adv_l2 < domlo(2)) then
         do k = adv_l3, adv_h3
            do j = adv_l2, domlo(2)-1
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
-                 vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
-                 vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
+                   vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
+                   vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -654,14 +704,28 @@
      if (adv_h2 > domhi(2)) then
         do k = adv_l3, adv_h3
            do j = domhi(2)+1, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
-                 vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
-                 vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
+                   vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
+                   vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -681,14 +745,28 @@
      if (adv_l3 < domlo(3)) then
         do k = adv_l3, domlo(3)-1
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
-                 vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
-                 vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
+                   vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
+                   vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -708,14 +786,28 @@
      if (adv_h3 > domhi(3)) then
         do k = domhi(3)+1, adv_h3
            do j = adv_l2, adv_h2
+              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1
+                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+
                  adv(i,j,k,URHO) = dens_ambient
                  adv(i,j,k,UTEMP) = temp_ambient
                  adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
 
-                 vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
-                 vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
-                 vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
+                 if ( inertial ) then
+
+                   vx = (-2.0d0 * M_PI / period) * yy
+                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vz = ZERO
+
+                 else
+
+                   vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
+                   vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
+                   vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
+ 
+                 endif
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz

@@ -11,11 +11,11 @@ geometry.is_periodic = 0 0 0
 geometry.coord_sys = 0
 
 geometry.prob_lo   =  0.    0.    0.
-geometry.prob_hi   =  1.e10 1.e10 1.e10
+geometry.prob_hi   =  1.024e10 1.024e10 1.024e10
 
 amr.n_cell         = 64 64 64
 
-amr.max_grid_size   = 32
+amr.max_grid_size   = 16 16 32
 amr.blocking_factor = 8
 
 amr.max_level      = 1       # maximum level number allowed
