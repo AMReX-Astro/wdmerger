@@ -4,6 +4,7 @@
      use model_parser_module
      use bl_constants_module
      use fundamental_constants_module
+     use meth_params_module, only: small_temp, small_pres, small_dens
      use eos_module
      use com, only: mass_p, mass_s, com_loc_p, com_loc_s
 
@@ -46,10 +47,10 @@
 
      integer :: ioproc
 
-     ! for outputting -- determine if we are the IO processor
+     ! For outputting -- determine if we are the IO processor
      call bl_pd_is_ioproc(ioproc)
 
-     ! build "probin" filename -- the name of file containing fortin namelist.
+     ! Build "probin" filename -- the name of file containing fortin namelist.
      if (namlen .gt. maxlen) then
         call bl_error("ERROR: probin file name too long")
      end if
@@ -59,7 +60,7 @@
      end do
 
 
-     ! set namelist defaults
+     ! Set namelist defaults
      denerr = 1.d20
      dengrad = 1.d20
      max_denerr_lev = 10
@@ -90,23 +91,22 @@
 
      interp_temp = .false.
 
-     ! read namelists -- override the defaults
+     ! Read namelists -- override the defaults
      untin = 9 
      open(untin,file=probin(1:namlen),form='formatted',status='old')
      read(untin,fortin)
      close(unit=untin)
 
 
-     ! grid geometry
+     ! Grid geometry
      center(1) = HALF*(problo(1)+probhi(1))
      center(2) = HALF*(problo(2)+probhi(2))
      center(3) = HALF*(problo(3)+probhi(3))
 
-     
-     ! read in model for the primary WD
+     ! Read in model for the primary WD
      call read_model_file(model_P_name)
      
-     ! copy the data over to P's arrays
+     ! Copy the data over to P's arrays
      allocate(model_P_r(npts_model))
      allocate(model_P_state(npts_model, nvars_model))
 
@@ -116,7 +116,7 @@
 
      call close_model_file()
 
-     ! compute the mass of the primary
+     ! Compute the mass of the primary
      mass_p_initial = ZERO
      do i = 1, npts_model_P-1
         if (i == 1) then
@@ -133,10 +133,10 @@
      enddo
 
 
-     ! read in model for the secondary WD
+     ! Read in model for the secondary WD
      call read_model_file(model_S_name)
      
-     ! copy the data over to B's arrays
+     ! Copy the data over to B's arrays
      allocate(model_S_r(npts_model))
      allocate(model_S_state(npts_model, nvars_model))
 
@@ -208,7 +208,7 @@
      endif
 
 
-     ! check that the cutoff densities match
+     ! Check that the cutoff densities match
      if (model_S_state(npts_model_S,idens_model) /= &
          model_P_state(npts_model_P,idens_model)) then
         call bl_error("ERROR: Cutoff densities for primary and secondary models do not agree.")
@@ -216,7 +216,7 @@
 
      dens_ambient = model_S_state(npts_model_S,idens_model)
 
-     ! check that the cutoff temperature match
+     ! Check that the cutoff temperature match
      if (model_S_state(npts_model_S,itemp_model) /= &
          model_P_state(npts_model_P,itemp_model)) then
         call bl_error("ERROR: Cutoff temperatures for primary and secondary models do not agree.")
@@ -225,16 +225,22 @@
      temp_ambient = model_S_state(npts_model_S,itemp_model)
 
 
-     ! ambient X
+     ! Ambient X
      xn_ambient(:) = model_S_state(npts_model_S,ispec_model:ispec_model-1+nspec)
 
 
-     ! get the rest of the ambient thermodynamic state
+     ! Given the inputs of small_dens and small_temp, figure out small_pres.
+     ! Use the ambient gas composition (we don't need to worry about saving
+     ! our result in eint_ambient since it will be reset in the next call).
+
+     call eos_given_RTX(eint_ambient,small_pres,small_dens, &
+                        small_temp,xn_ambient)
+
+     ! Get the rest of the ambient thermodynamic state
      call eos_given_RTX(eint_ambient,pres_ambient,dens_ambient, &
                         temp_ambient,xn_ambient)
 
-
-     ! compute the radius of the primary
+     ! Compute the radius of the primary
      radius_P_initial = -1.0d0
      do i = 1, npts_model_P
         if (model_P_state(i,idens_model) <= 1.1*dens_ambient) then
@@ -280,22 +286,22 @@
         call bl_error("ERROR: Stars are touching!")
      endif
 
-     ! make sure the domain is big enough
+     ! Make sure the domain is big enough
 
-     ! for simplicity, make sure the x and y sizes are 2x the greatest a + R
+     ! For simplicity, make sure the x and y sizes are 2x the greatest a + R
      length = max(a_P_initial + radius_P_initial, a_S_initial + radius_S_initial)
      if (length > HALF*(probhi(1) - problo(1)) .or. &
          length > HALF*(probhi(2) - problo(2))) then
         call bl_error("ERROR: The domain width is too small to include the stars (along their axis).")
      endif
 
-     ! for the height, let's take 2x the radius
+     ! For the height, let's take 2x the radius
      if (TWO*max(radius_P_initial, radius_S_initial) > HALF*(probhi(3) - problo(3))) then
         call bl_error("ERROR: The domain height is too small to include the stars (perpendicular to their axis).")
      endif
 
      
-     ! star center positions -- we'll put them in the midplane on the
+     ! Star center positions -- we'll put them in the midplane on the
      ! x-axis, with the CM at the center of the domain
      center_P_initial(1) = center(1) - a_P_initial
      center_P_initial(2) = center(2)
