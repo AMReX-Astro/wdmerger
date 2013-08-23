@@ -1,0 +1,33 @@
+# latex intermediates
+*.aux
+*.log
+*.dvi
+*.toc
+*.bbl
+*.blg
+*.lof
+*.lot
+
+
+# emacs temporaries
+*~
+\#*
+
+
+# Castro executables
+Castro*.ex
+
+# plt and chk files
+*plt*
+*chk*
+
+# These files are created at build time
+extern.f90
+network.f90
+helm_table.dat
+wdmerger_diag.out
+
+# build directories
+o/
+d/
+f/
