@@ -1,7 +1,7 @@
 # ------------------  INPUTS TO MAIN PROGRAM  -------------------
 
 max_step = 10000
-stop_time = 100.0
+stop_time = 40.0
 
 castro.print_energy_diagnostics = 1
 castro.print_fortran_warnings   = 0
@@ -11,11 +11,11 @@ geometry.is_periodic = 0 0 0
 geometry.coord_sys = 0
 
 geometry.prob_lo   =  0.    0.    0.
-geometry.prob_hi   =  1.e10 1.e10 1.e10
+geometry.prob_hi   =  1.024e10 1.024e10 1.024e10
 
 amr.n_cell         = 64 64 64
 
-amr.max_grid_size   = 32
+amr.max_grid_size   = 16 16 32 32
 amr.blocking_factor = 8
 
 amr.max_level      = 1       # maximum level number allowed
@@ -41,9 +41,10 @@ castro.ppm_reference = 1
 castro.use_colglaz = 1
 castro.grav_source_type = 2
 castro.ppm_trace_grav = 1
+castro.ppm_temp_fix = 1
 
-castro.do_rotation = 1
-castro.rotational_frequency = 0.01
+castro.do_rotation = 0
+castro.rotational_frequency = 0.025
 
 castro.show_center_of_mass = 1
 
@@ -51,7 +52,7 @@ gravity.gravity_type = PoissonGrav
 gravity.max_multipole_order = 6
 
 castro.dt_cutoff      = 5.e-20  # level 0 timestep below which we halt
-castro.cfl            = 0.5     # cfl number for hyperbolic system
+castro.cfl            = 0.7     # cfl number for hyperbolic system
 castro.init_shrink    = 0.1     # scale back initial timestep by this factor
 castro.change_max     = 1.1     # factor by which dt is allowed to change each timestep
 castro.sum_interval   = 1       # timesteps between computing and printing volume averages
@@ -66,15 +67,15 @@ amr.plot_files_output = 1
 amr.checkpoint_files_output = 1
 
 amr.check_file      = chk     # root name of checkpoint file
-amr.check_int       = 50      # number of timesteps between checkpoints
+amr.check_int       = 10      # number of timesteps between checkpoints
 amr.plot_file       = plt     # root name of plot file
-amr.plot_int        = 50      # number of timesteps between plotfiles
+amr.plot_int        = 10      # number of timesteps between plotfiles
 
 amr.v               = 1       # control verbosity in Amr.cpp
 castro.v            = 1       # control verbosity in Castro.cpp
 mg.v                = 0       # Turn off multigrid verbosity
 
-amr.probin_file = probin
+amr.probin_file = probin.inertial
 
 amr.derive_plot_vars = ALL
 
