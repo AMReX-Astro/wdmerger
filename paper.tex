@@ -451,36 +451,6 @@ itself, setting:
 
 
 
-\subsection{Gravity Source Correction}
-
-We also modify slightly the correction done to the gravitational
-source terms after integrating the system in time.  In the original
-Castro paper (Eqs. 19 and 20), the state after the conservative update
-due to fluxes and external sources (other than gravity) was
-represented with the superscript `$(2,\star)$'.  The gravitational
-sources were then corrected, making them centered in time, yielding
-the final state at the end of the hydrodynamics step, indicated with
-the superscript `$(2)$'.  This appeared as:
-\begin{eqnarray}
-(\rho {\bf u})^{(2)} &=& (\rho {\bf u})^{(2,\star)} +
-   \frac{\Delta t}{2} \left [ (\rho {\bf g})^{(2,\star)} - 
-                              (\rho {\bf g})^{(1)} \right ]\\
-(\rho E)^{(2)} &=& (\rho E)^{(2,\star)} +
-   \frac{\Delta t}{2} \left [ (\rho {\bf u\cdot g})^{(2,\star)} - 
-                              (\rho {\bf u\cdot g})^{(1)} \right ]
-\end{eqnarray}
-Here we make the subtle change of using the corrected ${\bf u}$ in the
-correction to the energy.  So our new energy correction equation appears as:
-\begin{equation}
-(\rho E)^{(2)} = (\rho E)^{(2,\star)} +
-   \frac{\Delta t}{2} \left [ (\rho {\bf u\cdot g})^{(2)} - 
-                              (\rho {\bf u\cdot g})^{(1)} \right ]
-\end{equation}
-Both of these are second-order accurate, but we've found that the
-latter is slightly better for conserving energy.  This change is now
-the default in the public version of Castro (it can be controlled by
-{\tt castro.grav\_source\_type}.
-
 \subsection{Gravity Tracing}
 
 We note a few additional differences between the original PPM
@@ -538,6 +508,114 @@ with the parmeter {\tt castro.ppm\_trace\_grav}.
 
 
 
+\subsection{Gravity Source Correction}
+
+We also modify slightly the correction done to the gravitational
+source terms after integrating the system in time.  In the original
+Castro paper (Eqs. 19 and 20), the state after the conservative update
+due to fluxes and external sources (other than gravity) was
+represented with the superscript `$(2,\star)$'.  The gravitational
+sources were then corrected, making them centered in time, yielding
+the final state at the end of the hydrodynamics step, indicated with
+the superscript `$(2)$'.  This appeared as:
+\begin{eqnarray}
+(\rho {\bf U})^{(2)} &=& (\rho {\bf U})^{(2,\star)} +
+   \frac{\Delta t}{2} \left [ (\rho {\bf g})^{(2,\star)} - 
+                              (\rho {\bf g})^{(1)} \right ]\\
+(\rho E)^{(2)} &=& (\rho E)^{(2,\star)} +
+   \frac{\Delta t}{2} \left [ (\rho {\bf U\cdot g})^{(2,\star)} - 
+                              (\rho {\bf U\cdot g})^{(1)} \right ]
+\end{eqnarray}
+Here we make the subtle change of using the corrected ${\bf u}$ in the
+correction to the energy.  So our new energy correction equation appears as:
+\begin{equation}
+(\rho E)^{(2)} = (\rho E)^{(2,\star)} +
+   \frac{\Delta t}{2} \left [ (\rho {\bf U\cdot g})^{(2)} - 
+                              (\rho {\bf U\cdot g})^{(1)} \right ]
+\end{equation}
+Both of these are second-order accurate, but we've found that the
+latter is slightly better for conserving energy.  This change is now
+the default in the public version of Castro (it can be controlled by
+{\tt castro.grav\_source\_type}.
+
+Rotation is handled similarly to gravity during the conservative update.
+The momentum equation, with rotation sources appears as:
+\begin{equation}
+\frac{\partial \rho {\bf U}}{\partial t} + \nabla \cdot (\rho {\bf U U} + p) = 
+   \rho {\bf g} - 2 \rho {\bf \Omega \times U} 
+                - \rho {\bf \Omega \times (\Omega \ times U)}
+\end{equation}
+we take the rotation axis to be in the $z$-direction, ${\bf \Omega} =
+\Omega \hat{\bf k}$.  Working out the cross-products, the rotation
+forces appear as
+\begin{equation}
+{\bf F}_\mathrm{rot} = \rho \left (
+    \begin{array}{c}
+     \phantom{-}2 \Omega v + \Omega^2 x \\
+              - 2 \Omega u + \Omega^2 y \\
+              0 
+    \end{array}
+  \right )
+\end{equation}
+We want to time-center this force in the final conservative update, giving
+updates for the $u$ and $v$ components of the velocity as:
+\begin{eqnarray}
+\frac{(\rho u)^{n+1} - (\rho u)^n}{\Delta t} + A^{(x),n+1/2} &=&
+   \frac{1}{2} \left [ (\rho {\bf g}\cdot \hat{\bf i})^n
+                      + (\rho {\bf g}\cdot \hat{\bf i})^{n+1} \right ] \nonumber\\&+&
+   \frac{1}{2} \left [ (2\rho \Omega v)^n + (2\rho \Omega v)^{n+1} \right ] \nonumber \\&+&
+   \frac{1}{2} \left [ (\rho \Omega^2 x)^n + (\rho \Omega^2 x)^{n+1} \right ] \\
+\frac{(\rho v)^{n+1} - (\rho v)^n}{\Delta t} + A^{(y),n+1/2} &=&
+   \frac{1}{2} \left [ (\rho {\bf g}\cdot \hat{\bf j})^n +
+                       (\rho {\bf g}\cdot \hat{\bf j})^{n+1} \right ] \nonumber \\ &+&
+   \frac{1}{2} \left [ (-2\rho \Omega u)^n + (-2\rho \Omega u)^{n+1} \right ] \nonumber \\ &+&
+   \frac{1}{2} \left [ (\rho \Omega^2 y)^n + (\rho \Omega^2 y)^{n+1} \right ]
+\end{eqnarray}
+where here the explicit advective term from the Godunov method is represented as $A$ and is already time-centered.  In the Castro algorithm, a full $\Delta t$ of the old-time-level source is first added and later we correct this by subtracting off $\Delta t/2$ of the old-time-level term and adding $\Delta t/2$ of the new-time-level source.  This correction appears as:
+\begin{eqnarray}
+(\rho u)^{n+1} = (\rho u)^\prime 
+   &+& \underbrace{
+      \frac{\Delta t}{2} \left [ (\rho {\bf g}\cdot \hat{\bf i})^{n+1}
+                               - (\rho {\bf g}\cdot \hat{\bf i})^{n} \right ]
+    }_{\equiv \Delta^{g,x}} \nonumber \\
+   &+& \frac{\Delta t}{2} \left [ (2\rho \Omega v)^{n+1} 
+                                - (2\rho \Omega v)^{n} \right ] \nonumber \\
+   &+& \underbrace{
+      \frac{\Delta t}{2} \left [ (\rho \Omega^2 x)^{n+1} 
+                               - (\rho \Omega^2 x)^{n} \right ]
+    }_{\equiv \Delta^{c,x}} \\
+%
+(\rho v)^{n+1} = (\rho v)^\prime 
+   &+& \underbrace{
+      \frac{\Delta t}{2} \left [ (\rho {\bf g}\cdot \hat{\bf j})^{n+1}
+                               - (\rho {\bf g}\cdot \hat{\bf j})^{n} \right ]
+    }_{\equiv \Delta^{g,y}} \nonumber \\
+   &+& \frac{\Delta t}{2} \left [ (-2\rho \Omega u)^{n+1} 
+                                - (-2\rho \Omega u)^{n} \right ] \nonumber \\
+   &+& \underbrace{
+      \frac{\Delta t}{2} \left [ (\rho \Omega^2 y)^{n+1} 
+                               - (\rho \Omega^2 y)^{n} \right ]
+    }_{\equiv \Delta^{c,y}} \\
+\end{eqnarray}
+For compactness, we define the following:
+\begin{eqnarray}
+S_x &=& (\rho u)^\prime + \Delta^{g,x} + \Delta^{c,x} 
+        - \frac{\Delta t}{2} (2 \rho \Omega v)^n \\
+%
+S_y &=& (\rho v)^\prime + \Delta^{g,y} + \Delta^{c,y} 
+        + \frac{\Delta t}{2} (2 \rho \Omega u)^n 
+\end{eqnarray}
+and our updates are now a coupled implicit system for the updates of
+$u$ and $v$:
+\begin{eqnarray}
+(\rho u)^{n+1} = S_x + \frac{\Delta t}{2}(2\rho \Omega v)^{n+1} \label{eq:rhouupdate}\\
+(\rho v)^{n+1} = S_y - \frac{\Delta t}{2}(2\rho \Omega u)^{n+1} 
+\end{eqnarray}
+This can be solved analytically:
+\begin{equation}
+(\rho v)^{n+1} = \frac{S_y - \Delta t \Omega S_x}{1 + \Delta t^2 \Omega^2}
+\end{equation}
+and then we can find $(\rho u)^{n+1}$ from Eq.~\ref{eq:rhouupdate}.
 \clearpage
 
 \begin{figure}
