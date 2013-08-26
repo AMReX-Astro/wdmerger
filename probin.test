@@ -2,8 +2,8 @@
   max_denerr_lev     = 4
   denerr             = 1.d-2
 
-  model_A_name = "sub_chandra.M_WD-0.60.hse.CO.1024.nocoulomb"
-  model_B_name = "sub_chandra.M_WD-0.80.hse.CO.1024.nocoulomb"
+  model_P_name = "sub_chandra.M_WD-0.80.hse.CO.1024.nocoulomb"
+  model_S_name = "sub_chandra.M_WD-0.60.hse.CO.1024.nocoulomb"
 
   period = 100.0
 
@@ -13,6 +13,8 @@
   
   damping  = F
   damping_alpha = 1.d-2
+
+  interp_temp = T
 /
 
 &extern
