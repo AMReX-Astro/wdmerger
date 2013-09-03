@@ -19,34 +19,7 @@ module Simulation_data
 
   real, save :: sim_smallx, sim_smallt, sim_smallu, sim_smalle, sim_smallp
 
-  logical, save :: sim_ignite
-
-  logical, save :: sim_ignitionFile
-  integer, save :: sim_ign_numpnts
-  real, allocatable, dimension(:), save :: sim_ignX, sim_ignY, sim_ignZ, sim_ignR
-
-  logical, save :: sim_ignMPole
-  real, save :: sim_ignMPoleA
-  integer, save :: sim_ignMpoleMinL, sim_ignMpoleMaxL, sim_ignMpoleSeed
-  integer, save :: sim_geom
-  real, allocatable, dimension(:), save  :: mp_A
-
-  logical, save :: sim_ignSin
-  real, save    :: sim_ignSinN, sim_ignSinA
-
-  real,    save           :: sim_laminarWidth
-
-  real, save :: sim_refFluffDensThresh, sim_refFluffMargin
-  real, save :: sim_refNogenEnucThresh, sim_refNogenFldtThresh, sim_refNogenMargin
-  integer, save :: sim_refFluffLevel, sim_refNogenLevel
-  real, save :: sim_refCentRegionDist
-  integer, save :: sim_refCentRegionLevel
-
-  real, save :: sim_vrms_reduced, sim_vrms_center, sim_vrms_Tc, sim_vrms_T0, sim_vrms_alpha
-  logical, save :: sim_read_turbfield
-  integer, save :: sim_smooth_level
-  character(len=4096), save :: sim_turbfield_filename
-  real, save :: sim_turbfield_bbox(IAXIS:KAXIS,LOW:HIGH)
+  logical, save :: sim_inertial
 
   integer, save :: sim_meshMe
 

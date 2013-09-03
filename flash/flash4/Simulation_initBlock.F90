@@ -52,7 +52,7 @@ subroutine Simulation_initBlock(blockID)
 
   real, dimension(SPECIES_BEGIN:SPECIES_END) :: massFraction
 
-  real :: velx, vely, velz
+  real :: x, y, z, velx, vely, velz
 
   real :: xc12initial, xne22initial
 
@@ -79,8 +79,11 @@ subroutine Simulation_initBlock(blockID)
   ! loop over all zones and init
   !-----------------------------------------------
   do k = blkLimits(LOW,KAXIS), blkLimits(HIGH,KAXIS)
+     z = kCoords(k)
      do j = blkLimits(LOW,JAXIS), blkLimits(HIGH,JAXIS)
+        y = jCoords(j)
         do i = blkLimits(LOW,IAXIS), blkLimits(HIGH,IAXIS)
+           x = iCoords(i)
 
            !-----------------------------------------------
            !  determine state of material at this radius if unburned
@@ -91,8 +94,8 @@ subroutine Simulation_initBlock(blockID)
            ! assume primary is centered at (-sim_wdp_a,0,0)
            ! assume secondary is centered at (sim_wds_a,0,0)
 
-           radius_p = ( (iCoords(i) + sim_wdp_a)**2 + jCoords(j)**2 + kCoords(k)**2 )**0.5d0
-           radius_s = ( (iCoords(i) - sim_wds_a)**2 + jCoords(j)**2 + kCoords(k)**2 )**0.5d0
+           radius_p = ( (x + sim_wdp_a)**2 + y**2 + z**2 )**0.5d0
+           radius_s = ( (x - sim_wds_a)**2 + y**2 + z**2 )**0.5d0
 
            ! First set everything to fluff.
            call sim_interpolate1dWd(radius_p, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
@@ -104,11 +107,16 @@ subroutine Simulation_initBlock(blockID)
            call sim_interpolate1dWd(radius_s, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
                                      xne22initial, 2) ! Secondary
 
-           ! Now calculate the rotational velocity from the initial period.
+           ! If we are in the inertial frame, calculate the rotational velocity from the initial period.
 
-           velx = jCoords(j)*(-2.0*PI/sim_binaryPeriod)
-           vely = iCoords(i)*( 2.0*PI/sim_binaryPeriod)
+           velx = sim_smallu
+           vely = sim_smallu
            velz = sim_smallu
+
+           if ( sim_inertial ) then
+             velx = y * (-2.0*PI/sim_binaryPeriod)
+             vely = x * ( 2.0*PI/sim_binaryPeriod)
+           endif
 
            ! Fill the mass fraction arrays.
 

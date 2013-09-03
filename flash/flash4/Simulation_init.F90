@@ -35,44 +35,37 @@ subroutine Simulation_init()
 
   character(len=256) :: initialWDpFileName
   character(len=256) :: initialWDsFileName
-  character(len=4096) :: ignitionFileName
-  character(len=80) :: reportbuf
   integer :: istat, i
   real :: radius, r_l, r_r
-  integer :: ignfileunit=2
 
-  integer :: try, l
-  logical :: accept, ignitionFile
   logical :: found_radius
-  real    :: u, v, r
-  real    :: deltaplus, deltaminus, costheta, P_lm1, P_l, hold
 
   real, parameter :: fourthirds = 4./3.
   real, parameter :: third = 1./3.
   real, save :: newton ! Newton's gravity
-!  real, save :: period ! Binary Period
-!fix below
-!  period = 40.0
 
   !--------------------------------------------------------
   !  initialize runtime parameters and some other constants
   !--------------------------------------------------------
-  call RuntimeParameters_get( 'initialWDpFile', initialWDpFileName)
-  call RuntimeParameters_get( 'initialWDsFile', initialWDsFileName)
+  call RuntimeParameters_get('initialWDpFile', initialWDpFileName)
+  call RuntimeParameters_get('initialWDsFile', initialWDsFileName)
 
-  call RuntimeParameters_get( 'binary_period', sim_binaryPeriod)
+  call RuntimeParameters_get('binary_period', sim_binaryPeriod)
+  call RuntimeParameters_get('inertial', sim_inertial)
 
   call RuntimeParameters_get('dens_fluff', sim_densFluff)
   call RuntimeParameters_get('temp_fluff', sim_tempFluff)
   call RuntimeParameters_get('xc12_fluff', sim_xc12Fluff)
   call RuntimeParameters_get('xne22_fluff', sim_xne22Fluff)
 
-  ! Why is G here but not pi?
+  call RuntimeParameters_get('smallx', sim_smallx)
+  call RuntimeParameters_get('smallp', sim_smallp)
+  call RuntimeParameters_get('smallt', sim_smallt)
+  call RuntimeParameters_get('smallu', sim_smallu)
+  call RuntimeParameters_get('smalle', sim_smalle)
+
   ! Store physical constants:
   call PhysicalConstants_get("Newton", newton)
-
-  ! only need to get width of artificial flame once
-  call Flame_getWidth(sim_laminarWidth)
 
   call Driver_getMype(MESH_COMM, sim_meshMe)
 

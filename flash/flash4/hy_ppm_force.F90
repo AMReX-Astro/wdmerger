@@ -81,7 +81,7 @@ subroutine hy_ppm_force(sweepDir, numCells, numIntCells, j, k,  igeom, coord, &
              radialCoord, thirdCoord, u, ut, utt, fict)
 
 
-  use Simulation_data, ONLY : sim_binaryPeriod
+  use Simulation_data, ONLY : sim_binaryPeriod, sim_inertial
   use Hydro_data, ONLY : hy_geometry
   use Driver_interface, ONLY : Driver_abortFlash
 
@@ -109,19 +109,24 @@ subroutine hy_ppm_force(sweepDir, numCells, numIntCells, j, k,  igeom, coord, &
   numIntCells8 = numIntCells + 8
 
   do i = 1, numIntCells8
-    select case(sweepDir)
-    case(1)
-      fict(i) =  2.0e0 * omega * ut(i) + omega * omega * coord(i)
-    case(2)
-      fict(i) = -2.0e0 * omega * ut(i) + omega * omega * coord(i)
-    case(3)
-      fict(i) =  0.0e0
-    end select
+ 
+    if ( sim_inertial ) then
+      fict(i) = 0.0e0
+    else
+      select case(sweepDir)
+      case(1)
+        fict(i) =  2.0e0 * omega * ut(i) + omega * omega * coord(i)
+      case(2)
+        fict(i) = -2.0e0 * omega * ut(i) + omega * omega * coord(i)
+      case(3)
+        fict(i) =  0.0e0
+      end select
+    endif
+
   enddo
   
-  fict(i) = 0.0e0
-
   return
+
 end subroutine hy_ppm_force
 
 
