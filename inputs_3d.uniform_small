@@ -39,7 +39,7 @@ castro.allow_negative_energy = 0
 castro.ppm_type = 1
 
 castro.do_rotation = 1
-castro.rotational_frequency = 0.005
+castro.rotational_frequency = 200.0
 
 castro.show_center_of_mass = 1
 

@@ -38,7 +38,7 @@ castro.use_colglaz = 0
 castro.grav_source_type = 2
 
 castro.do_rotation = 1
-castro.rotational_frequency = 0.01
+castro.rotational_period = 100.0
 
 
 gravity.gravity_type = PoissonGrav

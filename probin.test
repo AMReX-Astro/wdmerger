@@ -5,8 +5,6 @@
   model_P_name = "sub_chandra.M_WD-0.80.hse.CO.1024.nocoulomb"
   model_S_name = "sub_chandra.M_WD-0.60.hse.CO.1024.nocoulomb"
 
-  period = 100.0
-
   nsub = 4
 
   inertial = F

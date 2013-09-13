@@ -44,7 +44,7 @@ castro.ppm_trace_grav = 1
 castro.ppm_temp_fix = 1
 
 castro.do_rotation = 1
-castro.rotational_frequency = 0.025
+castro.rotational_period = 40.0
 
 castro.show_center_of_mass = 1
 
