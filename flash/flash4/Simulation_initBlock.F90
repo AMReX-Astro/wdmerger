@@ -24,7 +24,8 @@
 subroutine Simulation_initBlock(blockID)
   
   use Simulation_data
-  use sim_local_interface, ONLY : sim_interpolate1dWd
+!  use interpolate_module, ONLY : interpolate
+  use sim_local_interface, ONLY : interpolate
   use Grid_interface, ONLY : Grid_getBlkIndexLimits, &
     Grid_getBlkBoundBox, Grid_getDeltas, Grid_putPointData, &
     Grid_getCellCoords
@@ -48,7 +49,7 @@ subroutine Simulation_initBlock(blockID)
 
   real, dimension(EOS_NUM) :: state
   integer :: n
-  real :: radius_s, radius_p, ign_dist, idistsq, min_distsq
+  real :: dist_s, dist_p, ign_dist, idistsq, min_distsq
 
   real, dimension(SPECIES_BEGIN:SPECIES_END) :: massFraction
 
@@ -94,18 +95,37 @@ subroutine Simulation_initBlock(blockID)
            ! assume primary is centered at (-sim_wdp_a,0,0)
            ! assume secondary is centered at (sim_wds_a,0,0)
 
-           radius_p = ( (x + sim_wdp_a)**2 + y**2 + z**2 )**0.5d0
-           radius_s = ( (x - sim_wds_a)**2 + y**2 + z**2 )**0.5d0
+           dist_p = ( (x + sim_wdp_a)**2 + y**2 + z**2 )**0.5d0
+           dist_s = ( (x - sim_wds_a)**2 + y**2 + z**2 )**0.5d0
 
-           ! First set everything to fluff.
-           call sim_interpolate1dWd(radius_p, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
-                                     xne22initial, 0)
+           ! Call interpolation routine if we're in the primary WD
 
-           ! Then if within the two stars, interpolate and set values.
-           call sim_interpolate1dWd(radius_p, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
-                                     xne22initial, 1) ! Primary
-           call sim_interpolate1dWd(radius_s, deltas(IAXIS), state(EOS_DENS), state(EOS_TEMP), xc12initial, &
-                                     xne22initial, 2) ! Secondary
+           if ( dist_p < sim_wdp_radius ) then
+
+             state(EOS_DENS) = interpolate(dist_p, sim_wdp_npnts, sim_wdp_rad_tab, sim_wdp_dens_tab)
+             state(EOS_TEMP) = interpolate(dist_p, sim_wdp_npnts, sim_wdp_rad_tab, sim_wdp_temp_tab)
+             xc12initial     = interpolate(dist_p, sim_wdp_npnts, sim_wdp_rad_tab, sim_wdp_c12_tab )
+             xne22initial    = interpolate(dist_p, sim_wdp_npnts, sim_wdp_rad_tab, sim_wdp_ne22_tab)
+
+           ! Call interpolation routine if we're in the secondary WD
+
+           elseif ( dist_s < sim_wds_radius ) then
+
+             state(EOS_DENS) = interpolate(dist_s, sim_wds_npnts, sim_wds_rad_tab, sim_wds_dens_tab)
+             state(EOS_TEMP) = interpolate(dist_s, sim_wds_npnts, sim_wds_rad_tab, sim_wds_temp_tab)
+             xc12initial     = interpolate(dist_s, sim_wds_npnts, sim_wds_rad_tab, sim_wds_c12_tab )
+             xne22initial    = interpolate(dist_s, sim_wds_npnts, sim_wds_rad_tab, sim_wds_ne22_tab)
+
+           ! Otherwise, we're in the ambient medium
+
+           else
+
+             state(EOS_DENS) = sim_densFluff
+             state(EOS_TEMP) = sim_tempFluff
+             xc12initial     = sim_xc12Fluff
+             xne22initial    = sim_xne22Fluff
+
+           endif
 
            ! If we are in the inertial frame, calculate the rotational velocity from the initial period.
 

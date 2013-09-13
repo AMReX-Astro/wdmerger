@@ -1,12 +1,12 @@
 module sim_local_interface
 
-  interface sim_interpolate1dWd
-     subroutine sim_interpolate1dWd( radius, dr, dens, temp, xc12, xne22, nstar)
+  interface interpolate
+     double precision function interpolate(r, npts_model, model_r, model_var)
      implicit none
-     real, intent(in) :: radius, dr
-     integer, intent(in) :: nstar
-     real, intent(out):: dens, temp, xc12, xne22
-     end subroutine
+     double precision, intent(in) :: r
+     integer,          intent(in) :: npts_model
+     double precision, intent(in) :: model_r(npts_model), model_var(npts_model)
+     end function
   end interface
 
 end module
