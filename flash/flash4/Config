@@ -4,15 +4,6 @@ REQUIRES physics/Hydro
 REQUIRES physics/Gravity/GravityMain/Poisson/Multigrid
 REQUIRES physics/Eos/EosMain/Helmholtz
 
-IF withParticles
-   PARTICLETYPE passive INITMETHOD with_density MAPMETHOD weighted ADVMETHOD rungekutta
-   REQUIRES Particles/ParticlesMain
-   REQUIRES Particles/ParticlesInitialization/WithDensity/CellMassBins
-   REQUIRES Particles/ParticlesMapping/meshWeighting/CIC
-   REQUESTS IO/IOMain/
-   REQUESTS IO/IOParticles
-ENDIF
-
 #
 # progenitor
 #
@@ -24,6 +15,7 @@ PARAMETER     initialWDsFile        STRING   "cc_7e8_linear_wd_plain.dat"
 #
 
 PARAMETER     binary_period         REAL     40.0
+PARAMETER     inertial              BOOLEAN  FALSE
 
 #
 # ambient medium outside star
@@ -33,8 +25,8 @@ PARAMETER     binary_period         REAL     40.0
 # xc12_fluff = c12 mass fraction of the fluff
 # xo16_fluff = o16 mass fraction of the fluff
 
-PARAMETER     dens_fluff         REAL     1.0e-3
-PARAMETER     temp_fluff         REAL     3.0e7
+PARAMETER     dens_fluff         REAL     1.0e-4
+PARAMETER     temp_fluff         REAL     1.0e7
 PARAMETER     xc12_fluff         REAL     0.5e0
 PARAMETER     xne22_fluff        REAL     0.0e0
 
@@ -42,3 +34,4 @@ DATAFILES cc_7e8_linear_wd_plain.dat
 
 SPECIES C12
 SPECIES O16
+SPECIES NE22
