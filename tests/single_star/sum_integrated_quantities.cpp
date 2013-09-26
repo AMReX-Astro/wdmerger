@@ -24,7 +24,7 @@ Castro::sum_integrated_quantities ()
     Real moment_of_inertia[3][3] = { 0.0 };
     Real m_r_squared[3]          = { 0.0 };
 
-    Real omega[3]     = { 0.0, 0.0, 2.0*3.14159265358979*rotational_frequency };
+    Real omega[3]     = { 0.0, 0.0, 2.0*3.14159265358979*rotational_period };
     Real L_grid[3]    = { 0.0 };
 
     Real mass_p    = 0.0;
