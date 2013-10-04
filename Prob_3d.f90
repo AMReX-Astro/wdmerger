@@ -4,7 +4,7 @@
      use model_parser_module
      use bl_constants_module
      use fundamental_constants_module
-     use meth_params_module, only: small_temp, small_pres, small_dens
+     use meth_params_module, only: small_temp, small_pres, small_dens, rot_period
      use eos_module
      use com, only: mass_p, mass_s, com_loc_p, com_loc_s
 
@@ -19,7 +19,6 @@
 
      namelist /fortin/ &
           model_P_name, model_S_name, &
-          period, &
           nsub, &
           inertial, &
           interp_temp, &
@@ -83,7 +82,6 @@
      max_temperr_lev = -1
      max_tempgrad_lev = -1
 
-     period = 1.0
      model_P_name = "P"
      model_S_name = "S"
 
@@ -272,7 +270,7 @@
      ! Orbital properties
 
      ! Kepler's third law tells us the separation
-     a = (Gconst*(mass_P_initial + mass_s_initial)*period**2/(FOUR*M_PI**2))**THIRD
+     a = (Gconst*(mass_P_initial + mass_s_initial)*rot_period**2/(FOUR*M_PI**2))**THIRD
 
      ! Semi-major axes
      a_S_initial = a/(ONE + mass_S_initial/mass_P_initial)
@@ -352,7 +350,7 @@
      use interpolate_module
      use eos_module
      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS
+          UEDEN, UEINT, UFS, rot_period
      use network, only : nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
@@ -523,11 +521,11 @@
 
              ! x velocity is -omega * r * sin(theta) == -omega * y
 
-             state(i,j,k,UMX) = state(i,j,k,URHO) * (-2.0d0 * M_PI / period) * yy
+             state(i,j,k,UMX) = state(i,j,k,URHO) * (-2.0d0 * M_PI / rot_period) * yy
            
              ! y velocity is +omega * r * cos(theta) == +omega * x
 
-             state(i,j,k,UMY) = state(i,j,k,URHO) * ( 2.0d0 * M_PI / period) * xx
+             state(i,j,k,UMY) = state(i,j,k,URHO) * ( 2.0d0 * M_PI / rot_period) * xx
 
              ! Add corresponding kinetic energy
 
@@ -553,7 +551,7 @@
                          domlo,domhi,delta,xlo,time,bc)
 
      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS
+          UEDEN, UEINT, UFS, rot_period
      use bl_constants_module
      use probdata_module
      use eos_module
@@ -593,8 +591,8 @@
 
                  if ( inertial ) then
 
-                   vx = (-2.0d0 * M_PI / period) * yy
-                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vx = (-2.0d0 * M_PI / rot_period) * yy
+                   vy = ( 2.0d0 * M_PI / rot_period) * xx
                    vz = ZERO
 
                  else
@@ -634,8 +632,8 @@
 
                  if ( inertial ) then
 
-                   vx = (-2.0d0 * M_PI / period) * yy
-                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vx = (-2.0d0 * M_PI / rot_period) * yy
+                   vy = ( 2.0d0 * M_PI / rot_period) * xx
                    vz = ZERO
 
                  else
@@ -675,8 +673,8 @@
 
                  if ( inertial ) then
 
-                   vx = (-2.0d0 * M_PI / period) * yy
-                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vx = (-2.0d0 * M_PI / rot_period) * yy
+                   vy = ( 2.0d0 * M_PI / rot_period) * xx
                    vz = ZERO
 
                  else
@@ -716,8 +714,8 @@
 
                  if ( inertial ) then
 
-                   vx = (-2.0d0 * M_PI / period) * yy
-                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vx = (-2.0d0 * M_PI / rot_period) * yy
+                   vy = ( 2.0d0 * M_PI / rot_period) * xx
                    vz = ZERO
 
                  else
@@ -757,8 +755,8 @@
 
                  if ( inertial ) then
 
-                   vx = (-2.0d0 * M_PI / period) * yy
-                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vx = (-2.0d0 * M_PI / rot_period) * yy
+                   vy = ( 2.0d0 * M_PI / rot_period) * xx
                    vz = ZERO
 
                  else
@@ -798,8 +796,8 @@
 
                  if ( inertial ) then
 
-                   vx = (-2.0d0 * M_PI / period) * yy
-                   vy = ( 2.0d0 * M_PI / period) * xx
+                   vx = (-2.0d0 * M_PI / rot_period) * yy
+                   vy = ( 2.0d0 * M_PI / rot_period) * xx
                    vz = ZERO
 
                  else
