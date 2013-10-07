@@ -46,8 +46,6 @@
 
      integer :: ioproc
 
-     if (init == 0) return
-
      ! For outputting -- determine if we are the IO processor
      call bl_pd_is_ioproc(ioproc)
 
@@ -228,6 +226,9 @@
      ! Ambient X
      xn_ambient(:) = model_S_state(npts_model_S,ispec_model:ispec_model-1+nspec)
 
+     ! If this is a restart, we don't need to recompute the models.
+
+     if (init == 0) return
 
      ! Given the inputs of small_dens and small_temp, figure out small_pres.
      ! Use the ambient gas composition (we don't need to worry about saving
