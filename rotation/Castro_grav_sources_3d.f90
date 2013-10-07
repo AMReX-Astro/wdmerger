@@ -18,7 +18,7 @@ contains
                                lo,hi,dt,dx,E_added)
 
       use bl_constants_module, only: M_PI
-      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UEDEN, grav_source_type, rot_freq
+      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UEDEN, grav_source_type, rot_period
       use prob_params_module, only: coord_type
       use probdata_module, only: center
 
@@ -50,7 +50,7 @@ contains
 
 
       if (coord_type == 0) then
-         omega = TWO_PI*rot_freq
+         omega = TWO_PI / rot_period
       else
          call bl_error("Error:: Rotate_3d.f90 :: unknown coord_type")
       endif
@@ -122,7 +122,7 @@ end module grav_sources_module
                              dt,dx,E_added)
 
       use bl_constants_module, only: M_PI
-      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UEDEN, grav_source_type, rot_freq
+      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UEDEN, grav_source_type, rot_period
       use prob_params_module, only: coord_type
       use probdata_module, only: center
 
@@ -158,14 +158,14 @@ end module grav_sources_module
 
 
       if (coord_type == 0) then
-         omega = TWO_PI*rot_freq
+         omega = TWO_PI/rot_period
       else
          call bl_error("Error:: Rotate_3d.f90 :: unknown coord_type")
       endif
 
       problo(:) = 0.0d0
 
-      print *, 'in corrgsrc, rot_freq = ', rot_freq
+      !print *, 'in corrgsrc, rot_period = ', rot_period
 
       do k = lo(3),hi(3)
          z = problo(3) + dx(3)*(float(k)+0.5d0) - center(3)
