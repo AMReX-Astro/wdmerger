@@ -151,7 +151,7 @@ BL_FORT_PROC_DECL(CA_STATE_ERROR,ca_state_error)
      const Real* time, const int* level);
 #endif
 
-BL_FORT_PROC_DECL(CA_RADIUSERROR,ca_radiuserror)
+BL_FORT_PROC_DECL(CA_ERRORBOUNDARY,ca_errorboundary)
     (int* tag, ARLIM_P(tag_lo), ARLIM_P(tag_hi),
      const int* tagval, const int* clearval,
      BL_FORT_FAB_ARG(den),

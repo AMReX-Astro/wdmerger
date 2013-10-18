@@ -513,12 +513,14 @@
 
       ! Tag cells based on distance from center of grid
 
-      subroutine ca_radiuserror(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
-                                set,clear, &
-                                den,denl1,denl2,denl3,denh1,denh2,denh3, &
-                                lo,hi,nd,domlo,domhi, &
-                                delta,xlo,problo,time,level)
-      use probdata_module
+      subroutine ca_errorboundary(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
+                                  set,clear, &
+                                  den,denl1,denl2,denl3,denh1,denh2,denh3, &
+                                  lo,hi,nd,domlo,domhi, &
+                                  delta,xlo,problo,time,level)
+      use probdata_module, only: center, radius_P_initial, radius_S_initial, &
+                                 a_P_initial, a_S_initial, &
+                                 starBuffer, boundaryBuffer
       use bl_constants_module
       implicit none
 
@@ -532,30 +534,41 @@
 
       double precision ax,ay,az
       integer i, j, k
-      double precision x,y,z,r
-      double precision radiusBuffer, xLleft, yLleft, zLleft, xLright, yLright, zLright
+      double precision x,y,z,rSq
+      double precision xMax, yMax, zMax, rP, rS, rMax, rMaxSq, rMin, rMinSq
 
-      radiusBuffer = 1.10d0
+      ! We define two spherical volumes that define boundaries for refinement.
+      ! The first is the volume of the domain outside of which no refinement may happen.
+      ! boundaryBuffer = fraction of the distance from the center to the
+      ! edges where refinement is permitted. Set this slightly lower than where you
+      ! want the refinement to stop because the error buffers will tag zones outside this
+      ! boundary for refinement.
 
-      xLleft  = radiusBuffer * radius_P_initial + a_P_initial
-      yLleft  = radiusBuffer * radius_P_initial
-      zLleft  = radiusBuffer * radius_P_initial
+      xMax = boundaryBuffer * (center(1) - problo(1))
+      yMax = boundaryBuffer * (center(2) - problo(2))
+      zMax = boundaryBuffer * (center(3) - problo(3))
 
-      xLright = radiusBuffer * radius_S_initial + a_S_initial
-      yLright = radiusBuffer * radius_S_initial
-      ZLright = radiusBuffer * radius_S_initial
+      rMax = xMax
 
-      if ( yLleft < yLright ) then
+      if (yMax < rMax) rMax = yMax
+      if (zMax < rMax) rMax = zMax
 
-        yLleft = yLright
-        zLleft = zLright
- 
-      else
+      ! We also set some inner portion of the domain that should always be refined.
+      ! This is a spherical volume that extends past the stars by a fraction starBuffer
+      ! of the radius of the stars. For a WD the secondary is larger so we'll use that radius
+      ! for both sides of the domain to retain parity along the axis joining the stars.
 
-        yLright = yLleft
-        zLright = zLleft
+      rP = starBuffer * radius_P_initial + a_P_initial
+      rS = starBuffer * radius_S_initial + a_S_initial
 
-      endif
+      rMin = rS
+
+      if (rP > rMin) rMin = rP
+
+
+
+      rMaxSq = rMax * rMax
+      rMinSq = rMin * rMin
 
       if (level .eq. 0) then
          do k = lo(3), hi(3)
@@ -567,29 +580,15 @@
                do i = lo(1), hi(1)
                   x = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
 
-                  if ( x > 0.0d0 ) then
+                  rSq = x**2 + y**2 + z**2
 
-                    if ( (abs(x) .lt. xLright) .and. (abs(y) .lt. yLright) .and. (abs(z) .lt. zLright) ) then
+                  if ( rSq .lt. rMinSq ) then
  
-                      tag(i,j,k) = set
+                    tag(i,j,k) = set
 
-                    else
+                  elseif (rSq .gt. rMaxSq ) then
 
-                      tag(i,j,k) = clear
-
-                    endif
-
-                  else ! x < 0
- 
-                    if ( (abs(x) .lt. xLleft ) .and. (abs(y) .lt. ylLeft ) .and. (abs(z) .lt. zlleft ) ) then
-
-                      tag(i,j,k) = set
-
-                    else
- 
-                      tag(i,j,k) = clear
-
-                    endif
+                    tag(i,j,k) = clear
 
                   endif
 
@@ -598,4 +597,4 @@
          enddo
       endif
 
-      end
+      end subroutine ca_errorboundary

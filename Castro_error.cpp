@@ -14,8 +14,6 @@ typedef StateDescriptor::BndryFunc BndryFunc;
 void
 Castro::ErrorSetUp ()
 {
-    err_list.add("density",1,ErrorRec::Special,
-                 BL_FORT_PROC_CALL(CA_RADIUSERROR,ca_radiuserror));
 
     //
     // DEFINE ERROR ESTIMATION QUANTITIES
@@ -49,25 +47,9 @@ Castro::ErrorSetUp ()
 //   err_list.add("entropy",1,ErrorRec::Special,
 //		 BL_FORT_PROC_CALL(CA_ENTERROR,ca_enterror));
 
-#ifdef RADIATION
-    if (do_radiation && !Radiation::do_multigroup) {
-      err_list.add("rad",1,ErrorRec::Special,
-                   BL_FORT_PROC_CALL(CA_RADERROR,ca_raderror));
-    }
-    if (RadTests::do_thermal_wave) {
-      err_list.add("rho_E",1,ErrorRec::Special,
-                   BL_FORT_PROC_CALL(CA_DENERROR,ca_denerror));
-    }
-    else if (RadTests::do_clouds) {
-      err_list.add("density",1,ErrorRec::Special,
-                   BL_FORT_PROC_CALL(CA_DENERROR,ca_denerror));
-    }
-#endif
-
-#ifdef LEVELSET
-    err_list.add("LSphi",1,ErrorRec::Special,
-		 BL_FORT_PROC_CALL(CA_LSERROR,ca_lserror));
-#endif
   */
+
+    err_list.add("density",1,ErrorRec::Special,
+                 BL_FORT_PROC_CALL(CA_ERRORBOUNDARY,ca_errorboundary));
 
 }

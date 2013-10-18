@@ -26,7 +26,8 @@
           denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
-          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev
+          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
+          starBuffer, boundaryBuffer
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -79,6 +80,9 @@
      tempgrad = 1.d20
      max_temperr_lev = -1
      max_tempgrad_lev = -1
+
+     starBuffer = 1.5d0
+     boundaryBuffer = 0.6d0
 
      model_P_name = "P"
      model_S_name = "S"

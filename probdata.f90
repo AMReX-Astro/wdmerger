@@ -15,6 +15,7 @@ module probdata_module
   integer         , save ::  max_temperr_lev,  max_tempgrad_lev
   integer         , save ::  max_presserr_lev, max_pressgrad_lev
   integer         , save ::  max_raderr_lev,   max_radgrad_lev
+  double precision, save ::  starBuffer, boundaryBuffer
   
   ! model info
   character (len=80), save :: model_P_name
@@ -51,5 +52,9 @@ module probdata_module
   double precision, save :: a_P_initial, a_S_initial
   
   double precision, dimension(3), save :: center_P_initial, center_S_initial
+
+  ! tagging
+
+  
   
 end module probdata_module
