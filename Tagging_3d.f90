@@ -520,7 +520,7 @@
                                   delta,xlo,problo,time,level)
       use probdata_module, only: center, radius_P_initial, radius_S_initial, &
                                  a_P_initial, a_S_initial, &
-                                 starBuffer, boundaryBuffer
+                                 starBuffer, boundaryBuffer, single_star
       use bl_constants_module
       implicit none
 
@@ -558,14 +558,21 @@
       ! of the radius of the stars. For a WD the secondary is larger so we'll use that radius
       ! for both sides of the domain to retain parity along the axis joining the stars.
 
-      rP = starBuffer * radius_P_initial + a_P_initial
-      rS = starBuffer * radius_S_initial + a_S_initial
+      if (single_star) then
 
-      rMin = rS
+        rP = starBuffer * radius_P_initial
+        rMin = rP
 
-      if (rP > rMin) rMin = rP
+      else
 
+        rP = starBuffer * radius_P_initial + a_P_initial
+        rS = starBuffer * radius_S_initial + a_S_initial
 
+        rMin = rS
+
+        if (rP > rMin) rMin = rP
+
+      endif
 
       rMaxSq = rMax * rMax
       rMinSq = rMin * rMin

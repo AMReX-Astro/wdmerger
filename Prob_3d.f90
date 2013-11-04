@@ -23,11 +23,12 @@
           inertial, &
           interp_temp, &
           damping, damping_alpha, &
+          do_relax, relax_tau, &
           denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
           temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
-          starBuffer, boundaryBuffer
+          starBuffer, boundaryBuffer, single_star
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -46,6 +47,8 @@
      character (len=80) :: temp_name
 
      integer :: ioproc
+
+     double precision :: K_const, gamma_const, polytrope_type, mu_e
 
      ! For outputting -- determine if we are the IO processor
      call bl_pd_is_ioproc(ioproc)
@@ -90,8 +93,10 @@
      nsub = 1
 
      inertial = .false.
-
      interp_temp = .false.
+     damping  = .false.
+     do_relax = .false.
+     single_star = .false.
 
      ! Read namelists -- override the defaults
      untin = 9 
@@ -271,6 +276,7 @@
         call bl_error("ERROR: unable to compute radius of the secondary")
      endif
 
+
      
      ! Orbital properties
 
@@ -285,6 +291,8 @@
         print *, "a = ", a
         print *, "(a_P, a_S) = ", a_P_initial, a_S_initial
      endif
+
+     if (.not. single_star) then
 
      ! Make sure the stars are not touching.
      if (radius_P_initial + radius_S_initial > a) then
@@ -304,11 +312,16 @@
      if (TWO*max(radius_P_initial, radius_S_initial) > HALF*(probhi(3) - problo(3))) then
         call bl_error("ERROR: The domain height is too small to include the stars (perpendicular to their axis).")
      endif
-
+     endif
      
      ! Star center positions -- we'll put them in the midplane on the
      ! x-axis, with the CM at the center of the domain
-     center_P_initial(1) = center(1) - a_P_initial
+
+     if (single_star) then
+       center_P_initial(1) = center(1)
+     else
+       center_P_initial(1) = center(1) - a_P_initial
+     endif
      center_P_initial(2) = center(2)
      center_P_initial(3) = center(3)
 
@@ -434,7 +447,7 @@
 
 
                        ! Are we inside the secondary WD?
-                       else if (dist_S < radius_S_initial) then
+                       else if (dist_S < radius_S_initial .and. (.not. single_star)) then
 
                           state(i,j,k,URHO) = state(i,j,k,URHO) + &
                                interpolate(dist_S,npts_model_S, &

@@ -44,14 +44,19 @@ module probdata_module
   logical, save    :: damping
   double precision :: damping_alpha
 
+  ! relaxation
+  logical, save    :: do_relax
+  double precision :: relax_tau
+
   ! grid info
   double precision, save ::  center(3)
 
   ! binary properties
-  double precision, save :: period
   double precision, save :: a_P_initial, a_S_initial
   
   double precision, dimension(3), save :: center_P_initial, center_S_initial
+
+  logical :: single_star
 
   ! tagging
 
