@@ -4,8 +4,8 @@
                            new_state,new_state_l1,new_state_l2,new_state_l3,new_state_h1,new_state_h2,new_state_h3,&
                            src,src_l1,src_l2,src_l3,src_h1,src_h2,src_h3,problo,dx,time,dt)
 
-     use meth_params_module, only : NVAR, URHO, UMX, UMY, UEDEN
-     use probdata_module   , only : center, rot_period, damping, damping_alpha
+     use meth_params_module, only : NVAR, URHO, UMX, UMY, UEDEN, rot_period
+     use probdata_module   , only : center, damping, damping_alpha
      use bl_constants_module
 
      implicit none
