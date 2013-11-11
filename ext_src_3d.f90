@@ -5,7 +5,7 @@
                            src,src_l1,src_l2,src_l3,src_h1,src_h2,src_h3,problo,dx,time,dt)
 
      use meth_params_module, only : NVAR, URHO, UMX, UMY, UEDEN
-     use probdata_module   , only : center, period, damping, damping_alpha
+     use probdata_module   , only : center, rot_period, damping, damping_alpha
      use bl_constants_module
 
      implicit none
@@ -30,7 +30,7 @@
 
      if ( damping ) then
 
-       omega = 2.d0 * M_PI / period
+       omega = 2.d0 * M_PI / rot_period
 
        do i = lo(1), hi(1)
          x = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
@@ -42,9 +42,9 @@
              rho = new_state(i,j,k,URHO)
              px  = new_state(i,j,k,UMX )
              py  = new_state(i,j,k,UMY )
-             src(i,j,k,UMX)   =         damping_alpha / period * rho * omega * y
-             src(i,j,k,UMY)   = -1.d0 * damping_alpha / period * rho * omega * x
-             src(i,j,k,UEDEN) =         damping_alpha / period * omega * ( px * y - py * x ) / (2.d0 * rho)
+             src(i,j,k,UMX)   =         damping_alpha / rot_period * rho * omega * y
+             src(i,j,k,UMY)   = -1.d0 * damping_alpha / rot_period * rho * omega * x
+             src(i,j,k,UEDEN) =         damping_alpha / rot_period * omega * ( px * y - py * x ) / (2.d0 * rho)
            enddo
 
          enddo
