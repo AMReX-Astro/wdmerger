@@ -28,7 +28,7 @@
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
           temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
-          starBuffer, boundaryBuffer, single_star
+          starBuffer, boundaryBuffer, single_star, star_axis
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -47,8 +47,6 @@
      character (len=80) :: temp_name
 
      integer :: ioproc
-
-     double precision :: K_const, gamma_const, polytrope_type, mu_e
 
      ! For outputting -- determine if we are the IO processor
      call bl_pd_is_ioproc(ioproc)
@@ -97,6 +95,7 @@
      damping  = .false.
      do_relax = .false.
      single_star = .false.
+     star_axis = 1
 
      ! Read namelists -- override the defaults
      untin = 9 
@@ -294,40 +293,39 @@
 
      if (.not. single_star) then
 
-     ! Make sure the stars are not touching.
-     if (radius_P_initial + radius_S_initial > a) then
-        call bl_error("ERROR: Stars are touching!")
-     endif
+       ! Make sure the stars are not touching.
+       if (radius_P_initial + radius_S_initial > a) then
+          call bl_error("ERROR: Stars are touching!")
+       endif
 
-     ! Make sure the domain is big enough
+       ! Make sure the domain is big enough
 
-     ! For simplicity, make sure the x and y sizes are 2x the greatest a + R
-     length = max(a_P_initial + radius_P_initial, a_S_initial + radius_S_initial)
-     if (length > HALF*(probhi(1) - problo(1)) .or. &
-         length > HALF*(probhi(2) - problo(2))) then
-        call bl_error("ERROR: The domain width is too small to include the stars (along their axis).")
-     endif
+       ! For simplicity, make sure the x and y sizes are twice the greatest (a + R)
+       length = max(a_P_initial + radius_P_initial, a_S_initial + radius_S_initial)
+       if (length > HALF*(probhi(1) - problo(1)) .or. &
+           length > HALF*(probhi(2) - problo(2))) then
+          call bl_error("ERROR: The domain width is too small to include the stars (along their axis).")
+       endif
 
-     ! For the height, let's take 2x the radius
-     if (TWO*max(radius_P_initial, radius_S_initial) > HALF*(probhi(3) - problo(3))) then
-        call bl_error("ERROR: The domain height is too small to include the stars (perpendicular to their axis).")
-     endif
+       ! For the height, let's take twice the radius
+       if (TWO*max(radius_P_initial, radius_S_initial) > HALF*(probhi(3) - problo(3))) then
+          call bl_error("ERROR: The domain height is too small to include the stars (perpendicular to their axis).")
+       endif
+
      endif
      
      ! Star center positions -- we'll put them in the midplane on the
-     ! x-axis, with the CM at the center of the domain
+     ! axis specified by star_axis, with the center of mass at the center of the domain.
 
-     if (single_star) then
-       center_P_initial(1) = center(1)
-     else
-       center_P_initial(1) = center(1) - a_P_initial
+     center_P_initial = center
+     center_S_initial = center
+
+     if (.not. single_star) then
+
+       center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
+       center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
+
      endif
-     center_P_initial(2) = center(2)
-     center_P_initial(3) = center(3)
-
-     center_S_initial(1) = center(1) + a_S_initial
-     center_S_initial(2) = center(2)
-     center_S_initial(3) = center(3)
 
      ! Initialize COM quantities
 

@@ -56,6 +56,8 @@ module probdata_module
   
   double precision, dimension(3), save :: center_P_initial, center_S_initial
 
+  integer, save :: star_axis
+
   logical :: single_star
 
   ! tagging
