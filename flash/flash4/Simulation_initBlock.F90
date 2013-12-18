@@ -95,8 +95,12 @@ subroutine Simulation_initBlock(blockID)
            ! assume primary is centered at (-sim_wdp_a,0,0)
            ! assume secondary is centered at (sim_wds_a,0,0)
 
-           dist_p = ( (x + sim_wdp_a)**2 + y**2 + z**2 )**0.5d0
-           dist_s = ( (x - sim_wds_a)**2 + y**2 + z**2 )**0.5d0
+           if ( sim_single_star ) then
+             dist_p = ( x**2 + y**2 + z**2 )**0.5d0
+           else
+             dist_p = ( (x + sim_wdp_a)**2 + y**2 + z**2 )**0.5d0
+             dist_s = ( (x - sim_wds_a)**2 + y**2 + z**2 )**0.5d0
+           endif
 
            ! Call interpolation routine if we're in the primary WD
 
@@ -109,7 +113,7 @@ subroutine Simulation_initBlock(blockID)
 
            ! Call interpolation routine if we're in the secondary WD
 
-           elseif ( dist_s < sim_wds_radius ) then
+           elseif ( dist_s < sim_wds_radius .and. (.not. sim_single_star) ) then
 
              state(EOS_DENS) = interpolate(dist_s, sim_wds_npnts, sim_wds_rad_tab, sim_wds_dens_tab)
              state(EOS_TEMP) = interpolate(dist_s, sim_wds_npnts, sim_wds_rad_tab, sim_wds_temp_tab)

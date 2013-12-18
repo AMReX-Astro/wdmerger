@@ -52,6 +52,7 @@ subroutine Simulation_init()
 
   call RuntimeParameters_get('binary_period', sim_binaryPeriod)
   call RuntimeParameters_get('inertial', sim_inertial)
+  call RuntimeParameters_get('single_star', sim_single_star)
 
   call RuntimeParameters_get('dens_fluff', sim_densFluff)
   call RuntimeParameters_get('temp_fluff', sim_tempFluff)
@@ -223,9 +224,13 @@ subroutine Simulation_init()
     print *, 'Secondary semimajor axis: ', sim_wds_a
   endif
 
-  ! Make sure the stars are not touching.
-  if (sim_wdp_radius + sim_wds_radius > sim_wd_sep) then
-    call Driver_abortFlash('Stars are touching.')
+  if (.not. sim_single_star) then
+
+    ! Make sure the stars are not touching.
+    if (sim_wdp_radius + sim_wds_radius > sim_wd_sep) then
+      call Driver_abortFlash('Stars are touching.')
+    endif
+
   endif
   
   ! add check to see if grid is big enough here?

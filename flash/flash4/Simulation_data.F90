@@ -21,6 +21,8 @@ module Simulation_data
 
   logical, save :: sim_inertial
 
+  logical, save :: sim_single_star
+
   integer, save :: sim_meshMe
 
 end module Simulation_data

@@ -2,7 +2,7 @@ REQUIRES Driver
 REQUIRES Grid
 REQUIRES physics/Hydro
 REQUIRES physics/Gravity/GravityMain/Poisson/Multigrid
-REQUIRES physics/Eos/EosMain/Helmholtz
+REQUIRES physics/Eos/EosMain/Gamma
 
 #
 # progenitor
@@ -16,6 +16,7 @@ PARAMETER     initialWDsFile        STRING   "cc_7e8_linear_wd_plain.dat"
 
 PARAMETER     binary_period         REAL     40.0
 PARAMETER     inertial              BOOLEAN  FALSE
+PARAMETER     single_star           BOOLEAN  TRUE
 
 #
 # ambient medium outside star
