@@ -240,7 +240,7 @@ subroutine IO_writeIntegralQuantities ( isFirst, simTime)
                   do n = 0, 2
 
                     lsum(angMomXIdx+m) = lsum(angMomXIdx+m) + moment_of_inertia(m,n) * omega(n)
-                    lsum(kinEngIdx+m)  = lsum(kinEngIdx+m)  + 0.5e0 * omega(m) * moment_of_inertia(m,n) * omega(n)
+                    lsum(kinEngIdx)  = lsum(kinEngIdx)  + 0.5e0 * omega(m) * moment_of_inertia(m,n) * omega(n)
 
                   enddo
                enddo
