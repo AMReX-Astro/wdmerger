@@ -236,7 +236,7 @@
 
      ! If this is a restart, we don't need to recompute the models.
 
-     if (init == 0) return
+     !if (init == 0) return
 
      ! Given the inputs of small_dens and small_temp, figure out small_pres.
      ! Use the ambient gas composition (we don't need to worry about saving
