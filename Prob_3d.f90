@@ -39,6 +39,8 @@
      double precision :: a
      double precision :: length
 
+     type (eos_t) :: eos_state
+
      ! Temporary storage variables in case we need to switch the primary and secondary.
 
      double precision, allocatable :: temp_model_state(:,:), temp_model_r(:)
@@ -242,12 +244,23 @@
      ! Use the ambient gas composition (we don't need to worry about saving
      ! our result in eint_ambient since it will be reset in the next call).
 
-     call eos_given_RTX(eint_ambient,small_pres,small_dens, &
-                        small_temp,xn_ambient)
+     eos_state % xn  = xn_ambient
+     eos_state % rho = small_dens
+     eos_state % T   = small_temp
+ 
+     call eos(eos_input_rt, eos_state, .false.)
+
+     small_pres = eos_state % p
 
      ! Get the rest of the ambient thermodynamic state
-     call eos_given_RTX(eint_ambient,pres_ambient,dens_ambient, &
-                        temp_ambient,xn_ambient)
+
+     eos_state % rho = dens_ambient
+     eos_state % T   = temp_ambient
+
+     call eos(eos_input_rt, eos_state, .false.)
+
+     eint_ambient = eos_state % e
+     pres_ambient = eos_state % p
 
      ! Compute the radius of the primary
      radius_P_initial = -1.0d0
@@ -383,6 +396,8 @@
      double precision :: pres_zone, temp_zone
      double precision :: dist_P, dist_S
 
+     type (eos_t) :: eos_state
+
      integer :: i,j,k,ii,jj,kk,n
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, xl, yl, zl, xx, yy, zz) &
@@ -493,17 +508,26 @@
               temp_zone = temp_zone/(nsub*nsub*nsub)
               state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec)/(nsub*nsub*nsub)
 
-              ! thermodynamics
+              ! thermodynamics              
+
+              eos_state % xn  = state(i,j,k,UFS:UFS-1+nspec)
+              eos_state % p   = pres_zone
+              eos_state % rho = state(i,j,k,URHO)
+              eos_state % T   = temp_zone
+
+              pt_index(1) = i
+              pt_index(2) = j
+              pt_index(3) = k
+
               if (interp_temp) then
-                 state(i,j,k,UTEMP) = temp_zone
-                 call eos_given_RTX(state(i,j,k,UEINT),pres_zone,state(i,j,k,URHO),state(i,j,k,UTEMP), &
-                                      state(i,j,k,UFS:UFS-1+nspec))
+                 state(i,j,k,UTEMP) = eos_state % T
+                 call eos(eos_input_rt, eos_state, .false., pt_index = pt_index)
               else
-
-                 call eos_e_given_RPX(state(i,j,k,UEINT),state(i,j,k,UTEMP),state(i,j,k,URHO), &
-                                      pres_zone,state(i,j,k,UFS:UFS-1+nspec))
-
+                 call eos(eos_input_rp, eos_state, .false., pt_index = pt_index)
+                 state(i,j,k,UTEMP) = eos_state % T
               endif
+
+              state(i,j,k,UEINT) = eos_state % e
 
               state(i,j,k,UEDEN) = state(i,j,k,URHO) * state(i,j,k,UEINT)
               state(i,j,k,UEINT) = state(i,j,k,URHO) * state(i,j,k,UEINT)
