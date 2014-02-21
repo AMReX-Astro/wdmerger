@@ -396,12 +396,14 @@
      double precision :: pres_zone, temp_zone
      double precision :: dist_P, dist_S
 
+     integer :: pt_index(3)
+
      type (eos_t) :: eos_state
 
      integer :: i,j,k,ii,jj,kk,n
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, xl, yl, zl, xx, yy, zz) &
-     !$OMP PRIVATE(pres_zone, temp_zone, dist_P, dist_S)
+     !$OMP PRIVATE(pres_zone, temp_zone, dist_P, dist_S, eos_state, pt_index)
      do k = lo(3), hi(3)   
         zl = xlo(3) + delta(3)*dble(k-lo(3)) 
 
