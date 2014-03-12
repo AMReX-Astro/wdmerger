@@ -4,7 +4,7 @@
 #PBS -j oe
 #PBS -q batch
 #PBS -l walltime=02:00:00,nodes=8
-#PBS -l gres=widow2
+#PBS -l gres=atlas2
 
 export PSC_OMP_AFFINITY=FALSE
 export OMP_NUM_THREADS=8
