@@ -11,10 +11,10 @@ geometry.prob_hi   =  1.024e10 1.024e10 1.024e10
 
 amr.n_cell         = 64 64 64
 
-amr.max_grid_size   = 16 16 32 32
+amr.max_grid_size   = 256 256 16 16 32 32
 amr.blocking_factor = 8
 
-amr.max_level      = 2       # maximum level number allowed
+amr.max_level      = 1       # maximum level number allowed
 
 castro.lo_bc       =  2 2 2
 castro.hi_bc       =  2 2 2
@@ -34,12 +34,21 @@ castro.allow_negative_energy = 0
 
 castro.ppm_type = 1
 castro.ppm_reference = 1
-castro.use_colglaz = 0
+castro.ppm_temp_fix = 0
+castro.ppm_reference_eigenvectors = 1
+castro.ppm_reference_edge_limit = 1
+castro.ppm_tau_in_tracing = 0
+
+castro.use_flattening = 1
+castro.ppm_flatten_before_integrals = 1
+
+castro.use_colglaz = 1
+
 castro.grav_source_type = 2
 castro.ppm_trace_grav = 1
 
 castro.do_rotation = 0
-castro.rotational_frequency = 0.005
+castro.rotational_period = 200.0
 
 castro.show_center_of_mass = 1
 
@@ -55,7 +64,7 @@ amr.ref_ratio       = 4 4 4 4 4 # refinement ratio
 amr.regrid_int      = 2         # how often to regrid
 amr.n_error_buf     = 2 2 2 2 2 # number of buffer cells in error est (should be 
                                 # same as regrid_int--doesn't depend on ref_ratio)
-amr.grid_eff        = 0.9       # what constitutes an efficient grid
+amr.grid_eff        = 0.5       # what constitutes an efficient grid
 
 amr.plot_files_output = 1
 amr.checkpoint_files_output = 1
