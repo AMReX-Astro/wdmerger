@@ -5,6 +5,7 @@
      use bl_constants_module
      use fundamental_constants_module
      use eos_module
+     use eos_type_module
 
      implicit none
 
@@ -28,6 +29,8 @@
      integer :: ipp, ierr, ipp1
 
      double precision :: r_l, r_r
+
+     type (eos_t) :: eos_state
 
      integer :: ioproc
 
@@ -121,8 +124,14 @@
 
 
      ! get the rest of the ambient thermodynamic state
-     call eos_given_RTX(eint_ambient,pres_ambient,dens_ambient, &
-                        temp_ambient,xn_ambient)
+     eos_state%rho = dens_ambient
+     eos_state%T   = temp_ambient
+     eos_state%xn(:) = xn_ambient(:)
+
+     call eos(eos_input_rt, eos_state)
+
+     pres_ambient = eos_state%p
+     eint_ambient = eos_state%e
 
 
      ! compute the radius of the model
@@ -170,6 +179,7 @@
      use probdata_module
      use interpolate_module
      use eos_module
+     use eos_type_module
      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
           UEDEN, UEINT, UFS
      use network, only : nspec
@@ -187,6 +197,8 @@
      double precision :: x,y,z
      double precision :: pres
      double precision :: dist
+
+     type (eos_t) :: eos_state
 
      integer :: i,j,k,n
 
@@ -227,8 +239,15 @@
      do k = lo(3), hi(3)
         do j = lo(2), hi(2)
            do i = lo(1), hi(1)
-              call eos_given_RTX(state(i,j,k,UEINT),pres,state(i,j,k,URHO), &
-                                 state(i,j,k,UTEMP),state(i,j,k,UFS:UFS-1+nspec))
+
+              eos_state%rho = state(i,j,k,URHO)
+              eos_state%T = state(i,j,k,UTEMP)
+              eos_state%xn(:) = state(i,j,k,UFS:UFS-1+nspec)
+
+              call eos(eos_input_rt, eos_state)
+
+              state(i,j,k,UEINT) = eos_state%e
+              pres = eos_state%p
 
               state(i,j,k,UEDEN) = state(i,j,k,URHO) * state(i,j,k,UEINT)
               state(i,j,k,UEINT) = state(i,j,k,URHO) * state(i,j,k,UEINT)
@@ -256,7 +275,6 @@
           UEDEN, UEINT, UFS
      use bl_constants_module
      use probdata_module
-     use eos_module
 
      implicit none
      include 'bc_types.fi'
