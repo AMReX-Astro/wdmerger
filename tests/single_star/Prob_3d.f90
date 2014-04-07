@@ -6,7 +6,7 @@
      use fundamental_constants_module
      use eos_module
      use eos_type_module
-
+     use meth_params_module, only : small_dens, small_temp, small_pres
      implicit none
 
      integer :: init, namlen
@@ -133,6 +133,19 @@
      pres_ambient = eos_state%p
      eint_ambient = eos_state%e
 
+
+     ! set small_press
+     eos_state%rho = small_dens
+     eos_state%T = small_temp
+     eos_state%xn(:) = xn_ambient(:)
+
+     call eos(eos_input_rt, eos_state)
+     
+     small_pres = eos_state%p
+
+     if (ioproc == 1) then
+        print *, 'small_pres set to: ', small_pres
+     endif
 
      ! compute the radius of the model
      radius = -1.0d0
