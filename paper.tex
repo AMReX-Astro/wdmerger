@@ -124,47 +124,52 @@ We solve the Poisson equation for self-gravity for our problem,
 \begin{equation}
   \nabla^2 \Phi(\mathbf{x}) = -4\pi G\, \rho(\mathbf{x}),
 \end{equation}
-and we note that the sign convention used in CASTRO is opposite to that commonly seen in the physics literature. The solution of this equation in CASTRO is described in \cite{castro}, and consists of both level and composite solves, and a final synchronization at the end.
+where $\Phi$ is the gravitational potential, $G$ is the gravitational constant, and $\rho$ is the mass density. We note that the sign convention used in CASTRO is opposite to that commonly seen in the physics literature, so that $\Phi$ is positive everywhere. The solution of this equation in CASTRO is described in \cite{castro}, and consists of both level and composite solves, and a final synchronization at the end.
 
-The white dwarf merger problem falls into a class of problems with ``isolated'' boundary conditions, where we assume that all of the mass in the system is enclosed within the physical domain. Analytically, the Poisson equation is customarily solved by assuming that the potential vanishes as one gets very far away from the region of non-zero mass density. However, on a finite computational domain this assumption does not hold in general: there will be some non-zero value of the gravitational potential on the boundaries of the domain. In principle, the Dirichlet boundary values can be computed by doing a direct sum of the mass distribution for each zone outside the domain:
+Analytic solutions to the Poisson equation customarily assume that the potential vanishes at large distances from the region of non-zero density. However, on a finite computational domain it is usually not possible to have the edges of the domain be far enough away that the potential can be taken to be zero there. Solving the Poisson equation therefore requires knowledge of the values of the potential on the edges of the computational domain. In principle, they can be computed by doing a direct sum over the mass distribution inside the domain, where the mass in each zone is treated as a point source:
 \begin{equation}
-  \left. \Phi(\mathbf{x}) \right|_{\text{boundary}} = G\, \sum_{\text{i, j, k}} \frac{G \rho_{\text{ijk}}}{|\mathbf{x} - \mathbf{x}_{\text{ijk}}|}\, \Delta V_{\text{ijk}}.
+  \Phi_{\text{lmn}} = G\, \sum_{\text{i, j, k}} \frac{G \rho_{\text{ijk}}}{|\mathbf{x}_{\text{lmn}} - \mathbf{x}_{\text{ijk}}|}\, \Delta V_{\text{ijk}}.
 \end{equation}
-If there are $N$ zones per spatial dimension, then there are $\mathcal{O}(N^2)$ boundary zones, and each boundary zone requires a sum over $N^3$ zones, so the direct computation of the boundary conditions is an $\mathcal{O}(N^5)$ operation. However, in a typical simulation we place the boundaries of the domain far away from the region containing most of the mass, so that they do not contaminate the hydrodynamics in the region of interest at the center of the domain. As a result, a common approach is to make some approximation for the mass distribution on the domain that results in a more tractable summation scheme. 
+Here (i, j, k) are the indices of cells inside the domain, and (l, m, n) are the indices of boundary locations. $\Delta V$ is the volume of the zone. We have implemented this as an option\footnote{It is controlled with the \texttt{gravity.direct\_sum\_bcs} input parameter.} in CASTRO. If there are $N$ zones per spatial dimension, then there are $6 N^2$ boundary zones, and each boundary zone requires a sum over $N^3$ zones, so the direct computation of the boundary conditions scales as $N^5$.  This method is expensive enough that it is not used for hydrodynamics simulations (though it is useful for comparison to the approximate solutions described below).
 
-The original release of CASTRO featured a monopole prescription, where the boundary values were computed by summing up all the mass on the domain and treating it as a point source at the domain center. Newton's shell theorem shows that this is exact for a spherically symmetric mass distribution, and indeed this is generally a sufficient approximation for single-star Type Ia supernova simulations that employ self-gravity (ref). However, for a mass distribution with significant departures from spherical symmetry, this assumption may fail to produce accurate boundary values. Furthermore, since the Poisson equation is an elliptic partial differential equation, incorrect boundary values can instantaneously pollute the entire solution. We describe here new features we have added to CASTRO to ameliorate this issue.
+In a typical simulation we place the boundaries of the domain far enough away from the region containing most of the mass that some method of approximation to this direct summation is justified. Many approaches exist in the literature. The original release of CASTRO featured the crudest possible approximation: a monopole prescription, where the boundary values were computed by summing up all the mass on the domain and treating it as a point source at the domain center. This is exactly correct only for a spherically symmetric mass distribution, and indeed this is often a sufficient approximation for single-star Type Ia supernova simulations that employ self-gravity (ref). However, for a problem like that of a binary star system with significant departures from spherical symmetry, this assumption fails to produce accurate boundary values. This results in a significant drift of the center of the mass of the system over time. We describe here two new features we have added to CASTRO to address this issue.
 
 \subsubsection{Multipole Expansion}
 
-The most natural extension of the monopole prescription is to include higher-order multipole moments. If the entire mass distribution is enclosed, then the potential can be expanded as a series of spherical harmonics:
+The most natural extension of the monopole prescription is to include higher-order multipole moments. If the entire mass distribution is enclosed, then the potential can be expanded in a series of spherical harmonics $Y_{lm}$:
 \begin{equation}
   \Phi(\mathbf{x}) = \sum_{l=0}^{\infty}\sum_{m=-l}^{l} \frac{4\pi}{2l + 1} q_{lm} \frac{Y_{lm}(\theta,\phi)}{r^{l+1}}, \label{spherical_harmonic_expansion}
 \end{equation}
-where the origin of the coordinate system is taken to be at the center of the computational domain. The multipole moments can be calculated by expanding the Green's function for the Poisson equation as a series spherical harmonics, which yields
+where $q_{lm}$ are the so-called multipole moments. The origin of the coordinate system is taken to be the center of the computational domain, and $r$ is the distance to the origin. The multipole moments can be calculated by expanding the Green's function for the Poisson equation as a series of spherical harmonics.
+\begin{comment}
+, which yields
 \begin{equation}
   q_{lm} = \int Y^*_{lm}(\theta^\prime, \phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3x^\prime. \label{multipole_moments_original}
 \end{equation}
-Some simplification of Equation \ref{spherical_harmonic_expansion} can be achieved by using the addition theorem for spherical harmonics:
+\end{comment}
+After some algebraic simplification of Equation \ref{spherical_harmonic_expansion} using the addition theorem for spherical harmonics,
+\begin{comment}
 \begin{align}
   &\frac{4\pi}{2l+1} \sum_{m=-l}^{l} Y^*_{lm}(\theta^\prime,\phi^\prime)\, Y_{lm}(\theta, \phi) = P_l(\text{cos}\, \theta) P_l(\text{cos}\, \theta^\prime) \notag \\
   &\ \ + 2 \sum_{m=1}^{l} \frac{(l-m)!}{(l+m)!} P_{l}^{m}(\text{cos}\, \theta)\, P_{l}^{m}(\text{cos}\, \theta^\prime)\, \left[\text{cos}(m\phi)\, \text{cos}(m\phi^\prime) + \text{sin}(m\phi)\, \text{sin}(m\phi^\prime)\right].
 \end{align}
-Here the $P_{l}^{m}$ are the associated Legendre polynomials and the $P_l$ are the Legendre polynomials. After some algebraic simplification, the potential outside of the mass distribution can be written in the following way:
+\end{comment}
+the potential outside of the mass distribution can be written as:
 \begin{equation}
-  \Phi(\mathbf{x}) \approx \sum_{l=0}^{l_{\text{max}}} \left[Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} + \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right].
+  \Phi(\mathbf{x}) = \sum_{l=0}^{\infty} \left[Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} + \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right].\label{multipole_potential}
 \end{equation}
-The modified multipole moments are:
+$P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials. The modified multipole moments are:
 \begin{align}
   Q_l^{(0)}   &= \int P_l(\text{cos}\, \theta^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
   Q_{lm}^{(C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
   Q_{lm}^{(S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime.
 \end{align}
-Our strategy for the multipole boundary conditions, then, is to pick some value $l_{\text{max}}$ that is of sufficiently high order to capture the distribution of mass on the grid, evaluate the discretized analog of the modified multipole moments for $0 \leq l \leq l_{\text{max}}$ and $1 \leq m \leq l$, and then directly compute the value of the potential on all of the boundary zones. This is ultimately an $\mathcal{O}(N^3)$ operation, the same order as the monopole approximation, and the wall time required to calculate the boundary conditions will depend on the chosen value of $l_{\text{max}}$.
+This approach becomes computationally feasible when we cut off the outer summation in Equation \ref{multipole_potential} at some finite value of $l_{\text{max}}$. If it is of sufficiently high order, we will accurately capture the distribution of mass on the grid. In practice we first evaluate the discretized analog of the modified multipole moments for $0 \leq l \leq l_{\text{max}}$ and $1 \leq m \leq l$, an operation that scales as $N^3$. We then directly compute the value of the potential on all of the $6N^2$ boundary zones. Since the multipole moments only need to be calculated once, the full operation scales only as $N^3$. The amount of time required to calculate the boundary conditions will be directly related to the chosen value of $l_{\text{max}}$, so there is a trade-off between computational expense and accuracy of the result. We find that for the early stages of the evolution of the binary system, $l_\text{max} \approx 6$ is sufficient.
 
 
-\subsubsection{James Algorithm}
+\subsubsection{Isolated Potential}
 
-Figure~\ref{fig:2levgrav} shows the sequence of updates for $\phi$ on a 2-level grid.
+%Figure~\ref{fig:2levgrav} shows the sequence of updates for $\phi$ on a 2-level grid.
 
 
 %==========================================================================
@@ -630,12 +635,12 @@ and then we can find $(\rho u)^{n+1}$ from Eq.~\ref{eq:rhouupdate}.
 
 \clearpage
 
-\begin{figure}
-  \centering
-  \includegraphics[width=3.1in]{nested2}\hspace{1em}
-  \includegraphics[width=3.1in]{nested3}
-  \caption{\label{fig:2levgrav} Schematic showing the solve for $\phi$ for a 2-level grid.}
-\end{figure}
+%\begin{figure}
+%  \centering
+%  \includegraphics[width=3.1in]{nested2}\hspace{1em}
+%  \includegraphics[width=3.1in]{nested3}
+%  \caption{\label{fig:2levgrav} Schematic showing the solve for $\phi$ for a 2-level grid.}
+%\end{figure}
 
 \clearpage
 
