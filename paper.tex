@@ -161,18 +161,20 @@ the potential outside of the mass distribution can be written as:
 \begin{equation}
   \Phi(\mathbf{x}) = \sum_{l=0}^{\infty} \left[Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} + \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right].\label{multipole_potential}
 \end{equation}
-$P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials. The modified multipole moments are:
+$P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials. $Q_l^{(0)}$ and $Q_{lm}^{(C,S)}$ are variants of the multipole moments that involve integrals of $P_l$ and $P_l^m$, respectively, over the computational domain.
+\begin{comment}
 \begin{align}
   Q_l^{(0)}   &= \int P_l(\text{cos}\, \theta^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
   Q_{lm}^{(C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
   Q_{lm}^{(S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime.
 \end{align}
+\end{comment}
 This approach becomes computationally feasible when we cut off the outer summation in Equation \ref{multipole_potential} at some finite value of $l_{\text{max}}$. If it is of sufficiently high order, we will accurately capture the distribution of mass on the grid. In practice we first evaluate the discretized analog of the modified multipole moments for $0 \leq l \leq l_{\text{max}}$ and $1 \leq m \leq l$, an operation that scales as $N^3$. We then directly compute the value of the potential on all of the $6N^2$ boundary zones. Since the multipole moments only need to be calculated once, the full operation scales only as $N^3$. The amount of time required to calculate the boundary conditions will be directly related to the chosen value of $l_{\text{max}}$, so there is a trade-off between computational expense and accuracy of the result. We find that for the early stages of the evolution of the binary system, $l_\text{max} \approx 6$ is sufficient.
 
 \subsubsection{Isolated Potential}
 
 %Figure~\ref{fig:2levgrav} shows the sequence of updates for $\phi$ on a 2-level grid.
-A clever way to evaluate Equation \ref{direct_sum} for the boundary values of the potential was described by \cite{james77}. In electrostatics a commonly encountered boundary-value problem is that of a positive charge distribution inside of a grounded conducting box. The potential vanishes on the surface of the box. For this to happen, a collection of negative charges must form on the outer surface of the box, to compensate the charge enclosed inside the box. This can be described by a surface charge density $\sigma$. This construction is useful in determining what the potential would be at the location of the surface when the box is removed. We will describe the potential outside of a density distribution that is non-zero only in some finite region as ``isolated'', and denote it by $\Phi$. This is the quantity we want to solve for. The potential in the case where the surface is grounded and conducting is called the ``homogeneous'' potential, and will be denoted by $\phi$. The homogeneous potential is the sum of the isolated potential and also the potential due to the surface charges $\Psi$:
+A clever way to evaluate Equation \ref{direct_sum} exactly for the boundary values of the potential was described by \cite{james77}, and we have implemented a method inspired by that work here. In electrostatics a commonly encountered boundary-value problem is that of a positive charge distribution inside of a grounded conducting box. The potential vanishes on the surface of the box. For this to happen, a collection of negative charges must form on the outer surface of the box, to compensate the charge enclosed inside the box. This can be described by a surface charge density $\sigma$. This construction is useful in determining what the potential would be at the location of the surface when the box is removed. We will describe the potential outside of a density distribution that is non-zero only in some finite region as ``isolated'', and denote it by $\Phi$. This is the quantity we want to solve for. The potential in the case where the surface is grounded and conducting is called the ``homogeneous'' potential, and will be denoted by $\phi$. The homogeneous potential is the sum of the isolated potential and also the potential due to the surface charges $\Psi$:
 \begin{equation*}
   \phi = \Phi + \Psi.
 \end{equation*}
@@ -180,18 +182,21 @@ In order for $\phi$ to vanish at the surface, $\Phi$ and $\Psi$ must be of oppos
 \begin{equation}
   \Phi = \phi - \Psi.
 \end{equation}
-Therefore a strategy for finding $\Phi$ is to solve the Poisson equation in the case where the boundary conditions are homogeneous and obtain $\phi$, and subtract from it the $\Psi$ that would be generated by the necessary compensating surface charges $\sigma$. All of this can be done for the gravitational version of Poisson's equation. Even though we do not commonly speak of negative gravitational charges, they are simply a mathematical tool for obtaining the correct potential. In general,
+Therefore a strategy for finding $\Phi$ is: solve the Poisson equation with homogeneous boundary conditions for $\phi$; calculate the necessary surface charges $\sigma$; find the resulting $\Psi$ on the boundary of the domain; solve the Laplace equation with inhomogeneous boundary conditions for $\Psi$ inside the domain; and then take $\Phi = \phi - \Psi$. 
+
+We slightly simplify this approach by observing that, since $\phi$ is by construction zero on the boundary, the value of $\Psi$ everywhere on the boundary must be equal in magnitude and opposite in sign to $\Phi$. Therefore the problem of finding the boundary values for $\Phi$ is reduced to solving the Poisson equation for $\phi$, constructing the surface charges $\sigma$, and then performing the appropriate integration of $-\sigma$ to get the boundary values. We then proceed with the Poisson solve as normal.
+
+All of this can be done for the gravitational version of Poisson's equation. Even though we do not commonly speak of negative gravitational charges, they are simply a mathematical tool for obtaining the correct potential. In general,
 \begin{equation}
   \sigma = \frac{1}{4\pi G} {\bm{\nabla}} \phi \cdot \hat{\mathbf{n}},
 \end{equation}
-where $\hat{\mathbf{n}}$ is the unit vector perpendicular to (and pointing away from) the surface. On the computational domain, using an appropriate discretized representation of the ${\bm{\nabla}}$ operator, we calculate $\sigma$ at every boundary location. We can then find the resulting potential by summing over all of the surface charges:
+where $\hat{\mathbf{n}}$ is the unit vector perpendicular to (and pointing away from) the surface. On the computational domain, using an appropriate discretized representation of the ${\bm{\nabla}}$ operator\footnote{The gradient of $\phi$ is discontinuous across the surface; it is zero just outside the surface, and non-zero just inside the surface. Therefore instead of using a difference centered on the boundary edge, we take a one-sided difference using the grid points just inside the domain. In order for the discretization to remain second-order accurate, data from the two closest grid points are used.}, we calculate $\sigma$ at every boundary location. We can then find the resulting potential on the boundary by summing over all of the surface charges:
 \begin{equation}
   \Psi_{\text{l,m,n}} = \sum_{\text{l$^\prime$,m$^\prime$,n$^\prime$}} \frac{G\sigma_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}}{\left|\mathbf{x}_{\text{l,m,n}} - \mathbf{x}_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}\right|} dA_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}
 \end{equation}
+Here (l, m, n) refer only to boundary locations. The self-contribution from a zone must be excluded in this sum, since the denominator would diverge there.
 
-%In general,
-%\begin{equation}
-%  \sigma = 4\pi G
+As described so far, the method is not especially attractive: calculation of the boundary values requires an additional Poisson solve and a sum that scales as $N^4$. Furthermore, the latter sum faces problems with balancing of the computational work: only processors that have data on the boundary contribute to the summation, while the others remain idle. This does not compare well with the $N^3$ scaling of the multipole approach.
 
 %==========================================================================
 % Test Problems
