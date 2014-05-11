@@ -160,8 +160,8 @@ function process_files
   # as chkXXXXX.processed files.  We restrict the find command to a depth of
   # 1 to avoid catching any already-processed files in the checkfiles/ 
   # directory
-  chklist5=$(find . -maxdepth 1 -type d -name "${chk_prefix}??[05]00" -print | sort)
-  chklist6=$(find . -maxdepth 1 -type d -name "${chk_prefix}???[05]00" -print | sort)
+  chklist5=$(find . -maxdepth 1 -type d -name "${chk_prefix}?????" -print | sort)
+  chklist6=$(find . -maxdepth 1 -type d -name "${chk_prefix}??????" -print | sort)
 
   chklist="$chklist5 $chklist6"
 
