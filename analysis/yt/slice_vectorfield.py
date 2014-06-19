@@ -1,28 +1,39 @@
 from yt.mods import *
-import sys
-import os
-import fnmatch
-import string
 
+#type in path to directory for data; 
+#.png images will also be saved there by default
+#otherwise change 'outpath'
+
+path = '/home/'
+outpath = path
 pfprefix='plt'
+
+#the list of all fiels in the form ('a', 'b') can be found
+#by command pf.derived_field_list after data was loaded.
+
+field = ('gas', 'density')
+
+#for log plot
+
+log = True
+
+#----------Automatic----------
+
 pflist = []
-for p in os.listdir("."):
+for p in os.listdir(path):
     if fnmatch.fnmatch(p, "%s*" % (pfprefix)) and not fnmatch.fnmatch(p,'*%s' % ('.yt')):
         pflist.append(p)
     
 pflist.sort()
-#pflist=['plt00650']#,'plt00400','plt00100']
 
-field = 'logden'
-
-# Find min and max for colorbar.. eventually expand to emulate generalline.py
+# Find min and max for colorbar, eventually expand to emulate generalline.py
 for i, plotf in enumerate(pflist):
-    pf = load(plotf)
+    pf = load(path + plotf)
     print plotf
     if i==0:
         fieldrange = [0,0]
-        fieldrange[0],fieldrange[1] = pf.h.all_data().quantities["Extrema"](field)[0]
-    mi, ma = pf.h.all_data().quantities["Extrema"](field)[0]
+        fieldrange[0],fieldrange[1] = pf.h.all_data().quantities["Extrema"](field)
+    mi, ma = pf.h.all_data().quantities["Extrema"](field)
     if mi < fieldrange[0]:
         fieldrange[0] = mi
     if ma > fieldrange[1]:
@@ -30,11 +41,10 @@ for i, plotf in enumerate(pflist):
     print 'current fieldrange =', fieldrange
 
 for plotf in pflist:
-    pf = load(plotf)
+    pf = load(path + plotf)
     print plotf
-    pf.h
 
-    pf.field_info[field]._units = r"\rm{log}[\rm{g}/\rm{cm}^{3}]"
+    pf.field_info[field].take_log = log
 
     p = SlicePlot(pf, "z", field, width=((1.024e10, "cm"), (1.024e10, "cm")),
                   fontsize=14)
@@ -57,4 +67,4 @@ for plotf in pflist:
      #                text_which=1)
     #p.annotate_axis_label("rtw")
 
-    p.save('{a}_velocityfield.{b}.png'.format(a=field,b=plotf))
+    p.save('{outpath}{field}_velocityfield.{plotf}.png'.format(outpath = outpath, field = field, plotf = plotf))
