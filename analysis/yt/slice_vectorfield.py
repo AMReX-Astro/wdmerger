@@ -1,15 +1,20 @@
 from yt.mods import *
+import sys
+import os
+import fnmatch
+import string
 
-#type in path to directory for data; 
-#.png images will also be saved there by default
-#otherwise change 'outpath'
+# Type in path to directory for data; 
+# .png images will also be saved there by default.
+# Otherwise change 'outpath'.
+# By default we will assume that you are running this in the directory with the data.
 
-path = '/home/'
+path = './'
 outpath = path
 pfprefix='plt'
 
-#the list of all fiels in the form ('a', 'b') can be found
-#by command pf.derived_field_list after data was loaded.
+# The list of all fields in the form ('a', 'b') can be found
+# by command pf.derived_field_list after data was loaded.
 
 field = ('gas', 'density')
 
@@ -49,7 +54,7 @@ for plotf in pflist:
     p = SlicePlot(pf, "z", field, width=((1.024e10, "cm"), (1.024e10, "cm")),
                   fontsize=14)
     p.set_zlim(field, fieldrange[0],fieldrange[1])
-    p.set_cmap(field, 'jet')
+    p.set_cmap(field, 'hot')
 
     #p.annotate_contour('density', clim=(1.05e-4, 1.16e-4), ncont=5, label=False)
     p.annotate_grids(alpha=0.2, min_level=2)
@@ -67,4 +72,4 @@ for plotf in pflist:
      #                text_which=1)
     #p.annotate_axis_label("rtw")
 
-    p.save('{outpath}{field}_velocityfield.{plotf}.png'.format(outpath = outpath, field = field, plotf = plotf))
+    p.save('{outpath}{field[1]}_velocityfield.{plotf}.png'.format(outpath = outpath, field = field, plotf = plotf))
