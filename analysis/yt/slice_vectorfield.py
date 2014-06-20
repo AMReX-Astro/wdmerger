@@ -48,7 +48,8 @@ for i, plotf in enumerate(pflist):
 for plotf in pflist:
     pf = load(path + plotf)
     print plotf
-
+    
+    pf.index
     pf.field_info[field].take_log = log
 
     p = SlicePlot(pf, "z", field, width=((1.024e10, "cm"), (1.024e10, "cm")),
@@ -60,9 +61,14 @@ for plotf in pflist:
     p.annotate_grids(alpha=0.2, min_level=2)
     p.annotate_quiver('x_velocity', 'y_velocity', factor=16)
     p.annotate_title('Log density with velocity field')
+   
+    #print out code time
+    time = str(pf.current_time)
+    time = time.strip(' code_time')
     p.annotate_point([5.0e7, 1.0e8],
-                     'Current time: {a} s'.format(a=pf.current_time),
+                     'Current time: %s s' % time,
                      text_args={'size':'large', 'color':'w'})
+
     #p.annotate_marker([5.0e9, 5.0e9], marker="x")
     #p.annotate_point([5.7e9, 5.1e9], 'pfpf')
 
