@@ -1,0 +1,45 @@
+#!/bin/ksh
+#PBS -A m1400
+#PBS -N wdmerger
+#PBS -j oe
+#PBS -q debug
+#PBS -l walltime=0:30:00
+#PBS -l mppwidth=6000
+
+
+# this script runs with 6 threads on edison -- this seems to give the best 
+# performance.
+
+export OMP_NUM_THREADS=6
+
+
+cd $PBS_O_WORKDIR
+
+# Edison has 2 Intel "IvyBridge" processors each with 12 cores.  Each processor
+# connects to 1/2 of the node's memory, and is called a NUMA node.  So there
+# are 2 NUMA nodes per Edison node.
+#
+# -S is the number of MPI tasks per NUMA node (you want to split them
+#    across the 2 NUMA nodes per Edison node)
+#
+# -n is the total number of MPI tasks for the entire application
+#
+# -N is the number of MPI tasks PER Edison node
+#
+# -d is the number of OpenMP threads per MPI task (must match OMP_NUM_THREADS)
+#
+# see http://www.nersc.gov/users/computational-systems/edison/running-jobs/example-batch-scripts/
+#     http://www.nersc.gov/users/computational-systems/edison/running-jobs/aprun/
+#
+# you need to change -n to give the number of MPI tasks you want.  Then
+# that number * OMP_NUM_THREADS should match the mppwidth set at the top of this script
+#
+# The product of -N and -d should be 24 -- the total number of cores per Edison node.
+
+
+
+aprun -n 1000 -N 4 -d 6 -S 2 ./Castro3d.Linux.Intel.Intel.MPI.OMP.ex inputs_3d.pakmor
+
+
+rm -f process.pid
+
