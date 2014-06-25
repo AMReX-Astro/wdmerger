@@ -15,7 +15,7 @@ geometry.prob_hi   =  1.024e10 1.024e10 1.024e10
 
 amr.n_cell         = 480 480 480
 
-amr.max_grid_size   = 48 48 64
+amr.max_grid_size   = 48 32 64
 amr.blocking_factor = 8
 
 amr.max_level      = 2       # maximum level number allowed
