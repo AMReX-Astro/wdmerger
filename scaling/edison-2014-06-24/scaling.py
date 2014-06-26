@@ -1,7 +1,7 @@
 import numpy as np
 import pylab
 
-data = np.loadtxt("scaling.txt")
+data = np.loadtxt("scaling-48.txt")
 
 cores = data[:,0]*data[:,1]
 time = data[:,2]
