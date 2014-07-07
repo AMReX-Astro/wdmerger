@@ -62,6 +62,7 @@ systems with the AMR hydrodynamics code Castro.
 
 
 
+
 %==========================================================================
 % Numerical Methodology
 %==========================================================================
@@ -89,9 +90,9 @@ rotation
 
 \subsection{Microphysics}
 
-EOS (no Coulomb corrections)
+The equation of state (EOS) for our simulations is the Helmholtz EOS \citep{timmes_swesty:2000}. This models an electron-positron gas of arbitrary relativity and degeneracy over a wide range of temperatures and densities. Thermodynamic quantities are calculated as derivatives of the Helmholtz free energy, and the values are interpolated from a table. The natural variables of the Helmholtz free energy are temperature and density, and calling the EOS is simplest in this form. However, in hydrodynamics we often have the density, and internal energy as independent variables, and we want to obtain the temperature, pressure, and other quantities. To do this, we employ a Newton-Raphson iteration over the temperature (given some sufficient starting guess) until we find the temperature that corresponds to the desired internal energy. Sometimes this process fails to converge and the iterative value approaches zero. In these cases we employ a ``floor'' that limits how low the temperature can go (typically $10^4$ or $10^5$ K). There is a choice here how to proceed: we can either assign this floor value to the temperature and let that zone be thermodynamically inconsistent (the original behavior in Castro), or we can adjust the internal energy to be thermodynamically consistent with the temperature, at the cost of violating energy conservation. We have found in test problems of one-dimensional shocks that the latter yields more accurate results, so we employ the latter method.
 
-
+Reactions?
 
 \subsection{Initial Models}
 
@@ -190,7 +191,11 @@ All of this can be done for the gravitational version of Poisson's equation. Eve
 \begin{equation}
   \sigma = \frac{1}{4\pi G} {\bm{\nabla}} \phi \cdot \hat{\mathbf{n}},
 \end{equation}
-where $\hat{\mathbf{n}}$ is the unit vector perpendicular to (and pointing away from) the surface. On the computational domain, using an appropriate discretized representation of the ${\bm{\nabla}}$ operator\footnote{The gradient of $\phi$ is discontinuous across the surface; it is zero just outside the surface, and non-zero just inside the surface. Therefore instead of using a difference centered on the boundary edge, we take a one-sided difference using the grid points just inside the domain. In order for the discretization to remain second-order accurate, data from the two closest grid points are used.}, we calculate $\sigma$ at every boundary location. We can then find the resulting potential on the boundary by summing over all of the surface charges:
+where $\hat{\mathbf{n}}$ is the unit vector perpendicular to (and pointing away from) the surface. On the computational domain, using an appropriate discretized representation of the ${\bm{\nabla}}$ operator, we calculate $\sigma$ at every boundary location. This requires some care. In CASTRO, the boundaries are on cell edges a distance $dx / 2$ away from the outermost domain location. It is therefore tempting to use a central difference that uses the ghost zone on one side and the outermost zone inside the domain in the other. This is normally second-order accurate. However, by construction, the gradient of $\phi$ is discontinuous across that surface; it is zero just outside the surface, and non-zero just inside the surface. This discontinuity is what establishes the non-zero surface mass density, similar to how a jump in the electric field is associated with a surface charge density in electrostatics. Therefore it is inappropriate to use the central difference method. Instead, a one-sided difference is required, using only the data interior to the surface. For the discretization to be second-order accurate, data from the two nearest cells must be used. 
+
+ Therefore instead of using a difference centered on the boundary edge, we take a one-sided difference using the grid points just inside the domain. In order for the discretization to remain second-order accurate, data from the two closest grid points are used.}
+
+We can then find the resulting potential on the boundary by summing over all of the surface charges:
 \begin{equation}
   \Psi_{\text{l,m,n}} = \sum_{\text{l$^\prime$,m$^\prime$,n$^\prime$}} \frac{G\sigma_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}}{\left|\mathbf{x}_{\text{l,m,n}} - \mathbf{x}_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}\right|} dA_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}
 \end{equation}
