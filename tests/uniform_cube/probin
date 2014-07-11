@@ -1,0 +1,8 @@
+&fortin
+  max_denerr_lev     = 4
+  denerr             = 1.d-2
+/
+
+&extern
+  use_eos_coulomb = F
+/
