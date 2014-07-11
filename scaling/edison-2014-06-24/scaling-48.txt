@@ -1,0 +1,7 @@
+# same as the other scaling, but with max_grid_size = 48 at the finest level
+#        MPI     threads       total
+         50           6  1207.860000 
+        125           6  597.778000  
+        250           6  353.484000 
+        500           6  221.422000 
+       1000           6  146.499000 

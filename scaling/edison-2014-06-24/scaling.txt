@@ -1,0 +1,12 @@
+# 480^3 coarse grid with 2 levels (jumps of 2x and 4x) to give
+# effective 3840^3 resolution.
+#
+# Compiled using Intel 14.0.2
+
+#        MPI     threads       total 
+         50           6  1171.540000 
+        125           6  559.546000 
+        250           6  342.237000 
+        500           6  218.552000 
+       1000           6  152.287000 
+
