@@ -1,7 +1,6 @@
    subroutine PROBINIT (init,name,namlen,problo,probhi)
      
      use probdata_module
-     use model_parser_module
      use bl_constants_module
      use fundamental_constants_module
      use meth_params_module, only: small_temp, small_pres, small_dens, rot_period
@@ -27,18 +26,7 @@
      character :: model*(maxlen)
      integer :: ipp, ierr, ipp1
 
-     double precision :: r_l, r_r
-     double precision :: a
-     double precision :: length
-
-     type (eos_t) :: eos_state
-
      ! Temporary storage variables in case we need to switch the primary and secondary.
-
-     double precision, allocatable :: temp_model_state(:,:), temp_model_r(:)
-     double precision   :: temp_mass
-     integer            :: temp_npts
-     character (len=80) :: temp_name
 
      integer :: ioproc
 
@@ -82,7 +70,6 @@
      read(untin,fortin)
      close(unit=untin)
 
-
      ! Grid geometry
      center(1) = HALF*(problo(1)+probhi(1))
      center(2) = HALF*(problo(2)+probhi(2))
@@ -120,10 +107,10 @@
      use interpolate_module
      use eos_module
      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, rot_period
+          UEDEN, UEINT, UFS, UFA, rot_period
      use network, only : nspec
      use bl_constants_module
-     use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
+     use fundamental_constants_module
 
      implicit none
 
@@ -134,13 +121,14 @@
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
      double precision :: xx,yy,zz
+     double precision :: c(0:1,0:2), phi, num1, num2, den1, den2
+     integer          :: ii, jj, kk, ll
 
      type (eos_t) :: eos_state
 
-     integer :: i,j,k,ii,jj,kk,n
+     integer :: i,j,k,n
 
-     !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy, zz) &
-     !$OMP PRIVATE(eos_state)
+     !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy, zz, eos_state, ii, jj, kk, ll, num1, num2, den1, den2, phi, c)
      do k = lo(3), hi(3)   
         zz = xlo(3) + delta(3)*dble(k-lo(3)+HALF) 
 
@@ -150,17 +138,19 @@
            do i = lo(1), hi(1)   
               xx = xlo(1) + delta(1)*dble(i-lo(1)+HALF)
 
+              ! Establish the cube
+
               if (abs(xx) < 0.5 .and. abs(yy) < 0.5 .and. abs(zz) < 0.5) then
                  state(i,j,k,URHO) = 1.0d0
               else
                  state(i,j,k,URHO) = 1.0d-8
               endif
 
+              ! Establish the thermodynamic quantities
+
               state(i,j,k,UTEMP) = 1.0d6
 
               state(i,j,k,UFS:UFS-1+nspec) = 1.0d0 / nspec
-
-              ! thermodynamics              
 
               eos_state % xn  = state(i,j,k,UFS:UFS-1+nspec)
               eos_state % rho = state(i,j,k,URHO)
@@ -176,6 +166,47 @@
               do n = 1,nspec
                  state(i,j,k,UFS+n-1) = state(i,j,k,URHO) * state(i,j,k,UFS+n-1)
               end do
+
+              ! Fill in the true phi state
+
+              c(0,2) = -0.5 - zz
+              c(1,2) =  0.5 - zz
+              c(0,1) = -0.5 - yy
+              c(1,1) =  0.5 - yy
+              c(0,0) = -0.5 - xx
+              c(1,0) =  0.5 - xx
+
+              phi = 0.0
+
+              do ii = 0, 1
+                 do jj = 0, 1
+                    do ll = 0, 2
+
+                       num1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) + c(1,mod(ll+2,3)) )**3
+                       num2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) - c(0,mod(ll+2,3)) )
+                       den1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) - c(1,mod(ll+2,3)) )
+                       den2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) + c(0,mod(ll+2,3)) )**3
+
+                       phi = phi + 0.5 * (-1)**(ii+jj) * ( c(ii,ll) * c(jj,mod(ll+1,3)) * &
+                                         log( num1 * num2 / (den1 * den2) ) )
+
+                    enddo
+                 enddo
+              enddo
+
+              do ii = 0, 1
+                 do jj = 0, 1
+                    do kk = 0, 1
+                       do ll = 0, 2
+                          phi = phi + (-1)**(ii+jj+kk+1) * c(ii,ll)**2 * &
+                                      atan2( c(ii,ll) * c(kk,mod(ll+2,3)), c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + &
+                                             c(jj,mod(ll+1,3))*(c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(kk,mod(ll+2,3))**2)**(0.5) )
+                       enddo
+                    enddo
+                 enddo
+              enddo
+
+              state(i,j,k,UFA) = phi * 0.5 * Gconst
 
            enddo
         enddo
@@ -263,7 +294,7 @@
                  vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
                  vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
                  vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
- 
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -294,7 +325,7 @@
                  vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
                  vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
                  vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
- 
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz
@@ -325,7 +356,7 @@
                  vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
                  vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
                  vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
- 
+
                  adv(i,j,k,UMX) = dens_ambient*vx
                  adv(i,j,k,UMY) = dens_ambient*vy
                  adv(i,j,k,UMZ) = dens_ambient*vz

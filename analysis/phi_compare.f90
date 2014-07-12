@@ -15,7 +15,7 @@ program fwdbcs
 
   type(plotfile) pfComp
   integer :: unit
-  integer :: i, j, k, l, m, n, ii, jj, kk
+  integer :: i, j, ii, jj, kk
   real(kind=dp_t) :: c(0:1,0:2)
   real(kind=dp_t) :: num1, num2, den1, den2
   integer :: rr
@@ -26,7 +26,7 @@ program fwdbcs
 
   real(kind=dp_t), pointer :: pComp(:,:,:,:)
 
-  integer :: phiGrav_comp
+  integer :: phi_comp, true_comp
 
   real(kind=dp_t) :: residNorm, trueNorm
 
@@ -35,8 +35,7 @@ program fwdbcs
   integer :: flo(MAX_SPACEDIM), fhi(MAX_SPACEDIM)
 
   real(kind=dp_t) :: xlo(3), x, y, z
-  real(kind=dp_t) :: phi, dphi, L0
-  real(kind=dp_t) :: Gconst = 6.67428e-8_dp_t
+  real(kind=dp_t) :: phi, true, dphi, L0, L2
 
   integer :: narg, farg
   character(len=256) :: trueName, compName
@@ -56,7 +55,8 @@ program fwdbcs
 
   ! Figure out the variable index for phi.
 
-  phiGrav_comp = plotfile_var_index(pfComp, "phiGrav")
+  phi_comp  = plotfile_var_index(pfComp, "phiGrav")
+  true_comp = plotfile_var_index(pfComp, "adv_0")
  
   ! Get dx for the coarse level. We need this for the L2 norm.
 
@@ -74,15 +74,15 @@ program fwdbcs
 
   L0 = 0.0
 
-  do m = 1, nboxes(pfComp, 1)
+  do j = 1, nboxes(pfComp, 1)
         
-    call fab_bind(pfComp, 1, m)
+    call fab_bind(pfComp, 1, j)
 
-    lo = lwb(get_box(pfComp, 1, m))
-    hi = upb(get_box(pfComp, 1, m))
+    lo = lwb(get_box(pfComp, 1, j))
+    hi = upb(get_box(pfComp, 1, j))
 
     ! get a pointer to the current patch
-    pComp => dataptr(pfComp, 1, m)
+    pComp => dataptr(pfComp, 1, j)
 
     ! loop over all of the zones in the patch.
     do kk = lbound(pComp,dim=3), ubound(pComp,dim=3)
@@ -95,54 +95,16 @@ program fwdbcs
 !          if (kk .eq. flo(3) .or. kk .eq. fhi(3) .or. &
 !              jj .eq. flo(2) .or. jj .eq. fhi(2) .or. &
 !              ii .eq. flo(1) .or. ii .eq. fhi(1)) then
- 
-          c(0,2) = -0.5 - z
-          c(1,2) =  0.5 - z
-          c(0,1) = -0.5 - y
-          c(1,1) =  0.5 - y
-          c(0,0) = -0.5 - x
-          c(1,0) =  0.5 - x
 
-          phi = 0.0
+          phi  = pComp(ii,jj,kk,phi_comp)
+          true = pComp(ii,jj,kk,true_comp)
 
-          do i = 0, 1
-             do j = 0, 1
-                 do l = 0, 2
-
-                      num1 = ( (c(i,l)**2 + c(j,mod(l+1,3))**2 + c(1,mod(l+2,3))**2)**(0.5) + c(1,mod(l+2,3)) )**3
-                      num2 = ( (c(i,l)**2 + c(j,mod(l+1,3))**2 + c(0,mod(l+2,3))**2)**(0.5) - c(0,mod(l+2,3)) )
-                      den1 = ( (c(i,l)**2 + c(j,mod(l+1,3))**2 + c(1,mod(l+2,3))**2)**(0.5) - c(1,mod(l+2,3)) )
-                      den2 = ( (c(i,l)**2 + c(j,mod(l+1,3))**2 + c(0,mod(l+2,3))**2)**(0.5) + c(0,mod(l+2,3)) )**3
-
-                      phi = phi + 0.5 * (-1)**(i+j) * ( c(i,l) * c(j,mod(l+1,3)) * &
-                                         log( num1 * num2 / (den1 * den2) ) )
-
-                enddo
-             enddo
-          enddo
-
-          do i = 0, 1
-             do j = 0, 1
-                do k = 0, 1
-                   do l = 0, 2
-                          phi = phi + (-1)**(i+j+k+1) * (c(i,l)**2 * &
-                                      atan2( c(i,l) * c(k,mod(l+2,3)), c(i,l)**2 + c(j,mod(l+1,3))**2 + &
-                                             c(j,mod(l+1,3))*(c(i,l)**2 + c(j,mod(l+1,3))**2 + c(k,mod(l+2,3))**2)**(0.5) ) )
-                   enddo
-                enddo
-             enddo
-          enddo
-
-          phi = phi * 0.5 * Gconst
-
-!          print *, ii, jj, kk, x, y, z, dx, phi, pComp(ii,jj,kk,phiGrav_comp)
-
-          dphi = pComp(ii,jj,kk,phiGrav_comp) - phi
+          dphi = phi - true
 
           residNorm = residNorm + ( dphi )**2.0d0
-          trueNorm  = trueNorm  + (  phi )**2.0d0
+          trueNorm  = trueNorm  + ( true )**2.0d0
 
-          if (abs(dphi/phi) .gt. L0) L0 = abs(dphi/phi)
+          if (abs(dphi/true) .gt. L0) L0 = abs(dphi/true)
 
 !          endif  
 
@@ -150,19 +112,21 @@ program fwdbcs
       enddo
     enddo
 
-    call fab_unbind(pfComp, 1, m)
+    call fab_unbind(pfComp, 1, j)
                 
   end do
 
   residNorm = ( dx(1) * dx(2) * dx(3) * residNorm )**0.5d0
   trueNorm  = ( dx(1) * dx(2) * dx(3) * trueNorm  )**0.5d0
 
+  L2 = residNorm / trueNorm
+
 100 format(1x, 5(g20.10))
 
   !write (*, 100) pf%tm, kinetic_energy, internal_energy, -potential_energy, &
   !     kinetic_energy + internal_energy - potential_energy, max_mach
 
-  print *, "Rel. L2 Norm = ", residNorm / trueNorm
+  print *, "Rel. L2 Norm = ", L2
   print *, "Inf norm = ", L0
 
   call destroy(pfComp)
