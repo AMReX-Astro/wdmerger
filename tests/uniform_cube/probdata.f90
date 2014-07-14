@@ -23,4 +23,7 @@ module probdata_module
   ! grid info
   double precision, save ::  center(3)
 
+  ! cube data
+  double precision, save :: cube_rho, cube_a
+
 end module probdata_module

@@ -1,6 +1,9 @@
 &fortin
   max_denerr_lev     = 4
   denerr             = 1.d-2
+
+  cube_rho = 1.0d3
+  cube_a   = 2.0d0
 /
 
 &extern

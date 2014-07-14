@@ -19,7 +19,8 @@
           denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
-          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev
+          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
+          cube_rho, cube_a
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -63,6 +64,9 @@
      tempgrad = 1.d20
      max_temperr_lev = -1
      max_tempgrad_lev = -1
+
+     cube_rho = 1.0d0
+     cube_a   = 1.0d0
 
      ! Read namelists -- override the defaults
      untin = 9 
@@ -140,8 +144,8 @@
 
               ! Establish the cube
 
-              if (abs(xx) < 0.5 .and. abs(yy) < 0.5 .and. abs(zz) < 0.5) then
-                 state(i,j,k,URHO) = 1.0d0
+              if (abs(xx) < cube_a/2 .and. abs(yy) < cube_a/2 .and. abs(zz) < cube_a/2) then
+                 state(i,j,k,URHO) = cube_rho
               else
                  state(i,j,k,URHO) = 1.0d-8
               endif
@@ -169,12 +173,12 @@
 
               ! Fill in the true phi state
 
-              c(0,2) = -0.5 - zz
-              c(1,2) =  0.5 - zz
-              c(0,1) = -0.5 - yy
-              c(1,1) =  0.5 - yy
-              c(0,0) = -0.5 - xx
-              c(1,0) =  0.5 - xx
+              c(0,2) = -cube_a/2 - zz
+              c(1,2) =  cube_a/2 - zz
+              c(0,1) = -cube_a/2 - yy
+              c(1,1) =  cube_a/2 - yy
+              c(0,0) = -cube_a/2 - xx
+              c(1,0) =  cube_a/2 - xx
 
               phi = 0.0
 
@@ -206,7 +210,7 @@
                  enddo
               enddo
 
-              state(i,j,k,UFA) = phi * 0.5 * Gconst
+              state(i,j,k,UFA) = phi * 0.5 * Gconst * cube_rho
 
            enddo
         enddo
