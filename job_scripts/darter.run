@@ -1,0 +1,61 @@
+#PBS -A TG-AST100037
+#PBS -N wdmerger
+#PBS -j oe
+#PBS -q batch
+#PBS -l walltime=02:00:00,size=256
+
+export PSC_OMP_AFFINITY=FALSE
+export OMP_NUM_THREADS=8
+
+cd $PBS_O_WORKDIR
+
+# run the compression script to tar up the plot and checkpoint files
+# as they are created.
+#./process.darter &
+#PID=$!
+#trap 'kill -s TERM $PID' EXIT TERM HUP XCPU KILL
+
+# find the latest restart file -- first look for one with 6 digits then fall
+# back to 5
+restartFile=$(find . -type d -name "*chk??????" -print | sort | tail -1)
+
+# the Header is the last thing written -- check if it's there, otherwise,
+# fall back to the second-to-last check file written
+if [ ! -f ${restartFile}/Header ]; then
+
+    # how many *chk?????? files are there? if only one, then skip
+    nl=$(find . -type d -name "*chk??????" -print | sort | wc -l)
+    if [ $nl -gt 1 ]; then
+	restartFile=$(find . -type d -name "*chk??????" -print | sort | tail -2 | head -1)    
+    else
+	restartFile=""
+    fi
+fi
+
+
+# if the above checks failed, then there are no valid 6-digit chk files, so
+# check the 5-digit ones
+if [ "${restartFile}" = "" ]; then
+    restartFile=$(find . -type d -name "*chk?????" -print | sort | tail -1)
+
+    # make sure the Header was written, otherwise, check the second-to-last
+    # file
+    if [ ! -f ${restartFile}/Header ]; then
+	restartFile=$(find . -type d -name "*chk?????" -print | sort | tail -2 | head -1)    
+    fi
+fi
+
+
+# restartString will be empty if no chk files are found -- i.e. new run
+if [ "${restartFile}" = "" ]; then
+    restartString=""
+else
+    restartString="amr.restart=${restartFile}"
+fi
+
+aprun -n 32 -N 2 -S 1 -j 1 -d 8 ./Castro3d.Linux.Cray.Cray.MPI.OMP.ex inputs_3d ${restartString}
+#aprun -n 256 ./Castro3d.Linux.Cray.Cray.MPI.ex inputs_3d.test ${restartString}
+
+
+#rm -f process.pid
+
