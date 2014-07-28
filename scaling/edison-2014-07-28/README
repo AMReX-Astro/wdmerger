@@ -1,0 +1,7 @@
+This is like the 2014-06-24 test but with grids:
+
+amr.max_grid_size   = 48 32 48
+
+and
+
+amr.blocking_factor = 16
