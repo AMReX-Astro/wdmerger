@@ -95,7 +95,7 @@ The equation of state (EOS) for our simulations is the Helmholtz EOS \citep{timm
 Reactions?
 
 \subsection{Initial Models}
-
+\label{sec:initial_models}
 
 We generate initial models by integrating the equation of hydrostatic
 equilibrium, taking the temperature and composition to be constant,
@@ -183,7 +183,7 @@ In order for $\phi$ to vanish at the surface, $\Phi$ and $\Psi$ must be of oppos
 \begin{equation}
   \Phi = \phi - \Psi.
 \end{equation}
-Therefore a strategy for finding $\Phi$ is: solve the Poisson equation with homogeneous boundary conditions for $\phi$; calculate the necessary surface charges $\sigma$; find the resulting $\Psi$ on the boundary of the domain; solve the Laplace equation with inhomogeneous boundary conditions for $\Psi$ inside the domain; and then take $\Phi = \phi - \Psi$. 
+Therefore a strategy for finding $\Phi$ is: solve the Poisson equation with homogeneous boundary conditions for $\phi$; calculate the necessary surface charges $\sigma$; find the resulting $\Psi$ on the boundary of the domain; solve the Laplace equation with inhomogeneous boundary conditions for $\Psi$ inside the domain; and then take $\Phi = \phi - \Psi$.
 
 We slightly simplify this approach by observing that, since $\phi$ is by construction zero on the boundary, the value of $\Psi$ everywhere on the boundary must be equal in magnitude and opposite in sign to $\Phi$. Therefore the problem of finding the boundary values for $\Phi$ is reduced to solving the Poisson equation for $\phi$, constructing the surface charges $\sigma$, and then performing the appropriate integration of $-\sigma$ to get the boundary values. We then proceed with the Poisson solve as normal.
 
@@ -219,7 +219,11 @@ As described so far, the method is not especially attractive: calculation of the
 %==========================================================================
 \section{Test Problems}\label{Sec:Tests}
 
+In this section we describe a series of test problems that couple the hydrodynamics, gravity, and EOS modules.
+
 \subsection{Maintaining Hydrostatic Equilibrium}\label{Sec:HSE}
+
+In Section \ref{sec:initial_models} we describe the process by which we generate initial stellar models. While the 1D models are in hydrostatic equilibrium to within a small error, interpolation onto the 3D Cartesian grid will introduce perturbations into the solution \citep{zingale:2002}. Although we ensure that the initial models are generated with the same equation of state and are as well resolved as our finest grid, there will still be a hydrodynamical error associated with the fact that the rectangular grid cannot faithfully represent a spherical star. Additionally, the gravitational potential obtained by the multigrid solver will differ slightly from the one assumed by the initial model, and the operator splitting between the gravity and hydrodynamics should also result in small errors. As a result, we expect that the star will oscillate slightly about an equilibrium point, but that the amplitude of this oscillation should decrease with increasing resolution.
 
 \subsection{Gravitational Free Fall}\label{Sec:Gravitational Free Fall}
 
