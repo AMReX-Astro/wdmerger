@@ -11,6 +11,7 @@ Castro::sum_integrated_quantities ()
 {
     int finest_level  = parent->finestLevel();
     Real time         = state[State_Type].curTime();
+    int step          = parent->levelSteps(0);
     Real mass         = 0.0;
     Real momentum[3]  = { 0.0 };
     Real rho_E        = 0.0;
@@ -242,7 +243,8 @@ Castro::sum_integrated_quantities ()
         // Write header row
 
         if (time == 0.0) {
-          data_log1 << std::setw(datawidth) << "#    TIME              ";
+          data_log1 << std::setw(12)        << "# TIMESTEP ";
+          data_log1 << std::setw(datawidth) << "     TIME              ";
           data_log1 << std::setw(datawidth) << " TOTAL ENERGY          ";
 	  data_log1 << std::setw(datawidth) << " TOTAL E GRID          ";
           data_log1 << std::setw(datawidth) << " KIN. ENERGY           ";
@@ -296,6 +298,7 @@ Castro::sum_integrated_quantities ()
 
 	  data_log1 << std::fixed;
 
+	  data_log1 << std::setw(12)                                            << step;
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << time;
 
 	  data_log1 << std::scientific;
