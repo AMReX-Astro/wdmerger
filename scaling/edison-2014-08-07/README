@@ -1,0 +1,4 @@
+Latest BoxLib, with improvements to the bndry_reg parallel performance
+(in the CC MG solver).
+
+This was run with the Cray (8.3.0) compilers.
