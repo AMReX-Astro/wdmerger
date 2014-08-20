@@ -43,12 +43,16 @@ castro.ppm_tau_in_tracing = 0
 castro.use_flattening = 1
 castro.ppm_flatten_before_integrals = 1
 
+castro.transverse_reset_density = 0
+castro.transverse_reset_rhoe = 0
+castro.transverse_use_eos = 0
+
 castro.use_colglaz = 0
 
 castro.grav_source_type = 2
 castro.ppm_trace_grav = 1
 
-castro.small_temp = 1.e5
+castro.small_temp = 1.e6
 
 castro.do_rotation = 0
 castro.rotational_period = 200.0
