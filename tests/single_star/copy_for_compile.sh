@@ -12,3 +12,4 @@ cp inputs_3d $1
 cp probin $1
 cp ../../model_files/* $1/model_files/
 cp ../../job_scripts/* $1/job_scripts/
+cp ../../inputs/* $1/inputs/
