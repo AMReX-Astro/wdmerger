@@ -27,8 +27,8 @@ corners			= .false.
 plot_var_1		= "dens"
 plot_var_2		= "temp"
 plot_var_3		= "pres"
-plot_var_4              = "xvel"
-plot_var_5              = "yvel"
+plot_var_4              = "velx"
+plot_var_5              = "vely"
 
 # density, temperature
 dens_fluff		= 1.e-4
