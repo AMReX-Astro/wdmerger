@@ -10,17 +10,16 @@ restart			= .false.
 
 checkpointFileNumber    = 0
 plotFileNumber		= 0
-particleFileNumber	= 0
 
 # dump checkpoint files every trstrt seconds
-checkpointFileIntervalTime			= 0.5
+checkpointFileIntervalStep		= 1
 # dump plot files every tplot seconds
-plotFileIntervalTime			= 0.5
+plotFileIntervalStep			= 1
 
 # go for nend steps or tmax seconds, whichever comes first
-nend			= 999999
+nend			= 50
 # runlength is chosen to end just before star expands beyond grid
-tmax			= 0.2e0
+tmax			= 20.0e0
 
 corners			= .false.
 
@@ -28,6 +27,8 @@ corners			= .false.
 plot_var_1		= "dens"
 plot_var_2		= "temp"
 plot_var_3		= "pres"
+plot_var_4              = "xvel"
+plot_var_5              = "yvel"
 
 # density, temperature
 dens_fluff		= 1.e-4
@@ -47,25 +48,15 @@ xmin			= -5.12e9
 xmax			=  5.12e9
 ymin			= -5.12e9
 ymax			=  5.12e9
-zmin			= -5.12e9
-zmax			=  5.12e9
 
-nblockx			= 1
-nblocky			= 1
-nblockz			= 1
-
-# max and min levels of refinement
-# with nxb=16, level 1km resolution is level 13
-lrefine_min		= 5
-lrefine_max		= 5 
+nblockx			= 4
+nblocky			= 4
 
 # boundary conditions for the whole star
 xl_boundary_type	= "diode"
 xr_boundary_type	= "diode"
 yl_boundary_type        = "diode"
 yr_boundary_type        = "diode"
-zl_boundary_type        = "diode"
-zr_boundary_type        = "diode"
 
 ##########
 # timestep
@@ -73,13 +64,11 @@ zr_boundary_type        = "diode"
 
 # CFL limit
 cfl			= 0.80e0
-cfl_ini			= 0.1e0
 
 # initial and minimum
 dtinit			= 1.
 dtmin			= 1.e-20
-dtmax			= 8.e-4
-tstep_change_factor     = 1.2e0
+tstep_change_factor     = 1.1e0
 
 #############
 # miscellaneous
