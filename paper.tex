@@ -139,15 +139,15 @@ We solve the Poisson equation for self-gravity for our problem,
 \end{equation}
 where $\Phi$ is the gravitational potential, $G$ is the gravitational constant, and $\rho$ is the mass density. We note that the sign convention used in CASTRO is opposite to that commonly seen in the physics literature, so that $\Phi$ is positive everywhere. The solution of this equation in CASTRO is described in \cite{castro}, and consists of both level and composite solves, and a final synchronization at the end.
 
+\subsubsection{Boundary Conditions}
+
 Analytic solutions to the Poisson equation customarily assume that the potential vanishes at large distances from the region of non-zero density. However, on a finite computational domain it is usually not possible to have the edges of the domain be far enough away that the potential can be taken to be zero there. Solving the Poisson equation therefore requires knowledge of the values of the potential on the edges of the computational domain. In principle, they can be computed by doing a direct sum over the mass distribution inside the domain, where the mass in each zone is treated as a point source:
 \begin{equation}
   \Phi_{\text{lmn}} = G\, \sum_{\text{i, j, k}} \frac{G \rho_{\text{ijk}}}{|\mathbf{x}_{\text{lmn}} - \mathbf{x}_{\text{ijk}}|}\, \Delta V_{\text{ijk}}.\label{direct_sum}
 \end{equation}
-Here (i, j, k) are the indices of cells inside the domain, and (l, m, n) are the indices of boundary locations. $\Delta V$ is the volume of the zone. We have implemented this as an option\footnote{It is controlled with the \texttt{gravity.direct\_sum\_bcs} input parameter.} in CASTRO. If there are $N$ zones per spatial dimension, then there are $6 N^2$ boundary zones, and each boundary zone requires a sum over $N^3$ zones, so the direct computation of the boundary conditions scales as $N^5$.  This method is expensive enough that it is not used for hydrodynamics simulations (though it is useful for comparison to the approximate solutions described below).
+Here (i, j, k) are the indices of cells inside the domain, and (l, m, n) are the indices of boundary locations. $\Delta V$ is the volume of the zone. We have implemented this as an option\footnote{It is controlled with the \texttt{gravity.direct\_sum\_bcs} input parameter.} in CASTRO. If there are $N$ zones per spatial dimension, then there are $6 N^2$ boundary zones, and each boundary zone requires a sum over $N^3$ zones, so the direct computation of the boundary conditions scales as $N^5$.  This method is expensive enough that it is not used for hydrodynamics simulations (though it is useful for comparison to approximate solutions).
 
-In a typical simulation we place the boundaries of the domain far enough away from the region containing most of the mass that some method of approximation to this direct summation is justified. Many approaches exist in the literature. The original release of CASTRO featured the crudest possible approximation: a monopole prescription, where the boundary values were computed by summing up all the mass on the domain and treating it as a point source at the domain center. This is exactly correct only for a spherically symmetric mass distribution, and indeed this is often a sufficient approximation for single-star Type Ia supernova simulations that employ self-gravity (ref). However, for a problem like that of a binary star system with significant departures from spherical symmetry, this assumption fails to produce accurate boundary values. This results in a significant drift of the center of the mass of the system over time. We describe here two new features we have added to CASTRO to address this issue.
-
-\subsubsection{Multipole Expansion}
+In a typical simulation we place the boundaries of the domain far enough away from the region containing most of the mass that some method of approximation to this direct summation is justified. Many approaches exist in the literature. The original release of CASTRO featured the crudest possible approximation: a monopole prescription, where the boundary values were computed by summing up all the mass on the domain and treating it as a point source at the domain center. This is exactly correct only for a spherically symmetric mass distribution, and indeed this is often a sufficient approximation for single-star Type Ia supernova simulations that employ self-gravity (ref). However, for a problem like that of a binary star system with significant departures from spherical symmetry, this assumption fails to produce accurate boundary values. This results in a significant drift of the center of the mass of the system over time. 
 
 The most natural extension of the monopole prescription is to include higher-order multipole moments. If the entire mass distribution is enclosed, then the potential can be expanded in a series of spherical harmonics $Y_{lm}$:
 \begin{equation}
@@ -180,48 +180,6 @@ $P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Lege
 \end{align}
 \end{comment}
 This approach becomes computationally feasible when we cut off the outer summation in Equation \ref{multipole_potential} at some finite value of $l_{\text{max}}$. If it is of sufficiently high order, we will accurately capture the distribution of mass on the grid. In practice we first evaluate the discretized analog of the modified multipole moments for $0 \leq l \leq l_{\text{max}}$ and $1 \leq m \leq l$, an operation that scales as $N^3$. We then directly compute the value of the potential on all of the $6N^2$ boundary zones. Since the multipole moments only need to be calculated once, the full operation scales only as $N^3$. The amount of time required to calculate the boundary conditions will be directly related to the chosen value of $l_{\text{max}}$, so there is a trade-off between computational expense and accuracy of the result. We find that for the early stages of the evolution of the binary system, $l_\text{max} \approx 6$ is sufficient.
-
-\subsubsection{Isolated Potential}
-
-%Figure~\ref{fig:2levgrav} shows the sequence of updates for $\phi$ on a 2-level grid.
-A clever way to evaluate Equation \ref{direct_sum} exactly for the boundary values of the potential was described by \cite{james77}, and we have implemented a method inspired by that work here. In electrostatics a commonly encountered boundary-value problem is that of a positive charge distribution inside of a grounded conducting box. The potential vanishes on the surface of the box. For this to happen, a collection of negative charges must form on the outer surface of the box, to compensate the charge enclosed inside the box. This can be described by a surface charge density $\sigma$. This construction is useful in determining what the potential would be at the location of the surface when the box is removed. We will describe the potential outside of a density distribution that is non-zero only in some finite region as ``isolated'', and denote it by $\Phi$. This is the quantity we want to solve for. The potential in the case where the surface is grounded and conducting is called the ``homogeneous'' potential, and will be denoted by $\phi$. The homogeneous potential is the sum of the isolated potential and also the potential due to the surface charges $\Psi$:
-\begin{equation*}
-  \phi = \Phi + \Psi.
-\end{equation*}
-In order for $\phi$ to vanish at the surface, $\Phi$ and $\Psi$ must be of opposite sign, which makes sense since they are generated by opposite-sign charges. Rearranging this equation for the isolated potential yields
-\begin{equation}
-  \Phi = \phi - \Psi.
-\end{equation}
-Therefore a strategy for finding $\Phi$ is: solve the Poisson equation with homogeneous boundary conditions for $\phi$; calculate the necessary surface charges $\sigma$; find the resulting $\Psi$ on the boundary of the domain; solve the Laplace equation with inhomogeneous boundary conditions for $\Psi$ inside the domain; and then take $\Phi = \phi - \Psi$.
-
-We slightly simplify this approach by observing that, since $\phi$ is by construction zero on the boundary, the value of $\Psi$ everywhere on the boundary must be equal in magnitude and opposite in sign to $\Phi$. Therefore the problem of finding the boundary values for $\Phi$ is reduced to solving the Poisson equation for $\phi$, constructing the surface charges $\sigma$, and then performing the appropriate integration of $-\sigma$ to get the boundary values. We then proceed with the Poisson solve as normal.
-
-All of this can be done for the gravitational version of Poisson's equation. Even though we do not commonly speak of negative gravitational charges, they are simply a mathematical tool for obtaining the correct potential. In general,
-\begin{equation}
-  \sigma = \frac{1}{4\pi G} {\bm{\nabla}} \phi \cdot \hat{\mathbf{n}},\label{eq-isolated-sigma}
-\end{equation}
-where $\hat{\mathbf{n}}$ is the unit vector perpendicular to (and pointing away from) the surface. On the computational domain, using an appropriate discretized representation of the ${\bm{\nabla}}$ operator, we calculate $\sigma$ at every boundary location. This requires some care. In CASTRO, the boundaries are on cell edges a distance $dx / 2$ away from the outermost domain location. It is therefore tempting to use a central difference that uses the ghost zone on one side and the outermost zone inside the domain in the other. This is normally second-order accurate. However, by construction, the gradient of $\phi$ is discontinuous across that surface; it is zero just outside the surface, and non-zero just inside the surface. This discontinuity is what establishes the non-zero surface mass density, similar to how a jump in the electric field is associated with a surface charge density in electrostatics. Therefore it is inappropriate to use the central difference method. Instead, a one-sided difference is required, using only the data interior to the surface. For the discretization to be second-order accurate, data from the two nearest cells must be used. Generally, $\left.\partial f/\partial x\right|_{\rm i} = (-3 f_{\rm i} + 4 f_{\rm i+1} - f_{\rm i+2}) / (2 \Delta x)$ is a second-order accurate forward difference to the derivative of a function $f$ at zone index i; however, we are indexing from the domain edge, which does not coincide with a cell center. We can use this formula on our finite volume grid if we let $\Delta x \to \Delta x / 2$ (here we assume that the index 0 corresponds to the left-most cell center):
-\begin{equation*}
-  \left.\frac{\partial \phi}{\partial x}\right|_{-1/2} = \frac{-3 \phi_{-1/2} + 4 \phi_{0} - \phi_{1/2}}{2(\Delta x / 2)} + \mathcal{O}(\Delta x^2).
-\end{equation*}
-To proceed, we note that $\phi_{-1/2} = 0$ by construction, and $\phi_{1/2} = (\phi_{1} + \phi_{0}) / 2$ to second order, so:
-\begin{equation}
-  \left.\frac{\partial \phi}{\partial x}\right|_{-1/2} = \frac{7\phi_{0} - \phi_{1}}{2\Delta x} + \mathcal{O}(\Delta x^2).
-\end{equation}
-A similar formula holds for the one-sided (backward) difference at the opposite boundary. Once this gradient has been calculated, we can calculate surface masses using Equation \ref{eq-isolated-sigma} (recalling to negate the result to obtain positive masses, following the above discussion). For example, for a mass on the lower surface of constant $x$,
-\begin{equation}
-  M_{-1/2} = -\sigma_{-1/2} \Delta A = \frac{1}{4\pi G} \frac{7\phi_{0} - \phi_{1}}{2\Delta x}\Delta y \Delta z.
-\end{equation}
-According to Gauss' law, the total mass induced on the surface should be equal to the mass enclosed inside the boundary. We have verified directly that the sum of the mass added on the surface approaches the total mass inside the domain at a second-order rate of convergence.
-
-We can then find the resulting potential on the boundary by summing over all of the surface charges:
-\begin{equation}
-  \Psi_{\text{l,m,n}} = \sum_{\text{l$^\prime$,m$^\prime$,n$^\prime$}} g_{\text{l-l$^\prime$},\text{m-m$^\prime$},\text{n-n$^\prime$}} M_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}
-%= \sum_{\text{l$^\prime$,m$^\prime$,n$^\prime$}} \frac{GM_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}}{\left|\mathbf{x}_{\text{l,m,n}} - \mathbf{x}_{\text{l$^\prime$,m$^\prime$,n$^\prime$}}\right|}
-\end{equation}
-Here (l, m, n) refer only to boundary locations, and $g_{\text{a},\text{b},\text{c}}$ is the Green's function for the Poisson equation. At large distances, this is simply $G / r$, where $G$ is the gravitational constant and $r$ is the distance. However, this analytical expression is not correct for the discretized Laplacian, and the corresponding Green's function is a series in the odd powers of $1/r$. We use the expression derived by \citet{burkhart:1997}, only retaining the terms up to $r^{-5}$. Also, this expression nominally diverges at $r = 0$, which physically corresponds to the self-contribution to the potential from a zone. However, this singularity is integrable: the cell does have a contribution to its own potential. A numerical evaluation of the integral of the Green's function over a cubic region yields $\phi(r = 0) = 2.38\, G M / \Delta x$, assuming $\Delta x = \Delta y = \Delta z$, and so our Green's function at the origin is $g_{0,0,0} = 2.38\, G / \Delta x$. This is similar to how other authors treat this singularity, for example \citet{hockney_eastwood}. However, they simply set the Green's function as $G / \Delta x$, that is with unit prefactor, without further explanation.
-
-As described so far, the method is not especially attractive: calculation of the boundary values requires an additional Poisson solve and a sum that scales as $N^4$. Furthermore, the latter sum faces problems with balancing of the computational work: only processors that have data on the boundary contribute to the summation, while the others remain idle. This does not compare well with the $N^3$ scaling of the multipole approach.
 
 %==========================================================================
 % Test Problems
@@ -345,6 +303,8 @@ research used resources of the Oak Ridge Leadership Computing Facility
 located in the Oak Ridge National Laboratory, which is supported by
 the Office of Science of the Department of Energy under Contract
 DE-AC05-00OR22725. Project AST006 supported use of the ORNL/Titan resource. This work used the Extreme Science and Engineering Discovery Environment (XSEDE), which is supported by National Science Foundation grant number ACI-1053575. Project AST100037 supported use of the resources NICS/Kraken and NICS/Darter.
+
+%TODO: add blue waters citation
 
 \clearpage
 
