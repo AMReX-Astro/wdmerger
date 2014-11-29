@@ -17,7 +17,7 @@ amr.max_level      = 0
 castro.lo_bc       =  2 2 2
 castro.hi_bc       =  2 2 2
 
-castro.do_hydro = 1
+castro.do_hydro = 0
 castro.do_grav = 1
 castro.do_react = 0
 castro.do_sponge = 0
@@ -31,14 +31,13 @@ castro.cfl = 0.5
 
 castro.allow_negative_energy = 0
 
-castro.ppm_type = 1
-castro.grav_source_type = 2
-
 gravity.gravity_type = PoissonGrav
 gravity.max_multipole_order = 0
 gravity.direct_sum_bcs = 0
 
+amr.check_files_output = 0
 amr.plot_files_output = 1
+amr.plot_int = 1
 
 amr.probin_file = probin
 

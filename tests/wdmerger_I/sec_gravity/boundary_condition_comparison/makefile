@@ -17,7 +17,7 @@ all:
 
 	# Copy necessary setup files from the main directory,
 	# and then build the Castro executable.
-	cp $(main_dir)/Prob_3d.f90 .
+	if [ ! -e Prob_3d.f90 ]; then cp $(main_dir)/Prob_3d.f90 .; fi
 	cp $(main_dir)/probdata.f90 .
 	cp $(main_dir)/com.f90 .
 	cp $(main_dir)/Make.package .
@@ -28,7 +28,7 @@ all:
 	sed -i "/USE_OMP/c USE_OMP = FALSE" $(ca_make)
 	sed -i "/USE_HYDRO/c USE_HYDRO = FALSE" $(ca_make)
 	sed -i "/USE_GRAV/c USE_GRAV = TRUE" $(ca_make)
-	sed -i "/USE_GRAV/c USE_ROTATION = TRUE" $(ca_make)
+	sed -i "/USE_ROTATION/c USE_ROTATION = TRUE" $(ca_make)
 
 	make -f $(ca_make)
 
