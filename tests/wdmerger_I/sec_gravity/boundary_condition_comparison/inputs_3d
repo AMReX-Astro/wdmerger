@@ -28,7 +28,7 @@ castro.ppm_type = 1
 castro.grav_source_type = 2
 
 gravity.gravity_type = PoissonGrav
-gravity.max_multipole_order = 30
+gravity.max_multipole_order = 0
 gravity.direct_sum_bcs = 0
 
 amr.plot_files_output = 1
