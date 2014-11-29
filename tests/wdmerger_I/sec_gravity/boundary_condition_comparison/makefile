@@ -21,7 +21,10 @@ all:
 	cp $(main_dir)/probdata.f90 .
 	cp $(main_dir)/com.f90 .
 	cp $(main_dir)/Make.package .
-	cp $(main_dir)/GNUmakefile castro_makefile
+	cp $(main_dir)/GNUmakefile $(ca_make)
+
+	# Turn off OpenMP for this test.
+	sed -i "/USE_OMP/c USE_OMP = FALSE" $(ca_make)
 
 	make -f $(ca_make)
 
