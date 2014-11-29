@@ -12,8 +12,8 @@ all:
 	# and insert their names into the probin file.
 	cp -f $(model_dir)/$(model_P) .
 	cp -f $(model_dir)/$(model_S) .
-	sed -i "/model_P_name/c model_P_name = $(model_P)" $(probin)
-	sed -i "/model_S_name/c model_S_name = $(model_S)" $(probin)
+	sed -i "/model_P_name/c model_P_name = \"$(model_P)\"" $(probin)
+	sed -i "/model_S_name/c model_S_name = \"$(model_S)\"" $(probin)
 
 	# Copy necessary setup files from the main directory,
 	# and then build the Castro executable.
@@ -23,8 +23,12 @@ all:
 	cp $(main_dir)/Make.package .
 	cp $(main_dir)/GNUmakefile $(ca_make)
 
-	# Turn off OpenMP for this test.
+	# Make options: turn off OpenMP, use gcc, and turn off hydro and rotation.
+	sed -i "/USE_MPI/c USE_MPI = TRUE" $(ca_make)
 	sed -i "/USE_OMP/c USE_OMP = FALSE" $(ca_make)
+	sed -i "/USE_HYDRO/c USE_HYDRO = FALSE" $(ca_make)
+	sed -i "/USE_GRAV/c USE_GRAV = TRUE" $(ca_make)
+	sed -i "/USE_GRAV/c USE_ROTATION = TRUE" $(ca_make)
 
 	make -f $(ca_make)
 
