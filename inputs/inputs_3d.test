@@ -74,3 +74,6 @@ amr.derive_plot_vars = ALL
 amr.data_log = wdmerger_diag.out
 
 castro.plot_phiGrav = 1
+
+# for testing purposes we need to shut down some of the OMP to be deterministic
+castro.deterministic=1
