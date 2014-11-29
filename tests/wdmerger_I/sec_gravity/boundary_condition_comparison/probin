@@ -1,0 +1,16 @@
+&fortin
+
+model_P_name = 
+model_S_name = 
+
+nsub = 4
+
+interp_temp = T
+
+/
+
+&extern
+
+use_eos_coulomb = F
+
+/
