@@ -1,0 +1,9 @@
+# Define some useful directories and filenames
+
+main_dir  = ../../../..
+model_dir = $(main_dir)/model_files
+model_P   = sub_chandra.M_WD-0.90.hse.CO.100.00km.nocoulomb.hot
+model_S   = sub_chandra.M_WD-0.81.hse.CO.100.00km.nocoulomb.hot
+
+inputs  = inputs_3d
+probin  = probin

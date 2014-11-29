@@ -1,12 +1,8 @@
-# Define some useful directories and filenames
+SHELL = /bin/bash
 
-main_dir  = ../../../..
-model_dir = $(main_dir)/model_files
-model_P   = sub_chandra.M_WD-0.90.hse.CO.100.00km.nocoulomb.hot
-model_S   = sub_chandra.M_WD-0.81.hse.CO.100.00km.nocoulomb.hot
+# Pull in useful directories and filenames, and include any others
 
-inputs  = inputs_3d
-probin  = probin
+include var_names
 ca_make = castro_makefile
 
 # Main make target
@@ -29,6 +25,8 @@ all:
 
 	make -f $(ca_make)
 
+# Clean everything up with make clean
+
 clean:
 	rm -f $(model_P) $(model_S) 
 	rm -f Prob_3d.f90 probdata.f90 com.f90 
@@ -37,4 +35,5 @@ clean:
 		make realclean -f $(ca_make); \
 		rm -f Make.package $(ca_make); \
 	fi;
-
+	git checkout $(probin)
+	git checkout $(inputs)
