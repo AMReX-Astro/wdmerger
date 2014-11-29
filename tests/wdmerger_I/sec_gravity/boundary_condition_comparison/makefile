@@ -44,3 +44,8 @@ clean:
 	fi;
 	git checkout $(probin)
 	git checkout $(inputs)
+	rm -rf plt*
+	rm -rf chk*
+	rm -rf results
+	rm -f *.out
+
