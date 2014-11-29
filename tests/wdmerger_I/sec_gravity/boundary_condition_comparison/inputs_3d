@@ -22,6 +22,13 @@ castro.do_grav = 1
 castro.do_react = 0
 castro.do_sponge = 0
 
+castro.do_rotation = 0
+castro.rotation_period = 100.0
+
+castro.init_shrink = 1.0
+castro.dt_cutoff = 1.e-10
+castro.cfl = 0.5
+
 castro.allow_negative_energy = 0
 
 castro.ppm_type = 1
