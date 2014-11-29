@@ -23,7 +23,7 @@ castro.do_react = 0
 castro.do_sponge = 0
 
 castro.do_rotation = 0
-castro.rotation_period = 100.0
+castro.rotational_period = 100.0
 
 castro.init_shrink = 1.0
 castro.dt_cutoff = 1.e-10
