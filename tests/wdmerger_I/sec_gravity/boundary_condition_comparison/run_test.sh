@@ -4,7 +4,7 @@
 
 exec='mpiexec -n 8'
 Castro='Castro3d.Linux.g++.gfortran.MPI.ex'
-inputs='inputs_3d'
+inputs='inputs'
 probin='probin'
 
 # Define a function that moves all of the output
