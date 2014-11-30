@@ -1,8 +1,0 @@
-if [ -d "results/$1" ]; then
-  rm -rf results/$1/
-fi
-mkdir results/$1
-cp -r plt* results/$1/
-cp -r chk* results/$1/
-cp *.out results/$1/
-cp inputs_3d results/$1/
