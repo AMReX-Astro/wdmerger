@@ -32,12 +32,16 @@ castro.cfl = 0.5
 castro.allow_negative_energy = 0
 
 gravity.gravity_type = PoissonGrav
-gravity.max_multipole_order = 0
+gravity.max_multipole_order = 20
 gravity.direct_sum_bcs = 0
 
-amr.check_files_output = 0
+amr.checkpoint_files_output = 0
 amr.plot_files_output = 1
 amr.plot_int = 1
+
+amr.v     = 1
+castro.v  = 1
+gravity.v = 1
 
 amr.probin_file = probin
 
