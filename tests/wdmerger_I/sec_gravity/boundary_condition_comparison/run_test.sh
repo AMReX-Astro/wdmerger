@@ -44,7 +44,7 @@ fi
 
 # Loop over the multipole orders we want to examine
 
-for l in 0 2 6 20
+for l in {0..20}
 do
   dir=$results_dir/$l
   if [ ! -d $dir ]; then
