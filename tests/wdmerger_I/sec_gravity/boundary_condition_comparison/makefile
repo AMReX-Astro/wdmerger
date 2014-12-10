@@ -48,4 +48,4 @@ clean:
 	rm -rf chk*
 	rm -rf results
 	rm -f *.out
-
+	rm -f *.png

@@ -1,5 +1,6 @@
 import yt
 import numpy as np
+from matplotlib import pyplot as plt
 
 ell = range(21)
 
@@ -28,4 +29,8 @@ for l in ell:
 
     index += 1
 
-print l2
+plt.plot(ell,l2)
+plt.xlabel("Maximum multipole order")
+plt.ylabel("Relative L2 error")
+plt.yscale('log')
+plt.savefig('bc_comparison.png')
