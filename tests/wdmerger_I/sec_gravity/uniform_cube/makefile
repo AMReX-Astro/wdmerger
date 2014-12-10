@@ -25,7 +25,6 @@ clean:
 	rm -f helm_table.dat
 	if [ -e  "$(ca_make)" ]; then \
 		make realclean -f $(ca_make); \
-		rm -f Make.package $(ca_make); \
 	fi;
 	git checkout $(probin)
 	git checkout $(inputs)
