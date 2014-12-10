@@ -173,44 +173,44 @@
 
               ! Fill in the true phi state
 
-              c(0,2) = -cube_a/2 - zz
-              c(1,2) =  cube_a/2 - zz
-              c(0,1) = -cube_a/2 - yy
-              c(1,1) =  cube_a/2 - yy
-              c(0,0) = -cube_a/2 - xx
-              c(1,0) =  cube_a/2 - xx
+!              c(0,2) = -cube_a/2 - zz
+!              c(1,2) =  cube_a/2 - zz
+!              c(0,1) = -cube_a/2 - yy
+!              c(1,1) =  cube_a/2 - yy
+!              c(0,0) = -cube_a/2 - xx
+!              c(1,0) =  cube_a/2 - xx
 
-              phi = 0.0
+!              phi = 0.0
 
-              do ii = 0, 1
-                 do jj = 0, 1
-                    do ll = 0, 2
+!              do ii = 0, 1
+!                 do jj = 0, 1
+!                    do ll = 0, 2
 
-                       num1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) + c(1,mod(ll+2,3)) )**3
-                       num2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) - c(0,mod(ll+2,3)) )
-                       den1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) - c(1,mod(ll+2,3)) )
-                       den2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) + c(0,mod(ll+2,3)) )**3
+!                       num1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) + c(1,mod(ll+2,3)) )**3
+!                       num2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) - c(0,mod(ll+2,3)) )
+!                       den1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) - c(1,mod(ll+2,3)) )
+!                       den2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) + c(0,mod(ll+2,3)) )**3
 
-                       phi = phi + 0.5 * (-1)**(ii+jj) * ( c(ii,ll) * c(jj,mod(ll+1,3)) * &
-                                         log( num1 * num2 / (den1 * den2) ) )
+!                       phi = phi + 0.5 * (-1)**(ii+jj) * ( c(ii,ll) * c(jj,mod(ll+1,3)) * &
+!                                         log( num1 * num2 / (den1 * den2) ) )
 
-                    enddo
-                 enddo
-              enddo
+!                    enddo
+!                 enddo
+!              enddo
 
-              do ii = 0, 1
-                 do jj = 0, 1
-                    do kk = 0, 1
-                       do ll = 0, 2
-                          phi = phi + (-1)**(ii+jj+kk+1) * c(ii,ll)**2 * &
-                                      atan2( c(ii,ll) * c(kk,mod(ll+2,3)), c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + &
-                                             c(jj,mod(ll+1,3))*(c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(kk,mod(ll+2,3))**2)**(0.5) )
-                       enddo
-                    enddo
-                 enddo
-              enddo
+!              do ii = 0, 1
+!                 do jj = 0, 1
+!                    do kk = 0, 1
+!                       do ll = 0, 2
+!                          phi = phi + (-1)**(ii+jj+kk+1) * c(ii,ll)**2 * &
+!                                      atan2( c(ii,ll) * c(kk,mod(ll+2,3)), c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + &
+!                                             c(jj,mod(ll+1,3))*(c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(kk,mod(ll+2,3))**2)**(0.5) )
+!                       enddo
+!                    enddo
+!                 enddo
+!              enddo
 
-              state(i,j,k,UFA) = phi * 0.5 * Gconst * cube_rho
+!              state(i,j,k,UFA) = phi * 0.5 * Gconst * cube_rho
 
            enddo
         enddo
