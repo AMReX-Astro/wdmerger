@@ -30,7 +30,7 @@ castro.do_grav = 1
 castro.do_react = 0
 
 castro.small_temp = 1.e6
-castro.small_dens = 1.e-5
+castro.small_dens = 1.e-10
 
 castro.do_rotation = 0
 
