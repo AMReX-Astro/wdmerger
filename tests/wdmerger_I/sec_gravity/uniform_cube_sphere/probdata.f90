@@ -24,6 +24,9 @@ module probdata_module
   double precision, save ::  center(3)
 
   ! cube data
-  double precision, save :: cube_rho, cube_a
+  double precision, save :: density, diameter
+  double precision, save :: problem
+
+  double precision, save :: ambient_temp, ambient_dens
 
 end module probdata_module

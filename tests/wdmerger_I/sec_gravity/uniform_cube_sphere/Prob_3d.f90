@@ -20,7 +20,7 @@
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
           temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
-          cube_rho, cube_a
+          density, diameter, ambient_dens, ambient_temp, problem
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -65,8 +65,13 @@
      max_temperr_lev = -1
      max_tempgrad_lev = -1
 
-     cube_rho = 1.0d0
-     cube_a   = 1.0d0
+     density  = 1.0d0
+     diameter = 1.0d0
+
+     ambient_dens = 1.0d-8
+     ambient_temp = 1.0d6
+
+     problem = 1
 
      ! Read namelists -- override the defaults
      untin = 9 
@@ -115,6 +120,7 @@
      use network, only : nspec
      use bl_constants_module
      use fundamental_constants_module
+     use multifab_module
 
      implicit none
 
@@ -142,17 +148,33 @@
            do i = lo(1), hi(1)   
               xx = xlo(1) + delta(1)*dble(i-lo(1)+HALF)
 
-              ! Establish the cube
+              ! Establish the cube or sphere
 
-              if (abs(xx) < cube_a/2 .and. abs(yy) < cube_a/2 .and. abs(zz) < cube_a/2) then
-                 state(i,j,k,URHO) = cube_rho
+              if (problem .eq. 1) then
+
+                 if (abs(xx) < diameter/2 .and. abs(yy) < diameter/2 .and. abs(zz) < diameter/2) then
+                    state(i,j,k,URHO) = density
+                 else
+                    state(i,j,k,URHO) = ambient_dens
+                 endif
+
+              else if (problem .eq. 2) then
+
+                 if ((xx**2 + yy**2 + zz**2)**0.5 < diameter / 2) then
+                    state(i,j,k,URHO) = density
+                 else
+                    state(i,j,k,URHO) = ambient_dens
+                 endif
+
               else
-                 state(i,j,k,URHO) = 1.0d-8
+
+                 call bl_error("Problem not defined.")
+                
               endif
 
               ! Establish the thermodynamic quantities
 
-              state(i,j,k,UTEMP) = 1.0d6
+              state(i,j,k,UTEMP) = ambient_temp
 
               state(i,j,k,UFS:UFS-1+nspec) = 1.0d0 / nspec
 
@@ -173,12 +195,12 @@
 
               ! Fill in the true phi state
 
-!              c(0,2) = -cube_a/2 - zz
-!              c(1,2) =  cube_a/2 - zz
-!              c(0,1) = -cube_a/2 - yy
-!              c(1,1) =  cube_a/2 - yy
-!              c(0,0) = -cube_a/2 - xx
-!              c(1,0) =  cube_a/2 - xx
+!              c(0,2) = -diameter/2 - zz
+!              c(1,2) =  diameter/2 - zz
+!              c(0,1) = -diameter/2 - yy
+!              c(1,1) =  diameter/2 - yy
+!              c(0,0) = -diameter/2 - xx
+!              c(1,0) =  diameter/2 - xx
 
 !              phi = 0.0
 
@@ -210,12 +232,27 @@
 !                 enddo
 !              enddo
 
-!              state(i,j,k,UFA) = phi * 0.5 * Gconst * cube_rho
+!              state(i,j,k,UFA) = phi * 0.5 * Gconst * rho
 
            enddo
         enddo
      enddo
      !$OMP END PARALLEL DO
+
+!     true_mass = 4.0d0 / 3.0d0 * M_PI * (diameter / 2.0d0)**3 * rho
+
+!     call parallel_reduce_d(actual_mass, my_mass, MPI_SUM)
+
+!     do k = lo(3), hi(3)
+!        do j = lo(2), hi(2)
+!           do i = lo(1), hi(1)
+!              if (state(i,j,k,URHO) .gt. 2.d-8) then
+!                 state(i,j,k,URHO) = state(i,j,k,URHO) * true_mass / actual_mass
+!                 state(i,j,k,UFS:UFS+nspec-1) = state(i,j,k,UFS:UFS+nspec-1) * true_mass / actual_mass
+!              endif
+!           enddo
+!        enddo
+!     enddo
 
    end subroutine ca_initdata
 
