@@ -33,7 +33,7 @@ fi
 
 # Loop over the resolutions in question
 
-for problem in 1 2
+for problem in 1 2 3
 do
   echo "Now doing problem =" $problem
   sed -i "/problem/c problem = $problem" $probin
@@ -42,7 +42,7 @@ do
       mkdir $results_dir/problem$problem
   fi
 
-  for ncell in 16 32 64
+  for ncell in 16 32 64 128 256
   do
     dir=$results_dir/problem$problem/$ncell
     if [ ! -d $dir ]; then

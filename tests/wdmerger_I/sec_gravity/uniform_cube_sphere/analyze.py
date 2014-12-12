@@ -3,9 +3,10 @@ import numpy as np
 import math
 from matplotlib import pyplot as plt
 
-ncell_arr = [16, 32, 64]
+#ncell_arr = [16, 32, 64]
+ncell_arr = [16, 32, 64, 128, 256]
 
-num_problems = 2
+num_problems = 3
 
 l2 = np.zeros((num_problems,len(ncell_arr)))
 
@@ -13,6 +14,8 @@ diameter = 2.0e0
 density  = 1.0e3
 
 radius   = diameter / 2.0
+
+ambient_density = 1.0e-8
 
 Gconst   = 6.67428e-8
 
@@ -32,9 +35,26 @@ for p in range(num_problems):
 
         dx = 3.2e0 / ncell
 
-        # First we'll create the array for the analytical solution
+        # First we load in the numerical data
+
+        pf_name = "results/problem" + str(problem) + "/" + str(ncell) + "/plt00000"
+
+        pf = yt.load(pf_name)
+
+        plot_data = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['phiGrav']
+
+        # Now we'll create the array for the analytical solution
 
         exact = yt.YTArray(np.zeros((ncell,ncell,ncell)), 'erg/g')
+
+        if (problem == 2):
+
+            mass = 4.0 / 3.0 * math.pi * radius**3 * density
+
+        elif (problem == 3):
+
+            densGrid = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['density']
+            mass = densGrid[np.where(densGrid > 2.0 * ambient_density)].v.sum() * dx**3
 
         for k in range(ncell):
             zz = -1.6e0 + dx * (k + 0.5e0)
@@ -77,11 +97,9 @@ for p in range(num_problems):
 
                         exact[i,j,k] = phi * 0.5 * Gconst * density
 
-                    elif (problem == 2):
+                    elif (problem == 2 or problem == 3):
 
                         rr = (xx**2 + yy**2 + zz**2)**0.5
-
-                        mass = 4.0 / 3.0 * math.pi * radius**3 * density
 
                         if (rr <= radius):
                             exact[i,j,k] = Gconst * mass * (3 * radius**2 - rr**2) / (2 * radius**3)
@@ -92,13 +110,15 @@ for p in range(num_problems):
                         
                         print "This is not a valid problem."
 
+        # Now for problem 3, the only difference is that we normalize the mass
+        # by the amount of mass actually on the grid for the sphere.
+
+#        if (problem == 3):
+#            densGrid = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['density']
+#            actual_mass = densGrid[np.where(densGrid > 2.0 * ambient_density)].v.sum() * dx**3
+#            exact = exact * mass / actual_mass
+
         exact_L2 = np.sqrt(dx**3 * (exact**2).sum())
-
-        pf_name = "results/problem" + str(problem) + "/" + str(ncell) + "/plt00000"
-
-        pf = yt.load(pf_name)
-
-        plot_data = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['phiGrav']
 
         L2_field = (plot_data - exact)**2
 
@@ -108,7 +128,7 @@ for p in range(num_problems):
 
 print l2
 
-plt.plot(ncell_arr,l2[0,:],ncell_arr,l2[1,:])
+plt.plot(ncell_arr,l2[0,:],ncell_arr,l2[1,:],ncell_arr,l2[2,:])
 plt.xlabel("Number of cells per dimension")
 plt.ylabel("Relative L2 error")
 plt.xscale('log')

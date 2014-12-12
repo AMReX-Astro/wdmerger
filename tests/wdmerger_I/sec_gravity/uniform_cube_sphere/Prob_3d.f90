@@ -158,7 +158,7 @@
                     state(i,j,k,URHO) = ambient_dens
                  endif
 
-              else if (problem .eq. 2) then
+              else if (problem .eq. 2 .or. problem .eq. 3) then
 
                  if ((xx**2 + yy**2 + zz**2)**0.5 < diameter / 2) then
                     state(i,j,k,URHO) = density
