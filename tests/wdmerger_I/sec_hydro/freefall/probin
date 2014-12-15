@@ -1,0 +1,16 @@
+&fortin
+
+model_P_name = "sub_chandra.M_WD-0.90.hse.CO.100.00km.nocoulomb.hot"
+model_S_name = "sub_chandra.M_WD-0.81.hse.CO.100.00km.nocoulomb.hot"
+
+nsub = 4
+
+interp_temp = T
+
+/
+
+&extern
+
+use_eos_coulomb = F
+
+/
