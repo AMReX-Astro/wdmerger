@@ -227,7 +227,7 @@ We determine the initial separation to be consistent with the
 simulation performed in Section \ref{Sec:Kepler}; that is, we select
 an initial orbital period and use Kepler's third law to calculate the
 radius of a circular orbit with that period. We select an initial
-orbital period of 100 s for this simulation, so that the separation is
+orbital period of $T = 100$ s for this simulation, so that the separation is
 \[
   r_0 = 3.61 \times 10^{9}\ \text{cm}.
 \]
@@ -243,7 +243,7 @@ the domain to be covered by the finest resolution grids.
 The analytical result in Equation \ref{analyticalFreeFall} determines
 the total elapsed free-fall time,
 \[
-  t_{\text{ff}} = \frac{\pi}{2} \sqrt{\frac{r_0^3}{2GM}}.
+  t_{\text{ff}} = \frac{\pi}{2} \sqrt{\frac{r_0^3}{2GM}} = \frac{T}{4\sqrt{2}}.
 \]
 The physical radius of each white dwarf is roughly $10\%$ of the
 initial separation, so we consider the evolution terminated when the
