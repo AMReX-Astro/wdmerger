@@ -173,13 +173,13 @@ Castro::sum_integrated_quantities ()
           data_log1 << std::setw(datawidth) << "  X VELOCITY           ";
           data_log1 << std::setw(datawidth) << "  Y VELOCITY           ";
           data_log1 << std::setw(datawidth) << "  Z VELOCITY           ";
-	  data_log1 << std::setw(datawidth) << " RADIUS OF 1E6 BOUNDARY";
-	  data_log1 << std::setw(datawidth) << " RADIUS OF 1E5 BOUNDARY";
-	  data_log1 << std::setw(datawidth) << " RADIUS OF 1E4 BOUNDARY";
-	  data_log1 << std::setw(datawidth) << " RADIUS OF 1E3 BOUNDARY";
-	  data_log1 << std::setw(datawidth) << " RADIUS OF 1E2 BOUNDARY";
-	  data_log1 << std::setw(datawidth) << " RADIUS OF 1E1 BOUNDARY";
-	  data_log1 << std::setw(datawidth) << " RADIUS OF 1E0 BOUNDARY";
+	  data_log1 << std::setw(datawidth) << "  1E6 BOUNDARY RAD.    ";
+	  data_log1 << std::setw(datawidth) << "  1E5 BOUNDARY RAD.    ";
+	  data_log1 << std::setw(datawidth) << "  1E4 BOUNDARY RAD.    ";
+	  data_log1 << std::setw(datawidth) << "  1E3 BOUNDARY RAD.    ";
+	  data_log1 << std::setw(datawidth) << "  1E2 BOUNDARY RAD.    ";
+	  data_log1 << std::setw(datawidth) << "  1E1 BOUNDARY RAD.    ";
+	  data_log1 << std::setw(datawidth) << "  1E0 BOUNDARY RAD.    ";
          
           data_log1 << std::endl;
         }
