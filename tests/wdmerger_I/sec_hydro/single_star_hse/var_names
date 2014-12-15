@@ -1,0 +1,14 @@
+# Define some useful directories, filenames and variables
+
+main_dir:=../../../..
+model_dir:=$(main_dir)/model_files
+
+mass:=0.90
+
+file_start:="sub_chandra.M_WD-"
+file_end:=".hse.CO.100.00km.nocoulomb.hot"
+
+model:=$(file_start)$(mass)$(file_end)
+
+inputs:=inputs
+probin:=probin

@@ -1,32 +1,43 @@
-CASTRO_DIR ?= /path/to/Castro
+SHELL = /bin/bash
 
-PRECISION  = DOUBLE
-PROFILE    = FALSE
+# Pull in useful directories and filenames, and include any others
 
-DEBUG      = FALSE
+include var_names
+ca_make = castro_makefile
 
-USE_MPI    = TRUE
-USE_OMP    = FALSE
+# Main make target
 
-DIM        = 3
+all:
 
-COMP	   = g++
-FCOMP	   = gfortran
-
-USE_GRAV   = TRUE
-USE_REACT  = FALSE
-USE_MODELPARSER  = TRUE
-USE_ROTATION = TRUE
+	# Copy model files from main wdmerger model_files location,
+	# and insert their names into the probin file.
+	cp -f $(model_dir)/$(model) .
+	sed -i "/model_name/c model_name = \"$(model)\"" $(probin)
 
 
-# This sets the EOS directory in $(CASTRO_DIR)/EOS
-EOS_dir     := helmeos
+	# Copy CASTRO makefile from main directory
+	if [ ! -e $(ca_make) ]; then cp $(main_dir)/GNUmakefile $(ca_make); fi
 
-# This sets the network directory in $(NETWORK_HOME)
-Network_dir := general_null
-GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/triple_alpha_plus_o.net 
+	# Make options: turn off OpenMP, use gcc, and turn off hydro and rotation.
+	sed -i "/USE_MPI/c USE_MPI = TRUE" $(ca_make)
+	sed -i "/USE_OMP/c USE_OMP = FALSE" $(ca_make)
+	sed -i "/USE_GRAV/c USE_GRAV = TRUE" $(ca_make)
+	sed -i "/USE_ROTATION/c USE_ROTATION = TRUE" $(ca_make)
 
-Bpack   := ./Make.package
-Blocs   := .
+	make -f $(ca_make)
 
-include $(CASTRO_DIR)/Exec/Make.Castro
+# Clean everything up with make clean
+
+clean:
+	rm -f $(model)
+	rm -f helm_table.dat
+	if [ -e  "$(ca_make)" ]; then \
+		make realclean -f $(ca_make); \
+	fi;
+	rm -rf plt*
+	rm -rf chk*
+	rm -rf results
+	rm -f *.out
+	rm -f *.png
+	git checkout $(probin)
+	git checkout $(inputs)

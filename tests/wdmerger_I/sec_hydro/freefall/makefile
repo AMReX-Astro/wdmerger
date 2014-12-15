@@ -22,10 +22,12 @@ all:
 
 	# Copy necessary setup files from the main directory,
 	# and then build the Castro executable.
-	for file in Prob_3d.f90 probdata.f90 com.f90 Make.package sum_integrated_quantities.cpp Problem.H Problem_F.H GNUmakefile ; \
+	for file in Prob_3d.f90 probdata.f90 com.f90 Make.package sum_integrated_quantities.cpp Problem.H Problem_F.H ; \
 	do \
-		if [ ! -e $(file) ]; then cp $(main_dir)/$(file) .; fi \
+		if [ ! -e $$file ]; then cp $(main_dir)/$$file .; fi \
 	done
+
+	if [ ! -e $(ca_make) ]; then cp $(main_dir)/GNUmakefile $(ca_make); fi
 
 	# Make options: turn off OpenMP, use gcc, and turn off hydro and rotation.
 	sed -i "/USE_MPI/c USE_MPI = TRUE" $(ca_make)

@@ -98,7 +98,7 @@
      call close_model_file()
 
      ! compute the mass of the model
-     mass = ZERO
+     total_mass = ZERO
      do i = 1, npts_model_star-1
         if (i == 1) then
            r_l = ZERO
@@ -108,14 +108,14 @@
 
         r_r = HALF*(model_star_r(i) + model_star_r(i+1))
 
-        mass = mass + FOUR3RD*M_PI*(r_r - r_l)* &
+        total_mass = total_mass + FOUR3RD*M_PI*(r_r - r_l)* &
              (r_r**2 + r_l*r_r + r_l**2)*model_star_state(i,idens_model)
 
      enddo
 
 
      if (ioproc == 1) then
-        print *, "mass of model = ", mass
+        print *, "mass of model = ", total_mass
      endif
 
      dens_ambient = model_star_state(npts_model_star,idens_model)

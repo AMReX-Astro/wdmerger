@@ -23,7 +23,7 @@ module probdata_module
   
   integer, save :: npts_model_star
   
-  double precision, save :: mass
+  double precision, save :: total_mass
   double precision, save :: radius
   
   double precision, save :: dens_ambient, temp_ambient
