@@ -243,7 +243,7 @@ Castro::sum_integrated_quantities ()
         // Write header row
 
         if (time == 0.0) {
-          data_log1 << std::setw(12)        << "# TIMESTEP ";
+          data_log1 << std::setw(12)        << " #  TIMESTEP";
           data_log1 << std::setw(datawidth) << "     TIME              ";
           data_log1 << std::setw(datawidth) << " TOTAL ENERGY          ";
 	  data_log1 << std::setw(datawidth) << " TOTAL E GRID          ";
