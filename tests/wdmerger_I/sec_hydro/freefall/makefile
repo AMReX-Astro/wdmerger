@@ -4,7 +4,6 @@ SHELL = /bin/bash
 
 include var_names
 ca_make = castro_makefile
-#stop_time=$(echo "0.95 * $(rotational_period) / 4.0 / e(0.5*l(2))" | bc -l)
 
 # Main make target
 
@@ -31,7 +30,6 @@ all:
 	# Make options: turn off OpenMP, use gcc, and turn off hydro and rotation.
 	sed -i "/USE_MPI/c USE_MPI = TRUE" $(ca_make)
 	sed -i "/USE_OMP/c USE_OMP = FALSE" $(ca_make)
-	sed -i "/USE_HYDRO/c USE_HYDRO = FALSE" $(ca_make)
 	sed -i "/USE_GRAV/c USE_GRAV = TRUE" $(ca_make)
 	sed -i "/USE_ROTATION/c USE_ROTATION = TRUE" $(ca_make)
 
@@ -49,10 +47,10 @@ clean:
 		make realclean -f $(ca_make); \
 		rm -f Make.package $(ca_make); \
 	fi;
-	git checkout $(probin)
-	git checkout $(inputs)
 	rm -rf plt*
 	rm -rf chk*
 	rm -rf results
 	rm -f *.out
 	rm -f *.png
+	git checkout $(probin)
+	git checkout $(inputs)
