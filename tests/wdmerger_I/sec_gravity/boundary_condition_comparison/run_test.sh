@@ -7,23 +7,23 @@ Castro='Castro3d.Linux.g++.gfortran.MPI.ex'
 inputs='inputs'
 probin='probin'
 
-# Define a function that moves all of the output
-# data from a Castro run to the directory in the first argument.
+results_dir=results
 
-function move_results {
+function copy_files {
 
-  if [ -d "$1" ]; then
-    rm -rf $1/
-  fi
-  mkdir $1
-  mv plt* $1/
-  mv *.out $1/
-  cp $inputs $1/
-  cp $probin $1/
+    cp $Castro $1
+    cp helm_table.dat $1    
+    cp $inputs $1
+    cp $probin $1
+    cp sub* $1
 
 }
 
-results_dir=results
+function run {
+
+    echo "$exec $Castro $inputs > info.out" | batch
+
+}
 
 if [ ! -d $results_dir ]; then
   mkdir $results_dir
@@ -48,11 +48,13 @@ for l in {0..20}
 do
   dir=$results_dir/$l
   if [ ! -d $dir ]; then
-    mkdir $dir
     echo "Now doing l =" $l
+    mkdir $dir
     sed -i "/gravity.max_multipole_order/c gravity.max_multipole_order = $l" $inputs
-    $exec $Castro $inputs > info.out
-    move_results $dir
+    copy_files $dir
+    cd $dir
+    run
+    cd -
   fi
 done
 
@@ -61,12 +63,12 @@ done
 dir=$results_dir/true
 
 if [ ! -d $dir ]; then
-  mkdir $dir
   echo "Now computing exact solution"
+  mkdir $dir
   sed -i "/gravity.direct_sum_bcs/c gravity.direct_sum_bcs = 1" $inputs
-  $exec $Castro $inputs > info.out
-  move_results $dir
+  copy_files $dir
   sed -i "/gravity.direct_sum_bcs/c gravity.direct_sum_bcs = 0" $inputs
+  cd $dir
+  run
+  cd -
 fi
-
-sed -i "/gravity.direct_sum_bcs/c gravity.direct_sum_bcs = 0" $inputs
