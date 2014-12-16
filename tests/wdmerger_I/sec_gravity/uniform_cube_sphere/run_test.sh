@@ -7,19 +7,18 @@ Castro='Castro3d.Linux.g++.gfortran.MPI.ex'
 inputs='inputs'
 probin='probin'
 
-# Define a function that moves all of the output
-# data from a Castro run to the directory in the first argument.
+function copy_files {
 
-function move_results {
+    cp $Castro $1
+    cp helm_table.dat $1    
+    cp $inputs $1
+    cp $probin $1
 
-  if [ -d "$1" ]; then
-    rm -rf $1/
-  fi
-  mkdir $1
-  mv plt* $1/
-  mv *.out $1/
-  cp $inputs $1/
-  cp $probin $1/
+}
+
+function run {
+
+    echo "$exec $Castro $inputs > info.out" | batch
 
 }
 
@@ -46,11 +45,13 @@ do
   do
     dir=$results_dir/problem$problem/$ncell
     if [ ! -d $dir ]; then
-      mkdir $dir
       echo "Now doing ncell =" $ncell
+      mkdir $dir
       sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $inputs
-      $exec $Castro $inputs > info.out
-      move_results $dir
+      copy_files $dir
+      cd $dir
+      run
+      cd -
     fi
   done
 done
