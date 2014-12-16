@@ -8,11 +8,11 @@ geometry.is_periodic = 0 0 0
 geometry.coord_sys = 0
 
 geometry.prob_lo   =  0.       0.       0.
-geometry.prob_hi   =  1.024e10 1.024e10 1.024e10
+geometry.prob_hi   =  1.28e9   1.28e9   1.28e9
 
-amr.n_cell         = 128 128 128
+amr.n_cell = 128 128 128
 
-amr.max_grid_size   = 32
+amr.max_grid_size   = 64 48 32
 amr.blocking_factor = 16
 
 amr.max_level      = 0       # maximum level number allowed
@@ -53,6 +53,7 @@ castro.grav_source_type = 2
 castro.ppm_trace_grav = 1
 
 castro.small_temp = 1.e6
+castro.small_dens = 1.e-5
 
 castro.do_rotation = 0
 castro.rotational_period = 200.0
@@ -63,7 +64,7 @@ gravity.gravity_type = PoissonGrav
 
 castro.dt_cutoff      = 5.e-20  # level 0 timestep below which we halt
 castro.cfl            = 0.5     # cfl number for hyperbolic system
-castro.init_shrink    = 0.1     # scale back initial timestep by this factor
+castro.init_shrink    = 0.001   # scale back initial timestep by this factor
 castro.change_max     = 1.1     # factor by which dt is allowed to change each timestep
 castro.sum_interval   = 1       # timesteps between computing and printing volume averages
 
@@ -77,9 +78,9 @@ amr.plot_files_output = 1
 amr.checkpoint_files_output = 1
 
 amr.check_file      = chk     # root name of checkpoint file
-amr.check_int       = 25      # number of timesteps between checkpoints
+amr.check_int       = 250     # number of timesteps between checkpoints
 amr.plot_file       = plt     # root name of plot file
-amr.plot_int        = 25      # number of timesteps between plotfiles
+amr.plot_int        = 250     # number of timesteps between plotfiles
 
 amr.v               = 1       # control verbosity in Amr.cpp
 castro.v            = 1       # control verbosity in Castro.cpp
