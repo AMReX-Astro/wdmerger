@@ -2,8 +2,8 @@
   max_denerr_lev     = 4
   denerr             = 1.d-2
 
-  model_P_name = "model_files/polytrope.M_WD-0.90.hse.CO.100.00km"
-  model_S_name = "model_files/polytrope.M_WD-0.81.hse.CO.100.00km"
+  mass_P = 0.90
+  mass_S = 0.81
 
   nsub = 1
 

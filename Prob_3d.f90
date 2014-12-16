@@ -1,12 +1,13 @@
    subroutine PROBINIT (init,name,namlen,problo,probhi)
      
      use probdata_module
-     use model_parser_module
+     use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use bl_constants_module
      use fundamental_constants_module
      use meth_params_module, only: small_temp, small_pres, small_dens, rot_period
+     use network
      use eos_module
-     use com, only: mass_p, mass_s, com_loc_p, com_loc_s
+     use initial_model_module, only: init_1d
 
      implicit none
 
@@ -18,7 +19,7 @@
      integer :: i
 
      namelist /fortin/ &
-          model_P_name, model_S_name, &
+          mass_p, mass_s, &
           nsub, &
           inertial, &
           interp_temp, &
@@ -47,6 +48,9 @@
      double precision   :: temp_mass
      integer            :: temp_npts
      character (len=80) :: temp_name
+
+     double precision :: temp_core, xn_core(nspec)
+     double precision :: smallx, dx
 
      integer :: ioproc
 
@@ -87,10 +91,10 @@
      starBuffer = 1.5d0
      boundaryBuffer = 0.6d0
 
-     model_P_name = "P"
-     model_S_name = "S"
-
      nsub = 1
+
+     mass_p = 1.0
+     mass_s = 1.0
 
      inertial = .false.
      interp_temp = .false.
@@ -111,69 +115,30 @@
      center(2) = HALF*(problo(2)+probhi(2))
      center(3) = HALF*(problo(3)+probhi(3))
 
-     ! Read in model for the primary WD
-     call read_model_file(model_P_name)
-     
-     ! Copy the data over to P's arrays
+     npts_model = 1024
+
+     dx = 1.0d6
+
+     dens_ambient = 1.0d-4
+     temp_ambient = 1.0d7
+
+     allocate(model_P_state(npts_model,3+nspec))
+     allocate(model_S_state(npts_model,3+nspec))
+
      allocate(model_P_r(npts_model))
-     allocate(model_P_state(npts_model, nvars_model))
-
-     model_P_r(:) = model_r(:)
-     model_P_state(:,:) = model_state(:,:)
-     npts_model_P = npts_model
-
-     call close_model_file()
-
-     ! Compute the mass of the primary
-     mass_p_initial = ZERO
-     do i = 1, npts_model_P-1
-        if (i == 1) then
-           r_l = ZERO
-        else
-           r_l = HALF*(model_P_r(i) + model_P_r(i-1))
-        endif
-
-        r_r = HALF*(model_P_r(i) + model_P_r(i+1))
-
-        mass_p_initial = mass_p_initial + FOUR3RD*M_PI*(r_r - r_l)* &
-             (r_r**2 + r_l*r_r + r_l**2)*model_P_state(i,idens_model)
-
-     enddo
-
-
-     ! Read in model for the secondary WD
-     call read_model_file(model_S_name)
-     
-     ! Copy the data over to B's arrays
      allocate(model_S_r(npts_model))
-     allocate(model_S_state(npts_model, nvars_model))
 
-     model_S_r(:) = model_r(:)
-     model_S_state(:,:) = model_state(:,:)
-     npts_model_S = npts_model
+     smallx = 1.0d-10
 
-     call close_model_file()
+     temp_core = 1.0d7
 
-     ! Compute the mass of the secondary WD.
+     xn_core(:) = smallx
 
-     mass_s_initial = ZERO
-     do i = 1, npts_model_S-1
-        if (i == 1) then
-           r_l = ZERO
-        else
-           r_l = HALF*(model_S_r(i) + model_S_r(i-1))
-        endif
-
-        r_r = HALF*(model_S_r(i) + model_S_r(i+1))
-
-        mass_s_initial = mass_s_initial + FOUR3RD*M_PI*(r_r - r_l)* &
-             (r_r**2 + r_l*r_r + r_l**2)*model_S_state(i,idens_model)
-
-     enddo
+     xn_core(2) = HALF - TWO * smallx
+     xn_core(3) = HALF - TWO * smallx
 
      ! We want the primary WD to be more massive. If what we're calling
-     ! the primary ends up being less massive, switch the stars and all
-     ! the relevant data.
+     ! the primary ends up being less massive, switch the stars.
 
      if ( mass_p < mass_s ) then
 
@@ -181,60 +146,20 @@
          print *, "Primary mass is less than secondary mass; switching the stars."
        endif
 
-       allocate(temp_model_r(npts_model_p))
-       allocate(temp_model_state(npts_model_p,nvars_model))
-
-       temp_model_state(:,:) = model_P_state(:,:)
-       temp_model_r(:)       = model_P_r(:)
- 
-       model_P_state(:,:) = model_S_state(:,:)
-       model_P_r(:)       = model_S_r(:)
-
-       model_S_state(:,:) = temp_model_state(:,:)
-       model_S_r(:)       = temp_model_r(:)
-
-       deallocate(temp_model_r)
-       deallocate(temp_model_state)
-
        temp_mass = mass_p
-       mass_p_initial = mass_s_initial
-       mass_s_initial = temp_mass
-
-       temp_npts = npts_model_p
-       npts_model_p = npts_model_s
-       npts_model_s = temp_npts
-
-       temp_name = model_p_name
-       model_p_name = model_s_name
-       model_s_name = temp_name
+       mass_p = mass_s
+       mass_s = temp_mass
 
      endif
-     
-     if (ioproc == 1) then
-        print *, "Mass of the primary = ",   mass_p_initial
-        print *, "Mass of the secondary = ", mass_s_initial
-     endif
 
+     ! Generate primary and secondary WD
 
-     ! Check that the cutoff densities match
-     if (model_S_state(npts_model_S,idens_model) /= &
-         model_P_state(npts_model_P,idens_model)) then
-        call bl_error("ERROR: Cutoff densities for primary and secondary models do not agree.")
-     endif
+     call init_1d(model_P_r, model_P_state, npts_model, dx, mass_P, temp_core, xn_core, dens_ambient, temp_ambient)
 
-     dens_ambient = model_S_state(npts_model_S,idens_model)
-
-     ! Check that the cutoff temperature match
-     if (model_S_state(npts_model_S,itemp_model) /= &
-         model_P_state(npts_model_P,itemp_model)) then
-        call bl_error("ERROR: Cutoff temperatures for primary and secondary models do not agree.")
-     endif
-
-     temp_ambient = model_S_state(npts_model_S,itemp_model)
-
+     call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, temp_core, xn_core, dens_ambient, temp_ambient)
 
      ! Ambient X
-     xn_ambient(:) = model_S_state(npts_model_S,ispec_model:ispec_model-1+nspec)
+     xn_ambient(:) = model_S_state(npts_model,ispec_model:ispec_model-1+nspec)
 
      ! If this is a restart, we don't need to recompute the models.
 
@@ -264,7 +189,7 @@
 
      ! Compute the radius of the primary
      radius_P_initial = -1.0d0
-     do i = 1, npts_model_P
+     do i = 1, npts_model
         if (model_P_state(i,idens_model) <= 1.1*dens_ambient) then
            radius_P_initial = model_P_r(i)
            exit
@@ -277,7 +202,7 @@
 
      ! compute the radius of the secondary
      radius_S_initial = -1.0d0
-     do i = 1, npts_model_S
+     do i = 1, npts_model
         if (model_S_state(i,idens_model) <= 1.1*dens_ambient) then
            radius_S_initial = model_S_r(i)
            exit
@@ -293,11 +218,11 @@
      ! Orbital properties
 
      ! Kepler's third law tells us the separation
-     a = (Gconst*(mass_P_initial + mass_s_initial)*rot_period**2/(FOUR*M_PI**2))**THIRD
+     a = (Gconst*(mass_P + mass_S)*M_solar*rot_period**2/(FOUR*M_PI**2))**THIRD
 
      ! Semi-major axes
-     a_S_initial = a/(ONE + mass_S_initial/mass_P_initial)
-     a_P_initial = (mass_S_initial/mass_P_initial)*a_S_initial
+     a_S_initial = a/(ONE + mass_S/mass_P)
+     a_P_initial = (mass_S/mass_P)*a_S_initial
 
      if (ioproc == 1) then
         print *, "a = ", a
@@ -339,13 +264,6 @@
        center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
      endif
-
-     ! Initialize COM quantities
-
-     mass_p = mass_P_initial
-     mass_s = mass_S_initial
-     com_loc_p = center_P_initial
-     com_loc_s = center_S_initial
      
    end subroutine PROBINIT
 
@@ -440,24 +358,24 @@
                        if (dist_P < radius_P_initial) then
 
                           state(i,j,k,URHO) = state(i,j,k,URHO) + &
-                               interpolate(dist_P,npts_model_P, &
+                               interpolate(dist_P,npts_model, &
                                            model_P_r,model_P_state(:,idens_model))
 
                           if (interp_temp) then
                              temp_zone = temp_zone + &
-                                  interpolate(dist_P,npts_model_P, &
+                                  interpolate(dist_P,npts_model, &
                                               model_P_r,model_P_state(:,itemp_model))
 
                           else
                              pres_zone = pres_zone + &
-                                  interpolate(dist_P,npts_model_P, &
+                                  interpolate(dist_P,npts_model, &
                                               model_P_r,model_P_state(:,ipres_model))
 
                           endif
 
                           do n = 1, nspec
                              state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
-                                  interpolate(dist_P,npts_model_P, &
+                                  interpolate(dist_P,npts_model, &
                                               model_P_r,model_P_state(:,ispec_model-1+n))
                           enddo
 
@@ -466,24 +384,24 @@
                        else if (dist_S < radius_S_initial .and. (.not. single_star)) then
 
                           state(i,j,k,URHO) = state(i,j,k,URHO) + &
-                               interpolate(dist_S,npts_model_S, &
+                               interpolate(dist_S,npts_model, &
                                            model_S_r,model_S_state(:,idens_model))
 
                           if (interp_temp) then
                              temp_zone = temp_zone + &
-                                  interpolate(dist_S,npts_model_S, &
+                                  interpolate(dist_S,npts_model, &
                                               model_S_r,model_S_state(:,itemp_model))
 
                           else
                              pres_zone = pres_zone + &
-                                  interpolate(dist_S,npts_model_S, &
+                                  interpolate(dist_S,npts_model, &
                                               model_S_r,model_S_state(:,ipres_model))
 
                           endif
 
                           do n = 1, nspec
                              state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
-                                  interpolate(dist_S,npts_model_S, &
+                                  interpolate(dist_S,npts_model, &
                                               model_S_r,model_S_state(:,ispec_model-1+n))
                           enddo
 

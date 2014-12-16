@@ -18,45 +18,45 @@ module probdata_module
   double precision, save ::  starBuffer, boundaryBuffer
   
   ! model info
-  character (len=80), save :: model_P_name
-  character (len=80), save :: model_S_name
+  character (len=80) :: model_P_name
+  character (len=80) :: model_S_name
   
-  double precision, allocatable, save :: model_P_r(:), model_P_state(:,:)
-  double precision, allocatable, save :: model_S_r(:), model_S_state(:,:)
+  double precision, allocatable :: model_P_r(:), model_P_state(:,:)
+  double precision, allocatable :: model_S_r(:), model_S_state(:,:)
   
-  integer, save :: npts_model_P, npts_model_S
+  double precision :: mass_P, mass_S
+  double precision :: radius_P_initial, radius_S_initial
   
-  double precision, save :: mass_P_initial, mass_S_initial
-  double precision, save :: radius_P_initial, radius_S_initial
-  
-  double precision, save :: dens_ambient, temp_ambient
-  double precision, save :: xn_ambient(nspec)
-  double precision, save :: eint_ambient, pres_ambient
+  double precision :: dens_ambient, temp_ambient
+  double precision :: xn_ambient(nspec)
+  double precision :: eint_ambient, pres_ambient
 
-  logical, save :: interp_temp
+  logical :: interp_temp
 
-  integer, save :: nsub
+  integer :: npts_model
+
+  integer :: nsub
 
   ! inertial reference frame flag
-  logical, save :: inertial
+  logical :: inertial
 
   ! damping
-  logical, save    :: damping
+  logical          :: damping
   double precision :: damping_alpha
 
   ! relaxation
-  logical, save    :: do_relax
+  logical          :: do_relax
   double precision :: relax_tau
 
   ! grid info
   double precision, save ::  center(3)
 
   ! binary properties
-  double precision, save :: a_P_initial, a_S_initial
+  double precision :: a_P_initial, a_S_initial
   
-  double precision, dimension(3), save :: center_P_initial, center_S_initial
+  double precision, dimension(3) :: center_P_initial, center_S_initial
 
-  integer, save :: star_axis
+  integer :: star_axis
 
   logical :: single_star
 
