@@ -33,6 +33,7 @@ clean:
 	rm -f helm_table.dat
 	if [ -e  "$(ca_make)" ]; then \
 		make realclean -f $(ca_make); \
+		rm $(ca_make); \
 	fi;
 	rm -rf plt*
 	rm -rf chk*
