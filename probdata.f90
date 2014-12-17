@@ -1,6 +1,7 @@
 module probdata_module
 
   use network
+  use eos_module
 
   ! refinement criteria
   double precision, save ::    denerr,   dengrad
@@ -26,11 +27,9 @@ module probdata_module
   
   double precision :: mass_P, mass_S
   double precision :: radius_P_initial, radius_S_initial
-  
-  double precision :: dens_ambient, temp_ambient
-  double precision :: xn_ambient(nspec)
-  double precision :: eint_ambient, pres_ambient
 
+  type (eos_t) :: ambient_state
+  
   logical :: interp_temp
 
   integer :: npts_model

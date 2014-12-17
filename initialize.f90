@@ -15,7 +15,7 @@ use fundamental_constants_module, only: Gconst, M_solar
 
 contains
 
-  subroutine init_1d(model_r, model_hse, nx, dx, mass, radius, temp_core, xn_core, dens_ambient, temp_ambient)
+  subroutine init_1d(model_r, model_hse, nx, dx, mass, radius, temp_core, xn_core, ambient_state)
 
     implicit none
 
@@ -23,12 +23,13 @@ contains
 
     integer,          intent(in   ) :: nx
 
-    double precision, intent(in   ) :: dens_ambient, temp_ambient
     double precision, intent(in   ) :: dx, mass
     double precision, intent(in   ) :: temp_core, xn_core(nspec)
     double precision, intent(inout) :: radius
     double precision, intent(inout) :: model_hse(nx,3+nspec)
     double precision, intent(inout) :: model_r(nx)
+
+    type (eos_t), intent(in) :: ambient_state
 
     ! Local variables
 
@@ -235,10 +236,10 @@ contains
 
                    ! check if the density falls below our minimum
                    ! cut-off -- if so, floor it
-                   if (dens_zone < dens_ambient) then
+                   if (dens_zone < ambient_state % rho) then
 
-                      dens_zone = dens_ambient
-                      temp_zone = temp_ambient
+                      dens_zone = ambient_state % rho
+                      temp_zone = ambient_state % T
                       converged_hse = .TRUE.
                       fluff = .TRUE.
                       exit
@@ -284,11 +285,11 @@ contains
                       exit
                    endif
 
-                   if (dens_zone < dens_ambient) then
+                   if (dens_zone < ambient_state % rho) then
 
                       icutoff = i
-                      dens_zone = dens_ambient
-                      temp_zone = temp_ambient
+                      dens_zone = ambient_state % rho
+                      temp_zone = ambient_state % T
                       converged_hse = .TRUE.
                       fluff = .TRUE.
                       exit
@@ -296,8 +297,8 @@ contains
                    endif
                 endif
 
-                if (temp_zone < temp_ambient .and. isentropic) then
-                   temp_zone = temp_ambient
+                if (temp_zone < ambient_state % T .and. isentropic) then
+                   temp_zone = ambient_state % T
                    isentropic = .false.
                 endif
 
@@ -315,8 +316,8 @@ contains
              endif
 
           else
-             dens_zone = dens_ambient
-             temp_zone = temp_ambient
+             dens_zone = ambient_state % rho
+             temp_zone = ambient_state % T
           endif
 
 

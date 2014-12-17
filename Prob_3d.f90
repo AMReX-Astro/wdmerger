@@ -128,11 +128,15 @@
      xn_core(2) = HALF - TWO * smallx
      xn_core(3) = HALF - TWO * smallx
 
-     ! Define ambient state
+     ! Define ambient state and call EOS to get eint and pressure
 
-     dens_ambient = 1.0d-4
-     temp_ambient = 1.0d7
-     xn_ambient(:) = xn_core(:)
+     ambient_state % rho = 1.0d-4
+     ambient_state % T   = 1.0d7
+     ambient_state % xn  = xn_core
+
+     call eos(eos_input_rt, ambient_state, .false.)
+
+     ! Allocate arrays to hold the stellar models
 
      allocate(model_P_state(npts_model,3+nspec))
      allocate(model_S_state(npts_model,3+nspec))
@@ -141,7 +145,7 @@
      allocate(model_S_r(npts_model))
 
      ! We want the primary WD to be more massive. If what we're calling
-     ! the primary ends up being less massive, switch the stars.
+     ! the primary is less massive, switch the stars.
 
      if ( mass_p < mass_s ) then
 
@@ -158,32 +162,22 @@
      ! Generate primary and secondary WD
 
      call init_1d(model_P_r, model_P_state, npts_model, dx, mass_P, radius_P_initial, &
-                  temp_core, xn_core, dens_ambient, temp_ambient)
+                  temp_core, xn_core, ambient_state)
 
      call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, radius_S_initial, &
-                  temp_core, xn_core, dens_ambient, temp_ambient)
+                  temp_core, xn_core, ambient_state)
 
      ! Given the inputs of small_dens and small_temp, figure out small_pres.
      ! Use the ambient gas composition (we don't need to worry about saving
      ! our result in eint_ambient since it will be reset in the next call).
-
-     eos_state % xn  = xn_ambient
+ 
+     eos_state % xn  = ambient_state % xn
      eos_state % rho = small_dens
      eos_state % T   = small_temp
  
      call eos(eos_input_rt, eos_state, .false.)
 
      small_pres = eos_state % p
-
-     ! Get the rest of the ambient thermodynamic state
-
-     eos_state % rho = dens_ambient
-     eos_state % T   = temp_ambient
-
-     call eos(eos_input_rt, eos_state, .false.)
-
-     eint_ambient = eos_state % e
-     pres_ambient = eos_state % p
 
      ! Get the orbit from Kepler's third law
 
@@ -342,13 +336,13 @@
 
                        ! ambient medium
                        else
-                          state(i,j,k,URHO) = state(i,j,k,URHO) + dens_ambient
+                          state(i,j,k,URHO) = state(i,j,k,URHO) + ambient_state % rho
                           if (interp_temp) then
-                             temp_zone = temp_zone + temp_ambient
+                             temp_zone = temp_zone + ambient_state % T
                           else
-                             pres_zone = pres_zone + pres_ambient
+                             pres_zone = pres_zone + ambient_state % p
                           endif
-                          state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec) + xn_ambient(:)
+                          state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec) + ambient_state % xn(:)
 
                        endif
 
@@ -480,9 +474,9 @@
               do i = adv_l1, domlo(1)-1
                  xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
+                 adv(i,j,k,URHO) = ambient_state % rho
+                 adv(i,j,k,UTEMP) = ambient_state % T
+                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)
 
                  if ( inertial ) then
 
@@ -498,15 +492,15 @@
  
                  endif
 
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
+                 adv(i,j,k,UMX) = ambient_state % rho*vx
+                 adv(i,j,k,UMY) = ambient_state % rho*vy
+                 adv(i,j,k,UMZ) = ambient_state % rho*vz
 
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
+                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
                       HALF*(adv(i,j,k,UMX)**2 + &
                             adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
+                            adv(i,j,k,UMZ)**2)/ambient_state % rho
 
               enddo
            enddo
@@ -521,9 +515,9 @@
               do i = domhi(1)+1, adv_h1
                  xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
+                 adv(i,j,k,URHO) = ambient_state % rho
+                 adv(i,j,k,UTEMP) = ambient_state % T
+                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
                  if ( inertial ) then
 
@@ -539,15 +533,15 @@
  
                  endif
 
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
+                 adv(i,j,k,UMX) = ambient_state % rho*vx
+                 adv(i,j,k,UMY) = ambient_state % rho*vy
+                 adv(i,j,k,UMZ) = ambient_state % rho*vz
 
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
+                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
                       HALF*(adv(i,j,k,UMX)**2 + &
                             adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
+                            adv(i,j,k,UMZ)**2)/ambient_state % rho
 
               enddo
            enddo
@@ -562,9 +556,9 @@
               do i = adv_l1, adv_h1
                  xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
+                 adv(i,j,k,URHO) = ambient_state % rho
+                 adv(i,j,k,UTEMP) = ambient_state % T
+                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
                  if ( inertial ) then
 
@@ -580,15 +574,15 @@
  
                  endif
 
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
+                 adv(i,j,k,UMX) = ambient_state % rho*vx
+                 adv(i,j,k,UMY) = ambient_state % rho*vy
+                 adv(i,j,k,UMZ) = ambient_state % rho*vz
 
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
+                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
                       HALF*(adv(i,j,k,UMX)**2 + &
                             adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
+                            adv(i,j,k,UMZ)**2)/ambient_state % rho
 
               enddo
            enddo
@@ -603,9 +597,9 @@
               do i = adv_l1, adv_h1
                  xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
+                 adv(i,j,k,URHO) = ambient_state % rho
+                 adv(i,j,k,UTEMP) = ambient_state % T
+                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
                  if ( inertial ) then
 
@@ -621,15 +615,15 @@
  
                  endif
 
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
+                 adv(i,j,k,UMX) = ambient_state % rho*vx
+                 adv(i,j,k,UMY) = ambient_state % rho*vy
+                 adv(i,j,k,UMZ) = ambient_state % rho*vz
 
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
+                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
                       HALF*(adv(i,j,k,UMX)**2 + &
                             adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
+                            adv(i,j,k,UMZ)**2)/ambient_state % rho
 
               enddo
            enddo
@@ -644,9 +638,9 @@
               do i = adv_l1, adv_h1
                  xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
+                 adv(i,j,k,URHO) = ambient_state % rho
+                 adv(i,j,k,UTEMP) = ambient_state % T
+                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
                  if ( inertial ) then
 
@@ -662,15 +656,15 @@
  
                  endif
 
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
+                 adv(i,j,k,UMX) = ambient_state % rho*vx
+                 adv(i,j,k,UMY) = ambient_state % rho*vy
+                 adv(i,j,k,UMZ) = ambient_state % rho*vz
 
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
+                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
                       HALF*(adv(i,j,k,UMX)**2 + &
                             adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
+                            adv(i,j,k,UMZ)**2)/ambient_state % rho
 
               enddo
            enddo
@@ -685,9 +679,9 @@
               do i = adv_l1, adv_h1
                  xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
+                 adv(i,j,k,URHO) = ambient_state % rho
+                 adv(i,j,k,UTEMP) = ambient_state % T
+                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
                  if ( inertial ) then
 
@@ -703,15 +697,15 @@
  
                  endif
 
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
+                 adv(i,j,k,UMX) = ambient_state % rho*vx
+                 adv(i,j,k,UMY) = ambient_state % rho*vy
+                 adv(i,j,k,UMZ) = ambient_state % rho*vz
 
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
+                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
                       HALF*(adv(i,j,k,UMX)**2 + &
                             adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
+                            adv(i,j,k,UMZ)**2)/ambient_state % rho
 
               enddo
            enddo
