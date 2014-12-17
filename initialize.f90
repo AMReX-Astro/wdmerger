@@ -7,11 +7,12 @@ module initial_model_module
 use bl_types
 use bl_constants_module
 use bl_error_module
-use eos_module, only: eos_input_rt, eos, eos_init
+use eos_module, only: eos_input_rt, eos
 use eos_type_module
 use network, only: nspec
 use model_parser_module, only: itemp_model, idens_model, ipres_model, ispec_model
 use fundamental_constants_module, only: Gconst, M_solar
+use interpolate_module, only: interpolate
 
 contains
 
@@ -402,6 +403,81 @@ contains
 
   end subroutine init_1d
 
+  ! Takes a one-dimensional stellar model and interpolates it to a point in
+  ! 3D Cartesian grid space. Optionally does a sub-grid-scale interpolation
+  ! if nsub > 1 (set in the probin file).
+
+  subroutine interpolate_3d_from_1d(model_r, model_state, npts_model, loc, dx, state, nsub_in)
+
+    implicit none
+
+    integer,          intent(in) :: npts_model
+
+    double precision, intent(in) :: model_r(npts_model)
+    double precision, intent(in) :: model_state(npts_model,3+nspec)
+    double precision, intent(in) :: loc(3), dx(3)
+
+    type (eos_t) :: state
+
+    integer, optional, intent(in) :: nsub_in
+
+    integer :: i, j, k, n
+    integer :: nsub
+    double precision :: x, y, z, r
+
+    if (present(nsub_in)) then
+       nsub = nsub_in
+    else
+       nsub = 1
+    endif
+    
+    state % rho = ZERO 
+    state % p   = ZERO
+    state % T   = ZERO
+    state % xn  = ZERO
+
+    ! We perform a sub-grid-scale interpolation, where 
+    ! nsub determines the number of intervals we split the zone into.
+    ! If nsub = 1, we simply interpolate using the cell-center location.
+    ! As an example, if nsub = 3, then the sampled locations will be
+    ! k = 0 --> z = loc(3) - dx(3) / 3   (1/6 of way from left edge of zone)
+    ! k = 1 --> z = loc(3)               (halfway between left and right edge)
+    ! k = 2 --> z = loc(3) + dx(3) / 3   (1/6 of way from right edge of zone)
+
+    do k = 0, nsub-1
+       z = loc(3) + dble(k + HALF * (1 - nsub)) * dx(3) / nsub
+
+       do j = 0, nsub-1
+          y = loc(2) + dble(j + HALF * (1 - nsub)) * dx(2) / nsub
+
+          do i = 0, nsub-1
+             x = loc(1) + dble(i + HALF * (1 - nsub)) * dx(1) / nsub
+
+             r = (x**2 + y**2 + z**2)**(0.5)
+
+             state % rho = state % rho + interpolate(r, npts_model, model_r, model_state(:,idens_model))
+             state % T   = state % T   + interpolate(r, npts_model, model_r, model_state(:,itemp_model))
+
+             do n = 1, nspec
+                state % xn(n) = state % xn(n) + interpolate(r, npts_model, model_r, model_state(:,ispec_model-1+n))
+             enddo
+
+          enddo
+       enddo
+    enddo
+
+    ! Now normalize by the number of intervals, and complete the thermnodynamics
+
+    state % rho = state % rho / (nsub**3)
+    state % T   = state % T   / (nsub**3)
+    state % xn  = state % xn  / (nsub**3)
+
+    call eos(eos_input_rt, state)
+
+                      
+  end subroutine interpolate_3d_from_1d
+    
+
   ! Accepts the masses of two stars (in solar masses)
   ! and the orbital period of a system,
   ! and returns the semimajor axis of the orbit (in cm),
@@ -411,6 +487,8 @@ contains
 
     use bl_constants_module, only: FOUR, THIRD, M_PI
     use fundamental_constants_module, only: Gconst, M_solar
+
+    implicit none
 
     double precision, intent(in   ) :: mass_1, mass_2, period, radius_1, radius_2
     double precision, intent(inout) :: a, a_1, a_2
@@ -422,8 +500,8 @@ contains
 
     a = (Gconst*(mass_1 + mass_2)*M_solar*period**2/(FOUR*M_PI**2))**THIRD
 
-    a_2 = a/(ONE + mass_S/mass_P)
-    a_1 = (mass_S/mass_P)*a_2
+    a_2 = a/(ONE + mass_2/mass_1)
+    a_1 = (mass_2/mass_1)*a_2
 
     ! Make sure the domain is big enough to hold stars in an orbit this size
 

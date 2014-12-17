@@ -136,6 +136,16 @@
 
      call eos(eos_input_rt, ambient_state, .false.)
 
+     ! Given the inputs of small_dens and small_temp, figure out small_pres.
+ 
+     eos_state % xn  = ambient_state % xn
+     eos_state % rho = small_dens
+     eos_state % T   = small_temp
+ 
+     call eos(eos_input_rt, eos_state, .false.)
+
+     small_pres = eos_state % p
+
      ! Allocate arrays to hold the stellar models
 
      allocate(model_P_state(npts_model,3+nspec))
@@ -167,22 +177,10 @@
      call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, radius_S_initial, &
                   temp_core, xn_core, ambient_state)
 
-     ! Given the inputs of small_dens and small_temp, figure out small_pres.
-     ! Use the ambient gas composition (we don't need to worry about saving
-     ! our result in eint_ambient since it will be reset in the next call).
- 
-     eos_state % xn  = ambient_state % xn
-     eos_state % rho = small_dens
-     eos_state % T   = small_temp
- 
-     call eos(eos_input_rt, eos_state, .false.)
-
-     small_pres = eos_state % p
-
      ! Get the orbit from Kepler's third law
 
      call kepler_third_law(radius_P_initial, mass_P, radius_S_initial, mass_S, &
-                           rot_period, a, a_P_initial, a_S_initial, problo, probhi)
+                           rot_period, a_P_initial, a_S_initial, a, problo, probhi)
 
      ! Star center positions -- we'll put them in the midplane on the
      ! axis specified by star_axis, with the center of mass at the center of the domain.
@@ -222,13 +220,13 @@
                           delta,xlo,xhi)
 
      use probdata_module
-     use interpolate_module
      use eos_module
      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
           UEDEN, UEINT, UFS, rot_period
      use network, only : nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
+     use initial_model_module, only: interpolate_3d_from_1d
 
      implicit none
 
@@ -238,156 +236,51 @@
      double precision :: xlo(3), xhi(3), time, delta(3)
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
-     double precision :: xl,yl,zl,xx,yy,zz
-     double precision :: pres_zone, temp_zone
-     double precision :: dist_P, dist_S
+     double precision :: loc(3), xx, yy
+     double precision :: dist_P(3), dist_S(3)
 
      integer :: pt_index(3)
 
-     type (eos_t) :: eos_state
+     type (eos_t) :: zone_state
 
      integer :: i,j,k,ii,jj,kk,n
 
-     !$OMP PARALLEL DO PRIVATE(i, j, k, xl, yl, zl, xx, yy, zz) &
-     !$OMP PRIVATE(ii, jj, kk, n) &
-     !$OMP PRIVATE(pres_zone, temp_zone, dist_P, dist_S, eos_state, pt_index)
+     ! Loop through the zones and set the zone state depending on whether we are
+     ! inside the primary or secondary (in which case interpolate from the respective model)
+     ! or if we are in an ambient zone.
+
+     !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
+     !$OMP PRIVATE(dist_P, dist_S, zone_state, pt_index)
      do k = lo(3), hi(3)   
-        zl = xlo(3) + delta(3)*dble(k-lo(3)) 
+        loc(3) = xlo(3) + delta(3)*dble(k+HALF-lo(3)) 
 
         do j = lo(2), hi(2)     
-           yl = xlo(2) + delta(2)*dble(j-lo(2))
+           loc(2) = xlo(2) + delta(2)*dble(j+HALF-lo(2))
 
            do i = lo(1), hi(1)   
-              xl = xlo(1) + delta(1)*dble(i-lo(1))
+              loc(1) = xlo(1) + delta(1)*dble(i+HALF-lo(1))
 
-              state(i,j,k,URHO) = 0.0d0
-              pres_zone = 0.0d0
-              temp_zone = 0.0d0
-              state(i,j,k,UFS:UFS-1+nspec) = 0.0d0
+              dist_P = loc - center_P_initial
+              dist_S = loc - center_S_initial
 
-              do kk = 0, nsub-1
-                 zz = zl + dble(kk + HALF)*delta(3)/nsub
-
-                 do jj = 0, nsub-1
-                    yy = yl + dble(jj + HALF)*delta(2)/nsub
-
-                    do ii = 0, nsub-1
-                       xx = xl + dble(ii + HALF)*delta(1)/nsub
-
-                       dist_P = sqrt(( xx - center_P_initial(1) )**2 + &
-                                     ( yy - center_P_initial(2) )**2 + &
-                                     ( zz - center_P_initial(3) )**2)
-
-                       dist_S = sqrt(( xx - center_S_initial(1) )**2 + &
-                                     ( yy - center_S_initial(2) )**2 + &
-                                     ( zz - center_S_initial(3) )**2)
-
-                       ! Are we inside the primary WD?
-                       if (dist_P < radius_P_initial) then
-
-                          state(i,j,k,URHO) = state(i,j,k,URHO) + &
-                               interpolate(dist_P,npts_model, &
-                                           model_P_r,model_P_state(:,idens_model))
-
-                          if (interp_temp) then
-                             temp_zone = temp_zone + &
-                                  interpolate(dist_P,npts_model, &
-                                              model_P_r,model_P_state(:,itemp_model))
-
-                          else
-                             pres_zone = pres_zone + &
-                                  interpolate(dist_P,npts_model, &
-                                              model_P_r,model_P_state(:,ipres_model))
-
-                          endif
-
-                          do n = 1, nspec
-                             state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
-                                  interpolate(dist_P,npts_model, &
-                                              model_P_r,model_P_state(:,ispec_model-1+n))
-                          enddo
-
-
-                       ! Are we inside the secondary WD?
-                       else if (dist_S < radius_S_initial) then
-
-                          state(i,j,k,URHO) = state(i,j,k,URHO) + &
-                               interpolate(dist_S,npts_model, &
-                                           model_S_r,model_S_state(:,idens_model))
-
-                          if (interp_temp) then
-                             temp_zone = temp_zone + &
-                                  interpolate(dist_S,npts_model, &
-                                              model_S_r,model_S_state(:,itemp_model))
-
-                          else
-                             pres_zone = pres_zone + &
-                                  interpolate(dist_S,npts_model, &
-                                              model_S_r,model_S_state(:,ipres_model))
-
-                          endif
-
-                          do n = 1, nspec
-                             state(i,j,k,UFS-1+n) = state(i,j,k,UFS-1+n) + &
-                                  interpolate(dist_S,npts_model, &
-                                              model_S_r,model_S_state(:,ispec_model-1+n))
-                          enddo
-
-
-                       ! ambient medium
-                       else
-                          state(i,j,k,URHO) = state(i,j,k,URHO) + ambient_state % rho
-                          if (interp_temp) then
-                             temp_zone = temp_zone + ambient_state % T
-                          else
-                             pres_zone = pres_zone + ambient_state % p
-                          endif
-                          state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec) + ambient_state % xn(:)
-
-                       endif
-
-                    enddo
-                 enddo
-              enddo
-
-
-              ! normalize
-              state(i,j,k,URHO) = state(i,j,k,URHO)/(nsub*nsub*nsub)
-              pres_zone = pres_zone/(nsub*nsub*nsub)
-              temp_zone = temp_zone/(nsub*nsub*nsub)
-              state(i,j,k,UFS:UFS-1+nspec) = state(i,j,k,UFS:UFS-1+nspec)/(nsub*nsub*nsub)
-
-              ! thermodynamics              
-
-              eos_state % xn  = state(i,j,k,UFS:UFS-1+nspec)
-              eos_state % p   = pres_zone
-              eos_state % rho = state(i,j,k,URHO)
-              eos_state % T   = temp_zone
-
-              pt_index(1) = i
-              pt_index(2) = j
-              pt_index(3) = k
-
-              if (interp_temp) then
-                 state(i,j,k,UTEMP) = eos_state % T
-                 call eos(eos_input_rt, eos_state, .false., pt_index = pt_index)
+              if (sum(dist_P**2) < radius_P_initial**2) then
+                 call interpolate_3d_from_1d(model_P_r, model_P_state, npts_model, dist_P, delta, zone_state, nsub)
+              else if (sum(dist_S**2) < radius_S_initial**2) then
+                 call interpolate_3d_from_1d(model_S_r, model_S_state, npts_model, dist_S, delta, zone_state, nsub)
               else
-                 call eos(eos_input_rp, eos_state, .false., pt_index = pt_index)
-                 state(i,j,k,UTEMP) = eos_state % T
+                 zone_state = ambient_state
               endif
 
-              state(i,j,k,UEINT) = eos_state % e
-
-              state(i,j,k,UEDEN) = state(i,j,k,URHO) * state(i,j,k,UEINT)
-              state(i,j,k,UEINT) = state(i,j,k,URHO) * state(i,j,k,UEINT)
-
-              do n = 1,nspec
-                 state(i,j,k,UFS+n-1) = state(i,j,k,URHO) * state(i,j,k,UFS+n-1)
-              end do
+              state(i,j,k,URHO)  = zone_state % rho
+              state(i,j,k,UTEMP) = zone_state % T
+              state(i,j,k,UEINT) = zone_state % e * zone_state % rho
+              state(i,j,k,UEDEN) = zone_state % e * zone_state % rho
+              state(i,j,k,UFS:UFS+nspec-1) = zone_state % rho * zone_state % xn
 
            enddo
         enddo
      enddo
+
      !$OMP END PARALLEL DO
 
      ! Initial velocities = 0
