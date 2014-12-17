@@ -7,7 +7,7 @@
      use meth_params_module, only: small_temp, small_pres, small_dens, rot_period
      use network
      use eos_module
-     use initial_model_module, only: init_1d
+     use initial_model_module
 
      implicit none
 
@@ -29,7 +29,7 @@
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
           temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
-          starBuffer, boundaryBuffer, single_star, star_axis
+          starBuffer, boundaryBuffer, star_axis
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -100,7 +100,6 @@
      interp_temp = .false.
      damping  = .false.
      do_relax = .false.
-     single_star = .false.
      star_axis = 1
 
      ! Read namelists -- override the defaults
@@ -119,23 +118,27 @@
 
      dx = 1.0d6
 
+     smallx = 1.0d-10
+
+     ! Define stellar interior quantities
+
+     temp_core = 1.0d7
+
+     xn_core(:) = smallx
+     xn_core(2) = HALF - TWO * smallx
+     xn_core(3) = HALF - TWO * smallx
+
+     ! Define ambient state
+
      dens_ambient = 1.0d-4
      temp_ambient = 1.0d7
+     xn_ambient(:) = xn_core(:)
 
      allocate(model_P_state(npts_model,3+nspec))
      allocate(model_S_state(npts_model,3+nspec))
 
      allocate(model_P_r(npts_model))
      allocate(model_S_r(npts_model))
-
-     smallx = 1.0d-10
-
-     temp_core = 1.0d7
-
-     xn_core(:) = smallx
-
-     xn_core(2) = HALF - TWO * smallx
-     xn_core(3) = HALF - TWO * smallx
 
      ! We want the primary WD to be more massive. If what we're calling
      ! the primary ends up being less massive, switch the stars.
@@ -154,16 +157,11 @@
 
      ! Generate primary and secondary WD
 
-     call init_1d(model_P_r, model_P_state, npts_model, dx, mass_P, temp_core, xn_core, dens_ambient, temp_ambient)
+     call init_1d(model_P_r, model_P_state, npts_model, dx, mass_P, radius_P_initial, &
+                  temp_core, xn_core, dens_ambient, temp_ambient)
 
-     call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, temp_core, xn_core, dens_ambient, temp_ambient)
-
-     ! Ambient X
-     xn_ambient(:) = model_S_state(npts_model,ispec_model:ispec_model-1+nspec)
-
-     ! If this is a restart, we don't need to recompute the models.
-
-     !if (init == 0) return
+     call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, radius_S_initial, &
+                  temp_core, xn_core, dens_ambient, temp_ambient)
 
      ! Given the inputs of small_dens and small_temp, figure out small_pres.
      ! Use the ambient gas composition (we don't need to worry about saving
@@ -187,84 +185,20 @@
      eint_ambient = eos_state % e
      pres_ambient = eos_state % p
 
-     ! Compute the radius of the primary
-     radius_P_initial = -1.0d0
-     do i = 1, npts_model
-        if (model_P_state(i,idens_model) <= 1.1*dens_ambient) then
-           radius_P_initial = model_P_r(i)
-           exit
-        endif
-     enddo
+     ! Get the orbit from Kepler's third law
 
-     if (radius_P_initial < 0.0d0) then
-        call bl_error("ERROR: unable to compute radius of the primary")
-     endif
+     call kepler_third_law(radius_P_initial, mass_P, radius_S_initial, mass_S, &
+                           rot_period, a, a_P_initial, a_S_initial, problo, probhi)
 
-     ! compute the radius of the secondary
-     radius_S_initial = -1.0d0
-     do i = 1, npts_model
-        if (model_S_state(i,idens_model) <= 1.1*dens_ambient) then
-           radius_S_initial = model_S_r(i)
-           exit
-        endif
-     enddo
-
-     if (radius_S_initial < ZERO) then
-        call bl_error("ERROR: unable to compute radius of the secondary")
-     endif
-
-
-     
-     ! Orbital properties
-
-     ! Kepler's third law tells us the separation
-     a = (Gconst*(mass_P + mass_S)*M_solar*rot_period**2/(FOUR*M_PI**2))**THIRD
-
-     ! Semi-major axes
-     a_S_initial = a/(ONE + mass_S/mass_P)
-     a_P_initial = (mass_S/mass_P)*a_S_initial
-
-     if (ioproc == 1) then
-        print *, "a = ", a
-        print *, "(a_P, a_S) = ", a_P_initial, a_S_initial
-     endif
-
-     if (.not. single_star) then
-
-       ! Make sure the stars are not touching.
-       if (radius_P_initial + radius_S_initial > a) then
-          call bl_error("ERROR: Stars are touching!")
-       endif
-
-       ! Make sure the domain is big enough
-
-       ! For simplicity, make sure the x and y sizes are twice the greatest (a + R)
-       length = max(a_P_initial + radius_P_initial, a_S_initial + radius_S_initial)
-       if (length > HALF*(probhi(1) - problo(1)) .or. &
-           length > HALF*(probhi(2) - problo(2))) then
-          call bl_error("ERROR: The domain width is too small to include the stars (along their axis).")
-       endif
-
-       ! For the height, let's take twice the radius
-       if (TWO*max(radius_P_initial, radius_S_initial) > HALF*(probhi(3) - problo(3))) then
-          call bl_error("ERROR: The domain height is too small to include the stars (perpendicular to their axis).")
-       endif
-
-     endif
-     
      ! Star center positions -- we'll put them in the midplane on the
      ! axis specified by star_axis, with the center of mass at the center of the domain.
 
      center_P_initial = center
      center_S_initial = center
 
-     if (.not. single_star) then
+     center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
+     center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
-       center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
-       center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
-
-     endif
-     
    end subroutine PROBINIT
 
 
@@ -381,7 +315,7 @@
 
 
                        ! Are we inside the secondary WD?
-                       else if (dist_S < radius_S_initial .and. (.not. single_star)) then
+                       else if (dist_S < radius_S_initial) then
 
                           state(i,j,k,URHO) = state(i,j,k,URHO) + &
                                interpolate(dist_S,npts_model, &

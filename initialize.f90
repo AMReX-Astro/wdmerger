@@ -15,7 +15,7 @@ use fundamental_constants_module, only: Gconst, M_solar
 
 contains
 
-  subroutine init_1d(model_r, model_hse, nx, dx, mass, temp_core, xn_core, dens_ambient, temp_ambient)
+  subroutine init_1d(model_r, model_hse, nx, dx, mass, radius, temp_core, xn_core, dens_ambient, temp_ambient)
 
     implicit none
 
@@ -25,8 +25,8 @@ contains
 
     double precision, intent(in   ) :: dens_ambient, temp_ambient
     double precision, intent(in   ) :: dx, mass
-
     double precision, intent(in   ) :: temp_core, xn_core(nspec)
+    double precision, intent(inout) :: radius
     double precision, intent(inout) :: model_hse(nx,3+nspec)
     double precision, intent(inout) :: model_r(nx)
 
@@ -89,7 +89,13 @@ contains
 
     integer :: narg
 
+    integer :: ioproc
+
     type (eos_t) :: eos_state
+
+    ! For outputting -- determine if we are the IO processor
+
+    call bl_pd_is_ioproc(ioproc)
 
     ! convert the envelope and WD mass into solar masses
     M_tot = mass * M_solar
@@ -111,8 +117,6 @@ contains
        model_r(i) = HALF*(xznl(i) + xznr(i))
     enddo
 
-    print *, idens_model, itemp_model, ipres_model, ispec_model
-
     ! We don't know what WD central density will give the desired total
     ! mass, so we need to iterate over central density
 
@@ -127,8 +131,6 @@ contains
 
 
     do iter_mass = 1, MAX_ITER
-
-       print *, 'mass iter = ', iter_mass, rho_c, temp_core
 
        fluff = .false.
 
@@ -146,18 +148,9 @@ contains
        model_hse(:,itemp_model) = eos_state%T
        model_hse(:,ipres_model) = eos_state%p
 
-       if (iter_mass .eq. 1) then
-          print *, model_r
-       endif
-
        do i = 1, nspec
           model_hse(:,ispec_model-1+i) = eos_state%xn(i)
-          print *, i, ispec_model-1+i, model_hse(:,ispec_model-1+i)
        enddo
-
-       if (iter_mass .eq. 1) then
-          print *, model_r
-       endif
 
        ! keep track of the mass enclosed below the current zone
        M_enclosed(1) = FOUR3RD*M_PI*(xznr(1)**3 - xznl(1)**3)*model_hse(1,idens_model)
@@ -363,7 +356,6 @@ contains
                (xznr(i)**2 +xznl(i)*xznr(i) + xznl(i)**2)*model_hse(i,idens_model)
        enddo
 
-
        if (rho_c_old < ZERO) then
           ! not enough iterations yet -- store the old central density and
           ! mass and pick a new value
@@ -390,41 +382,63 @@ contains
           rho_c = min(1.1d0*rho_c_old, &
                       max((rho_c + drho_c), 0.9d0*rho_c_old))
 
-          print *, 'current mass = ', mass_wd/M_solar
-
        endif     
 
     enddo  ! end mass constraint loop
-
-    print *, model_r
 
     if (.not. mass_converged) then
        print *, 'ERROR: WD mass did not converge'
        call bl_error("ERROR: mass did not converge")
     endif
 
-    print *, 'final masses: '
-    print *, ' mass WD: ', mass_wd/M_solar
+    radius = model_r(icutoff)
 
-    ! compute the maximum HSE error
-    max_hse_error = -1.d30
+    if (ioproc == 1) then
+        print *, "Generated initial model for WD of mass", mass, &
+                 "and radius", radius
+    endif
 
-    do i = 2, nx-1
-       g_zone = -Gconst*M_enclosed(i-1)/xznr(i-1)**2
-       dpdr = (model_hse(i,ipres_model) - model_hse(i-1,ipres_model))/delx
-       rhog = HALF*(model_hse(i,idens_model) + model_hse(i-1,idens_model))*g_zone
-
-       print *, model_r(i), g_zone*model_r(i)
-
-       if (dpdr /= ZERO .and. model_hse(i+1,idens_model) > dens_ambient) then
-          max_hse_error = max(max_hse_error, abs(dpdr - rhog)/abs(dpdr))
-       endif
-
-    enddo
-
-    print *, 'maximum HSE error = ', max_hse_error
-    print *, ' '
 
   end subroutine init_1d
+
+  ! Accepts the masses of two stars (in solar masses)
+  ! and the orbital period of a system,
+  ! and returns the semimajor axis of the orbit (in cm),
+  ! as well as the distances a_1 and a_2 from the center of mass.
+
+  subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, a_1, a_2, a, problo, probhi)
+
+    use bl_constants_module, only: FOUR, THIRD, M_PI
+    use fundamental_constants_module, only: Gconst, M_solar
+
+    double precision, intent(in   ) :: mass_1, mass_2, period, radius_1, radius_2
+    double precision, intent(inout) :: a, a_1, a_2
+    double precision, intent(in   ) :: problo(3), probhi(3)
+
+    double precision :: length
+
+    ! Evaluate Kepler's third law
+
+    a = (Gconst*(mass_1 + mass_2)*M_solar*period**2/(FOUR*M_PI**2))**THIRD
+
+    a_2 = a/(ONE + mass_S/mass_P)
+    a_1 = (mass_S/mass_P)*a_2
+
+    ! Make sure the domain is big enough to hold stars in an orbit this size
+
+    length = a + radius_1 + radius_2
+
+    if (length > (probhi(1) - problo(1)) .or. &
+        length > (probhi(2) - problo(2)) .or. &
+        length > (probhi(3) - problo(3))) then
+        call bl_error("ERROR: The domain width is too small to include the binary orbit.")
+    endif
+
+     ! Make sure the stars are not touching.
+     if (radius_1 + radius_2 > a) then
+        call bl_error("ERROR: Stars are touching!")
+     endif
+
+  end subroutine kepler_third_law
 
 end module initial_model_module

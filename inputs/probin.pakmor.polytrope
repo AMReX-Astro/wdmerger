@@ -20,7 +20,6 @@
   starBuffer  = 1.5d0
   boundaryBuffer = 0.6d0
 
-  single_star = F
 /
 
 &extern

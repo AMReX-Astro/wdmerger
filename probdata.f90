@@ -58,8 +58,6 @@ module probdata_module
 
   integer :: star_axis
 
-  logical :: single_star
-
   ! tagging
 
   
