@@ -6,9 +6,9 @@ module initial_model_module
 
 use bl_types
 use bl_constants_module
-use bl_error_module
+use bl_error_module, only: bl_error
 use eos_module, only: eos_input_rt, eos
-use eos_type_module
+use eos_type_module, only: eos_t
 use network, only: nspec
 use model_parser_module, only: itemp_model, idens_model, ipres_model, ispec_model
 use fundamental_constants_module, only: Gconst, M_solar
@@ -91,13 +91,7 @@ contains
 
     integer :: narg
 
-    integer :: ioproc
-
     type (eos_t) :: eos_state
-
-    ! For outputting -- determine if we are the IO processor
-
-    call bl_pd_is_ioproc(ioproc)
 
     ! convert the envelope and WD mass into solar masses
     M_tot = mass * M_solar
@@ -395,12 +389,6 @@ contains
 
     radius = model_r(icutoff)
 
-    if (ioproc == 1) then
-        print *, "Generated initial model for WD of mass", mass, &
-                 "and radius", radius
-    endif
-
-
   end subroutine init_1d
 
   ! Takes a one-dimensional stellar model and interpolates it to a point in
@@ -473,51 +461,7 @@ contains
     state % xn  = state % xn  / (nsub**3)
 
     call eos(eos_input_rt, state)
-
-                      
+                    
   end subroutine interpolate_3d_from_1d
-    
-
-  ! Accepts the masses of two stars (in solar masses)
-  ! and the orbital period of a system,
-  ! and returns the semimajor axis of the orbit (in cm),
-  ! as well as the distances a_1 and a_2 from the center of mass.
-
-  subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, a_1, a_2, a, problo, probhi)
-
-    use bl_constants_module, only: FOUR, THIRD, M_PI
-    use fundamental_constants_module, only: Gconst, M_solar
-
-    implicit none
-
-    double precision, intent(in   ) :: mass_1, mass_2, period, radius_1, radius_2
-    double precision, intent(inout) :: a, a_1, a_2
-    double precision, intent(in   ) :: problo(3), probhi(3)
-
-    double precision :: length
-
-    ! Evaluate Kepler's third law
-
-    a = (Gconst*(mass_1 + mass_2)*M_solar*period**2/(FOUR*M_PI**2))**THIRD
-
-    a_2 = a/(ONE + mass_2/mass_1)
-    a_1 = (mass_2/mass_1)*a_2
-
-    ! Make sure the domain is big enough to hold stars in an orbit this size
-
-    length = a + radius_1 + radius_2
-
-    if (length > (probhi(1) - problo(1)) .or. &
-        length > (probhi(2) - problo(2)) .or. &
-        length > (probhi(3) - problo(3))) then
-        call bl_error("ERROR: The domain width is too small to include the binary orbit.")
-    endif
-
-     ! Make sure the stars are not touching.
-     if (radius_1 + radius_2 > a) then
-        call bl_error("ERROR: Stars are touching!")
-     endif
-
-  end subroutine kepler_third_law
-
+  
 end module initial_model_module
