@@ -76,6 +76,9 @@ contains
 
   subroutine initialize(name, namlen)
 
+    use bl_constants_module, only: ZERO
+    use bl_error_module, only: bl_error
+
     implicit none
 
     integer :: namlen, i
@@ -268,12 +271,19 @@ contains
 
   subroutine binary_setup
 
+    use bl_constants_module, only: ZERO
     use meth_params_module, only: rot_period
     use initial_model_module, only: init_1d
 
     implicit none
 
     double precision :: dx
+
+    center_P_initial = center
+    center_S_initial = center
+
+    radius_P_initial = ZERO
+    radius_S_initial = ZERO
 
     npts_model = 1024
 
@@ -297,27 +307,30 @@ contains
                  "and radius", radius_P_initial
     endif
 
-    call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, radius_S_initial, &
-                 stellar_temp, stellar_comp, ambient_state)
+    if (mass_S > ZERO) then
 
-    if (ioproc == 1) then
-        print *, "Generated initial model for secondary WD of mass", mass_S, &
-                 "and radius", radius_S_initial
-    endif
+       call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, radius_S_initial, &
+                   stellar_temp, stellar_comp, ambient_state)
+
+       if (ioproc == 1) then
+          print *, "Generated initial model for secondary WD of mass", mass_S, &
+                   "and radius", radius_S_initial
+       endif
 
     ! Get the orbit from Kepler's third law
 
-    call kepler_third_law(radius_P_initial, mass_P, radius_S_initial, mass_S, &
-                          rot_period, a_P_initial, a_S_initial, a)
+       call kepler_third_law(radius_P_initial, mass_P, radius_S_initial, mass_S, &
+                             rot_period, a_P_initial, a_S_initial, a)
 
-    ! Star center positions -- we'll put them in the midplane on the
-    ! axis specified by star_axis, with the center of mass at the center of the domain.
+       ! Star center positions -- we'll put them in the midplane on the
+       ! axis specified by star_axis, with the center of mass at the center of the domain.
+       ! If we're only doing a single star, which we know because the secondary mass is
+       ! less than zero, then just leave the star in the center.
 
-    center_P_initial = center
-    center_S_initial = center
+       center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
+       center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
-    center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
-    center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
+    endif
 
   end subroutine binary_setup
 
