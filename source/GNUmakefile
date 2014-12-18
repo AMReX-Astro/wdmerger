@@ -5,17 +5,17 @@ PROFILE    = FALSE
 
 DEBUG      = FALSE
 
-USE_MPI    = TRUE
-USE_OMP    = FALSE
+USE_MPI = TRUE
+USE_OMP = FALSE
 
 DIM        = 3
 
 COMP	   = g++
 FCOMP	   = gfortran
 
-USE_GRAV   = TRUE
-USE_REACT  = FALSE
-USE_MODELPARSER  = TRUE
+USE_GRAV = TRUE
+USE_REACT = FALSE
+USE_MODELPARSER = TRUE
 USE_ROTATION = TRUE
 #USE_TRACING = TRUE
 
@@ -26,7 +26,7 @@ EOS_dir     := helmeos
 Network_dir := general_null
 GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/triple_alpha_plus_o.net 
 
-Bpack   := ./Make.package
-Blocs   := .
+Bpack   := $(WDMERGER_HOME)/source/Make.package
+Blocs   := $(WDMERGER_HOME)/source/
 
 include $(CASTRO_DIR)/Exec/Make.Castro
