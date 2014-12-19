@@ -85,37 +85,29 @@ for p in range(num_problems):
 
             title = 'Cube'
 
-            # Uniform density cube; solution is courtesy of Hummer (1996)
+            # Uniform density cube; solution is courtesy of Waldvogel (1976)
 
-            c = yt.YTArray(np.zeros((2,3,dim[0],dim[1],dim[2])), 'cm')
+            x = yt.YTArray(np.zeros((2,dim[0],dim[1],dim[2])), 'cm')
+            y = yt.YTArray(np.zeros((2,dim[0],dim[1],dim[2])), 'cm')
+            z = yt.YTArray(np.zeros((2,dim[0],dim[1],dim[2])), 'cm')
 
-            c[0,2] = -radius - zz
-            c[1,2] =  radius - zz
-            c[0,1] = -radius - yy
-            c[1,1] =  radius - yy
-            c[0,0] = -radius - xx
-            c[1,0] =  radius - xx
-
-            for ii in range(2):
-                for jj in range(2):
-                    for ll in range(3):
-
-                        num1 = ( (c[ii,ll]**2 + c[jj,(ll+1) % 3]**2 + c[1,(ll+2) % 3]**2)**(0.5) + c[1,(ll+2) % 3] )**3
-                        num2 = ( (c[ii,ll]**2 + c[jj,(ll+1) % 3]**2 + c[0,(ll+2) % 3]**2)**(0.5) - c[0,(ll+2) % 3] )
-                        den1 = ( (c[ii,ll]**2 + c[jj,(ll+1) % 3]**2 + c[1,(ll+2) % 3]**2)**(0.5) - c[1,(ll+2) % 3] )
-                        den2 = ( (c[ii,ll]**2 + c[jj,(ll+1) % 3]**2 + c[0,(ll+2) % 3]**2)**(0.5) + c[0,(ll+2) % 3] )**3
-
-                        exact = exact + (0.5 * Gconst * density) * 0.5 * (-1)**(ii+jj) * ( c[ii,ll] * c[jj,(ll+1) % 3] * \
-                                        np.log( num1 * num2 / (den1 * den2) ) )
+            x[0] = radius + xx
+            x[1] = radius - xx
+            y[0] = radius + yy
+            y[1] = radius - yy
+            z[0] = radius + zz
+            z[1] = radius - zz
 
             for ii in range(2):
                 for jj in range(2):
                     for kk in range(2):
-                        for ll in range(3):
-                            exact = exact + (0.5 * Gconst * density) * (-1)**(ii+jj+kk+1) * c[ii,ll]**2 * \
-                                  np.arctan2( c[ii,ll] * c[kk,(ll+2) % 3], \
-                                              c[ii,ll]**2 + c[jj,(ll+1) % 3]**2 + c[jj,(ll+1) % 3] * \
-                                              (c[ii,ll]**2 + c[jj,(ll+1) % 3]**2 + c[kk,(ll+2) % 3]**2)**(0.5) )
+                        r = (x[ii]**2 + y[jj]**2 + z[kk]**2)**0.5
+                        exact += Gconst * density * (x[ii]*y[jj]*np.arctanh(z[kk] / r) + \
+                                                     y[jj]*z[kk]*np.arctanh(x[ii] / r) + \
+                                                     z[kk]*x[ii]*np.arctanh(y[jj] / r) - \
+                                                     x[ii]**2 / 2.0 * np.arctan(y[jj]*z[kk]/(x[ii]*r)) - \
+                                                     y[jj]**2 / 2.0 * np.arctan(z[kk]*x[ii]/(y[jj]*r)) - \
+                                                     z[kk]**2 / 2.0 * np.arctan(x[ii]*y[jj]/(z[kk]*r)))
 
         else:
             
