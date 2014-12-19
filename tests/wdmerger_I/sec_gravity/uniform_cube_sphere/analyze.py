@@ -46,11 +46,11 @@ for p in range(num_problems):
 
         exact = yt.YTArray(np.zeros((ncell,ncell,ncell)), 'erg/g')
 
-        if (problem == 2):
+        if (problem == 1):
 
             mass = 4.0 / 3.0 * math.pi * radius**3 * density
 
-        elif (problem == 3):
+        elif (problem == 2):
 
             densGrid = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['density']
             mass = densGrid[np.where(densGrid > 2.0 * ambient_density)].v.sum() * dx**3
@@ -64,7 +64,16 @@ for p in range(num_problems):
 
                     phi = 0.0
 
-                    if (problem == 1):
+                    if (problem == 1 or problem == 2):
+
+                        rr = (xx**2 + yy**2 + zz**2)**0.5
+
+                        if (rr <= radius):
+                            exact[i,j,k] = Gconst * mass * (3 * radius**2 - rr**2) / (2 * radius**3)
+                        else:
+                            exact[i,j,k] = Gconst * mass / rr
+
+                    if (problem == 3):
 
                         c[0,2] = -radius - zz
                         c[1,2] =  radius - zz
@@ -96,23 +105,14 @@ for p in range(num_problems):
 
                         exact[i,j,k] = phi * 0.5 * Gconst * density
 
-                    elif (problem == 2 or problem == 3):
-
-                        rr = (xx**2 + yy**2 + zz**2)**0.5
-
-                        if (rr <= radius):
-                            exact[i,j,k] = Gconst * mass * (3 * radius**2 - rr**2) / (2 * radius**3)
-                        else:
-                            exact[i,j,k] = Gconst * mass / rr
-
                     else:
                         
                         print "This is not a valid problem."
 
-        # Now for problem 3, the only difference is that we normalize the mass
+        # Now for problem 2, the only difference from problem 1 is that we normalize the mass
         # by the amount of mass actually on the grid for the sphere.
 
-        if (problem == 3):
+        if (problem == 2):
             densGrid = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['density']
             actual_mass = densGrid[np.where(densGrid > 2.0 * ambient_density)].v.sum() * dx**3
             exact = exact * mass / actual_mass

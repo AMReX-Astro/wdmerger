@@ -5,9 +5,9 @@
   density   = 1.0d3
   diameter  = 2.0d0
 
-  ! Problem 1 is the uniform cube;
-  ! Problem 2 is the uniform sphere;
-  ! Problem 3 is the normalized uniform sphere.
+  ! Problem 1 is the uniform sphere;
+  ! Problem 2 is the normalized uniform sphere;
+  ! Problem 3 is the uniform cube.
 
   problem = 1
 /
