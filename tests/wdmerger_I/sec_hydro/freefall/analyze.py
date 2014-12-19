@@ -21,7 +21,6 @@ diag_file.close()
 col_names.pop(0)                                        # Get rid of the # at the beginning
 col_names = [string.strip() for string in col_names]    # Remove any leading or trailing whitespace
 col_names = filter(None, col_names)                     # Remove any remaining blank entries
-col_names.pop(len(col_names)-1)                         # Remove the ending newline
 
 # Obtain the time column, and the locations of the center of mass of both stars
 
