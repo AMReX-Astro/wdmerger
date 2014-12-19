@@ -13,7 +13,6 @@ function copy_files {
     cp helm_table.dat $1    
     cp $inputs $1
     cp $probin $1
-    cp sub* $1
 
 }
 

@@ -1,7 +1,7 @@
 &fortin
 
-model_P_name = 
-model_S_name = 
+mass_P =
+mass_S =
 
 nsub = 4
 

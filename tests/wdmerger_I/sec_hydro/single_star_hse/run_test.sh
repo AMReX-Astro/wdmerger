@@ -13,7 +13,6 @@ function copy_files {
     cp helm_table.dat $1    
     cp $inputs $1
     cp $probin $1
-    cp sub* $1
 
 }
 
@@ -37,7 +36,7 @@ for ncell in 32 64 128
 do
   dir=$results_dir/$ncell
   if [ ! -d $dir ]; then
-    echo "Now doing ncell =" $ncell
+    echo "Submitting ncell =" $ncell
     mkdir $dir
     sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $inputs
     copy_files $dir

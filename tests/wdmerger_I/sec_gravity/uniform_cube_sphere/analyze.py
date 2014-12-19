@@ -3,7 +3,6 @@ import numpy as np
 import math
 from matplotlib import pyplot as plt
 
-#ncell_arr = [16, 32, 64]
 ncell_arr = [16, 32, 64, 128, 256]
 
 num_problems = 3
@@ -113,10 +112,10 @@ for p in range(num_problems):
         # Now for problem 3, the only difference is that we normalize the mass
         # by the amount of mass actually on the grid for the sphere.
 
-#        if (problem == 3):
-#            densGrid = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['density']
-#            actual_mass = densGrid[np.where(densGrid > 2.0 * ambient_density)].v.sum() * dx**3
-#            exact = exact * mass / actual_mass
+        if (problem == 3):
+            densGrid = pf.covering_grid(level=0,left_edge=[-1.6,-1.6,-1.6], dims=pf.domain_dimensions)['density']
+            actual_mass = densGrid[np.where(densGrid > 2.0 * ambient_density)].v.sum() * dx**3
+            exact = exact * mass / actual_mass
 
         exact_L2 = np.sqrt(dx**3 * (exact**2).sum())
 
@@ -125,8 +124,6 @@ for p in range(num_problems):
         l2[p,index] = np.sqrt(dx**3 * L2_field.sum())  / exact_L2
 
         index += 1
-
-print l2
 
 plt.plot(ncell_arr,l2[0,:],ncell_arr,l2[1,:],ncell_arr,l2[2,:])
 plt.xlabel("Number of cells per dimension")

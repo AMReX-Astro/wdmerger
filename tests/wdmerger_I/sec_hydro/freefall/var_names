@@ -1,7 +1,7 @@
 # Define some useful directories, filenames and variables
 
-main_dir:=../../../..
-model_dir:=$(main_dir)/model_files
+merger_makefile:=$(WDMERGER_HOME)/source/GNUmakefile
+makefile:=castro_makefile
 
 mass_P:=0.90
 mass_S:=0.81
@@ -20,12 +20,6 @@ rotational_period:=100.0
 # Of course, I could have just used sqrt(2) = 1.414, but where's the fun in that?
 
 stop_time:=$$(echo "0.90 * $(rotational_period) / 4.0 / e(0.5*l(2))" | bc -l)
-
-file_start:="sub_chandra.M_WD-"
-file_end:=".hse.CO.100.00km.nocoulomb.hot"
-
-model_P:=$(file_start)$(mass_P)$(file_end)
-model_S:=$(file_start)$(mass_S)$(file_end)
 
 inputs:=inputs
 probin:=probin

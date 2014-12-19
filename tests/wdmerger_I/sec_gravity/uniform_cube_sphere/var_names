@@ -1,7 +1,7 @@
 # Define some useful directories and filenames
 
-main_dir  = ../../../..
-model_dir = $(main_dir)/model_files
+merger_make = GNUmakefile
+makefile = castro_makefile
 
 inputs  = inputs
 probin  = probin

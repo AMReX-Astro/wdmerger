@@ -15,7 +15,6 @@ function copy_files {
     cp helm_table.dat $1    
     cp $inputs $1
     cp $probin $1
-    cp sub* $1
 
 }
 
@@ -48,7 +47,7 @@ for l in {0..20}
 do
   dir=$results_dir/$l
   if [ ! -d $dir ]; then
-    echo "Now doing l =" $l
+    echo "Submitting l =" $l
     mkdir $dir
     sed -i "/gravity.max_multipole_order/c gravity.max_multipole_order = $l" $inputs
     copy_files $dir
@@ -63,7 +62,7 @@ done
 dir=$results_dir/true
 
 if [ ! -d $dir ]; then
-  echo "Now computing exact solution"
+  echo "Submitting exact solution"
   mkdir $dir
   sed -i "/gravity.direct_sum_bcs/c gravity.direct_sum_bcs = 1" $inputs
   copy_files $dir

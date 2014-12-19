@@ -1,7 +1,7 @@
 &fortin
 
-model_P_name = "sub_chandra.M_WD-0.90.hse.CO.100.00km.nocoulomb.hot"
-model_S_name = "sub_chandra.M_WD-0.81.hse.CO.100.00km.nocoulomb.hot"
+mass_P = 0.90
+mass_S = 0.81
 
 nsub = 4
 

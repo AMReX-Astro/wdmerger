@@ -1,14 +1,10 @@
 # Define some useful directories, filenames and variables
 
-main_dir:=../../../..
-model_dir:=$(main_dir)/model_files
+merger_makefile = $(WDMERGER_HOME)/source/GNUmakefile
+makefile = castro_makefile
 
-mass:=0.90
+mass_P = 0.90
+mass_S = -1.00
 
-file_start:="sub_chandra.M_WD-"
-file_end:=".hse.CO.100.00km.nocoulomb.hot"
-
-model:=$(file_start)$(mass)$(file_end)
-
-inputs:=inputs
-probin:=probin
+inputs = inputs
+probin = probin
