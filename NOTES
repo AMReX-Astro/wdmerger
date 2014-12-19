@@ -1,3 +1,0 @@
--- We have a working requirement that only the level 0 grids touch the
-   boundary -- this is to ensure that the Poisson solver BCs are set
-   properly.

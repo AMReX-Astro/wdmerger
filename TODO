@@ -1,9 +1,0 @@
--- crashes with Coulomb corrections on
-
--- better hydro BCs -- feed in ambient T, rho from initial models?
-
--- need diagnostics:
-
-   o location of CM of each star each timestep
-  
--- vis: how to show rotation?
