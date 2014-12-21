@@ -95,41 +95,11 @@ make the restriction that only level-0 (coarse) grids can touch the domain bound
 
 CASTRO's approach to adaptive mesh refinement, based on its underlying BoxLib framework, is to refine zones based on certain user-specified criteria that tag regions of interest for higher spatial resolution. Data is represented on one of a number of AMR levels, where each level corresponds to a set of zones at the same resolution, which covers a subset of the domain covered by the level immediately below it. We typically call the level 0 grid the \textit{coarse} grid, which has the lowest spatial resolution. Each finer, higher-level grid has a higher resolution than the grid below it by some integer factor $N$, which is restricted to be $N = 2\ \text{or}\ 4$ in the code. The zones are strictly contained within the rectangular extent of the underlying coarser zones (the code is not restricted to representing only Cartesian geometries, but we use a Cartesian mesh with uniform spacing in each dimension for the present study). For the time evolution of the AMR system we use subcycling, where each AMR level is advanced at a different timestep and a correction step is applied at the end to synchronize the various levels. Generally the number of subcycled timesteps is equal to the jump in refinement between levels, so for example on a grid with three levels and two jumps of four in refinement, the level 2 zones will have 16 times higher spatial resolution than the coarse grid and there will be 16 level 2 timesteps per level 0 timestep.
 
-For the evolution of binary systems, it is most natural to evolve the two stars in a frame that is co-rotating at the same period as the orbital period. CASTRO has the ability to evolve systems in a rotating reference frame, as discussed in the original code paper. Source terms corresponding to the Coriolis and centrifugal force terms are added to the momentum and energy equations. In this frame, the stars essentially remain stationary in their original positions due to the centrifugal force supporting against the gravitational attraction, and will remain this way as long as significant mass transfer does not occur. \cite{swesty00} demonstrated (in the context of neutron star mergers) that conservation of angular momentum is much easier to obtain in the rotating reference frame than in an inertial frame in which stars advect large amounts of material around the domain. We wish to emphasize that although it is commonly stated in the literature that grid-based codes poorly conserve angular momentum, this is not generally true. When the resolution is sufficiently high and a rotating reference frame is employed, excellent conservation properties can result, as demonstrated in Section \ref{sec:kepler}. We note that as the stars begin to coalesce, the rotating reference frame will no longer provide a good approximation to the spatial motion of the stars and then they will begin to significantly move around the domain. This is not necessarily problematic because the most important feature of the rotating frame is that it helps ensure that the initial coalescence is not the result of spurious numerical loss of angular momentum. When significant mass transfer sets in and evolution proceeds on a dynamical timescale, the conservation properties may be slightly worse but angular momentum conservation is also less important.
-
 \subsection{Microphysics}
 
 The equation of state (EOS) for our simulations is the Helmholtz EOS \citep{timmes_swesty:2000}. This models an electron-positron gas of arbitrary relativity and degeneracy over a wide range of temperatures and densities. Thermodynamic quantities are calculated as derivatives of the Helmholtz free energy, and the values are interpolated from a table. The natural variables of the Helmholtz free energy are temperature and density, and calling the EOS is simplest in this form. However, in hydrodynamics we often have the density, and internal energy as independent variables, and we want to obtain the temperature, pressure, and other quantities. To do this, we employ a Newton-Raphson iteration over the temperature (given some sufficient starting guess) until we find the temperature that corresponds to the desired internal energy. Sometimes this process fails to converge and the iterative value approaches zero. In these cases we employ a ``floor'' that limits how low the temperature can go (typically $10^4$ or $10^5$ K). There is a choice here how to proceed: we can either assign this floor value to the temperature and let that zone be thermodynamically inconsistent (the original behavior in Castro), or we can adjust the internal energy to be thermodynamically consistent with the temperature, at the cost of violating energy conservation. We have found in test problems of one-dimensional shocks that the latter yields more accurate results, so we employ the latter method.
 
 Reactions?
-
-\subsection{Initial Models}
-\label{sec:initial_models}
-
-We generate initial models by integrating the equation of hydrostatic
-equilibrium, taking the temperature and composition to be constant,
-and using the general stellar equation of state.  This results in
-a single nonlinear equation to find the density in a zone given the
-conditions in the zone beneath it:
-\begin{equation}
-\frac{p(\rho_{i+1}) - p_i}{\Delta x} = \frac{1}{2} (\rho_i + \rho_{i+1}) g_{i+1/2}
-\end{equation}
-This is solved via Newton iteration to give $\rho_{i+1}$.  Here, $g_{i+1/2}$
-is the gravitational acceleration at the interface between zones $i$ and $i+1$,
-found by simply adding up all the mass from zones $1, \ldots, i$ to get the
-enclosed mass, $M_{i+1/2}$, and then $g_{i+1/2} = -GM_{i+1/2}/r_{i+1/2}^2$.
-
-To start the integration off, we need a central density.  We guess at
-this, and then iterate over the entire integration procedure to find
-the central density needed to yield the desired total mass.  Finally,
-we generate the initial model at the same resolution as the finest
-grid in our simulation.
-
-We map the 1-d model onto the 3-d Cartesian grid by taking density,
-temperature, and composition as the independent variables,
-interpolating these to the cell-centers, and then calling the equation
-of state to initialize the remaining terms.  The velocity is taken to
-be zero in the rotating frame initially.
 
 \subsection{Gravity}
 \label{sec:gravity}
@@ -222,8 +192,37 @@ Another factor that may affect convergence testing is easily seen in Figure \ref
 
 \subsection{Rotation}\label{sec:rotation}
 
+For the evolution of binary systems, it is most natural to evolve the two stars in a frame that is co-rotating at the same period as the orbital period. CASTRO has the ability to evolve systems in a rotating reference frame, as discussed in the original code paper. Source terms corresponding to the Coriolis and centrifugal force terms are added to the momentum and energy equations. In this frame, the stars essentially remain stationary in their original positions due to the centrifugal force supporting against the gravitational attraction, and will remain this way as long as significant mass transfer does not occur. \cite{swc:2000} demonstrated (in the context of neutron star mergers) that conservation of angular momentum is much easier to obtain in the rotating reference frame than in an inertial frame in which stars advect large amounts of material around the domain. We wish to emphasize that although it is commonly stated in the literature that grid-based codes poorly conserve angular momentum, this is not generally true. When the resolution is sufficiently high and a rotating reference frame is employed, excellent conservation properties can result, as demonstrated in Section \ref{sec:kepler}. We note that as the stars begin to coalesce, the rotating reference frame will no longer provide a good approximation to the spatial motion of the stars and then they will begin to significantly move around the domain. This is not necessarily problematic because the most important feature of the rotating frame is that it helps ensure that the initial coalescence is not the result of spurious numerical loss of angular momentum. When significant mass transfer sets in and evolution proceeds on a dynamical timescale, the conservation properties may be slightly worse but angular momentum conservation is also less important.
+
 %==========================================================================
-% Test Problems
+% Initial Models and Problem Setup
+%==========================================================================
+
+\section{Initial Models and Problem Setup}
+\label{sec:initial_models}
+
+At the start of any full simulation, we generate initial model white dwarfs by integrating the equation of hydrostatic equilibrium, taking the temperature and composition to be constant, and using the general stellar equation of state.  This results in a single non-linear equation to find the density in a zone given the conditions in the zone beneath it:
+\begin{equation}
+\frac{p_{i+1} - p_i}{\Delta x} = \frac{1}{2} (\rho_i + \rho_{i+1}) g_{i+1/2}.
+\end{equation}
+This equation is a function of $\rho_{i+1}$ only since the pressure is uniquely determined by the density in this case. $\rho_i and p_i$ are known,  $g_{i+1/2}$ is the gravitational acceleration at the interface between zones $i$ and $i+1$, found by simply adding up all the mass from zones $1, \ldots, i$ to get the enclosed mass, $M_{i+1/2}$, and then setting $g_{i+1/2} = -GM_{i+1/2}/r_{i+1/2}^2$. We solve this equation for $\rho_{i+1}$ using a Newton-Raphson iteration.
+
+We desire to specify the mass of the white dwarf, as well as its temperature and composition. To start the integration off, we therefore need to guess at a central density.  We then do a secant iteration over the entire integration procedure to find the central density needed to yield the desired total mass.  We note that the grid spacing $\Delta x$ is chosen such that it is equal to the zone size on the finest level of our problem, which is known in advance since we specify the domain size and the maximum number of possible levels of refinement.
+
+We map the 1D model onto the 3D Cartesian grid by taking density, temperature, and composition as the independent variables, interpolating these to the cell centers, and then calling the equation of state to initialize the remaining terms.  The interpolation process divides each zone into $n_{\text{sub}}$ sub-zones of equal volume for the purpose of sampling the 1D model, and the sub-zones are added together to obtain the full zone's characteristics. This sub-grid-scale interpolation is useful near the edge of the star, where the density falls off rapidly with radius.
+
+For a single star simulation, the star is simply placed at the center of the computational domain, which we take to be the origin. For a binary star simulation, we take as parameters the mass of the two white dwarfs and the initial orbital period $T$. Using Kepler's third law and assuming a circular orbit, we can then work out the orbital separation $a$:
+\begin{equation}
+  a = \left(\frac{4\pi^2 T^2}{GM}\right)^{1/3}.
+\end{equation}
+Here $M = M_P + M_S$ is the total mass of the system, where $M_P$ is the specified \textit{primary} mass and $M_S$ is the specified \textit{secondary} mass. The primary WD will always be on the left side of the computational domain for our simulations, and is more massive than the secondary. This reflects the usual terminology in the literature where the primary WD is the accretor and the secondary is the donor. The center of mass is located at the center of the computational domain, and the stars lie along the $x$ axis, so that the primary's center of mass is located at $x = -(M_S / M)\, a$ and the secondary's center of mass is located at $x = (M_P / M)\, a$.
+
+The initial velocity is taken to be zero in if we are in the reference frame that rotates with the WDs, and if we are in the inertial frame the velocity is set equal to the rigid rotation rate corresponding to the specified period $T$.
+
+We do not attempt to enforce equilibrium with an additional relaxation step. This will be an important part of future work in this series, as numerous groups working on binary evolution \citep{swc:2000,motl:2002,rosswog:2004,dan:2011,pakmor:2012:gadget} have commented on the importance of equilibrium initial conditions in determining the evolution of the system. In particular, we plan to compare the self-consistent field method (which finds an equilibrium solution \textit{a priori}) and the method of \cite{rosswog:2004}, which starts with our method and then attempts to guide the evolution toward the equilibrium state using suitably defined damping terms. However, these issues are not considered for the present study, as we are not yet attempting to study the merger process.
+
+%==========================================================================
+% Numerical Test Problems
 %==========================================================================
 \section{Numerical Test Problems}\label{sec:Tests}
 
