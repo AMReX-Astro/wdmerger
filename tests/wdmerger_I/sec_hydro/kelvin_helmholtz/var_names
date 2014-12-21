@@ -1,0 +1,7 @@
+# Define some useful directories and filenames
+
+merger_make = GNUmakefile
+makefile = castro_makefile
+
+inputs  = inputs
+probin  = probin
