@@ -20,7 +20,7 @@
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
           temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
-          rho1, rho2, pressure
+          rho1, rho2, pressure, problem
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -63,6 +63,8 @@
      tempgrad = 1.d20
      max_temperr_lev = -1
      max_tempgrad_lev = -1
+
+     problem = 1
 
      rho1 = 1.0
      rho2 = 2.0
@@ -134,10 +136,23 @@
      integer :: i,j,k,n
 
      double precision :: dens, velx, vely, velz
-     double precision :: w0, sigma
+     double precision :: w0, sigma, ramp, delta_y
+     double precision :: vel1, vel2
+
+     integer :: sine_n
 
      w0 = 0.1
      sigma = 0.05 / 2**0.5
+     delta_y = 0.05
+
+     vel1 = -0.5
+     vel2 =  0.5
+
+     if (problem .eq. 1) then
+        sine_n = 4
+     else if (problem .eq. 2) then
+        sine_n = 2
+     endif
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy, zz, eos_state)
      do k = lo(3), hi(3)   
@@ -146,22 +161,40 @@
         do j = lo(2), hi(2)     
            yy = xlo(2) + delta(2)*dble(j-lo(2)+HALF)
 
+           ramp = ((ONE + exp(-TWO*(yy-0.25)/delta_y))*(ONE + exp(TWO*(yy-0.75)/delta_y)))**(-1)
+
            do i = lo(1), hi(1)   
               xx = xlo(1) + delta(1)*dble(i-lo(1)+HALF)
 
-              if (abs(yy - 0.5) < 0.25) then
-                 dens = rho2
-                 velx = 0.5
-                 vely = 0.0
-                 velz = 0.0
-              else
-                 dens = rho1
-                 velx = -0.5
-                 vely = 0.0
-                 velz = 0.0
-              endif
+              ! Assume zero y and z initial state, add perturbation later
 
-              vely = w0 * sin(FOUR*M_PI*xx) * (exp(-(yy-0.25)**2/(2*sigma**2)) + exp(-(yy-0.75)**2/(2*sigma**2)))
+              vely = 0.0
+              velz = 0.0
+
+              if (problem .eq. 1) then
+
+                 if (abs(yy - 0.5) < 0.25) then
+                    dens = rho2
+                    velx = 0.5
+                 else
+                    dens = rho1
+                    velx = -0.5
+                 endif
+
+                 vely = w0 * sin(sine_n*M_PI*xx) * (exp(-(yy-0.25)**2/(2*sigma**2)) + exp(-(yy-0.75)**2/(2*sigma**2)))
+
+              else if (problem .eq. 2) then
+                 
+                dens = rho1 + ramp * (rho2 - rho1)
+                velx = vel1 + ramp * (vel2 - vel1)
+
+                vely = w0 * sin(sine_n*M_PI*xx)
+
+              else
+
+                 call bl_error("Error: This problem choice is undefined.")
+
+              endif
 
               state(i,j,k,URHO) = dens
               state(i,j,k,UMX)  = dens * velx

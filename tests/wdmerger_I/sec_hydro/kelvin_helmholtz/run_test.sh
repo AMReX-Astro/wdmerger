@@ -17,8 +17,8 @@ function copy_files {
 
 function run {
 
-    echo "$exec $Castro $inputs > info.out" | batch
-
+#    echo "$exec $Castro $inputs > info.out" | batch
+    $exec $Castro $inputs > info.out
 }
 
 # Check if results directory already exists, and if not then create it.
@@ -29,13 +29,25 @@ if [ ! -d $results_dir ]; then
   mkdir $results_dir
 fi
 
-# Loop over the resolutions in question
+# Loop over problem choices
+
+for problem in 1 2
+do
+
+  dir=$results_dir/problem$problem/
+  if [ ! -d $dir ]; then
+      echo "Submitting problem =" $problem
+      mkdir $dir
+      sed -i "/problem/c problem = $problem" $probin
+  fi
+
+  # Loop over the resolutions in question
 
   for ncell in 64
   do
-    dir=$results_dir/$ncell
+    dir=$results_dir/problem$problem/$ncell
     if [ ! -d $dir ]; then
-      echo "Now doing ncell =" $ncell
+      echo "Submitting ncell =" $ncell
       mkdir $dir
       ncell_x=$ncell
       ncell_y=$ncell
@@ -61,4 +73,4 @@ fi
       cd -
     fi
   done
-
+done
