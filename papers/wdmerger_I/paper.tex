@@ -309,6 +309,23 @@ A related question is whether our code reliably simulates the bulk motion of the
 
 \subsubsection{Kelvin-Helmholtz Instability}\label{sec:khi}
 
+Following \cite{robertson:2010}, we set up a Kelvin-Helmholtz test in the following way. The problem domain runs from 0 to 1 in both the $x$ and $y$ directions. Though this is a two-dimensional test, we run CASTRO in 3D and replicate the problem along 8 cells in the $z$ direction; the physical size of these zones is determined so that $dz = dx = dy$, a requirement at present in CASTRO. The problem involves a fluid slab of density $\rho_1 = 2.0$ traveling rightward in the $x$-direction at velocity $v_1 = 0.5$, sandwiched by a fluid of density $\rho_2 = 1.0$ traveling leftward at velocity $v_2 = -0.5$. The density gradient is in the $y$ direction, so this creates a velocity shear along the interface between the fluids. The density and velocity distribution on the computational domain are given by:
+\begin{align}
+  \rho &= \rho_1 + R(y)\left[\rho_2 - \rho_1\right] \\
+  v_x  &= v_1 + R(y)\left[v_2 - v_1\right] \\
+  v_y  &= v_{\text{bulk}} + v^\prime
+\end{align}
+Here $R(y)$ is a ramp function that describes the transition between the two fluids, while $v_{\text{bulk}}$ is the bulk motion of the fluid in the $y$ direction and $v^\prime$ is the velocity perturbation that seeds the instability. The problem will be established for two sets of initial conditions (ICs), which we follow \citeauthor{robertson:2010} in calling ICs A and B. They differ in their ramp function ($R_A$ and $R_B$ respectively), as well as the initial perturbation ($v^\prime_A$ and $v^\prime_B$ respectively), and the frequency of the perturbation ($n_A = 4$ and $n_B = 2$):
+\begin{align}
+  R_A &= \begin{cases} 0 & |y - 0.5| > 0.25 \\ 1 & |y - 0.5| < 0.25 \end{cases} \\
+  R_B &= \Big\{\left[1 + \text{exp}(-2(y-0.25)/\Delta_y)\right]\left[1 + \text{exp}(2(y-0.75)/\Delta_y)\right]\Big\}^{-1} \\
+  v^\prime_A &= w_0\, \text{sin}\left(n_A\, \pi\, x\right) \left\{\text{exp}\left[-\frac{(y-0.25)^2}{2\sigma^2}\right] + \text{exp}\left[-\frac{(y-0.75)^2}{2\sigma^2}\right]\right\} \\
+  v^\prime_B &= w_0\, \text{sin}\left(n_B\, \pi\, x\right).
+\end{align}
+Here $w_0 = 0.1$ is the scale of the velocity perturbation, $\sigma = 0.05/\sqrt{2}$ controls the width of the Gaussian for IC A, and $\Delta_y$ is the transition distance scale for the smooth ramp of IC B. The pressure everywhere is set to $p = 2.5$, and we run this with a gamma-law equation of state set to $\gamma = 5/3$. Plotfiles are generated every 0.01 seconds, and the problem is run until $t = 2$.
+
+We run the problem for $v_\text{bulk} = [0, 1, 3, 10, 30, 100]$, and for each set of initial conditions run the problem at resolutions of $64^2$, $128^2$, $256^2$, $512^2$. In addition, for each initial condition we run a simulation at the very high resolution of $2560^2$ for the stationary problem only. This serves as a reference solution to gauge the extent to which the bulk flow affects the development of the fluid instability.
+
 \subsubsection{Hot Bubble}\label{sec:hot_bubble}
 
 \subsubsection{Moving Star}\label{sed:moving_star}
