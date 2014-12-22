@@ -9,7 +9,11 @@
   ! Problem 1 is the Kelvin-Helmholtz test of Springel (2009)
   ! Problem 2 is the variant by Robertson et al. (2010)
 
-  problem = 1
+  problem = 2
+  
+  ! Controls the uniform flow speed of the material
+
+  bulk_velocity = 0
   
 /
 

@@ -25,4 +25,7 @@ module probdata_module
   ! problem number
   integer :: problem
 
+  ! uniform flow speed
+  double precision :: bulk_velocity
+
 end module probdata_module

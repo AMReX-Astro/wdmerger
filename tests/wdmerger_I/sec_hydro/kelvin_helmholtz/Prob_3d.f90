@@ -20,7 +20,7 @@
           velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
           presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
           temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
-          rho1, rho2, pressure, problem
+          rho1, rho2, pressure, problem, bulk_velocity
 
      integer, parameter :: maxlen=127
      character :: probin*(maxlen)
@@ -69,6 +69,8 @@
      rho1 = 1.0
      rho2 = 2.0
      pressure = 2.5
+
+     bulk_velocity = 0.0
 
      ! Read namelists -- override the defaults
      untin = 9 
@@ -166,9 +168,10 @@
            do i = lo(1), hi(1)   
               xx = xlo(1) + delta(1)*dble(i-lo(1)+HALF)
 
-              ! Assume zero y and z initial state, add perturbation later
+              ! Assume zero initial z-velocity, and the y-velocity represents the bulk flow
+              ! which will be perturbed in the following step
 
-              vely = 0.0
+              vely = bulk_velocity
               velz = 0.0
 
               if (problem .eq. 1) then
@@ -181,14 +184,14 @@
                     velx = -0.5
                  endif
 
-                 vely = w0 * sin(sine_n*M_PI*xx) * (exp(-(yy-0.25)**2/(2*sigma**2)) + exp(-(yy-0.75)**2/(2*sigma**2)))
+                 vely = vely + w0 * sin(sine_n*M_PI*xx) * (exp(-(yy-0.25)**2/(2*sigma**2)) + exp(-(yy-0.75)**2/(2*sigma**2)))
 
               else if (problem .eq. 2) then
                  
                 dens = rho1 + ramp * (rho2 - rho1)
                 velx = vel1 + ramp * (vel2 - vel1)
 
-                vely = w0 * sin(sine_n*M_PI*xx)
+                vely = vely + w0 * sin(sine_n*M_PI*xx)
 
               else
 
