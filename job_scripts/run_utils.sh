@@ -74,15 +74,12 @@ function run {
     # there are scaling tests where this is necessary; we'll assume the user understands
     # what they are doing and set it up accordingly.
 
+    old_ppn=$ppn
+
     if [ $ntasks -eq 0 ]; then
 	ntasks="1"
-	old_ppn=$ppn
 	ppn=$nprocs
     fi
-
-    echo $nprocs
-    echo $ppn
-    echo $ntasks
 
     sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $job_script
     sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $job_script
