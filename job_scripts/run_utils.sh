@@ -68,14 +68,21 @@ function run {
 
     mkdir -p $dir
 
-    # If the number of processors is less than the number of processors per node,
-    # set it equal to a full node's worth.
+    ntasks=$(expr $nprocs / $ppn)
 
-    if [ $nprocs -lt $ppn ]; then
-	nprocs=$ppn
+    # If the number of processors is less than the number of processors per node,
+    # there are scaling tests where this is necessary; we'll assume the user understands
+    # what they are doing and set it up accordingly.
+
+    if [ $ntasks -eq 0 ]; then
+	ntasks="1"
+	old_ppn=$ppn
+	ppn=$nprocs
     fi
 
-    ntasks=$(expr $nprocs / $ppn)
+    echo $nprocs
+    echo $ppn
+    echo $ntasks
 
     sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $job_script
     sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $job_script
@@ -87,6 +94,10 @@ function run {
     cd $dir
     $exec $job_script
     cd - > /dev/null
+
+    # Restore the number of processors per node in case we changed it.
+
+    ppn=$old_ppn
 
   else
 
