@@ -143,17 +143,21 @@
 
      integer :: sine_n
 
-     w0 = 0.1
-     sigma = 0.05 / 2**0.5
-     delta_y = 0.05
-
      vel1 = -0.5
      vel2 =  0.5
 
      if (problem .eq. 1) then
         sine_n = 4
+        w0 = 0.1
+        sigma = 0.05 / 2**0.5
      else if (problem .eq. 2) then
         sine_n = 2
+        w0 = 0.1
+        delta_y = 0.05
+     else if (problem .eq. 3) then
+        sine_n = 4
+        w0 = 0.01
+        delta_y = 0.025
      endif
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy, zz, eos_state)
@@ -162,8 +166,6 @@
 
         do j = lo(2), hi(2)     
            yy = xlo(2) + delta(2)*dble(j-lo(2)+HALF)
-
-           ramp = ((ONE + exp(-TWO*(yy-0.25)/delta_y))*(ONE + exp(TWO*(yy-0.75)/delta_y)))**(-1)
 
            do i = lo(1), hi(1)   
               xx = xlo(1) + delta(1)*dble(i-lo(1)+HALF)
@@ -187,11 +189,31 @@
                  vely = vely + w0 * sin(sine_n*M_PI*xx) * (exp(-(yy-0.25)**2/(2*sigma**2)) + exp(-(yy-0.75)**2/(2*sigma**2)))
 
               else if (problem .eq. 2) then
+
+                ramp = ((ONE + exp(-TWO*(yy-0.25)/delta_y))*(ONE + exp(TWO*(yy-0.75)/delta_y)))**(-1)
                  
                 dens = rho1 + ramp * (rho2 - rho1)
                 velx = vel1 + ramp * (vel2 - vel1)
 
                 vely = vely + w0 * sin(sine_n*M_PI*xx)
+
+              else if (problem .eq. 3) then
+
+                 if ( yy .lt. 0.25 ) then
+                    dens = rho1 - (rho1 - rho2) / 2 * exp( (yy-0.25) / delta_y )
+                    velx = vel1 - (vel1 - vel2) / 2 * exp( (yy-0.25) / delta_y )
+                 else if ( yy .le. 0.50 ) then
+                    dens = rho2 + (rho1 - rho2) / 2 * exp( (0.25-yy) / delta_y )
+                    velx = vel2 + (vel1 - vel2) / 2 * exp( (0.25-yy) / delta_y )
+                 else if ( yy .lt. 0.75 ) then
+                    dens = rho2 + (rho1 - rho2) / 2 * exp( (yy-0.75) / delta_y )
+                    velx = vel2 + (vel1 - vel2) / 2 * exp( (yy-0.75) / delta_y )
+                 else
+                    dens = rho1 - (rho1 - rho2) / 2 * exp( (0.75-yy) / delta_y )
+                    velx = vel1 - (vel1 - vel2) / 2 * exp( (0.75-yy) / delta_y )
+                 endif
+                 
+                 vely = vely + w0 * sin(sine_n*M_PI*xx)
 
               else
 

@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 
-num_problems = 2
+num_problems = 3
 
 ncell = 512
 
