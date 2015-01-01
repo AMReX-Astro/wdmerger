@@ -5,9 +5,7 @@ mass_S:=0.60
 
 rotational_period:=100.0
 
-num_periods:=50
-
-stop_time:=$$(echo "$(num_periods) * $(rotational_period)" | bc -l)
+max_step:=10
 
 # Main make target
 
@@ -19,7 +17,7 @@ all: make_castro
 
 	# Insert the orbital period and stopping time into the inputs file
 	sed -i "/castro.rotational_period/c castro.rotational_period = $(rotational_period)" $(inputs)
-	sed -i "/stop_time/c stop_time = $(stop_time)" $(inputs)
+	sed -i "/max_step/c max_step = $(max_step)" $(inputs)
 
 # Pull in main makefile
 
