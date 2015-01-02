@@ -263,7 +263,7 @@ At the start of any full simulation, we generate initial model white dwarfs by i
 \begin{equation}
 \frac{p_{i+1} - p_i}{\Delta x} = \frac{1}{2} (\rho_i + \rho_{i+1}) g_{i+1/2}.
 \end{equation}
-This equation is a function of $\rho_{i+1}$ only since the pressure is uniquely determined by the density in this case. $\rho_i and p_i$ are known,  $g_{i+1/2}$ is the gravitational acceleration at the interface between zones $i$ and $i+1$, found by simply adding up all the mass from zones $1, \ldots, i$ to get the enclosed mass, $M_{i+1/2}$, and then setting $g_{i+1/2} = -GM_{i+1/2}/r_{i+1/2}^2$. We solve this equation for $\rho_{i+1}$ using a Newton-Raphson iteration.
+This equation is a function of $\rho_{i+1}$ only since the pressure is uniquely determined by the density in this case. $\rho_i$ and $p_i$ are known,  $g_{i+1/2}$ is the gravitational acceleration at the interface between zones $i$ and $i+1$, found by simply adding up all the mass from zones $1, \ldots, i$ to get the enclosed mass, $M_{i+1/2}$, and then setting $g_{i+1/2} = -GM_{i+1/2}/r_{i+1/2}^2$. We solve this equation for $\rho_{i+1}$ using a Newton-Raphson iteration.
 
 We desire to specify the mass of the white dwarf, as well as its temperature and composition. To start the integration off, we therefore need to guess at a central density.  We then do a secant iteration over the entire integration procedure to find the central density needed to yield the desired total mass.  We note that the grid spacing $\Delta x$ is chosen such that it is equal to the zone size on the finest level of our problem, which is known in advance since we specify the domain size and the maximum number of possible levels of refinement.
 
