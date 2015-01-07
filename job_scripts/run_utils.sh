@@ -145,3 +145,10 @@ if [ ! -d $results_dir ]; then
   mkdir $results_dir
 fi
 
+# Create the plots directory, for saving output
+
+plots_dir="plots"
+
+if [ ! -d $plots_dir ]; then
+    mkdir $plots_dir
+fi
