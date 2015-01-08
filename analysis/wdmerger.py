@@ -1,4 +1,22 @@
+import os
 import numpy as np
+
+def get_last_output(dir):
+
+    # Open up the standard output for analysis. It will be the numerically last file
+    # starting with the designated output string.
+
+    files = os.listdir(dir)
+
+    files = sorted(filter(lambda s: s[0:9] == "wdmerger.",files))
+
+    if (len(files) == 0):
+        print "Error: No wdmerger output files in directory " + dir
+        exit()
+
+    return "dir" + "/" + files[len(files)-1]
+
+
 
 def timing(output_filename):
 
