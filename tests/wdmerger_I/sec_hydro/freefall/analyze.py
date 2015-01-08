@@ -1,10 +1,11 @@
 import yt
 import numpy as np
 from matplotlib import pyplot as plt
+import wdmerger
 
 # Open up the diagnostic output for analysis
 
-ncell = 64
+ncell = 256
 
 diag_filename = "results/" + str(ncell) + "/wdmerger_diag.out"
 

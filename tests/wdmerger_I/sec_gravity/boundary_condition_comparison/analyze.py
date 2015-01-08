@@ -1,6 +1,7 @@
 import yt
 import numpy as np
 from matplotlib import pyplot as plt
+import wdmerger
 
 ell = range(21)
 

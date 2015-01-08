@@ -2,57 +2,75 @@ import yt
 import numpy as np
 from matplotlib import pyplot as plt
 import os
+import wdmerger
 
-num_problems = 3
+problem_arr = [1, 2, 3]
 
-ncell = 512
+ncell_arr = [64, 128, 256, 1024, 2048, 4096]
 
 vel_arr = [0, 1, 3, 10, 30, 100]
 
-for p in range(num_problems):
+plots_dir = 'plots/'
 
-    problem = p + 1
+for problem in problem_arr:
+
+    p = problem - 1 # For array indexing
 
     for v in vel_arr:
 
-        # First we load in the numerical data. We want to use the last plotfile
-        # since that is at the time of interest.
+        for ncell in ncell_arr:
 
-        dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/" + str(ncell)
+            # Set up the simulation times for generating plots
 
-        dir_contents = os.listdir(dir)
+            if (problem == 3):
+                plot_per = 0.1
+                time_arr = [ 0.0, 1.5, 2.5, 4.7, 9.2 ]
+            else:
+                plot_per = 0.05
+                time_arr = [ 0.0, 2.0 ]
 
-        # Strip out non-plotfiles, then select the first and last one in the list.
+            for t in time_arr:
 
-        plotfiles = sorted(filter(lambda s: s[0:3] == 'plt', dir_contents))
+                # Generate the plot name, and skip this iteration if it already exists.
 
-        # This step strips out 'plt' from each plotfile, sorts them numerically,
-        # then recasts them as strings. This is necessary because we may have some
-        # plotfiles with six digits and some with five, and the default sort will
-        # not sort them properly numerically.
+                file_name = plots_dir + 'density_t' + str(t) + '_p' + str(problem) + '_v' + str(v) + '_n' + str(ncell) + '.eps'
 
-        plotfiles = ['plt' + str(y).zfill(5) for y in sorted([int(x[3:]) for x in plotfiles])]
+                if (os.path.isfile(file_name)):
+                    print "Plot with filename " + file_name + " already exists; skipping."
+                    continue
 
-        pf_name = dir + "/" + plotfiles[0]
+                # First we load in the numerical data.
 
-        print pf_name
+                dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/" + str(ncell)
 
-        pf = yt.load(pf_name)
+                # Make sure there's actually data for this combination of settings.
+                # For example, we don't do every flow velocity at every resolution.
 
-        plot = yt.SlicePlot(pf, 'z', "density", width=(1.0, 'cm'))
+                if (not os.path.isdir(dir)):
+                    continue
 
-        file_name = 'density_t0_p_' + str(problem) + '_v_' + str(v) + '_n_' + str(ncell) + '.eps'
+                print "Generating plot with filename " + file_name
 
-        plot.save(file_name)
+                # Get the list of plotfiles in the directory.
 
-        pf_name = dir + "/" + plotfiles[len(plotfiles)-1]
+                plotfiles = wdmerger.get_plotfiles(dir)
 
-        print pf_name
+                # Figure out which one in the list we want by dividing the simulation time
+                # by the interval between plotfile outputs.
 
-        pf = yt.load(pf_name)
+                index = int(round(t / plot_per))
 
-        plot = yt.SlicePlot(pf, 'z', "density", width=(1.0, 'cm'))
+                # As a redundancy, guard against the possibility that this plotfile doesn't exist.
+                # Could happen if the full run hasn't been completed yet.
 
-        file_name = 'density_t2_p_' + str(problem) + '_v_' + str(v) + '_n_' + str(ncell) + '.eps'
+                if (index >= len(plotfiles)):
+                    print "Error: the plotfile does not exist. Skipping this iteration."
+                    continue
 
-        plot.save(file_name)
+                pf_name = dir + "/" + plotfiles[index]
+
+                pf = yt.load(pf_name)
+
+                plot = yt.SlicePlot(pf, 'z', "density", width=(1.0, 'cm'))
+
+                plot.save(file_name)

@@ -19,7 +19,7 @@ def get_last_output(dir):
         print "Error: No wdmerger output files in directory " + dir
         exit()
 
-    return "dir" + "/" + files[len(files)-1]
+    return dir + "/" + files[len(files)-1]
 
 
 #

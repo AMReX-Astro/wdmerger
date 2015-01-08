@@ -1,6 +1,7 @@
 import yt
 import numpy as np
 from matplotlib import pyplot as plt
+import wdmerger
 
 ncell_arr = [16, 32, 64, 128, 256]
 
