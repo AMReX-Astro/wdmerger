@@ -1,6 +1,11 @@
 import os
 import numpy as np
 
+
+#
+# Return the name of the latest wdmerger output file in the directory dir.
+#
+
 def get_last_output(dir):
 
     # Open up the standard output for analysis. It will be the numerically last file
@@ -17,6 +22,9 @@ def get_last_output(dir):
     return "dir" + "/" + files[len(files)-1]
 
 
+#
+# Get the timing data for a wdmerger output file.
+#
 
 def timing(output_filename):
 
@@ -61,3 +69,39 @@ def timing(output_filename):
     avg_timestep_no_grav = np.average(coarseSteps)
 
     return [avg_timestep, avg_timestep_no_grav]
+
+
+
+#
+# Get a sorted list of all the plotfiles in directory dir.
+#
+
+def get_plotfiles(dir):
+
+    # Check to make sure the directory exists.
+
+    if (not os.path.isdir(dir)):
+        print "Error: Directory " + dir + " does not exist, exiting."
+        exit()
+
+    # List all of the files in the directory.
+
+    dir_contents = os.listdir(dir)
+
+    # Strip out non-plotfiles.
+
+    plotfiles = sorted(filter(lambda s: s[0:3] == 'plt', dir_contents))
+
+    # Remove any redundant plotfiles. These are generated with names like "old" or "temp"
+    # and an easy way to get rid of them is just to check on all plotfiles that don't have
+    # the right number of characters.
+
+    plotfiles = filter(lambda s: len(s) == 8 or len(s) == 9, plotfiles)
+
+    # This step strips out 'plt' from each plotfile, sorts them numerically,
+    # then recasts them as strings. This is necessary because we may have some
+    # plotfiles with six digits and some with five, and the default sort will
+    # not sort them properly numerically.
+
+    plotfiles = ['plt' + str(y).zfill(5) for y in sorted([int(x[3:]) for x in plotfiles])]
+
