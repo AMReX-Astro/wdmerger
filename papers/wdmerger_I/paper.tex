@@ -314,23 +314,21 @@ the system. This differential equation has a closed-form solution for
 the evolution time as a function of separation:
 \begin{equation}
   t(r) = \sqrt{\frac{r_0^3}{2GM}} \left[ \text{arccos}\left(\sqrt{\frac{r}{r_0}}\,\right) + \sqrt{\frac{r}{r_0} \left(1 - \frac{r}{r_0}\right)}\ \right]. \label{analyticalFreeFall}
-\end{equation}\MarginPar{This result is derived in the freefall directory.}
+\end{equation}
 This result can be derived by recognizing that
-\[
+\begin{equation}
   t(r) = \int_{r_0}^r \frac{dr}{v(r)}
-\]
+\end{equation}
 and inserting the velocity as a function of radial separation,
-\[
+\begin{equation}
   v(r) = \sqrt{\frac{2GM}{r_0}\left(\frac{r_0}{r} - 1\right)}.
-\]
+\end{equation}
 We determine the initial separation to be consistent with the
 simulation performed in Section \ref{sec:kepler}; that is, we select
 an initial orbital period and use Kepler's third law to calculate the
 radius of a circular orbit with that period. We select an initial
-orbital period of $T = 100$ s for this simulation, so that the separation is
-\[
-  r_0 = 3.61 \times 10^{9}\ \text{cm}.
-\]
+orbital period of $T = 100$ s for this simulation, so that the separation is 
+$r_0 = 3.61 \times 10^{9}\ \text{cm}$.
 We chose a relatively low resolution simulation to demonstrate the
 capabilities of CASTRO even while using modest resources. The
 computational grid is covered by a coarse grid of $48^3$ zones, with
@@ -342,9 +340,9 @@ the domain to be covered by the finest resolution grids.
 
 The analytical result in Equation \ref{analyticalFreeFall} determines
 the total elapsed free-fall time,
-\[
+\begin{equation}
   t_{\text{ff}} = \frac{\pi}{2} \sqrt{\frac{r_0^3}{2GM}} = \frac{T}{4\sqrt{2}}.
-\]
+\end{equation}
 The physical radius of each white dwarf is roughly $10\%$ of the
 initial separation, so we consider the evolution terminated when the
 radial separation reaches that value (at that point, the stars will no
