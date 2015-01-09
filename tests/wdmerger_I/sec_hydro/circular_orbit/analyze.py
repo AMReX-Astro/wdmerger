@@ -24,4 +24,4 @@ dist = dist / dist[0]
 plt.plot(time, dist)
 plt.xlabel("Time (s)")
 plt.ylabel("Distance / Initial Distance")
-plt.savefig('circular_orbit.png')
+plt.savefig('plots/circular_orbit.eps')
