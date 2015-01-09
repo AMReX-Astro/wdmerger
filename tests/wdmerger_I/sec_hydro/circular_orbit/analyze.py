@@ -3,35 +3,19 @@ import numpy as np
 from matplotlib import pyplot as plt
 import wdmerger
 
-# Open up the diagnostic output for analysis
+# Set the name of the diagnostic output file
 
 ncell = 128
 
 diag_filename = "results/" + str(ncell) + "/wdmerger_diag.out"
 
-diag_out = np.loadtxt(diag_filename)
-
-# Now we need to obtain the column locations for the left and right centers of mass
-
-diag_file = open(diag_filename,'r')
-col_names = diag_file.readline().split('  ')
-diag_file.close()
-
-# Let's do some cleanup
-
-col_names.pop(0)                                        # Get rid of the # at the beginning
-col_names = [string.strip() for string in col_names]    # Remove any leading or trailing whitespace
-col_names = filter(None, col_names)                     # Remove any remaining blank entries
-col_names.pop(len(col_names)-1)                         # Remove the ending newline
-
 # Obtain the time column, and the locations of the center of mass of both stars
 
-col_t = col_names.index('TIME')
-col_l = col_names.index('LEFT X COM')
-col_r = col_names.index('RIGHT X COM')
+time      = wdmerger.get_column('TIME',        diag_filename)
+left_com  = wdmerger.get_column('LEFT X COM',  diag_filename)
+right_com = wdmerger.get_column('RIGHT X COM', diag_filename)
 
-time = diag_out[:,col_t]
-dist = abs(diag_out[:,col_r] - diag_out[:,col_l])
+dist = abs(right_com - left_com)
 
 # Normalize disatnce by initial distance
 

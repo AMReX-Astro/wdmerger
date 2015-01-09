@@ -3,46 +3,26 @@ import numpy as np
 from matplotlib import pyplot as plt
 import wdmerger
 
-# Open up the diagnostic output for analysis
+# Set the name of the diagnostic output file
 
 ncell = 64
 
 diag_filename = "results/" + str(ncell) + "/single_star.out"
 
-diag_out = np.loadtxt(diag_filename)
-
-# Now we need to obtain the column names
-
-diag_file = open(diag_filename,'r')
-col_names = diag_file.readline().split('  ')
-diag_file.close()
-
-# Let's do some cleanup
-
-col_names.pop(0)                                        # Get rid of the # at the beginning
-col_names = [string.strip() for string in col_names]    # Remove any leading or trailing whitespace and newlines
-col_names = filter(None, col_names)                     # Remove any remaining blank entries
-
 # Obtain the time column, and the spherical radii denoting different density cutoffs
 
-time = diag_out[:,col_names.index('TIME')]
+time = wdmerger.get_column('TIME', diag_filename)
 
 nCols = 7
 
 rad = np.zeros((len(time), nCols))
 
-rad[:,0] = diag_out[:,col_names.index('1E0 BOUNDARY RAD.')]
-rad[:,1] = diag_out[:,col_names.index('1E1 BOUNDARY RAD.')]
-rad[:,2] = diag_out[:,col_names.index('1E2 BOUNDARY RAD.')]
-rad[:,3] = diag_out[:,col_names.index('1E3 BOUNDARY RAD.')]
-rad[:,4] = diag_out[:,col_names.index('1E4 BOUNDARY RAD.')]
-rad[:,5] = diag_out[:,col_names.index('1E5 BOUNDARY RAD.')]
-rad[:,6] = diag_out[:,col_names.index('1E6 BOUNDARY RAD.')]
+for n in range(nCols):
+    rad[:,n] = wdmerger.get_column('1E' + str(n) + ' BOUNDARY RAD.')
 
-# Divide radii by initial radii
+    # Divide radii by initial radii
 
-for j in range(nCols):
-    rad[:,j] = rad[:,j] / rad[0,j]
+    rad[:,n] = rad[:,n] / rad[0,n]
 
 # Let's plot with reversed axis for aesthetic purposes
 

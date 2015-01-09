@@ -3,34 +3,19 @@ import numpy as np
 from matplotlib import pyplot as plt
 import wdmerger
 
-# Open up the diagnostic output for analysis
+# Set the name of the diagnostic output file
 
 ncell = 256
 
 diag_filename = "results/" + str(ncell) + "/wdmerger_diag.out"
 
-diag_out = np.loadtxt(diag_filename)
+# Get the desired columns for the time and the left and right centers of mass
 
-# Now we need to obtain the column locations for the left and right centers of mass
+time      = wdmerger.get_column('TIME',        diag_filename)
+left_com  = wdmerger.get_column('LEFT X COM',  diag_filename)
+right_com = wdmerger.get_column('RIGHT X COM', diag_filename)
 
-diag_file = open(diag_filename,'r')
-col_names = diag_file.readline().split('  ')
-diag_file.close()
-
-# Let's do some cleanup
-
-col_names.pop(0)                                        # Get rid of the # at the beginning
-col_names = [string.strip() for string in col_names]    # Remove any leading or trailing whitespace
-col_names = filter(None, col_names)                     # Remove any remaining blank entries
-
-# Obtain the time column, and the locations of the center of mass of both stars
-
-col_t = col_names.index('TIME')
-col_l = col_names.index('LEFT X COM')
-col_r = col_names.index('RIGHT X COM')
-
-time = diag_out[:,col_t]
-dist = abs(diag_out[:,col_r] - diag_out[:,col_l])
+dist = abs(right_com - left_com)
 
 # Let's divide the time array by free-fall timescale
 
@@ -43,14 +28,14 @@ time = time / t_ff
 
 dist = dist / dist[0]
 
-# Generate the analytical result.
+# Generate the analytical result
 
 d_exact = np.arange(0.0, 1.0, 0.001)
 
 t_exact = np.arccos(np.sqrt(d_exact)) + np.sqrt(d_exact * (1.0 - d_exact))
 t_exact *= 2.0 / np.pi
 
-# Let's plot with reversed axis for aesthetic purposes
+# Let's plot with reversed axes for aesthetic purposes
 
 plt.plot(dist[::5], time[::5], 'o', d_exact, t_exact, '-')
 plt.axis([0.0, 1.0, 0.0, 1.0])
