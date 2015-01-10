@@ -2,6 +2,69 @@ import os
 import numpy as np
 
 
+
+#
+# Returns the current git hash of the wdmerger repo.
+# Credit: http://stackoverflow.com/questions/14989858/get-the-current-git-hash-in-a-python-script
+#
+
+def get_wdmerger_git_commit_hash():
+    import subprocess
+    cwd = os.getcwd()
+    WDMERGER_HOME = os.getenv('WDMERGER_HOME')
+    os.chdir(WDMERGER_HOME)
+    hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+    os.chdir(cwd)
+
+    return hash
+
+
+
+#
+# Given a plotfile directory, return the CASTRO and BoxLib git commit hashes.
+#
+
+def get_git_commits_from_plotfile(plotfile):
+    job_info = open(plotfile + "/job_info", 'r')
+    lines = job_info.readlines()
+    lines = [line.split() for line in lines]
+    for line in lines:
+        if (len(line) == 4):
+            if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
+                castro_hash = line[3]
+            elif (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
+                boxlib_hash = line[3]
+
+    return [castro_hash, boxlib_hash]
+
+
+
+#
+# Given CASTRO and BoxLib hashes that were used to create the plot for a given plotfile,
+# insert these and the current wdmerger hash into the EPS file.
+# Credit: http://stackoverflow.com/questions/1325905/inserting-line-at-specified-position-of-a-text-file-in-python
+# A comma in a print statement effectively prevents a newline from being appended to the print. This is valid in Python 2.x,
+# but is not valid in Python 3.x. Instead, one should use the print() function in that case.
+# Source: http://stackoverflow.com/questions/11266068/python-avoid-new-line-with-print-command
+#
+
+def insert_commits_into_eps(eps_file, plotfile):
+    import fileinput
+    
+    [castro_hash, boxlib_hash] = get_git_commits_from_plotfile(plotfile)
+    wdmerger_hash = get_wdmerger_git_commit_hash();
+
+    input = fileinput.input(eps_file, inplace=True)
+
+    for line in input:
+        print line,
+        if line.startswith('%%CreationDate:'):
+            print "%%CASTRO git hash: " + castro_hash + "\n" + \
+                  "%%BoxLib git hash: " + boxlib_hash + "\n" + \
+                  "%%wdmerger git hash: " + wdmerger_hash
+
+
+
 #
 # Return the name of the latest wdmerger output file in the directory dir.
 #
@@ -105,6 +168,8 @@ def get_plotfiles(dir):
 
     plotfiles = ['plt' + str(y).zfill(5) for y in sorted([int(x[3:]) for x in plotfiles])]
 
+    return plotfiles
+
 
 
 #
@@ -117,6 +182,8 @@ def get_column(col_name, diag_filename):
     # with all the data.
 
     diag_file = open(diag_filename,'r')
+    castro_hash_line = diag_file.readline()
+    boxlib_hash_line = diag_file.readline()
     col_names = diag_file.readline().split('  ')
     diag_list = diag_file.readlines()
     data = []
@@ -138,4 +205,5 @@ def get_column(col_name, diag_filename):
     # Obtain the column index and then return the column with that index.
 
     col_index = col_names.index(col_name)
+
     return data[:,col_index]

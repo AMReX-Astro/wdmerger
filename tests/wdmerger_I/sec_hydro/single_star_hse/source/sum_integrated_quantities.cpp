@@ -4,6 +4,8 @@
 #include <Castro_F.H>
 #include <Geometry.H>
 
+#include "buildInfo.H"
+
 void
 Castro::sum_integrated_quantities ()
 {
@@ -155,6 +157,15 @@ Castro::sum_integrated_quantities ()
         // Write header row
 
         if (time == 0.0) {
+
+	  // Output the git commit hashes used to build the executable.
+
+          const char* castro_hash = buildInfoGetGitHash(1);
+	  const char* boxlib_hash = buildInfoGetGitHash(2);
+
+	  data_log1 << "# Castro git hash: " << castro_hash << "\n";
+	  data_log1 << "# BoxLib git hash: " << boxlib_hash << "\n";
+
           data_log1 << std::setw(datawidth) << "#     TIME             ";
           data_log1 << std::setw(datawidth) << "  MASS                 ";
           data_log1 << std::setw(datawidth) << "  XMOM                 ";
