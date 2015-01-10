@@ -1,3 +1,8 @@
+# Set the parameters that are unique for this test
+EOS_dir=gamma_law_general
+DIM=2
+USE_GRAV=FALSE
+
 # Main make target
 
 all: make_castro

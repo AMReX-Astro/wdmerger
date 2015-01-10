@@ -12,48 +12,63 @@ do
 
     # Loop over the resolutions in question
 
-    for ncell in 64 128 256 512
+    for ncell in 64 128 256 1024 2048 4096 #512 1024 #2048 4096
     do
+
+      # We only want to do the high-resolution convergence test
+      # for the zero-velocity problem.
+
+      if [ $ncell -ge 1024 ] && [ $vel -gt 0 ]; then
+	  continue
+      fi
+
       dir=$results_dir/problem$problem/velocity$vel/$ncell
-      ncell_x=$ncell
-      ncell_y=$ncell
-      ncell_z=8
-
-      # Since CASTRO only supports dx = dy = dz,
-      # we must change the size of the problem in the z
-      # direction to ensure that dz stays equal to dx and dy.
-
-      problo_x=0.0
-      probhi_x=1.0
-      problo_y=0.0
-      probhi_y=1.0
-      problo_z=0.0
-      probhi_z=$(echo "$probhi_x / $ncell_x * $ncell_z" | bc -l)
 
       sed -i "/problem/c problem = $problem" $probin
       sed -i "/bulk_velocity/c bulk_velocity = $vel" $probin
 
-      sed -i "/geometry.prob_lo/c geometry.prob_lo = $problo_x $problo_y $problo_z" $inputs
-      sed -i "/geometry.prob_hi/c geometry.prob_hi = $probhi_x $probhi_y $probhi_z" $inputs
-      sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell_z" $inputs
+      sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell" $inputs
+
+      # Determine stopping time based on problem of interest
+
+      if [ $problem -eq 1 ]; then
+	  stop_time=2.0
+	  plot_per=0.05
+      elif [ $problem -eq 2 ]; then
+	  stop_time=2.0
+	  plot_per=0.05
+      elif [ $problem -eq 3 ]; then
+	  stop_time=10.0
+	  plot_per=0.1
+      fi
+
+      sed -i "/amr.plot_per/c amr.plot_per = $plot_per" $inputs
+      sed -i "/amr.check_per/c amr.check_per = $plot_per" $inputs
+      sed -i "/stop_time/c stop_time = $stop_time" $inputs
 
       # Set number of processors based on amount of work
 
       if [ $ncell -eq 64 ]; then
 	  nprocs=16
-	  walltime=2:00:00
+	  walltime=00:15:00
       elif [ $ncell -eq 128 ]; then
-	  nprocs=64
-	  walltime=2:00:00
+	  nprocs=128
+	  walltime=00:30:00
       elif [ $ncell -eq 256 ]; then
-	  nprocs=256
-	  walltime=4:00:00
-      elif [ $ncell -eq 512 ]; then
 	  nprocs=1024
-	  walltime=6:00:00
-      elif [ $ncell -eq 2560 ]; then
-	  nprocs=25600
-	  walltime=2:00:00
+	  walltime=02:00:00
+      elif [ $ncell -eq 512 ]; then
+	  nprocs=2048
+	  walltime=06:00:00
+      elif [ $ncell -eq 1024 ]; then
+	  nprocs=128
+	  walltime=02:00:00
+      elif [ $ncell -eq 2048 ]; then
+         nprocs=1024
+	 walltime=04:00:00
+      elif [ $ncell -eq 4096 ]; then
+         nprocs=1024
+	 walltime=20:00:00
       fi
 
       run $dir $nprocs $walltime
