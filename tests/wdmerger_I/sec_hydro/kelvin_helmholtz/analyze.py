@@ -1,6 +1,7 @@
 import yt
 import numpy as np
 from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1 import AxesGrid
 import os
 import wdmerger
 
@@ -11,6 +12,8 @@ ncell_arr = [64, 128, 256, 1024, 2048, 4096]
 vel_arr = [0, 1, 3, 10, 30, 100]
 
 plots_dir = 'plots/'
+
+fig = plt.figure()
 
 for problem in problem_arr:
 
@@ -71,8 +74,24 @@ for problem in problem_arr:
 
                 pf = yt.load(pf_name)
 
-                plot = yt.SlicePlot(pf, 'z', "density", width=(1.0, 'cm'))
+                # Load the data and create the plot
 
-                plot.save(eps_filename)
+                p = yt.SlicePlot(pf, 'z', "density", width=(1.0, 'cm'))
+
+                p.set_log("density", False)
+
+                p.set_cmap(field="density", cmap='bwr')
+
+                plot = p.plots['density']
+
+                colorbar = plot.cb
+
+                colorbar.solids.set_edgecolor("face") # Prevents lines from appearing in the colorbar at color boundaries, which can happen for the EPS output
+
+                colorbar.set_clim(0.8,2.2)
+                colorbar.set_ticks([0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2])
+
+                p.save(eps_filename)
 
                 wdmerger.insert_commits_into_eps(eps_filename, pf_name, 'plot')
+                
