@@ -35,6 +35,43 @@ def get_git_commits_from_plotfile(plotfile):
             elif (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
                 boxlib_hash = line[3]
 
+    job_info.close()
+
+    return [castro_hash, boxlib_hash]
+
+
+
+#
+# Given a diagnostic output file, return the CASTRO and BoxLib git commit hashes.
+#
+
+def get_git_commits_from_diagfile(diagfile):
+    diagfile = open(diagfile, 'r')
+    castro_hash = (diagfile.readline().split())[4]
+    boxlib_hash = (diagfile.readline().split())[4]
+    diagfile.close()
+
+    return [castro_hash, boxlib_hash]
+
+
+
+#
+# Given the stdout from a Castro run, return the CASTRO and BoxLib git commit hashes.
+#
+
+def get_git_commits_from_infofile(infofile):
+    infofile = open(infofile, 'r')
+    lines = infofile.readlines()
+    lines = [line.split() for line in lines]
+    for line in lines:
+        if (len(line) == 4):
+            if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
+                castro_hash = line[3]
+            elif (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
+                boxlib_hash = line[3]
+
+    infofile.close()
+
     return [castro_hash, boxlib_hash]
 
 
@@ -48,10 +85,18 @@ def get_git_commits_from_plotfile(plotfile):
 # Source: http://stackoverflow.com/questions/11266068/python-avoid-new-line-with-print-command
 #
 
-def insert_commits_into_eps(eps_file, plotfile):
+def insert_commits_into_eps(eps_file, data_file, data_file_type):
     import fileinput
-    
-    [castro_hash, boxlib_hash] = get_git_commits_from_plotfile(plotfile)
+
+    if (data_file_type == 'plot'):
+        [castro_hash, boxlib_hash] = get_git_commits_from_plotfile(data_file)
+    elif (data_file_type == 'diag'):
+        [castro_hash, boxlib_hash] = get_git_commits_from_diagfile(data_file)
+    elif (data_file_type == 'info'):
+        [castro_hash, boxlib_hash] = get_git_commits_from_infofile(data_file)
+    else:
+        print "Error: Data file type not recognized."
+
     wdmerger_hash = get_wdmerger_git_commit_hash();
 
     input = fileinput.input(eps_file, inplace=True)

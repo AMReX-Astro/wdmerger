@@ -30,8 +30,11 @@ for l in ell:
 
     index += 1
 
+eps_filename = 'plots/bc_comparison.eps'
+
 plt.plot(ell,l2)
 plt.xlabel("Maximum multipole order")
 plt.ylabel("Relative L2 error")
 plt.yscale('log')
-plt.savefig('plots/bc_comparison.eps')
+plt.savefig(eps_filename)
+wdmerger.insert_commits_into_eps(eps_filename, pf_name, 'plot')

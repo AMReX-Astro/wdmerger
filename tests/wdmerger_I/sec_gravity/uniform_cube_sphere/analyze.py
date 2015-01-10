@@ -129,6 +129,8 @@ for p in range(num_problems):
 maxerr = max(l2[:,0])
 second_order = 3.0 * maxerr * (np.array(ncell_arr) / ncell_arr[0])**(-2.0)
 
+eps_filename = 'plots/phi_comparison.eps'
+
 plt.plot(ncell_arr, second_order, label='Second order convergence')
 
 plt.xlim([ncell_arr[0], ncell_arr[len(ncell_arr)-1]])
@@ -137,4 +139,5 @@ plt.ylabel(r"Relative L$^2$ error")
 plt.xscale('log', basex=2)
 plt.yscale('log')
 plt.legend(loc='upper right')
-plt.savefig('plots/phi_comparison.eps')
+plt.savefig(eps_filename)
+wdmerger.insert_commits_into_eps(eps_filename, pf_name, 'plot')

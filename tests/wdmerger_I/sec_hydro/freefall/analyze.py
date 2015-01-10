@@ -37,10 +37,13 @@ t_exact *= 2.0 / np.pi
 
 # Let's plot with reversed axes for aesthetic purposes
 
+eps_filename = 'plots/freefall.eps'
+
 plt.plot(dist[::5], time[::5], 'o', d_exact, t_exact, '-')
 plt.axis([0.0, 1.0, 0.0, 1.0])
 plt.gca().invert_xaxis()
 plt.gca().invert_yaxis()
 plt.xlabel("Distance / Initial Distance")
 plt.ylabel("Time / Free Fall Timescale")
-plt.savefig('plots/freefall.eps')
+plt.savefig(eps_filename)
+wdmerger.insert_commits_into_eps(eps_filename, diag_filename, 'diag')

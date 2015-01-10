@@ -33,10 +33,10 @@ for problem in problem_arr:
 
                 # Generate the plot name, and skip this iteration if it already exists.
 
-                file_name = plots_dir + 'density_t' + str(t) + '_p' + str(problem) + '_v' + str(v) + '_n' + str(ncell) + '.eps'
+                eps_filename = plots_dir + 'density_t' + str(t) + '_p' + str(problem) + '_v' + str(v) + '_n' + str(ncell) + '.eps'
 
-                if (os.path.isfile(file_name)):
-                    print "Plot with filename " + file_name + " already exists; skipping."
+                if (os.path.isfile(eps_filename)):
+                    print "Plot with filename " + eps_filename + " already exists; skipping."
                     continue
 
                 # First we load in the numerical data.
@@ -49,7 +49,7 @@ for problem in problem_arr:
                 if (not os.path.isdir(dir)):
                     continue
 
-                print "Generating plot with filename " + file_name
+                print "Generating plot with filename " + eps_filename
 
                 # Get the list of plotfiles in the directory.
 
@@ -73,4 +73,6 @@ for problem in problem_arr:
 
                 plot = yt.SlicePlot(pf, 'z', "density", width=(1.0, 'cm'))
 
-                plot.save(file_name)
+                plot.save(eps_filename)
+
+                wdmerger.insert_commits_into_eps(eps_filename, pf_name, 'plot')

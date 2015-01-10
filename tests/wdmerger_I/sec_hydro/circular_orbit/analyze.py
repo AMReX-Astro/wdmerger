@@ -21,7 +21,10 @@ dist = abs(right_com - left_com)
 
 dist = dist / dist[0]
 
+eps_filename = 'plots/circular_orbit.eps'
+
 plt.plot(time, dist)
 plt.xlabel("Time (s)")
 plt.ylabel("Distance / Initial Distance")
-plt.savefig('plots/circular_orbit.eps')
+plt.savefig(eps_filename)
+wdmerger.insert_commits_into_eps(eps_filename, diag_filename, 'diag')
