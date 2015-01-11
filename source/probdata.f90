@@ -69,6 +69,10 @@ module probdata_module
 
   integer :: star_axis
 
+  ! Bulk system motion
+
+  double precision :: bulk_velx, bulk_vely, bulk_velz
+
 contains
 
   ! This routine calls all of the other subroutines at the beginning
@@ -118,6 +122,7 @@ contains
 
   subroutine read_namelist
 
+    use bl_constants_module, only: ZERO, HALF
     use meth_params_module
 
     implicit none
@@ -139,7 +144,8 @@ contains
          velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
          presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
-         starBuffer, boundaryBuffer, star_axis
+         starBuffer, boundaryBuffer, star_axis, &
+         bulk_velx, bulk_vely, bulk_velz
 
     ! Set namelist defaults
     denerr = 1.d20
@@ -171,8 +177,8 @@ contains
     mass_s = 1.0
 
     stellar_temp = 1.0d7
-    stellar_C12  = 0.5d0
-    stellar_O16  = 0.5d0
+    stellar_C12  = HALF
+    stellar_O16  = HALF
 
     smallx = 1.d-10
 
@@ -181,6 +187,10 @@ contains
     damping  = .false.
     do_relax = .false.
     star_axis = 1
+
+    bulk_velx = ZERO
+    bulk_vely = ZERO
+    bulk_velz = ZERO
 
     ! Read namelist to override the defaults
     untin = 9 
