@@ -193,7 +193,7 @@
      ! setting the material to the ambient state
 
      ! -x
-     if (adv_l1 < domlo(1)) then
+     if (adv_l1 < domlo(1) .and. bc(1,1,1) .ne. 0) then
         do k = adv_l3, adv_h3
            do j = adv_l2, adv_h2
               yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
@@ -234,7 +234,7 @@
      endif
 
      ! +x
-     if (adv_h1 > domhi(1)) then
+     if (adv_h1 > domhi(1) .and. bc(1,2,1) .ne. 0) then
         do k = adv_l3, adv_h3
            do j = adv_l2, adv_h2
               yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
@@ -275,7 +275,7 @@
      endif
 
      ! -y
-     if (adv_l2 < domlo(2)) then
+     if (adv_l2 < domlo(2) .and. bc(2,1,1) .ne. 0) then
         do k = adv_l3, adv_h3
            do j = adv_l2, domlo(2)-1
               yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
@@ -316,7 +316,7 @@
      endif
 
      ! +y
-     if (adv_h2 > domhi(2)) then
+     if (adv_h2 > domhi(2) .and. bc(2,2,1) .ne. 0) then
         do k = adv_l3, adv_h3
            do j = domhi(2)+1, adv_h2
               yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
@@ -357,7 +357,7 @@
      endif
 
      ! -z
-     if (adv_l3 < domlo(3)) then
+     if (adv_l3 < domlo(3) .and. bc(3,1,1) .ne. 0) then
         do k = adv_l3, domlo(3)-1
            do j = adv_l2, adv_h2
               yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
@@ -398,7 +398,7 @@
      endif
 
      ! +z
-     if (adv_h3 > domhi(3)) then
+     if (adv_h3 > domhi(3) .and. bc(3,2,1) .ne. 0) then
         do k = domhi(3)+1, adv_h3
            do j = adv_l2, adv_h2
               yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
