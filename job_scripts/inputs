@@ -1,0 +1,123 @@
+############################## CASTRO INPUTS ###############################################
+
+############################################################################################
+# Problem setup
+############################################################################################
+
+amr.probin_file ?= probin			   # Name of the probin file
+
+max_step ?= 10000                                  # Maximum coarse timestep
+stop_time ?= 100.0	                           # Simulation time to stop at
+
+geometry.is_periodic ?= 0 0 0                      # Non-periodic boundary conditions
+
+geometry.coord_sys ?= 0                            # Cartesian coordinate system
+
+geometry.prob_lo   ?=  0.    0.    0.	           # Lower boundary limits in physical space
+geometry.prob_hi   ?=  1.024e10 1.024e10 1.024e10  # Upper boundary limits in physical space
+
+castro.dt_cutoff      ?= 1.e-10                	   # Level 0 timestep below which we halt
+castro.cfl            ?= 0.5                   	   # CFL number for hyperbolic system
+castro.init_shrink    ?= 0.0001                	   # Scale back initial timestep by this factor
+castro.change_max     ?= 1.01                  	   # Factor by which dt is allowed to change each timestep
+castro.sum_interval   ?= 1                     	   # Timesteps between computing and printing volume averaged diagnostic quantities
+
+############################################################################################
+# Boundary conditions
+# 0 = Interior           3 = Symmetry
+# 1 = Inflow             4 = SlipWall
+# 2 = Outflow            5 = NoSlipWall
+############################################################################################
+
+castro.lo_bc       ?=  2 2 2                   	   # Boundary conditions on lo x, y, and z edges
+castro.hi_bc       ?=  2 2 2		      	   # Boundary conditions on hi x, y, and z edges
+
+############################################################################################ 
+# Resolution, gridding and AMR
+############################################################################################
+
+amr.n_cell          ?= 128 128 128	      	   # Number of cells on the coarse grid
+
+amr.max_level       ?= 0		           # Maximum level number allowed
+
+amr.ref_ratio       ?= 4 4 4 4 4               	   # Refinement ratio
+amr.regrid_int      ?= 2                       	   # How many coarse timesteps between regridding
+amr.n_error_buf     ?= 2 2 2 2 2               	   # Number of buffer cells in error est (should be same as regrid_int)
+
+amr.max_grid_size   ?= 32 48 64  	      	   # Maximum grid size at each level
+amr.blocking_factor ?= 16                      	   # Grid sizes must be a multiple of this
+
+amr.grid_eff        ?= 0.9                     	   # What constitutes an efficient grid
+
+castro.allow_untagging ?= 1    		      	   # Allow zones to be untagged when they no longer satisfy the tagging criteria
+
+############################################################################################
+# Physics to include
+############################################################################################
+
+castro.do_hydro ?= 1				   # Whether or not to do hydrodynamics
+castro.do_grav ?= 1			      	   # Whether or not to do gravity
+castro.do_react ?= 0			      	   # Whether or not to do reactions
+castro.do_sponge ?= 0			      	   # Whether or not to apply the sponge
+castro.add_ext_src ?= 1			      	   # Whether or not to apply external source terms
+castro.do_rotation ?= 1			      	   # Whether or not to include the rotation source term
+castro.rotational_period ?= 100.0	      	   # Rotational period of the rotating reference frame
+
+############################################################################################
+# PPM options
+############################################################################################
+
+castro.ppm_type ?= 1                           	   # Piecewise parabolic with the original limiters (0 is piecewise linear; 2 is new limiters)
+castro.ppm_reference ?= 1		      	   # Whether we subtract off a reference state in PPM
+castro.ppm_reference_eigenvectors ?= 1         	   # Whether to evaluate eigenvectors using the reference state
+castro.ppm_reference_edge_limit ?= 1 	      	   # Use the wave moving fastest toward the interface instead of the cell centered value as the reference state
+castro.use_colglaz ?= 0		              	   # Whether or not to use the Colella and Glaz (1985) Riemann solver
+castro.ppm_trace_grav ?= 1		      	   # Whether to do PPM tracing for the gravitational source term
+castro.ppm_temp_fix ?= 0		      	   # Use the EOS in calculation of the edge states going into the Riemann solver
+castro.grav_source_type ?= 2		      	   # How to include the gravity source term in the hydro equations
+
+############################################################################################
+# Thermodyanmics
+############################################################################################
+
+castro.small_temp ?= 1.e5                      	   # Minimum allowable temperature (K)
+castro.small_dens ?= 1.e-5		      	   # Minimum allowable density (g / cm**3)
+
+castro.allow_negative_energy ?= 0	      	   # Disable the possibility of having a negative energy
+
+############################################################################################
+# Gravity
+############################################################################################
+
+gravity.gravity_type ?= PoissonGrav            	   # Full self-gravity with the Poisson equation
+gravity.max_multipole_order ?= 6              	   # Multipole expansion includes terms up to 1 / r**max_multipole_order
+gravity.direct_sum_bcs ?= 0                    	   # Exact calculation of gravity boundary conditions (for analysis purposes only)
+gravity.ml_tol ?= 1.e-10                       	   # Relative tolerance for multigrid solver (multiple level)
+gravity.sl_tol ?= 1.e-10	              	   # Relative tolerance for multigrid solver (single level)
+
+############################################################################################
+# Diagnostics and I/O
+############################################################################################
+
+castro.show_center_of_mass ?= 1                	   # Calculate and print the center of mass at each time step
+castro.print_energy_diagnostics ?= 1           	   # Diagnostics on how much energy and momentum is lost off the grid
+castro.sum_interval   ?= 1                     	   # Timesteps between computing and printing volume averaged diagnostic quantities
+
+amr.plot_files_output ?= 1                     	   # Whether or not to output plotfiles
+amr.checkpoint_files_output ?= 1               	   # Whether or not to output checkpoints
+
+amr.check_file      ?= chk        	      	   # Root name of checkpoint file
+amr.check_per       ?= 0.1     		      	   # Simulation time between checkpoints
+amr.plot_file       ?= plt     		      	   # Root name of plot file
+amr.plot_per        ?= 0.1    		      	   # Simulation time between plotfiles
+
+amr.v               ?= 1       		      	   # Control verbosity in Amr.cpp
+castro.v            ?= 1       		      	   # Control verbosity in Castro.cpp
+gravity.v           ?= 1       		      	   # Control verbosity in Gravity.cpp
+mg.v                ?= 0       		      	   # Control verbosity in the multigrid solver
+
+amr.derive_plot_vars ?= ALL			   # Calculate all variables for plotfiles, including derived variables
+castro.plot_phiGrav ?= 1			   # Include the gravitational potential in the plotfile
+
+amr.data_log ?= wdmerger_diag.out		   # Name of the diagnostic sum outputs
+

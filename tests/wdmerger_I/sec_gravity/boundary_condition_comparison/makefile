@@ -1,15 +1,16 @@
 # Problem-specific variables
 
 mass_P = 0.90
-mass_S = 0.81
+mass_S = 0.60
+
+castro.do_hydro = 0
+castro.do_rotation = 0
+
+max_step = 0
 
 # Main make target
 
 all: make_castro
-
-	# Insert masses into probin file.
-	sed -i "/mass_P/c mass_P = $(mass_P)" $(probin)
-	sed -i "/mass_S/c mass_S = $(mass_S)" $(probin)
 
 # Pull in main makefile
 
