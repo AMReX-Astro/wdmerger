@@ -232,7 +232,7 @@ contains
 
   subroutine set_ambient_and_small
 
-    use meth_params_module, only: small_temp, small_pres, small_dens
+    use meth_params_module, only: small_temp, small_pres, small_dens, small_ener
 
     implicit none
 
@@ -255,6 +255,7 @@ contains
     call eos(eos_input_rt, eos_state, .false.)
 
     small_pres = eos_state % p
+    small_ener = eos_state % e
 
   end subroutine set_ambient_and_small
 
