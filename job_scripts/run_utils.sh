@@ -81,9 +81,13 @@ function run {
 	ppn=$nprocs
     fi
 
-    sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $job_script
-    sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $job_script
-    sed -i "/aprun/c aprun -n $nprocs -N $ppn $CASTRO $inputs \$\{restartString\}" $job_script
+    if [ $MACHINE == "GENERICLINUX" ] ; then 
+	echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $job_script
+    elif [ $MACHINE == "BLUE WATERS" ]; then
+	sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $job_script
+	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $job_script
+	sed -i "/aprun/c aprun -n $nprocs -N $ppn $CASTRO $inputs \$\{restartString\}" $job_script
+    fi
 
     # Change into the run directory, submit the job, then come back to the main directory.
 
