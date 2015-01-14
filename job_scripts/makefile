@@ -153,7 +153,7 @@ make_probin:
 			echo "nsub = $(nsub)" >> $(probin) ; \
 			echo "inertial = $(inertial)" >> $(probin) ; \
 			echo "damping = $(damping)" >> $(probin) ; \
-			echo "damping_alpha = $(damping)" >> $(probin) ; \
+			echo "damping_alpha = $(damping_alpha)" >> $(probin) ; \
 			echo "interp_temp = $(interp_temp)" >> $(probin) ; \
 			echo "starBuffer = $(starBuffer)" >> $(probin) ; \
 			echo "boundaryBuffer = $(boundaryBuffer)" >> $(probin) ; \
