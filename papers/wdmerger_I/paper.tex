@@ -95,7 +95,24 @@ The Euler equations for hydrodynamics (in the absence of source terms) in conser
 \end{align}
 Here $\rho$ is the mass density, $\mathbf{u}$ is the fluid velocity vector, $p$ is the pressure, and $E = \mathbf{u}^2 / 2 + e$ is the total specific energy, where $e$ is the internal (thermal) specific energy.
 
-We use the unsplit piecewise-parabolic method (PPM) solver in CASTRO to advance the hydrodynamics system in time \citep{ppmunsplit}.  A number of changes were made to the solver, which are detailed in the Appendix.  These changes bring the algorithm more in line with that of \cite{ppm}. CASTRO as originally released featured a slightly modified version of the higher resolution limiters of \cite{colella_sekora:2008}, which can be accessed in the code using \texttt{castro.ppm\_type = 2}. The advantage of this limiter is that it preserves physical extrema rather than clipping them off as in the original approach of \cite{ppm}. However, we found these limiters to be unsatisfactory for our problem. There are many regions in our problem with large density gradients (such as the interface between the star's atmosphere and the ambient gas outside of it) and in these regions the algorithm can yield negative densities. This often results from the limiters interpreting these gradients as being true minima. As a result, we use the original limiter, which is strictly monotonicity preserving in the parabolic profiles it generates; this is activated with \texttt{castro.ppm\_type = 1}.
+We use the unsplit piecewise-parabolic method (PPM) solver in CASTRO
+to advance the hydrodynamics system in time \citep{ppmunsplit}.  A
+number of changes were made to the solver, which are detailed in the
+Appendix.  These changes bring the algorithm more in line with that of
+\cite{ppm}. CASTRO as originally released featured a slightly modified
+version of the higher resolution limiters of
+\cite{colella_sekora:2008}, which can be accessed in the code using
+\texttt{castro.ppm\_type = 2}. The advantage of this limiter is that
+it preserves physical extrema rather than clipping them off as in the
+original approach of \cite{ppm}. However, we found these limiters to
+be unsatisfactory for our problem. There are many regions in our
+problem with large density gradients (such as the interface between
+the star's atmosphere and the ambient gas outside of it) and in these
+regions the algorithm can yield negative densities. This often results
+from the limiters interpreting these gradients as being true
+minima. As a result, we use the original limiter, which is strictly
+monotonicity preserving in the parabolic profiles it generates; this
+is activated with \texttt{castro.ppm\_type = 1}.
 
 A related issue that required a code improvement was that in cases of large density gradients such as the edge of a star, it is possible to generate negative densities in zones even with the more strongly limited PPM. This can occur if a region of large density is moving away from an ambient zone at relatively large speeds; then the net density flux in the ambient zones can be large enough to unphysically drag the density below zero. In practice, this will occur at the trailing edge of a star that is moving across a grid. In such a situation, there are two main approaches one could take: either explicitly introduce a positivity-guaranteeing diffusive flux, or reset the characteristics of the affected zone. We choose the latter approach. Even though it is non-conservative, it preserves a characteristic we value, which is to keep the edge of the stars relatively sharp, as they physically should be. Since the mass of the affected zones is typically already fairly low, this should not seriously affect the energy conservation properties of our simulation. Similarly, it is also possible in this physical situation for very large velocities to be generated in the material behind the star. The momentum transferred to the ambient zone is close to the momentum of the stellar material, but this is of much higher density and so the velocity of the ambient material must become very large to compensate. While this may be physically viable in certain circumstances, it poses a problem for our code, which uses subcycling in time (see below). The timestep is fixed at the beginning of the set of subcycled timesteps, and if in the middle of the cycle a velocity is generated that is so large that it violates the CFL criterion for this timestep, we cannot guarantee the stability of the resulting solution since we cannot alter the timestep. (Nor would we want to, because in some cases because the velocity becomes spuriously large and would drag down the global timestep.) Therefore we also insert a check at the end of every hydrodynamics timestep that resets the velocity and/or sound-speed (indirectly, using the temperature) of any zone that violates the CFL criterion given the timestep we chose at the beginning of the cycle. In practice, we find that this is mainly necessary only for simulations in the inertial reference frame of the white dwarf merger, which we do not normally do for the reasons stated in Section \ref{sec:kepler}.
 
@@ -445,14 +462,15 @@ DE-AC05-00OR22725. Project AST006 supported use of the ORNL/Titan resource. This
 
 \section{Castro hydrodynamics changes}
 
+The basic PPM algorithm in CASTRO has undergone a number of changes since
+the original code paper \citep{castro}.  A discussion of the pure
+hydrodynamics changes was given in \citet{zingalekatz:2015}.  Here
+we discuss the changes that affect multispecies flow and source
+terms.
+
 Summary of changes:
 \begin{itemize}
-\item New reference state/flattening fix: helps energy conservation a
-  lot, also fixes some undershoot/overshoots
-
 \item New gravity update type: fixes some energy conservation
-
-\item temperature-based PPM: fixes temperature floors
 
 \item changing I's to use limit of the parabola instead of the
   cell-center: not sure if this does much
