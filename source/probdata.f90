@@ -35,6 +35,7 @@ module probdata_module
   integer :: npts_model
 
   double precision :: mass_P, mass_S
+  double precision :: central_density_P, central_density_S
   double precision :: radius_P_initial, radius_S_initial
   double precision :: stellar_temp, stellar_comp(nspec)
 
@@ -125,7 +126,7 @@ contains
 
   subroutine read_namelist
 
-    use bl_constants_module, only: ZERO, HALF
+    use bl_constants_module, only: ZERO, HALF, ONE
     use meth_params_module
 
     implicit none
@@ -137,6 +138,7 @@ contains
 
     namelist /fortin/ &
          mass_p, mass_s, &
+         central_density_P, central_density_S, &
          nsub, &
          inertial, &
          interp_temp, &
@@ -175,6 +177,9 @@ contains
     boundaryBuffer = 0.6d0
 
     nsub = 1
+
+    central_density_P = -ONE
+    central_density_S = -ONE
 
     mass_p = 1.0
     mass_s = 1.0
@@ -287,7 +292,7 @@ contains
 
   subroutine binary_setup
 
-    use bl_constants_module, only: ZERO
+    use bl_constants_module, only: ZERO, ONE
     use meth_params_module, only: rot_period
     use initial_model_module, only: init_1d
 
@@ -315,25 +320,25 @@ contains
 
     ! Generate primary and secondary WD
 
-    call init_1d(model_P_r, model_P_state, npts_model, dx, mass_P, radius_P_initial, &
-                 stellar_temp, stellar_comp, ambient_state)
+    call init_1d(model_P_r, model_P_state, npts_model, dx, radius_P_initial, mass_P, &
+                 central_density_P, stellar_temp, stellar_comp, ambient_state)
 
     if (ioproc == 1) then
         print *, "Generated initial model for primary WD of mass", mass_P, &
-                 "and radius", radius_P_initial
+                 ", central density", central_density_P, ", and radius", radius_P_initial
     endif
 
     if (mass_S > ZERO) then
 
-       call init_1d(model_S_r, model_S_state, npts_model, dx, mass_S, radius_S_initial, &
-                   stellar_temp, stellar_comp, ambient_state)
+       call init_1d(model_S_r, model_S_state, npts_model, dx, radius_S_initial, mass_S, &
+                    central_density_S, stellar_temp, stellar_comp, ambient_state)
 
        if (ioproc == 1) then
           print *, "Generated initial model for secondary WD of mass", mass_S, &
-                   "and radius", radius_S_initial
+                   ", central density", central_density_S, ", and radius", radius_S_initial
        endif
 
-    ! Get the orbit from Kepler's third law
+       ! Get the orbit from Kepler's third law
 
        call kepler_third_law(radius_P_initial, mass_P, radius_S_initial, mass_S, &
                              rot_period, a_P_initial, a_S_initial, a)

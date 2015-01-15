@@ -16,7 +16,7 @@ use interpolate_module, only: interpolate
 
 contains
 
-  subroutine init_1d(model_r, model_hse, nx, dx, mass, radius, temp_core, xn_core, ambient_state)
+  subroutine init_1d(model_r, model_hse, nx, dx, radius, mass, central_density, temp_core, xn_core, ambient_state)
 
     implicit none
 
@@ -24,11 +24,12 @@ contains
 
     integer,          intent(in   ) :: nx
 
-    double precision, intent(in   ) :: dx, mass
+    double precision, intent(in   ) :: dx
     double precision, intent(in   ) :: temp_core, xn_core(nspec)
     double precision, intent(inout) :: radius
     double precision, intent(inout) :: model_hse(nx,3+nspec)
     double precision, intent(inout) :: model_r(nx)
+    double precision, intent(inout) :: mass, central_density
 
     type (eos_t), intent(in) :: ambient_state
 
@@ -75,7 +76,7 @@ contains
 
     integer, parameter :: MAX_ITER = 250
 
-    integer :: iter, iter_mass
+    integer :: iter, iter_mass, num_iters
 
     integer :: icutoff
 
@@ -93,8 +94,42 @@ contains
 
     type (eos_t) :: eos_state
 
-    ! convert the envelope and WD mass into solar masses
-    M_tot = mass * M_solar
+    ! First, make sure we haven't overspecified with both the mass and the central density,
+    ! and make sure we've specified at least one.
+
+    if (mass > ZERO .and. central_density > ZERO) then
+       call bl_error('Error: Cannot specify both mass and central density in the initial model generator.')
+    else if (mass < ZERO .and. central_density < ZERO) then
+       call bl_error('Error: Must specify either mass or central density in the initial model generator.')
+    endif
+
+    ! If we are specifying the mass, then we don't know what WD central density 
+    ! will give the desired total mass, 
+    ! so we need to do a secant iteration over central density.
+    ! rho_c_old is the 'old' guess for
+    ! the central density and rho_c is the current guess.  After 2
+    ! loops, we can start estimating the density required to yield our
+    ! desired mass.
+
+    ! If instead we are specifying the central density, then we only need to do a 
+    ! single HSE integration.
+
+    if (mass > ZERO) then
+
+       ! Convert the WD mass into solar masses
+       M_tot = mass * M_solar
+
+       rho_c_old = -ONE
+       rho_c     = 1.d7     ! A reasonable starting guess for moderate-mass WDs
+
+    elseif (central_density > ZERO) then
+
+       rho_c_old = central_density
+       rho_c     = central_density
+
+    endif
+
+    isentropic = .false.
 
     !----------------------------------------------------------------------------
     ! Create a 1-d uniform grid that is identical to the mesh that we are
@@ -113,16 +148,6 @@ contains
        model_r(i) = HALF*(xznl(i) + xznr(i))
     enddo
 
-    ! We don't know what WD central density will give the desired total
-    ! mass, so we need to iterate over central density
-
-    ! we will do a secant iteration.  rho_c_old is the 'old' guess for
-    ! the central density and rho_c is the current guess.  After 2
-    ! loops, we can start estimating the density required to yield our
-    ! desired mass
-    rho_c_old = -ONE
-    rho_c     = 1.d7     ! A reasonable starting guess for moderate-mass WDs
-
     mass_converged = .false.
 
 
@@ -130,16 +155,16 @@ contains
 
        fluff = .false.
 
-       ! we start at the center of the WD and integrate outward.  Initialize
+       ! We start at the center of the WD and integrate outward.  Initialize
        ! the central conditions.
        eos_state%T     = temp_core
        eos_state%rho   = rho_c
        eos_state%xn(:) = xn_core(:)
 
-       ! (t, rho) -> (p, s)    
+       ! (T, rho) -> (p, s)    
        call eos(eos_input_rt, eos_state, .false.)
 
-       ! make the initial guess be completely uniform
+       ! Make the initial guess be completely uniform
        model_hse(:,idens_model) = eos_state%rho
        model_hse(:,itemp_model) = eos_state%T
        model_hse(:,ipres_model) = eos_state%p
@@ -148,7 +173,7 @@ contains
           model_hse(:,ispec_model-1+i) = eos_state%xn(i)
        enddo
 
-       ! keep track of the mass enclosed below the current zone
+       ! Keep track of the mass enclosed below the current zone
        M_enclosed(1) = FOUR3RD*M_PI*(xznr(1)**3 - xznl(1)**3)*model_hse(1,idens_model)
 
 
@@ -159,47 +184,42 @@ contains
 
           delx = model_r(i) - model_r(i-1)
 
-          ! as the initial guess for the density, use the previous zone
+          ! As the initial guess for the density, use the previous zone
           dens_zone = model_hse(i-1,idens_model)
 
           temp_zone = temp_core
           xn(:) = xn_core(:)
 
-          isentropic = .false.
-
-
           g_zone = -Gconst*M_enclosed(i-1)/(xznl(i)*xznl(i))
 
 
           !----------------------------------------------------------------------
-          ! iteration loop
+          ! Iteration loop
           !----------------------------------------------------------------------
 
-          ! start off the Newton loop by saying that the zone has not converged
+          ! Start off the Newton loop by assuming that the zone has not converged
           converged_hse = .FALSE.
 
           if (.not. fluff) then
 
              do iter = 1, MAX_ITER
 
-
                 if (isentropic) then
 
                    p_want = model_hse(i-1,ipres_model) + &
                         delx*0.5_dp_t*(dens_zone + model_hse(i-1,idens_model))*g_zone
 
-
-                   ! now we have two functions to zero:
+                   ! We have two functions to zero:
                    !   A = p_want - p(rho,T)
                    !   B = entropy_base - s(rho,T)
                    ! We use a two dimensional Taylor expansion and find the deltas
-                   ! for both density and temperature   
+                   ! for both density and temperature.
 
                    eos_state%T     = temp_zone
                    eos_state%rho   = dens_zone
                    eos_state%xn(:) = xn(:)
 
-                   ! (t, rho) -> (p, s) 
+                   ! (T, rho) -> (p, s) 
                    call eos(eos_input_rt, eos_state, .false.)
 
                    entropy = eos_state%s
@@ -248,8 +268,8 @@ contains
                    endif
 
                 else
-                   ! the core is isothermal, so we just need to constrain
-                   ! the density and pressure to agree with the EOS and HSE
+                   ! The core is isothermal, so we just need to constrain
+                   ! the density and pressure to agree with the EOS and HSE.
 
                    ! We difference HSE about the interface between the current
                    ! zone and the one just inside.
@@ -260,7 +280,7 @@ contains
                    eos_state%rho   = dens_zone
                    eos_state%xn(:) = xn(:)
 
-                   ! (t, rho) -> (p, s)
+                   ! (T, rho) -> (p, s)
                    call eos(eos_input_rt, eos_state, .false.)
 
                    entropy = eos_state%s
@@ -272,8 +292,6 @@ contains
 
                    dens_zone = max(0.9*dens_zone, &
                         min(dens_zone + drho, 1.1*dens_zone))
-
-                   ! (t, rho) -> (p, s)
 
                    if (abs(drho) < TOL_HSE*dens_zone) then
                       converged_hse = .TRUE.
@@ -316,19 +334,19 @@ contains
           endif
 
 
-          ! call the EOS one more time for this zone and then go on
-          ! to the next
+          ! Call the EOS one more time for this zone and then go on
+          ! to the next.
           eos_state%T     = temp_zone
           eos_state%rho   = dens_zone
           eos_state%xn(:) = xn(:)
 
-          ! (t, rho) -> (p, s)    
+          ! (T, rho) -> (p, s)    
           call eos(eos_input_rt, eos_state, .false.)
 
           pres_zone = eos_state%p
 
 
-          ! update the thermodynamics in this zone
+          ! Update the thermodynamics in this zone.
           model_hse(i,idens_model) = dens_zone
           model_hse(i,itemp_model) = temp_zone
           model_hse(i,ipres_model) = pres_zone
@@ -341,7 +359,7 @@ contains
 
           cs_hse(i) = eos_state%cs
 
-       enddo  ! end loop over zones
+       enddo  ! End loop over zones
 
 
        mass_wd = FOUR3RD*M_PI*(xznr(1)**3 - xznl(1)**3)*model_hse(1,idens_model)
@@ -353,21 +371,21 @@ contains
        enddo
 
        if (rho_c_old < ZERO) then
-          ! not enough iterations yet -- store the old central density and
-          ! mass and pick a new value
+          ! Not enough iterations yet -- store the old central density and
+          ! mass and pick a new value.
           rho_c_old = rho_c
           mass_wd_old = mass_wd
 
           rho_c = HALF*rho_c_old
 
        else
-          ! have we converged
-          if ( abs(mass_wd - M_tot)/M_tot < TOL_WD_MASS ) then
+          ! Check if we have converged. If we specified the central density, we can just stop here.
+          if ( abs(mass_wd - M_tot)/M_tot < TOL_WD_MASS .or. central_density > ZERO ) then
              mass_converged = .true.
              exit
           endif
 
-          ! do a secant iteration:
+          ! Do a secant iteration:
           ! M_tot = M(rho_c) + dM/drho |_rho_c x drho + ...        
           drho_c = (M_tot - mass_wd)/ &
                ( (mass_wd  - mass_wd_old)/(rho_c - rho_c_old) )
@@ -380,14 +398,19 @@ contains
 
        endif     
 
-    enddo  ! end mass constraint loop
+    enddo  ! End mass constraint loop
 
     if (.not. mass_converged) then
        print *, 'ERROR: WD mass did not converge'
        call bl_error("ERROR: mass did not converge")
     endif
 
+    if (central_density < ZERO) then
+       central_density = model_hse(1,idens_model)
+    endif
+
     radius = model_r(icutoff)
+    mass = mass_wd / M_solar
 
   end subroutine init_1d
 
@@ -454,7 +477,7 @@ contains
        enddo
     enddo
 
-    ! Now normalize by the number of intervals, and complete the thermnodynamics
+    ! Now normalize by the number of intervals, and complete the thermodynamics.
 
     state % rho = state % rho / (nsub**3)
     state % T   = state % T   / (nsub**3)
