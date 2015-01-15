@@ -41,6 +41,9 @@ module probdata_module
   ! Smallest allowed mass fraction
   double precision :: smallx
 
+  ! Smallest allowed velocity on the grid
+  double precision :: smallu
+  
   ! EOS state type that describes the ambient gas around the stars
   type (eos_t) :: ambient_state
   
@@ -237,6 +240,8 @@ contains
     implicit none
 
     type (eos_t) :: eos_state
+
+    smallu = 1.d-12
 
     ! Define ambient state and call EOS to get eint and pressure
 

@@ -109,9 +109,9 @@
      do k = lo(3), hi(3)
         do j = lo(2), hi(2)
            do i = lo(1), hi(1)
-              state(i,j,k,UMX) = state(i,j,k,URHO) * bulk_velx
-              state(i,j,k,UMY) = state(i,j,k,URHO) * bulk_vely
-              state(i,j,k,UMZ) = state(i,j,k,URHO) * bulk_velz
+              state(i,j,k,UMX) = state(i,j,k,URHO) * (bulk_velx + smallu)
+              state(i,j,k,UMY) = state(i,j,k,URHO) * (bulk_vely + smallu)
+              state(i,j,k,UMZ) = state(i,j,k,URHO) * (bulk_velz + smallu)
            enddo
         enddo
      enddo
