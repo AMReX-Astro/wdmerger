@@ -53,8 +53,6 @@ contains
 
     integer, parameter :: nvar = 3 + nspec
 
-    double precision :: xmin, xmax, dCoord
-
     double precision :: dens_zone, temp_zone, pres_zone, entropy
     double precision :: dpd, dpt, dsd, dst
 
@@ -132,19 +130,12 @@ contains
     isentropic = .false.
 
     !----------------------------------------------------------------------------
-    ! Create a 1-d uniform grid that is identical to the mesh that we are
-    ! mapping onto, and then we want to force it into HSE on that mesh.
+    ! Create a 1-D uniform grid.
     !----------------------------------------------------------------------------
 
-    xmin = 0.000e9
-    xmax = 1.024e9
-
-    ! compute the coordinates of the new gridded function
-    dCoord = (xmax - xmin) / dble(nx)
-
     do i = 1, nx
-       xznl(i) = xmin + (dble(i) - ONE)*dCoord
-       xznr(i) = xmin + (dble(i))*dCoord
+       xznl(i) = (dble(i) - ONE)*dx
+       xznr(i) = (dble(i))*dx
        model_r(i) = HALF*(xznl(i) + xznr(i))
     enddo
 
