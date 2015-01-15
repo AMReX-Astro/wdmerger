@@ -324,7 +324,7 @@ The Euler equations for hydrodynamics (in the absence of source terms) in conser
 Here $\rho$ is the mass density, $\mathbf{u}$ is the fluid velocity
 vector, $p$ is the pressure, and $E = \mathbf{u}^2 / 2 + e$ is the
 total specific energy, where $e$ is the internal (thermal) specific
-energy.
+energy (energy per unit mass).
 
 We use the unsplit piecewise-parabolic method (PPM) solver in CASTRO
 to advance the hydrodynamics system in time \citep{ppmunsplit}.  A
@@ -652,7 +652,7 @@ where the mass in each zone is treated as a point source:
 \begin{equation}
   \Phi_{\text{lmn}} = G\, \sum_{\text{i, j, k}} \frac{G \rho_{\text{ijk}}}{|\mathbf{x}_{\text{lmn}} - \mathbf{x}_{\text{ijk}}|}\, \Delta V_{\text{ijk}}.\label{direct_sum}
 \end{equation}
-Here (i, j, k) are the indices of cells inside the domain, and (l, m,
+Here $(i, j, k)$ are the indices of cells inside the domain, and (l, m,
 n) are the indices of boundary locations. $\Delta V$ is the volume of
 the zone. We have implemented this as an option \footnote{It is
   controlled with the \texttt{gravity.direct\_sum\_bcs} input
@@ -752,7 +752,8 @@ a uniform sphere, which can be easily determined using Gauss' law:
 \begin{equation}
   \phi_{\text{sphere}}(r) = \frac{GM}{r} \times \begin{cases} (3R^2 - r^2)/(2 r^2) & r \leq R \\ 1 & r > R \end{cases},\label{eq:sphere-analytical}
 \end{equation}
-where $M = 4\pi R^3 / 3$ is the mass of the sphere. Defining the $L^2$ norm of a field $f$ as
+where $M = 4\pi R^3 / 3$ is the mass of the sphere. Defining the $L^2$
+norm of a field $f$ as \MarginPar{We usually use $\| \ldots \|_2$ for a norm}
 \begin{equation}
   L^2(f) = \left(\sum_{i,j,k} dx\, dy\, dz\, f_{ijk}^2\right)^{1/2},
 \end{equation}
@@ -793,8 +794,8 @@ the cube. At each resolution we use the same $R$ as for the sphere,
 which ensures that the cube always fills exactly the same fraction of
 the domain and thus has the same mass, so the only improvement comes
 from better sampling at higher resolution. The potential for this
-object has been worked out analytically by \cite{waldvogel:1976} (see
-also a similar result in \cite{hummer:1996}). The potential is in
+object has been worked out analytically by \citet{waldvogel:1976} (see
+also a similar result in \citealt{hummer:1996}). The potential is in
 Equation 15 of that paper, though the last term is missing a factor of
 $1/2$, which destroys the symmetry. Inserting this missing factor and
 performing a simple coordinate transformation so that the center of
@@ -881,7 +882,7 @@ zone beneath it:
 \frac{p_{i+1} - p_i}{\Delta x} = \frac{1}{2} (\rho_i + \rho_{i+1}) g_{i+1/2}.
 \end{equation}
 This equation is a function of $\rho_{i+1}$ only since the pressure is
-uniquely determined by the density in this case. $\rho_i$ and $p_i$
+uniquely determined by the density in this case. Here, $\rho_i$ and $p_i$
 are known, $g_{i+1/2}$ is the gravitational acceleration at the
 interface between zones $i$ and $i+1$, found by simply adding up all
 the mass from zones $1, \ldots, i$ to get the enclosed mass,
