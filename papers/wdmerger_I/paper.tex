@@ -1264,11 +1264,12 @@ DE-AC05-00OR22725. Project AST006 supported use of the ORNL/Titan resource. This
 
 \section{Castro hydrodynamics changes}
 
-The basic PPM algorithm in CASTRO has undergone a number of changes since
-the original code paper \citep{castro}.  A discussion of the pure
-hydrodynamics changes was given in \citet{zingalekatz:2015}.  Here
-we discuss the changes that affect multispecies flow and source
-terms.
+The basic PPM algorithm in CASTRO has undergone a number of changes
+since the original code paper \citep{castro}.  A discussion of the
+pure hydrodynamics changes along with verification of CASTRO when
+using the stellar equation of state was given in
+\citet{zingalekatz:2015}.  Here we discuss the changes that affect
+multispecies flow and source terms.
 
 Summary of changes:
 \begin{itemize}
@@ -1287,41 +1288,35 @@ Summary of changes:
   it is not currently in the code)
 \end{itemize}
 
-We use the Castro code as described in \citet{castro}.  For all the
-runs, the PPM reconstruction is done, using the original limiters for
-the parabolic profiles \citep{ppm}.  We modify the prediction of the
-interface states slightly.  The original implementation of the PPM
-prediction in Castro takes the form:
-\begin{equation}
-q_{i+1/2,L}^{n+1/2} = q_i -
-   \sum_{\nu;\lambda_i^{(\nu)}\ge 0} l_i^{(\nu)} \cdot \left [
-        q_i - \mathcal{I}_+^{(\nu)}(q_i)
-       \right ] r_i^{(\nu)}
-\end{equation}
-where $q$ is the vector of primitive variables, with $q_i$
-representing the average in the cell, $l^{(\nu)}$ and $r^{(\nu)}$ are
-the left and right eigenvectors with eigenvalue $\lambda^{(\nu)}$,
-with $\nu$ the index of the characteristic wave of the system.  The
-sum is over all the waves that result from the characteristic
-structure of the problem, but designed such that only waves moving
-toward the interface contribute to the interface value,
-$q_{i+1/2,L}^{n+1/2}$.  Finally, $\mathcal{I}_+^{(\nu)}(q)$ is the
-average under the parabolic profile of quantity $q$ of all the information
-that can reach the right interface of the zone $i$ as carried by the wave
-$\nu$.   The reader is referred to
-\citet{ppmunsplit} for further defaults.
-
 \subsection{Reference States}
 
-The presence of $q_i$ in this expression serves as a reference state.
-The idea is that the error in the characteristic projection of the
-jump (due to the nonlinearity) is minimized if we pick a suitable
-reference state, since we only care about the jumps carried to the
-interface over the timestep \citep{colellaglaz1985}.  The original
-Castro implementation used the cell-average quantity.  Experiments
-found that this is ill-behaved in the presence of strong shocks
-(especially at low resolution). For the present work, we switch the
-reference state to
+We use the Castro code as described in \citet{castro}.  For all the
+runs, the PPM reconstruction is done, using the original limiters for
+the parabolic profiles \citep{ppm}.  The prediction of the interface
+states appears as:
+\begin{equation}
+\label{eq:ppmstatel}
+q_{i+1/2,L}^{n+1/2} = \tilde{q}_L -
+   \sum_{\nu;\lambda_i^{(\nu)}\ge 0} l_i^{(\nu)} \cdot \left [
+        \tilde{q}_L  - \mathcal{I}^{(\nu)}_+(q_i)
+       \right ] r_i^{(\nu)}
+\end{equation}
+where $q$ is the vector of primitive variables, $l_i^{(\nu)}$ and
+$r_i^{(\nu)}$ are the left and right eigenvectors with eigenvalue
+$\lambda_i^{(\nu)}$, with $\nu$ the index of the characteristic wave of
+the system.  The sum is over all the waves that result from the
+characteristic structure of the problem, but designed such that only
+waves moving toward the interface contribute to the interface value,
+$q_{i+1/2,L}^{n+1/2}$.  The reference state, $\tilde{q}_L$ is
+chosen to minimize the work of the characteristic projection.
+Finally, $\mathcal{I}_+^{(\nu)}(q)$ is the
+average under the parabolic profile of quantity $q$ of all the
+information that can reach the right interface of the zone $i$ as
+carried by the wave $\nu$.  The reader is referred to
+\citet{ppmunsplit} for further defaults.
+
+Since the original CASTRO paper, the reference state implementation
+has been switched to:
 \begin{equation}
 \label{eq:refchoice}
 \tilde{q}_L = \left \{ \begin{array}{cc}
@@ -1334,33 +1329,12 @@ where the $(+)$ superscript here means the fastest wave moving to the right
 (the $u+c$ eigenvalue).   This is simply the average under the largest
 portion of the parabolic profile that could possible reach the interface 
 over the timestep.  This is
-in agreement with \citet{ppmunsplit} (eq. 90).  This makes our
-expression appear as:
-\begin{equation}
-\label{eq:ppmstatel}
-q_{i+1/2,L}^{n+1/2} = \tilde{q}_L -
-   \sum_{\nu;\lambda_i^{(\nu)}\ge 0} l_i^{(\nu)} \cdot \left [
-        \tilde{q}_L  - \mathcal{I}^{(\nu)}_+(q_i)
-       \right ] r_i^{(\nu)}
-\end{equation}
-The final change is that now we can no longer simply multiply
-$\tilde{q_i} - \mathcal{I}^{(\nu)}_+(q_i)$ by the flattening
-parameter, $\chi$, but instead blend the traced state with the cell
-centered state as:
-  \begin{equation}
-  q_{i+1/2,\{L,R\}}^{n+1/2} \leftarrow (1 - \chi) q_i + \chi q_{i+1/2,\{L,R\}}^{n+1/2}
-  \end{equation}
-This is the same prescription used in the \cite{ppm}.
+in agreement with \citet{ppmunsplit} (eq. 90).  The flattening
+in the original CASTRO paper has also been updated as discussed
+in \citet{zingalekatz:2015}.
 
-This change is now the default in the public version of Castro,
-and can be controlled with the parameter {\tt castro.ppm\_reference}.
-Figure~\ref{Fig:sod} shows the
-solution to the Sod problem using the old and new reference states.
-We see that the shock and contact are slightly sharper with this new
-reference state, but also there is a slight dip at the tail of the
-rarefaction with the new method.
-
-It is instructive to look at the effect of the reference state choice.
+We comment on the choice of reference state for passively-advected
+quantities (like $X_k$ or the transverse velocity).
 First, consider one of the variables present in one-dimensional flow
 (density, velocity in the normal direction, and pressure).  Here we
 our reference state is as in Eq.~\ref{eq:refchoice} and we have.
