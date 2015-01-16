@@ -78,7 +78,7 @@ make_inputs:
 		echo "max_step = $(max_step)" >> $(inputs) ; \
 		echo "stop_time = $(stop_time)" >> $(inputs) ; \
 		echo "geometry.is_periodic = $(geometry.is_periodic)" >> $(inputs) ; \
-		echo "geometry.coord_sys = $(geometry.is_periodic)" >> $(inputs) ; \
+		echo "geometry.coord_sys = $(geometry.coord_sys)" >> $(inputs) ; \
 		echo "geometry.prob_lo = $(geometry.prob_lo)" >> $(inputs) ; \
 		echo "geometry.prob_hi = $(geometry.prob_hi)" >> $(inputs) ; \
 		echo "castro.dt_cutoff = $(castro.dt_cutoff)" >> $(inputs) ; \
