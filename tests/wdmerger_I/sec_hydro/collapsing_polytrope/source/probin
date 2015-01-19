@@ -1,0 +1,11 @@
+&fortin
+
+
+
+/
+
+&extern
+
+  polytrope_type = 2
+
+/
