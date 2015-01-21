@@ -14,11 +14,6 @@ include $(WDMERGER_HOME)/job_scripts/inputs
 
 include $(WDMERGER_HOME)/job_scripts/probin
 
-# Prints a variable VAR when makefile is called as
-# make print-VAR
-
-print-%: ; @echo $* is $($*)
-
 # Makefile options. We'll use the ?= method so that
 # the including makefile can override these for custom tests
 # (e.g. changing the number of dimensions or the EOS).
@@ -30,6 +25,25 @@ FCOMP ?= gfortran
 DIM ?= 3
 EOS_dir ?= helmeos
 USE_GRAV ?= TRUE
+DEBUG ?= FALSE
+
+# Determine where our source files are coming from
+# based on the relevant file in the source directory.
+
+ifneq ($(wildcard source/full_source),)
+	Blocs := source/
+	Bpack := source/Make.package
+else ifneq ($(wildcard source/partial_source),)
+	Blocs := source/ $(WDMERGER_HOME)/source/
+	Bpack := $(WDMERGER_HOME)/source/Make.package
+else ifneq ($(wildcard source/modules_only),)
+	Blocs := source/ $(WDMERGER_HOME)/source/modules/
+	Bpack := source/Make.package $(WDMERGER_HOME)/source/modules/Make.package
+else
+	Blocs := $(WDMERGER_HOME)/source/ $(WDMERGER_HOME)/source/modules/
+	Bpack := $(WDMERGER_HOME)/source/Make.package $(WDMERGER_HOME)/source/modules/Make.package
+endif
+
 
 # Sets up the CASTRO makefile in the local directory
 # and inserts our preferred make options like compiler
@@ -56,14 +70,9 @@ make_castro: make_inputs make_probin
 		sed -i "/USE_GRAV/c USE_GRAV = $(USE_GRAV)" $(local_makefile) ; \
 		sed -i "/USE_MPI/c USE_MPI = $(USE_MPI)" $(local_makefile) ; \
 		sed -i "/USE_OMP/c USE_OMP = $(USE_OMP)" $(local_makefile) ; \
-		if [ -e "source/full_source" ] ; \
-		then \
-			sed -i "/Blocs/c Blocs := source/" $(local_makefile) ; \
-			sed -i "/Bpack/c Bpack := source/Make.package" $(local_makefile) ; \
-		elif [ -e "source/partial_source" ] ; \
-		then \
-			sed -i "/Blocs/c Blocs := source/ $(WDMERGER_HOME)/source/" $(local_makefile) ; \
-		fi \
+		sed -i "/DEBUG/c DEBUG = $(DEBUG)" $(local_makefile) ; \
+		sed -i "/Blocs/c Blocs := $(Blocs)" $(local_makefile) ; \
+		sed -i "/Bpack/c Bpack := $(Bpack)" $(local_makefile) ; \
 	fi
 
 	make -f $(local_makefile)
@@ -142,7 +151,7 @@ make_probin:
 
 	if [ ! -e $(probin) ]; \
 	then \
-		if [ ! -e "source/full_source" ] ; \
+		if [ ! -e "source/probin" ] ; \
 		then \
 			touch $(probin) ; \
 			echo "&fortin" >> $(probin) ; \
@@ -177,3 +186,8 @@ clean:
 		rm -f $(local_makefile); \
 	fi
 	rm -rf $(clean_targets)
+
+# Prints a variable VAR when makefile is called as
+# make print-VAR
+
+print-%: ; @echo $* is $($*)

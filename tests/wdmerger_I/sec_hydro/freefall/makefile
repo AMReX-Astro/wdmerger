@@ -3,6 +3,7 @@
 mass_P = 0.90
 mass_S = 0.81
 
+castro.do_rotation = 0
 castro.rotational_period = 100.0
 
 amr.plot_per = 0.1
