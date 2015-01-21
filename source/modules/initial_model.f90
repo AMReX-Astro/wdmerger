@@ -37,7 +37,7 @@ contains
 
     double precision :: temp_base, delta
 
-    double precision :: xzn_hse(nx), xznl(nx), xznr(nx), M_enclosed(nx), cs_hse(nx)
+    double precision :: xzn_hse(nx), xznl(nx), xznr(nx), M_enclosed(nx)
 
     integer :: i, n
 
@@ -74,7 +74,7 @@ contains
 
     integer, parameter :: MAX_ITER = 250
 
-    integer :: iter, iter_mass, num_iters
+    integer :: iter, iter_mass
 
     integer :: icutoff
 
@@ -127,7 +127,6 @@ contains
 
     endif
 
-    isentropic = .false.
 
     !----------------------------------------------------------------------------
     ! Create a 1-D uniform grid.
@@ -195,117 +194,51 @@ contains
 
              do iter = 1, MAX_ITER
 
-                if (isentropic) then
+                ! The core is isothermal, so we just need to constrain
+                ! the density and pressure to agree with the EOS and HSE.
 
-                   p_want = model_hse(i-1,ipres_model) + &
-                        delx*0.5_dp_t*(dens_zone + model_hse(i-1,idens_model))*g_zone
+                ! We difference HSE about the interface between the current
+                ! zone and the one just inside.
+                p_want = model_hse(i-1,ipres_model) + &
+                     delx*0.5*(dens_zone + model_hse(i-1,idens_model))*g_zone
 
-                   ! We have two functions to zero:
-                   !   A = p_want - p(rho,T)
-                   !   B = entropy_base - s(rho,T)
-                   ! We use a two dimensional Taylor expansion and find the deltas
-                   ! for both density and temperature.
+                eos_state%T     = temp_zone
+                eos_state%rho   = dens_zone
+                eos_state%xn(:) = xn(:)
 
-                   eos_state%T     = temp_zone
-                   eos_state%rho   = dens_zone
-                   eos_state%xn(:) = xn(:)
+                ! (T, rho) -> (p, s)
+                call eos(eos_input_rt, eos_state, .false.)
 
-                   ! (T, rho) -> (p, s) 
-                   call eos(eos_input_rt, eos_state, .false.)
+                entropy = eos_state%s
+                pres_zone = eos_state%p
 
-                   entropy = eos_state%s
-                   pres_zone = eos_state%p
+                dpd = eos_state%dpdr
 
-                   dpt = eos_state%dpdt
-                   dpd = eos_state%dpdr
-                   dst = eos_state%dsdt
-                   dsd = eos_state%dsdr
+                drho = (p_want - pres_zone)/(dpd - 0.5*delx*g_zone)
 
-                   A = p_want - pres_zone
-                   B = entropy_base - entropy
+                dens_zone = max(0.9*dens_zone, &
+                     min(dens_zone + drho, 1.1*dens_zone))
 
-                   dAdT = -dpt
-                   dAdrho = 0.5d0*delx*g_zone - dpd
-                   dBdT = -dst
-                   dBdrho = -dsd
+                if (abs(drho) < TOL_HSE*dens_zone) then
+                   converged_hse = .TRUE.
+                   exit
+                endif
 
-                   dtemp = (B - (dBdrho/dAdrho)*A)/ &
-                        ((dBdrho/dAdrho)*dAdT - dBdT)
+                if (dens_zone < ambient_state % rho) then
 
-                   drho = -(A + dAdT*dtemp)/dAdrho
+                   icutoff = i
+                   dens_zone = ambient_state % rho
+                   temp_zone = ambient_state % T
+                   converged_hse = .TRUE.
+                   fluff = .TRUE.
+                   exit
 
-                   dens_zone = max(0.9_dp_t*dens_zone, &
-                                   min(dens_zone + drho, 1.1_dp_t*dens_zone))
-
-                   temp_zone = max(0.9_dp_t*temp_zone, &
-                                   min(temp_zone + dtemp, 1.1_dp_t*temp_zone))
-
-                   ! check if the density falls below our minimum
-                   ! cut-off -- if so, floor it
-                   if (dens_zone < ambient_state % rho) then
-
-                      dens_zone = ambient_state % rho
-                      temp_zone = ambient_state % T
-                      converged_hse = .TRUE.
-                      fluff = .TRUE.
-                      exit
-
-                   endif
-
-                   if ( abs(drho) < TOL_HSE*dens_zone .and. &
-                        abs(dtemp) < TOL_HSE*temp_zone) then
-                      converged_hse = .TRUE.
-                      exit
-                   endif
-
-                else
-                   ! The core is isothermal, so we just need to constrain
-                   ! the density and pressure to agree with the EOS and HSE.
-
-                   ! We difference HSE about the interface between the current
-                   ! zone and the one just inside.
-                   p_want = model_hse(i-1,ipres_model) + &
-                        delx*0.5*(dens_zone + model_hse(i-1,idens_model))*g_zone
-
-                   eos_state%T     = temp_zone
-                   eos_state%rho   = dens_zone
-                   eos_state%xn(:) = xn(:)
-
-                   ! (T, rho) -> (p, s)
-                   call eos(eos_input_rt, eos_state, .false.)
-
-                   entropy = eos_state%s
-                   pres_zone = eos_state%p
-
-                   dpd = eos_state%dpdr
-
-                   drho = (p_want - pres_zone)/(dpd - 0.5*delx*g_zone)
-
-                   dens_zone = max(0.9*dens_zone, &
-                        min(dens_zone + drho, 1.1*dens_zone))
-
-                   if (abs(drho) < TOL_HSE*dens_zone) then
-                      converged_hse = .TRUE.
-                      exit
-                   endif
-
-                   if (dens_zone < ambient_state % rho) then
-
-                      icutoff = i
-                      dens_zone = ambient_state % rho
-                      temp_zone = ambient_state % T
-                      converged_hse = .TRUE.
-                      fluff = .TRUE.
-                      exit
-
-                   endif
                 endif
 
                 if (temp_zone < ambient_state % T .and. isentropic) then
                    temp_zone = ambient_state % T
                    isentropic = .false.
                 endif
-
 
              enddo
 
@@ -347,8 +280,6 @@ contains
           M_enclosed(i) = M_enclosed(i-1) + &
                FOUR3RD*M_PI*(xznr(i) - xznl(i))* &
                (xznr(i)**2 +xznl(i)*xznr(i) + xznl(i)**2)*model_hse(i,idens_model)
-
-          cs_hse(i) = eos_state%cs
 
        enddo  ! End loop over zones
 
