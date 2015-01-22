@@ -181,6 +181,85 @@ def timing(output_filename):
 
 
 #
+# Add up all the energy and momentum losses reported from castro.print_energy_diagnostics.
+#
+
+def energy_momentum_diagnostics(output_filename):
+
+    # Read in the file and return the following data in arrays:
+    # - All energy added from the gravitational source terms
+    # - All energy added from the gravitational correction terms
+    # - All momentum added from the gravitational correction terms
+
+    output = open(output_filename, 'r')
+    lines = output.readlines()
+    rho_E_lines = filter(lambda s: s[0:7] == "(rho E)",lines)
+    grav_E_lines = filter(lambda s: s.split()[4] == "grav.",rho_E_lines)
+    flux_E_lines    = filter(lambda s: s.split()[4] == "fluxes",rho_E_lines)
+    mass_lines = filter(lambda s: s[0:7] == "   Mass",lines)
+    xmom_lines = filter(lambda s: s[0:4] == "xmom",lines)
+    ymom_lines = filter(lambda s: s[0:4] == "ymom",lines)
+    zmom_lines = filter(lambda s: s[0:4] == "zmom",lines)
+
+    neg_rho_m_lines = filter(lambda s: s.split()[3] == "negative",mass_lines)
+    neg_rho_E_lines = filter(lambda s: s.split()[4] == "negative",mass_lines)
+
+    grav_xmom_lines = filter(lambda s: s.split()[3] == "grav.",xmom_lines)
+    grav_ymom_lines = filter(lambda s: s.split()[3] == "grav.",ymom_lines)
+    grav_zmom_lines = filter(lambda s: s.split()[3] == "grav.",zmom_lines)
+    flux_xmom_lines = filter(lambda s: s.split()[3] == "fluxes",xmom_lines)
+    flux_ymom_lines = filter(lambda s: s.split()[3] == "fluxes",ymom_lines)
+    flux_zmom_lines = filter(lambda s: s.split()[3] == "fluxes",zmom_lines)
+    reset_E_lines   = filter(lambda s: s.split()[4] == "reset",rho_E_lines)
+
+    mass_added_neg_reset = sum([float(s.split()[7]) for s in neg_rho_m_lines])
+    E_added_neg_reset    = sum([float(s.split()[8]) for s in neg_rho_E_lines])
+
+    E_added_flux =  sum([float(s.split()[6]) for s in flux_E_lines])
+    E_added_grav = -sum([float(s.split()[8]) for s in grav_E_lines])
+
+    xmom_added_flux = sum([float(s.split()[5]) for s in flux_xmom_lines])
+    ymom_added_flux = sum([float(s.split()[5]) for s in flux_ymom_lines])
+    zmom_added_flux = sum([float(s.split()[5]) for s in flux_zmom_lines])
+    xmom_added_grav = sum([float(s.split()[7]) for s in grav_xmom_lines])
+    ymom_added_grav = sum([float(s.split()[7]) for s in grav_ymom_lines])
+    zmom_added_grav = sum([float(s.split()[7]) for s in grav_zmom_lines])
+
+    E_added_reset   = sum([float(s.split()[7]) for s in reset_E_lines])
+
+    print ""
+    print "Analysis of output file " + output_filename
+    print ""
+
+    print "Mass added from negative density resets = " + str(mass_added_neg_reset)
+    print "Energy added from negative density resets = " + str(E_added_neg_reset)
+    print "Energy added from gravitational sources = " + str(E_added_grav)
+    print "Energy added from hydro fluxes = " + str(E_added_flux)
+    print "Energy added from resets = " + str(E_added_reset)
+    print "xmom added from hydro fluxes = " + str(xmom_added_flux)
+    print "ymom added from hydro fluxes = " + str(ymom_added_flux)
+    print "zmom added from hydro fluxes = " + str(zmom_added_flux)
+    print "xmom added from gravitational sources = " + str(xmom_added_grav)
+    print "ymom added from gravitational sources = " + str(ymom_added_grav)
+    print "zmom added from gravitational sources = " + str(zmom_added_grav)
+
+    print ""
+    print "Final diagnostics:"
+    print ""
+
+    print "Mass added = " + str(mass_added_neg_reset)
+    print "Energy added = " + str(E_added_grav + E_added_flux + E_added_reset + E_added_neg_reset)
+    print "xmom added = " + str(xmom_added_flux + xmom_added_grav)
+    print "ymom added = " + str(ymom_added_flux + ymom_added_grav)
+    print "zmom added = " + str(zmom_added_flux + zmom_added_grav)
+
+    print ""
+
+#    return [avg_timestep, avg_timestep_no_grav]
+
+
+
+#
 # Get a sorted list of all the plotfiles in directory dir.
 #
 

@@ -83,7 +83,7 @@ function run {
 
     if [ $MACHINE == "GENERICLINUX" ] ; then 
 	echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $job_script
-    elif [ $MACHINE == "BLUE WATERS" ]; then
+    elif [ $MACHINE == "BLUE_WATERS" ]; then
 	sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $job_script
 	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $job_script
 	sed -i "/aprun/c aprun -n $nprocs -N $ppn $CASTRO $inputs \$\{restartString\}" $job_script
