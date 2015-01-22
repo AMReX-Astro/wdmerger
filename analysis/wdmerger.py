@@ -215,8 +215,8 @@ def energy_momentum_diagnostics(output_filename):
     mass_added_neg_reset = sum([float(s.split()[7]) for s in neg_rho_m_lines])
     E_added_neg_reset    = sum([float(s.split()[8]) for s in neg_rho_E_lines])
 
-    E_added_flux =  sum([float(s.split()[6]) for s in flux_E_lines])
-    E_added_grav = -sum([float(s.split()[8]) for s in grav_E_lines])
+    E_added_flux = sum([float(s.split()[6]) for s in flux_E_lines])
+    E_added_grav = sum([float(s.split()[8]) for s in grav_E_lines])
 
     xmom_added_flux = sum([float(s.split()[5]) for s in flux_xmom_lines])
     ymom_added_flux = sum([float(s.split()[5]) for s in flux_ymom_lines])
