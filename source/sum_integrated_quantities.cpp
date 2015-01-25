@@ -22,10 +22,12 @@ Castro::sum_integrated_quantities ()
     Real momentum[3]  = { 0.0 };
     Real rho_E        = 0.0;
     Real rho_e        = 0.0;
+    Real rho_K        = 0.0;
     Real rho_phi      = 0.0;
 
     Real gravitational_energy = 0.0; 
     Real kinetic_energy       = 0.0; 
+    Real gas_energy           = 0.0;
     Real rotational_energy    = 0.0;
     Real internal_energy      = 0.0; 
     Real total_energy         = 0.0;
@@ -105,6 +107,7 @@ Castro::sum_integrated_quantities ()
       mom_grid[2]     += ca_lev.volWgtSum("zmom", time);
 
       rho_E    += ca_lev.volWgtSum("rho_E", time);
+      rho_K    += ca_lev.volWgtSum("kineng",time);
       rho_e    += ca_lev.volWgtSum("rho_e", time);
 
 #ifdef GRAVITY
@@ -215,8 +218,9 @@ Castro::sum_integrated_quantities ()
 
     gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
     internal_energy = rho_e;
-    kinetic_energy = rho_E - rho_e;
-    total_E_grid = gravitational_energy + internal_energy + kinetic_energy;
+    kinetic_energy = rho_K;
+    gas_energy = rho_E;
+    total_E_grid = gravitational_energy + rho_E;
     total_energy = total_E_grid;
 
     for (int i = 0; i <= 2; i++) {
@@ -263,6 +267,7 @@ Castro::sum_integrated_quantities ()
 	  data_log1 << std::setw(datawidth) << "     DT                ";
           data_log1 << std::setw(datawidth) << " TOTAL ENERGY          ";
 	  data_log1 << std::setw(datawidth) << " TOTAL E GRID          ";
+	  data_log1 << std::setw(datawidth) << " GAS ENERGY            ";
           data_log1 << std::setw(datawidth) << " KIN. ENERGY           ";
 	  data_log1 << std::setw(datawidth) << " ROT. ENERGY           ";
           data_log1 << std::setw(datawidth) << " GRAV. ENERGY          ";
@@ -322,6 +327,7 @@ Castro::sum_integrated_quantities ()
 
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << total_energy;
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << total_E_grid;
+ 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << gas_energy;
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << kinetic_energy;
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rotational_energy;	  
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << gravitational_energy;
