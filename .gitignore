@@ -1,4 +1,4 @@
-# latex intermediates
+# LaTeX files and figures
 *.aux
 *.log
 *.dvi
@@ -7,12 +7,13 @@
 *.blg
 *.lof
 *.lot
-
+*.png
+*.eps
+*.pdf
 
 # emacs temporaries
 *~
 \#*
-
 
 # Castro executables
 Castro*.ex
@@ -26,6 +27,9 @@ extern.f90
 network.f90
 helm_table.dat
 wdmerger_diag.out
+
+# Python objects
+*.pyc
 
 # build directories
 o/
