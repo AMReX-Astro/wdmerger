@@ -30,18 +30,27 @@ DEBUG ?= FALSE
 # Determine where our source files are coming from
 # based on the relevant file in the source directory.
 
+root_locs = $(WDMERGER_HOME)/source/
+root_pack = $(WDMERGER_HOME)/source/Make.package
+
+module_locs = $(WDMERGER_HOME)/source/modules/
+module_pack = $(WDMERGER_HOME)/source/modules/Make.package
+
+curr_locs = source/
+curr_pack = source/Make.package
+
 ifneq ($(wildcard source/full_source),)
-	Blocs := source/
-	Bpack := source/Make.package
+	Blocs := $(curr_locs)
+	Bpack := $(curr_pack)
 else ifneq ($(wildcard source/partial_source),)
-	Blocs := source/ $(WDMERGER_HOME)/source/
-	Bpack := $(WDMERGER_HOME)/source/Make.package
+	Blocs := $(curr_locs) $(root_locs) $(module_locs)
+	Bpack := $(curr_pack) $(root_pack) $(module_pack)
 else ifneq ($(wildcard source/modules_only),)
-	Blocs := source/ $(WDMERGER_HOME)/source/modules/
-	Bpack := source/Make.package $(WDMERGER_HOME)/source/modules/Make.package
+	Blocs := $(curr_locs) $(module_locs)
+	Bpack := $(curr_pack) $(module_pack)
 else
-	Blocs := $(WDMERGER_HOME)/source/ $(WDMERGER_HOME)/source/modules/
-	Bpack := $(WDMERGER_HOME)/source/Make.package $(WDMERGER_HOME)/source/modules/Make.package
+	Blocs := $(root_locs) $(module_locs)
+	Bpack := $(root_pack) $(module_pack)
 endif
 
 
