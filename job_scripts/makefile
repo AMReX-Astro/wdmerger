@@ -133,6 +133,9 @@ make_inputs:
 		echo "castro.small_temp = $(castro.small_temp)" >> $(inputs) ; \
 		echo "castro.small_dens = $(castro.small_dens)" >> $(inputs) ; \
 		echo "castro.allow_negative_energy = $(castro.allow_negative_energy)" >> $(inputs) ; \
+		echo "castro.dual_energy_update_E_from_e = $(castro.dual_energy_update_E_from_e)" >> $(inputs) ; \
+		echo "castro.dual_energy_eta1 = $(castro.dual_energy_eta1)" >> $(inputs) ; \
+		echo "castro.dual_energy_eta2 = $(castro.dual_energy_eta2)" >> $(inputs) ; \
 		echo "gravity.gravity_type = $(gravity.gravity_type)" >> $(inputs) ; \
 		echo "gravity.max_multipole_order = $(gravity.max_multipole_order)" >> $(inputs) ; \
 		echo "gravity.direct_sum_bcs = $(gravity.direct_sum_bcs)" >> $(inputs) ; \
