@@ -88,10 +88,6 @@ contains
 
     call grid_data
 
-    ! Set up the polytropic sphere
-
-    call polytrope_setup
-
   end subroutine
 
 
@@ -111,16 +107,17 @@ contains
     double precision :: polytrope_C12, polytrope_O16
 
     namelist /fortin/ &
-         eta, rho_c, central_frac, &
+         mass, radius, &
          ambient_density, &
          nsub, &
-         polytrope_temp, polytrope_C12, polytrope_O16, &
+         stellar_temp, stellar_C12, stellar_O16, &
          denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
          velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
          presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev
 
     ! Set namelist defaults
+
     denerr = 1.d20
     dengrad = 1.d20
     max_denerr_lev = 10
@@ -143,20 +140,19 @@ contains
 
     nsub = 1
 
-    eta = 0.93d0
-    central_frac = 0.2d0
+    mass   = 1.0d0
+    radius = 1.0d9
 
-    rho_c = 1.0d7
+    ambient_density = 1.0d-4
 
-    ambient_density = 1.0d-10
-
-    polytrope_temp = 1.0d7
-    polytrope_C12  = HALF
-    polytrope_O16  = HALF
+    stellar_temp = 1.0d7
+    stellar_C12  = HALF
+    stellar_O16  = HALF
 
     smallx = 1.d-10
 
     ! Read namelist to override the defaults
+
     untin = 9 
     open(untin,file=probin,form='formatted',status='old')
     read(untin,fortin)
@@ -167,9 +163,9 @@ contains
     iC12 = network_species_index("carbon-12")
     iO16 = network_species_index("oxygen-16")
 
-    polytrope_comp(1:nspec) = smallx
-    polytrope_comp(iC12)    = polytrope_C12 - (nspec - 2) * smallx
-    polytrope_comp(iO16)    = polytrope_O16 - (nspec - 2) * smallx
+    stellar_comp(1:nspec) = smallx
+    stellar_comp(iC12)    = stellar_C12 - (nspec - 2) * smallx
+    stellar_comp(iO16)    = stellar_O16 - (nspec - 2) * smallx
 
   end subroutine read_namelist
 
@@ -202,9 +198,9 @@ contains
 
     ! Define ambient state and call EOS to get eint and pressure
 
-    ambient_state % rho = ambient_density * rho_c
-    ambient_state % T   = polytrope_temp
-    ambient_state % xn  = polytrope_comp
+    ambient_state % rho = ambient_density
+    ambient_state % T   = stellar_temp
+    ambient_state % xn  = stellar_comp
 
     call eos(eos_input_rt, ambient_state, .false.)
 
@@ -212,7 +208,7 @@ contains
  
     eos_state % rho = small_dens
     eos_state % T   = small_temp
-    eos_state % xn  = polytrope_comp
+    eos_state % xn  = stellar_comp
  
     call eos(eos_input_rt, eos_state, .false.)
 
@@ -237,49 +233,5 @@ contains
     center(3) = HALF * (zmax - zmin)
 
   end subroutine grid_data
-
-
-
-  subroutine polytrope_setup
-
-    use bl_constants_module, only: ZERO
-    use initial_model_module, only: init_1d
-    use model_parser_module, only: itemp_model, idens_model, ipres_model, ispec_model
-    use eos_module, only: eos_set_polytrope_parameters, eos_get_polytrope_parameters
-
-    implicit none
-
-    double precision :: dx
-
-    integer :: polytrope
-    double precision :: gamma, K_const, mu_e
-
-    radius = ZERO
-
-    npts_model = 1024
-
-    dx = 1.0d7
-
-    mass = -1.d0
-
-    ! Allocate arrays to hold the stellar models
-
-    allocate(model_state(npts_model,3+nspec))
-    allocate(model_r(npts_model))
-
-    ! Generate the polytropic sphere
-
-    call init_1d(model_r, model_state, npts_model, dx, radius, mass, rho_c, &
-                 polytrope_temp, polytrope_comp, ambient_state)
-
-    if (ioproc == 1) then
-        print *, "Generated initial model for WD of mass", mass, &
-                 ", central density", model_state(1,idens_model), &
-                 ", central pressure", model_state(1,ipres_model), &
-                 ", and radius", radius
-
-    endif
-
-  end subroutine polytrope_setup
 
 end module probdata_module

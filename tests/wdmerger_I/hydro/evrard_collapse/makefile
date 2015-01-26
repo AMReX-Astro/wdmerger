@@ -1,9 +1,8 @@
 # Problem-specific makefile variables
-EOS_dir=polytrope
+
+EOS_dir=gamma_law_general
 
 # Problem-specific variables
-
-geometry.is_periodic = 1 1 1
 
 castro.lo_bc       =  0 0 0
 castro.hi_bc       =  0 0 0

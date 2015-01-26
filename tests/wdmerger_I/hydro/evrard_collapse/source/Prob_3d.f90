@@ -39,14 +39,14 @@
                           delta,xlo,xhi)
 
      use probdata_module
-     use eos_module, only: eos_input_rp, eos
+     use eos_module, only: eos_input_re, eos
      use eos_type_module, only: eos_t
      use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
           UEDEN, UEINT, UFS, rot_period
      use network, only : nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
-     use initial_model_module, only: interpolate_3d_from_1d
+     use fundamental_constants_module, only: Gconst
 
      implicit none
 
@@ -79,21 +79,16 @@
            do i = lo(1), hi(1)   
               loc(1) = xlo(1) + delta(1)*dble(i+HALF-lo(1))
 
-              dist = loc - center
+              dist = sum( (loc - center)**2 )
+              dist = dist**0.5
 
-              if (sum(dist**2) <= radius**2) then
-                 call interpolate_3d_from_1d(model_r, model_state, npts_model, dist, delta, zone_state, nsub)
-
-                 ! If we're in the central part of the polytrope, reset the pressure to a fraction eta
-                 ! of the value in HSE, and then recompute the thermodynamics.
-
-                 if (sum(dist**2) <= (central_frac * radius)**2) then
-                    zone_state % p = zone_state % p * eta
-                    call eos(eos_input_rp, zone_state)
-                 endif
+              if (dist <= radius) then
+                 zone_state % rho = mass / (2 * M_PI * radius**2 * dist)
               else
                  zone_state = ambient_state
               endif
+
+              zone_state % e = 0.05 * Gconst / radius
 
               state(i,j,k,URHO)  = zone_state % rho
               state(i,j,k,UTEMP) = zone_state % T
