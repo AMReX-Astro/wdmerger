@@ -28,11 +28,8 @@ module probdata_module
 
   integer :: npts_model
 
-  double precision :: P_c, rho_c, mass, radius
-  double precision :: polytrope_temp, polytrope_comp(nspec)
-
-  ! Fraction by which we decrease the central pressure
-  double precision :: eta, central_frac
+  double precision :: mass, radius
+  double precision :: stellar_comp(nspec)
 
   ! Smallest allowed mass fraction
   double precision :: smallx
@@ -40,13 +37,12 @@ module probdata_module
   ! Smallest allowed velocity on the grid
   double precision :: smallu
   
-  ! EOS state type that describes the ambient gas around the polytrope
+  ! EOS state type that describes the ambient gas around the star
   type (eos_t) :: ambient_state
   double precision :: ambient_density
   
   ! Controls interpolation from 1D model to 3D model
   integer :: nsub
-  logical :: interp_temp
 
   ! Grid info
   double precision :: center(3)
@@ -82,7 +78,7 @@ contains
 
     ! Finalize ambient state, and get small_pres
 
-    call set_ambient_and_small
+    call set_small
 
     ! Complete any grid related calculations like defining its center
 
@@ -104,13 +100,13 @@ contains
     integer :: untin, i
 
     integer :: iC12, iO16
-    double precision :: polytrope_C12, polytrope_O16
+    double precision :: stellar_C12, stellar_O16
 
     namelist /fortin/ &
          mass, radius, &
          ambient_density, &
          nsub, &
-         stellar_temp, stellar_C12, stellar_O16, &
+         stellar_C12, stellar_O16, &
          denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
          velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
          presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
@@ -145,7 +141,6 @@ contains
 
     ambient_density = 1.0d-4
 
-    stellar_temp = 1.0d7
     stellar_C12  = HALF
     stellar_O16  = HALF
 
@@ -186,7 +181,7 @@ contains
 
   ! Define the ambient state, and calculate small_pres
 
-  subroutine set_ambient_and_small
+  subroutine set_small
 
     use meth_params_module, only: small_temp, small_pres, small_dens, small_ener
 
@@ -195,14 +190,6 @@ contains
     type (eos_t) :: eos_state
 
     smallu = 1.d-12
-
-    ! Define ambient state and call EOS to get eint and pressure
-
-    ambient_state % rho = ambient_density
-    ambient_state % T   = stellar_temp
-    ambient_state % xn  = stellar_comp
-
-    call eos(eos_input_rt, ambient_state, .false.)
 
     ! Given the inputs of small_dens and small_temp, figure out small_pres.
  
@@ -215,7 +202,7 @@ contains
     small_pres = eos_state % p
     small_ener = eos_state % e
 
-  end subroutine set_ambient_and_small
+  end subroutine set_small
 
 
 

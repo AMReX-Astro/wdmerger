@@ -46,7 +46,7 @@
      use network, only : nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
-     use fundamental_constants_module, only: Gconst
+     use fundamental_constants_module, only: Gconst, M_solar
 
      implicit none
 
@@ -57,7 +57,7 @@
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
      double precision :: loc(3), xx, yy
-     double precision :: dist(3)
+     double precision :: dist
 
      integer :: pt_index(3)
 
@@ -83,12 +83,15 @@
               dist = dist**0.5
 
               if (dist <= radius) then
-                 zone_state % rho = mass / (2 * M_PI * radius**2 * dist)
+                 zone_state % rho = mass * m_solar / (2 * M_PI * radius**2 * dist)
               else
-                 zone_state = ambient_state
+                 zone_state % rho = ambient_density
               endif
 
-              zone_state % e = 0.05 * Gconst / radius
+              zone_state % e  = 0.05 * Gconst * mass * m_solar / radius
+              zone_state % xn = stellar_comp
+
+              call eos(eos_input_re, zone_state)
 
               state(i,j,k,URHO)  = zone_state % rho
               state(i,j,k,UTEMP) = zone_state % T

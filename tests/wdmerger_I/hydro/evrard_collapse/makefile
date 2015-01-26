@@ -4,8 +4,7 @@ EOS_dir=gamma_law_general
 
 # Problem-specific variables
 
-castro.lo_bc       =  0 0 0
-castro.hi_bc       =  0 0 0
+stop_time = 15.0
 
 geometry.prob_lo = 0.00e9 0.00e9 0.00e9
 geometry.prob_hi = 5.12e9 5.12e9 5.12e9
