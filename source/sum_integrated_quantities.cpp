@@ -202,18 +202,6 @@ Castro::sum_integrated_quantities ()
       com_vel[i]   = momentum[i] / mass;
     } 
 
-    const Real* ml = &mass_left;
-    const Real* mr = &mass_right;
-    const Real* cxl = &com_l[0];
-    const Real* cxr = &com_r[0];
-    const Real* cyl = &com_l[1];
-    const Real* cyr = &com_r[1];
-    const Real* czl = &com_l[2];
-    const Real* czr = &com_r[2];
-
-    BL_FORT_PROC_CALL(COM_SAVE,com_save)
-      (ml, mr, cxl, cxr, cyl, cyr, czl, czr);
-
     // Complete calculations for energy and momenta
 
     gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
