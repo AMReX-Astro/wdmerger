@@ -15,7 +15,7 @@
 *~
 \#*
 
-# Castro executables
+# Executables
 Castro*.ex
 
 # plt and chk files
@@ -27,6 +27,8 @@ extern.f90
 network.f90
 helm_table.dat
 wdmerger_diag.out
+buildInfo.cpp
+castro_makefile
 
 # Python objects
 *.pyc
