@@ -464,20 +464,167 @@ synchronization at the end.
 
 The effect of gravity on the hydrodynamical evolution is typically
 incorporated by the use of a source term for the momentum and energy
-equations. The integral form of the momentum source term is
+equations. In a finite volume methodology, the momentum source term appears in 
+integral form as
 \begin{equation}
-  \int \rho \mathbf{g}\, dV
+  \left.\frac{\partial (\rho \mathbf{u})}{\partial t}\right|_{\text{grav}} = \frac{1}{\Delta V} \int \rho \mathbf{g}\, dV
 \end{equation}
 and for the energy source term it is
 \begin{equation}
-  \int \rho \mathbf{u}\cdot\mathbf{g}\, dV \label{eq:cell_center_gravity_source}.
+  \left.\frac{\partial (\rho E)}{\partial t}\right|_{\text{grav}} = \frac{1}{\Delta V} \int \rho \mathbf{u}\cdot\mathbf{g}\, dV \label{eq:cell_center_gravity_source}.
 \end{equation}
+Here $\Delta V$ is the cell's volume.
 In most hydrodynamics codes these are discretized as $\rho\,
-\mathbf{g}\, \Delta V$ and $\rho\, \mathbf{u}\,\cdot\mathbf{g}\,
-\Delta V$, respectively, where $\Delta V$ is the zone volume and
-$\rho$, $\mathbf{u}$, and $\mathbf{g}$ are evaluated at the zone
-center. As observed by \cite{arepo}, the essential problem with this
-approach is that fluid movements in a grid code are calculated using
+\mathbf{g}$ and $\rho\, \mathbf{u}\,\cdot\mathbf{g}$, respectively, 
+where $\rho$, $\mathbf{u}$, and $\mathbf{g}$ 
+are evaluated at the zone
+center. 
+
+There are two ways that this source term enters the hydrodynamics update.
+First, during the hydrodynamics update, we alter the edge states that enter
+into the determination of the fluxes. To second order in space and time, 
+this can be done using the cell-centered
+source term evaluated at time-level $n$. The details of this are described in 
+the appendix. Second, after the hydrodynamics step, we add the time-centered source term
+to the state. First we will describe how we do this for the momentum,
+and then we will describe our approach for the energy. This discussion will be somewhat detailed.
+However, we believe that the attention is necessary because of the importance of accuracy
+in the gravitational source terms for our problem. The stability of the white dwarf binary
+system is dependent in large part upon accurate coupling of the hydrodynamics and gravity;
+an error in this approach could lead to, for example, a spurious mass transfer episode
+that might lead us to very different conclusions about the long term stability of such a system.
+Such considerations are generally unimportant for spherically-symmetric single star calculations,
+but are of the utmost importance in a simulation where the global gravitational field can change 
+quite significantly over the course of the simulation.
+
+In a system with self-gravity, total momentum is conserved if the spatial domain
+includes all of the mass of the system. This must be the 
+case because each mass element exerts an equal and opposite gravitational force 
+on every other mass element. However, the standard approach does not necessarily
+guarantee that momentum is conserved numerically. We cannot represent a vacuum state 
+in our code, so there is a small but non-zero density on the edge of the grid. 
+This allows momentum to leak out of the domain even if the gravitational source term 
+is written in an explicitly conservative manner. To see this, one can write the 
+density in terms of the potential and then consider its spatial discretization. For simplicity,
+we will consider one spatial dimension.
+\begin{align}
+  -\rho_{i}  \frac{d\Phi_{i}}{dx} &= -\frac{1}{4\pi G} \frac{d^2\Phi_i}{dx^2} \frac{d \Phi}{dx} \notag \\
+  &= -\frac{1}{4\pi G} \left[\frac{\Phi_{i-1} - 2 \Phi_{i} + \Phi_{i+1}}{\Delta x^2}\right] \left[ \frac{\Phi_{i+1} - \Phi_{i-1}}{2\Delta x} \right] \notag \\
+  &= -\frac{1}{8\pi G \Delta x^3} \left[ \Phi_{i+1}^2 - \Phi_{i-1}^2 - 2\Phi_i\left(\Phi_{i+1} - \Phi_{i-1}\right) \right] \label{eq:momentum_discretization}
+\end{align}
+It is easy to verify that adding the source terms two cells to the left
+and right of this zone will result in complete cancellation of the source terms.
+However, if the potential if non-zero outside of the domain, then there will be
+momentum lost or gained from the grid, which will be encapsulated in the ghost cells
+just outside the domain. In addition, when we replace the Laplacian above by the full
+three-dimensional stencil including the $y$ and $z$ derivatives, and depending on the
+discretization these will not be cancelled at all. This latter problem can be resolved by
+writing the momentum update in an explicitly conservative way.
+
+\citet[Chapter 4]{shu:1992} observes that it is possible to describe the source term 
+for the momentum equation by taking the divergence of a gravitational stress tensor,
+\begin{equation}
+  G_{ij} = -\frac{1}{4\pi G}\left(g_i g_j - \frac{1}{2}|\mathbf{g}|^2\delta_{ij}\right).
+\end{equation}
+The momentum equations are then written explicitly in conservative form.
+The flux at any zone boundary is added to one cell and
+subtracted from another, so that the total momentum in the domain interior stays constant to
+within numerical roundoff error. This result can be derived by analytically recasting 
+Equation \ref{eq:momentum_discretization}. In the continuum limit, the two momentum
+formulations are identical. Thus the latter has been advocated by, for example, 
+\cite{jiang:2013} for the ATHENA code. However, in a finite discretization 
+the divergence of the gravitational acceleration is no longer guaranteed to equal
+the zone density. In particular, we find that the mixing of the gravitational components
+means that the truncation error in the gravitational field can lead to large errors
+that imply a density much different than the zone's actual density. This is especially
+problematic in a simulation with a low-density ambient medium, where even a small error 
+in the momentum update can lead to large changes in a zone's momentum. By continuing to explicitly
+use the cell density in the momentum update, we can forgo this possibility: the size of the update
+will always be suitably small if the zone's density is small. Thus for our simulations
+we continue to use the standard source term for the momentum.
+
+Time centering of this source term is done in CASTRO using a predictor-corrector approach.
+At the start of a coarse grid timestep, we solve the gravitational potential for the density $\rho^n$.
+We then add to the momenta a prediction of the source term that is first-order accurate in time, 
+$\Delta t\, \rho^n\, \mathbf{g}^n$. After the hydrodynamics update, we recalculate
+the gravitational potential based on the new density, $\rho^n$, and then add 
+$-(\Delta t/2) \rho^n \mathbf{g}^n + (\Delta t/2) \rho^{n+1} \mathbf{g}^{n+1}$ to the momenta.
+
+Dealing with the energy equation is more difficult. The central
+challenge is to write down a form of the discretized energy equation
+that explicitly conserves total energy when coupled to gravity. When
+gravity is included, the total energy is
+\begin{equation}
+  \rho E_{\text{tot}} = \rho E - \frac{1}{2}\rho\Phi = \frac{1}{2}\rho \mathbf{u}^2 + \rho e - \frac{1}{2}\rho\Phi, \label{eq:total_energy_gravity}
+\end{equation}
+where $\rho E$ is the total gas energy from the pure hydrodynamics equation,
+and the factor of $1/2$ in the gravitational energy term is necessary
+for simulations with self-gravity to prevent double-counting of
+interactions. The standard approach has been to note that the total energy update
+can be written down by taking the dot product of the velocity and the momentum source term,
+so that the time-centered energy update is
+\begin{equation}
+  \left.\Delta (\rho E)\right|_\text{grav} = \frac{\Delta t}{2} \left[ \rho^n \mathbf{u}^n \cdot \mathbf{g}^n + \rho^{n+1} \mathbf{u}^{n+1} \cdot \mathbf{g}^{n+1}\right].
+\end{equation}
+However, this does not conserve the total energy of Equation \ref{eq:total_energy_gravity}.
+In particular, we notice in our simulations a long-term secular change in the gravitational potential energy
+that is not accounted for in the gas energy. One solution to this problem has been offered by 
+\cite{jiang:2013} and \cite{marcello:2012}. They propose to evolve the total energy instead of the gas energy 
+in the hydrodynamics equations. When this is done, one can write down an explicitly conservative 
+formulation:
+\begin{equation}
+  \frac{\partial \rho E_{\text{tot}}}{\partial t} = -\bm{\nabla}\cdot(\rho\mathbf{u}E + p\mathbf{u} + \mathbf{F_g}).
+\end{equation}
+Here $\mathbf{F_g}$ is a flux term which explicitly accounts for the change in the total energy due to self-gravity. 
+By using Equation \ref{eq:cell_center_gravity_source} and the continuity equation, it is straightforward to show that
+\begin{equation}
+  {\bm\nabla} \cdot \mathbf{F_g} = -\rho \mathbf{u} \cdot \mathbf{g} - \frac{\partial}{\partial t}\left(\frac{1}{2}\rho\Phi\right). \label{eq:gradient_F_g}
+\end{equation}
+From here one can use the continuity equation to explicitly calculate the flux $\mathbf{F_g}$, as in \cite{jiang:2013}:
+\begin{equation}
+  \mathbf{F_g} = \frac{1}{8\pi G}\left(\Phi\bm{\nabla}\dot{\Phi} - \dot{\Phi}\bm{\nabla}\Phi\right) + \rho\mathbf{u}\Phi \label{eq:jiang_flux}.
+\end{equation}
+Here the dots refer to time derivatives. This has some attractive features. 
+In particular, for a simulation with AMR, a flux-based approach
+can quite naturally be accommodated in a way that conserves energy across levels, when fluxes
+at interfaces between coarse and fine grids are matched. We note in passing that although
+\citeauthor{jiang:2013} claim that this approach requires a Poisson solve for the time derivative of the potential,
+$\dot{\Phi}$, this is not needed as in practice we will already have the potential at time-levels
+$n$ and $n+1$, and to second order in time, $\dot{\Phi}^{n+1/2} = (\Phi^{n+1} - \Phi^{n}) / \Delta t.$
+
+Now, the first term on the right-hand side of Equation \ref{eq:gradient_F_g} is the old source term. The second term simply 
+accounts for the time rate of change of the gravitational potential energy. But since
+\begin{equation}
+  \frac{\partial(\rho E_{\text{tot}})}{\partial t} = \frac{\partial (\rho E)}{\partial t} + \frac{\partial (1/2) \rho \Phi}{\partial t},
+\end{equation}
+this does not actually add any information, since we can subtract off the time derivative 
+of the potential energy and be back where we started. This demonstrates that the problem
+with the original approach lies in the numerical discretization; if this is done correctly,
+we can still properly conserve total energy.
+
+Before pursuing that, we wish to point out the reason why we prefer not to use this 
+approach of solving a total energy equation. The expression for the flux $\mathbf{F_g}$
+given in \cite{jiang:2013} includes terms that are proportional to $\Phi$ and ${\bm{\nabla}} \Phi$,
+but that are not explicitly proportional to the zone density $\rho$. Thus the approach suffers
+from the same problems as the conservative momentum formulation discussed above. Truncation errors
+in the gravitational field will result in an approximation to the density that can be quite 
+different from the actual density, especially in low-density regions. In practice,
+we have found this to be such a serious problem that this approach is not feasible for our problem.
+The formulation of \cite{marcello:2012} does not suffer from the same problem. However, a 
+remaining problem is that in this formalism, the internal energy
+is calculated by subtracting the potential energy and the kinetic energy from the 
+total energy. Due to numerical discretization errors, however, this can result in a serious 
+error in the internal energy. This problem can be eased by the dual energy formalism,
+but not completely. This means that we will potentially have very large errors in a 
+zone's temperature, which can have serious repercussions in the reacting flows we will eventually consider,
+as many reaction rates are very sensitive to temperature. Therefore our goal is instead to consider an approach
+that is explicitly \textit{non}-conservative for the gas energy $(\rho E)$, but which
+instead conserves the total energy $(\rho E_{\text{tot}})$ over the computational domain 
+(subject, of course, to small errors due to energy leaking from the domain boundary).
+
+The question of how to do this was resolved by \cite{arepo}. 
+The essential problem with the standard approach is that 
+fluid movements in a grid code are calculated using
 fluxes at zone boundaries, while the standard gravity source term is
 an estimate of the flux using the zone center quantities. This can
 lead to a striking mismatch when the gradient across a zone is
@@ -489,159 +636,53 @@ stars are moving on a grid, large quantities of material are being
 advected, so even a slight error in the calculation for the
 high-density material can manifest itself as a long-term error in
 energy conservation. This becomes apparent in Section
-\ref{sec:kepler}. So while a closer look at this may be unwarranted
-for situations like a stationary single star central explosion
-calculation, a detailed discussion is certainly called for in the case
-of an orbiting binary system where getting the gravity right is
-absolutely necessary for fully trusting the long-term evolution of the
-system.
+\ref{sec:kepler}. 
 
-\citet[Chapter 4]{shu:1992} observes that it is possible to describe the source term for the momentum equation by taking the divergence of a gravitational stress tensor,
-\begin{equation}
-  G_{ij} = -\frac{1}{4\pi G}\left(g_i g_j - \frac{1}{2}|\mathbf{g}|^2\delta_{ij}\right).
-\end{equation}
-The momentum equations are then written explicitly in conservative
-form when discretized: just as with the momentum stress tensor,
-divergences are calculated using discretized fluxes at zone
-boundaries, and the flux at any zone boundary is added to one cell and
-subtracted from another, so that the total momentum stays constant to
-within numerical roundoff error (with the possible exception of domain
-boundaries). This method works because, from the Poisson equation,
-$\rho$ can be written as proportional to the divergence of
-$\mathbf{g}$. We note that in order for the method to be reliable, the
-expression for all components of $\mathbf{g}$ must be correctly
-calculated from $\phi$ on zone boundaries so that the total divergence
-does indeed recover the density. This is straightforward for the
-component normal to the zone interface, but requires averaging over
-zones in the perpendicular direction to obtain the transverse
-components.
-
-Dealing with the energy equation is more difficult. The central
-challenge is to write down a form of the discretized energy equation
-that explicitly conserves total energy when coupled to gravity. When
-gravity is included, the total energy is
-\begin{equation}
-  \rho E_{\text{tot}} = E_G - \frac{1}{2}\rho\phi = \frac{1}{2}\rho \mathbf{u}^2 + \rho e - \frac{1}{2}\rho\phi,
-\end{equation}
-where $E_G$ is the gas energy from the pure hydrodynamics equation,
-and the factor of $1/2$ in the gravitational energy term is necessary
-for simulations with self-gravity to prevent double-counting of
-interactions. Recently, three different approaches have been proposed
-for achieving this. We will briefly examine these and then describe
-the approach that makes the most sense for us.
-
-\citet{marcello:2012} use the mass continuity equation to rewrite the
-standard source term from Equation
-\ref{eq:cell_center_gravity_source}. When this is done, the resulting
-evolution equation for the total energy is:
-\begin{equation}
-  \frac{\partial (\rho E_{\text{tot}})}{\partial t} = -\bm{\nabla}\cdot\left(\rho \mathbf{u} E_{\text{tot}} + p\mathbf{u} - \frac{1}{2}\rho\mathbf{u}\phi\right) + \frac{1}{2}\phi\frac{\partial \rho}{\partial t} - \frac{1}{2}\rho\frac{\partial \phi}{\partial t}.
-\end{equation}
-In practice, we would still actually evolve the total gas energy
-$E_G$, and so when discretized to second order in time from time level
-$n$ to time level $n+1$ the gas energy equation would look like
+We start with the integral formulation of the energy source term (Equation
+\ref{eq:cell_center_gravity_source}), but do not discretize it at
+the cell center.  Instead, we recognize that $\mathbf{u} = {\bm\nabla}\left[\mathbf{r}\cdot\mathbf{u}\right]$,
+where $\mathbf{r}$ is the position vector originating from the zone center.
+Then, since in the cell-centered approach we assume that the density, velocity,
+and gravitational acceleration are constant across the zone, we can include all terms
+inside the gradient operator. This allows us to use the divergence theorem to evaluate
+the quantities on the zone faces. To be second-order accurate in time, the fields must 
+all be evaluated at time-level $n+1/2$, but for clarity we will neglect the superscript.
 \begin{align}
-  (\rho E_G)^{n+1} &= (\rho E_G)^{n} + \left(\frac{1}{2} (\rho \phi)^{n+1} - \frac{1}{2} (\rho \phi)^{n}\right) \notag \\
-   &- \Delta t\, \bm{\nabla}\cdot\left(\rho \mathbf{u} E_{\text{tot}} + p\mathbf{u} - \frac{1}{2}\rho\mathbf{u}\phi\right) \notag \\
-   &+ \frac{\Delta t}{2}\left(\phi \frac{\partial \rho}{\partial t}\right)^{n+1/2} - \frac{\Delta t}{2} \left(\rho \frac{\partial \phi}{\partial t}\right)^{n+1/2}.
+  \left.\Delta\left(\rho E\right)_i\right|_{\text{grav}} &= \frac{\Delta t}{\Delta V} \int \rho \mathbf{u}\cdot\mathbf{g}\, dV_i \notag \\
+     &= \frac{\Delta t}{\Delta V} \int \rho\, {\bm \nabla} \left[\mathbf{r} \cdot \mathbf{u}\right]\cdot\mathbf{g}\, dV_i \notag \\
+     &= \frac{\Delta t}{\Delta V} \int {\bm \nabla} \cdot \left[ \rho\, (\mathbf{r} \cdot \mathbf{u})\, \mathbf{g}\right]\, dV_i \notag \\
+     &= \frac{\Delta t}{\Delta V} \int \rho\, (\mathbf{r} \cdot \mathbf{u})\, \mathbf{g} \cdot \mathbf{dS}_i.
 \end{align}
-It is not immediately obvious that this is explicitly conservative for
-the total energy, due to the last two terms on the right-hand side,
-but written in discrete form the potential is linked to the density in
-such a way that there is indeed a perfect cancellation of terms
-between adjacent cells (see Equation 88 in
-\citeauthor{marcello:2012}). Doing it this way requires a prescription
-for calculating $\phi^{n+1/2}$, the potential at the time halfway
-between the new and old state, as well as $\dot{\phi}^{n+1/2}$, the
-time derivative of the potential at that time. To second order in
-time, these can be calculated as $(\phi^{n+1} + \phi^{n})/2$ and
-$(\phi^{n+1}-\phi^{n})/\Delta t$ respectively. So, in practice what we
-do is to first solve the Poisson equation using $\rho^n$ at the
-beginning of a time step; then, evolve the pure hydrodynamics
-equations without the gravitational source to obtain $\rho^{n+1}$;
-then, solve the Poisson equation for $\phi^{n+1}$; and then to finally
-calculate the gravitational source terms and add them in. An
-alternative approach is to use the predictor-corrector scheme that
-CASTRO features, where the time level $n$ source term is included in
-the hydrodynamics update and then left out of the final update. In
-either case, the time level $n$ calculation of $\mathbf{g}$ is
-included the PPM reconstruction of the edge states.
-
-\citet{jiang:2013} start from the motivation of extending to the
-energy equation the flux-based formalism that allows explicit
-conservation for the momentum equation. They determine that the energy
-is perfectly conserved if we define a gravitational flux
-$\mathbf{F_g}$ and take its divergence for the energy equation:
+Here $\mathbf{dS}$ is a surface element whose vector points normal to
+and away from the surface. In one dimension, this expression evaluates to
 \begin{align}
-  \mathbf{F_g} &= \frac{1}{8\pi G}\left(\phi\bm{\nabla}\dot{\phi} - \dot{\phi}\bm{\nabla}\phi\right) + \rho\mathbf{u}\phi \label{eq:jiang_flux}\\
-  \frac{\partial (\rho E_G)}{\partial t} &= -\bm{\nabla} \cdot \left(\rho\mathbf{u}E_G + p\mathbf{u} + \mathbf{F_g}\right)
+  \left.\Delta\left(\rho E\right)_i\right|_{\text{grav}} &= \frac{\Delta t}{\Delta V} \rho_{i-1/2}\, \frac{\Delta x}{2} u_{x_{i-1/2}} g_{x_{i-1/2}} \Delta A_{i-1/2} \notag \\
+             &+ \frac{\Delta t}{\Delta V} \rho_{i+1/2}\, \frac{\Delta x}{2} u_{x_{i+1/2}} g_{x_{i+1/2}} \Delta A_{i+1/2} \notag \\
+             &= \frac{1}{2} \rho_{i-1/2} u_{x_{i-1/2}} g_{x_{i-1/2}} \notag \\
+             &+ \frac{1}{2} \rho_{i+1/2} u_{x_{i+1/2}} g_{x_{i+1/2}}.\label{eq:edge_centered_gravity_source}
 \end{align}
-This is analytically equivalent to the approach by
-\citet{marcello:2012}, which can be seen by taking the divergence of
-the flux and using the Poisson equation. It would be justified to use
-this form simply because it is cleaner to write down, but there is a
-more important benefit to using an explicit flux based formula: in
-AMR, conservation between levels can only happen if all fluid
-movements are written down using fluxes, because it is those fluxes
-that are adjusted at coarse-fine interfaces to ensure conservation. In
-this form we can simply add the gravitational source term to the
-hydrodynamical fluxes and use the existing AMR algorithm to guarantee
-conservation between levels. We note that \citeauthor{jiang:2013} say
-that this method requires the solution of an additional Poisson
-equation to obtain the intermediate time gravitational potential, but
-as we pointed out above, this can be done to second order simply by
-taking a centered difference using the existing Poisson solves, so no
-extra Poisson solve is necessary.
+(We note that this differs slightly from Equation 94 in \cite{arepo} in that
+we evaluate the gravitational acceleration at the zone face rather than the zone center.)
+In the limit of constant fields, this expression simply averages out to the standard 
+source term at the zone center. However, when the fields vary this can give very different results.
 
-This flux-based formalism has a significant drawback for our problem:
-unlike \citeauthor{jiang:2013}, we use open hydrodynamic boundary
-conditions, not periodic boundary conditions. Mass, momentum and
-energy can be lost (or gained) across the domain boundary. This is not
-a serious source of error in the standard cell-centered
-discretization, because the source term is proportional to $\rho$ and
-the density near the domain boundary is generally filled with a very
-low density ambient medium, so the size of the source term is always
-small. However, the gravitational flux in Equation \ref{eq:jiang_flux}
-has terms that are not explicitly proportional to
-density. Consequently, the flux lost across the domain boundaries can
-be significant (though this effect diminishes with increasing
-resolution). A related problem is that at the edge of a star, the
-gravitational flux can be so large that the gas energy becomes
-negative after an update. This effect is greatly diminished if the
-flux is instead proportional to density, as in the standard
-method. This is not a major problem for ideal or polytropic gases in
-pure hydrodynamics problems, but in our simulations we want the
-internal energy (and thus the temperature) to always be reliable so
-that nuclear reactions occur at the correct rates. This is especially
-sensitive at the edges of the stars, where the burning is expected to
-occur in a violent merger scneario.
-
-A possible compromise approach is discussed in \cite{arepo}. We start
-with the integral formulation of the energy source term (Equation
-\ref{eq:cell_center_gravity_source}), but instead of discretizing at
-the cell center, we use Gauss' theorem to evaluate the source term at
-the zone boundaries (see Equations 91--96 of that paper; we exclude
-the term related to the motion of the zones since our grids are
-fixed). This results in a gravitational update for zone $i$ written as
-\begin{equation}
-  \Delta E^{\text{grav}}_{i} = -\frac{1}{2}\sum_{j} \Delta m_{ij}\, \mathbf{r}_{ij} \cdot \bm{\nabla}\phi_i \approx -\frac{1}{2}\sum_{j} \Delta m_{ij}\left(\phi_i - \phi_j\right),
-\end{equation}
-where the sum is over all $j$ zones that share a boundary with zone
-$i$. Here $\mathbf{r}_{ij}$ is the radius vector joining zones $i$ and
-$j$ and $\Delta m_{ij}$ is the mass exchanged between zones $i$ and
-$j$ in the hydrodynamics update, and is equal to $\Delta t A_{ij}
-F_\rho^{ij}$, where $A_{ij}$ is the area of the zone boundary and
-$F_{\rho}^{ij}$ is the mass flux from the mass continuity equation. It
-is straightforward to see that the second version is explicitly
-conservative. The benefit of this form is that the mass exchanged
-between zones near the domain boundary will always be small in
-absolute terms since these zones are at very low density. Thus the
-energy lost through the boundary will be of comparable size to the
-standard method, but the gravity update should be more accurate since
-the change in gravitational energy now tracks the explicit motion of
-mass on the grid.
-
-% Now rewrite this so that it is in flux form
+As pointed out by \citeauthor{arepo}, $(\rho u)$ evaluated at the faces at time level $n+1/2$ is the mass flux,
+so $(\rho u)_{i-1/2}\, \Delta t\, \Delta A = \Delta m_{i-1/2}$ is the mass exchanged between zones $i$ and $i-1$.
+Additionally, to second order $g_{x_{i-1/2}} \Delta x = \Phi_{i} - \Phi_{i-1}$. Therefore the energy gained by the zone is
+\begin{align}
+  \left.\Delta\left(\rho E\right)_i\right|_{\text{grav}} &= \frac{1}{2} \Delta m_{i-1/2} \left(\Phi_{i} - \Phi_{i-1}\right) \notag \\
+     &+ \frac{1}{2} \Delta m_{i+1/2} \left(\Phi_{i+1} - \Phi_{i}\right)
+\end{align}
+This expression says that the energy gained by a zone is due to a mass element moving through a potential gradient
+between two zones. Now, the key observation is that this does not have the telescoping property of a conservative flux;
+instead, the \textit{same} amount of gravitational potential energy is gained by zones $i$ and $i-1$ by the mass flux 
+between them. When this source term is summed up over all zones, it will exactly compensate for the change in 
+gravitational potential energy, except for any energy lost through the boundaries. The extension of this energy change 
+to multiple dimensions simply means that we include the mass fluxes and potential gradients across the $y$ and $z$ faces.
+We have found that in practice this method for conserving the total energy is the least susceptible to deleterious effects
+from numerical discretization errors. However, it does mean that there can be sharp changes in the total energy of a zone
+in regions near a white dwarf's surface, because the mass fluxes into the ambient medium can be quite large compared to
+the mass of the zone. This effect diminishes at higher resolutions as the gradients become better resolved.
 
 \subsubsection{Boundary Conditions}\label{sec:gravity_boundary_conditions}
 
@@ -747,7 +788,7 @@ it is important to check whether proper numerical convergence is
 achieved for the Poisson solver. To do so, we created a simple test
 that inserts a sphere of radius $R$ and uniform mass density $\rho$
 onto our grid, and used CASTRO to calculate the gravitational
-potential $\phi$ of this setup. We ensure that $R$ is an integer
+potential $\Phi$ of this setup. We ensure that $R$ is an integer
 multiple of the grid spacing, and the center of the sphere is at the
 origin. The problem domain for our simulations is $[-1.6, 1.6]^3$, and
 we take $R = 0.5$ and $\rho = 10^3$. The zones with $r > R$ are filled
@@ -756,7 +797,7 @@ multiple resolutions corresponding to jumps by a factor of two. For
 comparison, at each grid point we evaluate the analytical potential of
 a uniform sphere, which can be easily determined using Gauss' law:
 \begin{equation}
-  \phi_{\text{sphere}}(r) = \frac{GM}{r} \times \begin{cases} (3R^2 - r^2)/(2 r^2) & r \leq R \\ 1 & r > R \end{cases},\label{eq:sphere-analytical}
+  \Phi_{\text{sphere}}(r) = \frac{GM}{r} \times \begin{cases} (3R^2 - r^2)/(2 r^2) & r \leq R \\ 1 & r > R \end{cases},\label{eq:sphere-analytical}
 \end{equation}
 where $M = 4\pi R^3 / 3$ is the mass of the sphere. Defining the $L^2$
 norm of a field $f$ as
@@ -765,7 +806,7 @@ norm of a field $f$ as
 \end{equation}
 we measure the numerical error by calculating the $L^2$ norm of the error and normalizing it by the $L^2$ norm of the analytical solution:
 \begin{equation}
-  \text{Error} = \frac{\|\phi - \phi_{\text{sphere}}\|_2}{\|\phi_{\text{sphere}}\|_2}.
+  \text{Error} = \frac{\|\Phi - \Phi_{\text{sphere}}\|_2}{\|\Phi_{\text{sphere}}\|_2}.
 \end{equation}
 
 \begin{figure}
@@ -807,7 +848,7 @@ $1/2$, which destroys the symmetry. Inserting this missing factor and
 performing a simple coordinate transformation so that the center of
 the cube is at the origin, the potential is
 \begin{align}
-  \phi_{\text{cube}}(x,y,z) &= G\rho\sum_{i,j,k=0}^1\left[x_i y_j\, \text{tanh}^{-1}\left(\frac{z_k}{r_{ijk}}\right)\right. \notag \\
+  \Phi_{\text{cube}}(x,y,z) &= G\rho\sum_{i,j,k=0}^1\left[x_i y_j\, \text{tanh}^{-1}\left(\frac{z_k}{r_{ijk}}\right)\right. \notag \\
   &+ \left. y_j z_k\, \text{tanh}^{-1}\left(\frac{x_i}{r_{ijk}}\right) + z_k x_i\, \text{tanh}^{-1}\left(\frac{y_j}{r_{ijk}}\right) \right.\notag \\
   &\left. - \frac{x_i^2}{2}\,\text{tan}^{-1}\left(\frac{y_j z_k}{x_i r_{ijk}}\right) - \frac{y_j^2}{2}\,\text{tan}^{-1}\left(\frac{z_k x_i}{y_j r_{ijk}}\right) \right. \notag \\
   &- \left. \frac{z_k^2}{2}\,\text{tan}^{-1}\left(\frac{x_i y_j}{z_k r_{ijk}}\right)\right]
@@ -1469,124 +1510,7 @@ whereas previously it was only added to the final unsplit interface
 states.  Both methods are second-order accurate.
 
 The tracing of gravity can be controlled in the public version of Castro
-with the parmeter {\tt castro.ppm\_trace\_grav}.
-
-
-
-\subsection{Gravity Source Correction}
-
-We also modify slightly the correction done to the gravitational
-source terms after integrating the system in time.  In the original
-Castro paper (Eqs. 19 and 20), the state after the conservative update
-due to fluxes and external sources (other than gravity) was
-represented with the superscript `$(2,\star)$'.  The gravitational
-sources were then corrected, making them centered in time, yielding
-the final state at the end of the hydrodynamics step, indicated with
-the superscript `$(2)$'.  This appeared as:
-\begin{eqnarray}
-(\rho {\bf U})^{(2)} &=& (\rho {\bf U})^{(2,\star)} +
-   \frac{\Delta t}{2} \left [ (\rho {\bf g})^{(2,\star)} - 
-                              (\rho {\bf g})^{(1)} \right ]\\
-(\rho E)^{(2)} &=& (\rho E)^{(2,\star)} +
-   \frac{\Delta t}{2} \left [ (\rho {\bf U\cdot g})^{(2,\star)} - 
-                              (\rho {\bf U\cdot g})^{(1)} \right ]
-\end{eqnarray}
-Here we make the subtle change of using the corrected ${\bf u}$ in the
-correction to the energy.  So our new energy correction equation appears as:
-\begin{equation}
-(\rho E)^{(2)} = (\rho E)^{(2,\star)} +
-   \frac{\Delta t}{2} \left [ (\rho {\bf U\cdot g})^{(2)} - 
-                              (\rho {\bf U\cdot g})^{(1)} \right ]
-\end{equation}
-Both of these are second-order accurate, but we've found that the
-latter is slightly better for conserving energy.  This change is now
-the default in the public version of Castro (it can be controlled by
-{\tt castro.grav\_source\_type}.
-
-Rotation is handled similarly to gravity during the conservative update.
-The momentum equation, with rotation sources appears as:
-\begin{equation}
-\frac{\partial \rho {\bf U}}{\partial t} + \nabla \cdot (\rho {\bf U U} + p) = 
-   \rho {\bf g} - 2 \rho {\bf \Omega \times U} 
-                - \rho {\bf \Omega \times (\Omega \times U)}
-\end{equation}
-we take the rotation axis to be in the $z$-direction, ${\bf \Omega} =
-\Omega \hat{\bf k}$.  Working out the cross-products, the rotation
-forces appear as
-\begin{equation}
-{\bf F}_\mathrm{rot} = \rho \left (
-    \begin{array}{c}
-     \phantom{-}2 \Omega v + \Omega^2 x \\
-              - 2 \Omega u + \Omega^2 y \\
-              0 
-    \end{array}
-  \right )
-\end{equation}
-We want to time-center this force in the final conservative update, giving
-updates for the $u$ and $v$ components of the velocity as:
-\begin{eqnarray}
-\frac{(\rho u)^{n+1} - (\rho u)^n}{\Delta t} + A^{(x),n+1/2} &=&
-   \frac{1}{2} \left [ (\rho {\bf g}\cdot \hat{\bf i})^n
-                      + (\rho {\bf g}\cdot \hat{\bf i})^{n+1} \right ] \nonumber\\&+&
-   \frac{1}{2} \left [ (2\rho \Omega v)^n + (2\rho \Omega v)^{n+1} \right ] \nonumber \\&+&
-   \frac{1}{2} \left [ (\rho \Omega^2 x)^n + (\rho \Omega^2 x)^{n+1} \right ] \\
-\frac{(\rho v)^{n+1} - (\rho v)^n}{\Delta t} + A^{(y),n+1/2} &=&
-   \frac{1}{2} \left [ (\rho {\bf g}\cdot \hat{\bf j})^n +
-                       (\rho {\bf g}\cdot \hat{\bf j})^{n+1} \right ] \nonumber \\ &+&
-   \frac{1}{2} \left [ (-2\rho \Omega u)^n + (-2\rho \Omega u)^{n+1} \right ] \nonumber \\ &+&
-   \frac{1}{2} \left [ (\rho \Omega^2 y)^n + (\rho \Omega^2 y)^{n+1} \right ]
-\end{eqnarray}
-where here the explicit advective term from the Godunov method is
-represented as $A$ and is already time-centered.  In the Castro
-algorithm, a full $\Delta t$ of the old-time-level source is first
-added and later we correct this by subtracting off $\Delta t/2$ of the
-old-time-level term and adding $\Delta t/2$ of the new-time-level
-source.  This correction appears as:
-\begin{eqnarray}
-(\rho u)^{n+1} = (\rho u)^\prime 
-   &+& \underbrace{
-      \frac{\Delta t}{2} \left [ (\rho {\bf g}\cdot \hat{\bf i})^{n+1}
-                               - (\rho {\bf g}\cdot \hat{\bf i})^{n} \right ]
-    }_{\equiv \Delta^{g,x}} \nonumber \\
-   &+& \frac{\Delta t}{2} \left [ (2\rho \Omega v)^{n+1} 
-                                - (2\rho \Omega v)^{n} \right ] \nonumber \\
-   &+& \underbrace{
-      \frac{\Delta t}{2} \left [ (\rho \Omega^2 x)^{n+1} 
-                               - (\rho \Omega^2 x)^{n} \right ]
-    }_{\equiv \Delta^{c,x}} \\
-%
-(\rho v)^{n+1} = (\rho v)^\prime 
-   &+& \underbrace{
-      \frac{\Delta t}{2} \left [ (\rho {\bf g}\cdot \hat{\bf j})^{n+1}
-                               - (\rho {\bf g}\cdot \hat{\bf j})^{n} \right ]
-    }_{\equiv \Delta^{g,y}} \nonumber \\
-   &+& \frac{\Delta t}{2} \left [ (-2\rho \Omega u)^{n+1} 
-                                - (-2\rho \Omega u)^{n} \right ] \nonumber \\
-   &+& \underbrace{
-      \frac{\Delta t}{2} \left [ (\rho \Omega^2 y)^{n+1} 
-                               - (\rho \Omega^2 y)^{n} \right ]
-    }_{\equiv \Delta^{c,y}} \\
-\end{eqnarray}
-For compactness, we define the following:
-\begin{eqnarray}
-S_x &=& (\rho u)^\prime + \Delta^{g,x} + \Delta^{c,x} 
-        - \frac{\Delta t}{2} (2 \rho \Omega v)^n \\
-%
-S_y &=& (\rho v)^\prime + \Delta^{g,y} + \Delta^{c,y} 
-        + \frac{\Delta t}{2} (2 \rho \Omega u)^n 
-\end{eqnarray}
-and our updates are now a coupled implicit system for the updates of
-$u$ and $v$:
-\begin{eqnarray}
-(\rho u)^{n+1} = S_x + \frac{\Delta t}{2}(2\rho \Omega v)^{n+1} \label{eq:rhouupdate}\\
-(\rho v)^{n+1} = S_y - \frac{\Delta t}{2}(2\rho \Omega u)^{n+1} 
-\end{eqnarray}
-This can be solved analytically:
-\begin{equation}
-(\rho v)^{n+1} = \frac{S_y - \Delta t \Omega S_x}{1 + \Delta t^2 \Omega^2}
-\end{equation}
-and then we can find $(\rho u)^{n+1}$ from Eq.~\ref{eq:rhouupdate}.
-\clearpage
+with the parameter {\tt castro.ppm\_trace\_grav}.
 
 \begin{figure}
   \centering
