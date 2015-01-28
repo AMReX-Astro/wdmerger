@@ -141,6 +141,20 @@ simulate binary white dwarf systems, and is intended to provide useful informati
 viability of mergers of white dwarfs as a progenitor for Type Ia supernovae. It is a set of 
 source files designed to use the CASTRO code \citep{castro}.
 
+This software requires a few other software packages to be installed before it can be used.
+The science software includes \href{https://ccse.lbl.gov/BoxLib/}{BoxLib} and 
+\href{https://ccse.lbl.gov/Downloads/downloadCASTRO.html}{CASTRO}. This software is written 
+in C++ and Fortran, and compilers for each are needed. The gcc compilers are sufficient.
+In addition, it relies on several utilities that are 
+commonly distributed on Linux systems: \texttt{bash}, \texttt{GNU bc}, \texttt{GNU make}, 
+\texttt{batch}, \texttt{GNU sed}, and \texttt{GNU awk}. Analysis is mainly performed in 
+\href{https://www.python.org/}{python}, with the \href{http://matplotlib.org/}{matplotlib} 
+library and the \href{http://yt-project.org/}{yt} code being used for visualization. 
+If python and yt are not installed on your system, you will still be able to compile and 
+run this code, but you will need some other mechanism for analyzing the BoxLib output data.
+We have some routines for this purpose available in Fortran and may be able to provide them
+upon request.
+
 %------------------------------------------------------------------------------
 \backmatter
 
