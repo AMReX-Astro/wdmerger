@@ -195,6 +195,7 @@ def energy_momentum_diagnostics(output_filename):
     lines = output.readlines()
     rho_E_lines = filter(lambda s: s[0:7] == "(rho E)",lines)
     grav_E_lines = filter(lambda s: s.split()[4] == "grav.",rho_E_lines)
+    rot_E_lines = filter(lambda s: s.split()[4] == "rot.",rho_E_lines)
     flux_E_lines    = filter(lambda s: s.split()[4] == "fluxes",rho_E_lines)
     mass_lines = filter(lambda s: s[0:7] == "   Mass",lines)
     xmom_lines = filter(lambda s: s[0:4] == "xmom",lines)
@@ -204,6 +205,9 @@ def energy_momentum_diagnostics(output_filename):
     neg_rho_m_lines = filter(lambda s: s.split()[3] == "negative",mass_lines)
     neg_rho_E_lines = filter(lambda s: s.split()[4] == "negative",mass_lines)
 
+    rot_xmom_lines = filter(lambda s: s.split()[3] == "rot.",xmom_lines)
+    rot_ymom_lines = filter(lambda s: s.split()[3] == "rot.",ymom_lines)
+    rot_zmom_lines = filter(lambda s: s.split()[3] == "rot.",zmom_lines)
     grav_xmom_lines = filter(lambda s: s.split()[3] == "grav.",xmom_lines)
     grav_ymom_lines = filter(lambda s: s.split()[3] == "grav.",ymom_lines)
     grav_zmom_lines = filter(lambda s: s.split()[3] == "grav.",zmom_lines)
@@ -217,6 +221,7 @@ def energy_momentum_diagnostics(output_filename):
 
     E_added_flux = sum([float(s.split()[6]) for s in flux_E_lines])
     E_added_grav = sum([float(s.split()[8]) for s in grav_E_lines])
+    E_added_rot  = sum([float(s.split()[8]) for s in rot_E_lines])
 
     xmom_added_flux = sum([float(s.split()[5]) for s in flux_xmom_lines])
     ymom_added_flux = sum([float(s.split()[5]) for s in flux_ymom_lines])
@@ -224,6 +229,9 @@ def energy_momentum_diagnostics(output_filename):
     xmom_added_grav = sum([float(s.split()[7]) for s in grav_xmom_lines])
     ymom_added_grav = sum([float(s.split()[7]) for s in grav_ymom_lines])
     zmom_added_grav = sum([float(s.split()[7]) for s in grav_zmom_lines])
+    xmom_added_rot = sum([float(s.split()[7]) for s in rot_xmom_lines])
+    ymom_added_rot = sum([float(s.split()[7]) for s in rot_ymom_lines])
+    zmom_added_rot = sum([float(s.split()[7]) for s in rot_zmom_lines])
 
     E_added_reset   = sum([float(s.split()[7]) for s in reset_E_lines])
 
@@ -234,6 +242,7 @@ def energy_momentum_diagnostics(output_filename):
     print "Mass added from negative density resets = " + str(mass_added_neg_reset)
     print "Energy added from negative density resets = " + str(E_added_neg_reset)
     print "Energy added from gravitational sources = " + str(E_added_grav)
+    print "Energy added from rotation sources = " + str(E_added_rot)
     print "Energy added from hydro fluxes = " + str(E_added_flux)
     print "Energy added from resets = " + str(E_added_reset)
     print "xmom added from hydro fluxes = " + str(xmom_added_flux)
@@ -242,16 +251,19 @@ def energy_momentum_diagnostics(output_filename):
     print "xmom added from gravitational sources = " + str(xmom_added_grav)
     print "ymom added from gravitational sources = " + str(ymom_added_grav)
     print "zmom added from gravitational sources = " + str(zmom_added_grav)
+    print "xmom added from rotation sources = " + str(xmom_added_rot)
+    print "ymom added from rotation sources = " + str(ymom_added_rot)
+    print "zmom added from rotation sources = " + str(zmom_added_rot)
 
     print ""
     print "Final diagnostics:"
     print ""
 
     print "Mass added = " + str(mass_added_neg_reset)
-    print "Energy added = " + str(E_added_grav + E_added_flux + E_added_reset + E_added_neg_reset)
-    print "xmom added = " + str(xmom_added_flux + xmom_added_grav)
-    print "ymom added = " + str(ymom_added_flux + ymom_added_grav)
-    print "zmom added = " + str(zmom_added_flux + zmom_added_grav)
+    print "Energy added = " + str(E_added_grav + E_added_flux + E_added_rot + E_added_reset + E_added_neg_reset)
+    print "xmom added = " + str(xmom_added_flux + xmom_added_grav + xmom_added_rot)
+    print "ymom added = " + str(ymom_added_flux + ymom_added_grav + ymom_added_rot)
+    print "zmom added = " + str(zmom_added_flux + zmom_added_grav + zmom_added_rot)
 
     print ""
 
