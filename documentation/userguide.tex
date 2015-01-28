@@ -1,0 +1,150 @@
+\documentclass[12pt]{book} 
+
+\usepackage[margin=1.0in]{geometry}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{epsfig}
+
+\usepackage{natbib}
+
+% chapter title styles
+\usepackage[Sonny]{fncychap}
+\ChNameVar{\LARGE}
+\ChTitleVar{\LARGE\sl}
+
+% part page style see
+% http://tex.stackexchange.com/questions/6609/problems-with-part-labels-using-titlesec
+\usepackage{titlesec}
+
+\titleformat{\part}[display]
+   {\Huge\filcenter}
+   {{\partname{}} \thepart}
+   {0em}
+   {\hrule}
+
+
+% hyperlinks -- load after fncychap
+\usepackage{hyperref}
+
+% color package
+\usepackage[usenames]{color}
+
+% number subsubsections and put them in the TOC
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+% custom hrule for title page
+\newcommand{\HRule}{\rule{\linewidth}{0.125mm}}
+
+
+% short table of contents
+\usepackage{shorttoc}
+
+% spacing in the table of contents
+\usepackage[titles]{tocloft}
+
+\setlength{\cftbeforechapskip}{2ex}
+\setlength{\cftbeforesecskip}{0.25ex}
+
+% don't put a header on blank pages, see
+% http://www.latex-community.org/forum/viewtopic.php?f=4&p=51559
+% change ``plain'' to ``empty'' to eliminate the page number
+\makeatletter
+\renewcommand*\cleardoublepage{\clearpage\if@twoside
+\ifodd\c@page\else
+\hbox{}
+\thispagestyle{empty}
+\newpage
+\if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\makeatother
+
+
+% don't make the chapter/section headings uppercase.  See the fancyhdr
+% documentation (section 9)
+\usepackage{fancyhdr}
+\renewcommand{\chaptermark}[1]{%
+ \markboth{\chaptername
+\ \thechapter.\ #1}{}}
+
+\renewcommand{\sectionmark}[1]{\markright{\thesection---#1}}
+
+
+% skip a bit of space between paragraphs, to enhance readability
+\usepackage{parskip}
+
+
+
+% special fraction
+\newcommand{\sfrac}[2]{\mathchoice
+  {\kern0em\raise.5ex\hbox{\the\scriptfont0 #1}\kern-.15em/
+   \kern-.15em\lower.25ex\hbox{\the\scriptfont0 #2}}
+  {\kern0em\raise.5ex\hbox{\the\scriptfont0 #1}\kern-.15em/
+   \kern-.15em\lower.25ex\hbox{\the\scriptfont0 #2}}
+  {\kern0em\raise.5ex\hbox{\the\scriptscriptfont0 #1}\kern-.2em/
+   \kern-.15em\lower.25ex\hbox{\the\scriptscriptfont0 #2}}
+  {#1\!/#2}}
+
+% codes
+\newcommand{\castro}{{\sf Castro}}
+\newcommand{\boxlib}{{\sf BoxLib}}
+\newcommand{\yt}{{\sf yt}}
+
+
+%------------------------------------------------------------------------------
+\begin{document}
+
+\frontmatter
+
+\begin{titlepage}
+\begin{center}
+\ \\[3in]
+{\sf \Huge WDMERGER} 
+
+\begin{minipage}{5.5in}
+\HRule\\[2mm]
+\centering
+{\Large \em A software package for simulating white dwarf mergers with CASTRO}
+
+\HRule
+\end{minipage}
+
+\ \\[1 in]
+{\sf \huge User's Guide}
+
+\vfill
+
+{\large \today}
+\end{center}
+
+\end{titlepage}
+
+
+\shorttoc{Chapter Listing}{0}
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\clearpage
+
+\addcontentsline{toc}{chapter}{preface}
+
+\clearpage
+
+\mainmatter
+
+\chapter{Getting Started}
+
+Welcome to the user's guide for the wdmerger software package. This software is designed to
+simulate binary white dwarf systems, and is intended to provide useful information on the 
+viability of mergers of white dwarfs as a progenitor for Type Ia supernovae. It is a set of 
+source files designed to use the CASTRO code \citep{castro}.
+
+%------------------------------------------------------------------------------
+\backmatter
+
+\bibliographystyle{../papers/apj}
+\bibliography{../papers/refs}
+
+\end{document}
