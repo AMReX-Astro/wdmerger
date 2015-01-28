@@ -887,11 +887,11 @@ convergence for our full simulations.
 
 For the evolution of binary systems, it is most natural to evolve the
 two stars in a frame that is co-rotating at the same period as the
-orbital period. CASTRO has the ability to evolve systems in a rotating
-reference frame, as discussed in the original code paper. Source terms
-corresponding to the Coriolis and centrifugal force terms are added to
-the momentum and energy equations. In this frame, the stars
-essentially remain stationary in their original positions due to the
+orbital period. Since the publication of the original code paper, CASTRO 
+now has the ability to evolve systems in a rotating reference frame. 
+Source terms corresponding to the Coriolis and centrifugal 
+force terms are added to the momentum and energy equations. In this frame, 
+the stars essentially remain stationary in their original positions due to the
 centrifugal force supporting against the gravitational attraction, and
 will remain this way as long as significant mass transfer does not
 occur. \cite{swc:2000} demonstrated (in the context of neutron star
@@ -900,10 +900,18 @@ obtain in the rotating reference frame than in an inertial frame in
 which stars advect large amounts of material around the domain. We
 wish to emphasize that although it is commonly stated in the
 literature that grid-based codes poorly conserve angular momentum,
-this is not generally true. When the resolution is sufficiently high
+it is only generally true that grid-based codes do not exactly conserve 
+angular momentum when the equations are written in conservative form
+for linear momentum. (See also \cite{motl:2002} for an example of how 
+to evolve the hydrodynamics equations for angular momentum.) 
+The extent to which angular momentum conservation is violated
+will be a function of the resolution. When this is sufficiently high
 and a rotating reference frame is employed, excellent conservation
-properties can result, as demonstrated in Section \ref{sec:kepler}. We
-note that as the stars begin to coalesce, the rotating reference frame
+properties can result, as demonstrated in Section \ref{sec:kepler}. 
+In particular, at reasonable resolution for a binary orbit our code 
+conserves angular momentum well enough that this no longer becomes 
+a reason to use a Lagrangian method such as smoothed-particle hydrodynamics.
+We note that as the stars begin to coalesce, the rotating reference frame
 will no longer provide a good approximation to the spatial motion of
 the stars and then they will begin to significantly move around the
 domain. This is not necessarily problematic because the most important
@@ -913,6 +921,42 @@ momentum. When significant mass transfer sets in and evolution
 proceeds on a dynamical timescale, the conservation properties may be
 slightly worse but angular momentum conservation is also less
 important.
+
+In a rotating reference frame with angular frequency vector $\bm{\omega}$, the momentum equation becomes:
+\begin{equation}
+  \left.\frac{\partial(\rho \mathbf{u})}{\partial t}\right|_{\text{rot}} = -2\, {\bm\omega} \times (\rho\mathbf{u}) - \rho {\bm\omega} \times \left({\bm\omega} \times \mathbf{r}\right).
+\end{equation}
+Here $\mathbf{r}$ is the position vector with respect to the origin. Typically we choose $\bm{\omega} = (0, 0, 2\pi / T)^T$,
+with the rotation axis coincident with the $z$ axis at $x = y = 0$.
+$T$ is the rotation period, which is the most natural quantity to specify
+for a rotating stellar system. As described in the appendix, we include this source term
+in the edge state prediction in a way that is analogous to the gravity source.
+We evaluate all quantities at cell centers and use the same predictor-corrector 
+approach that we use for the gravity source terms to the momentum equations.
+
+The update to the energy equation can be determined by taking the dot product of the velocity
+with the momentum source terms. The Coriolis term vanishes identically, as it must
+because the Coriolis term does no work on the fluid. The update from the centrifugal force becomes
+\begin{equation}
+  \left.\frac{\partial(\rho E)}{\partial t}\right|_{\text{rot}} = \frac{1}{\Delta V}\int \rho \mathbf{u} \cdot \mathbf{f}_R\, dV,
+\end{equation}
+with $\mathbf{f}_R \equiv  -{\bm\omega} \times \left({\bm\omega} \times \mathbf{r}\right)$. 
+This expression is identical to the gravity source under the interchange of $\mathbf{g}$ with $\mathbf{f}_R$.
+As observed by \cite{marcello:2012}, we can similarly write down a rotational potential,
+\begin{equation}
+  \Phi_R = -\frac{1}{2} \left| {\bm\omega} \times \mathbf{r} \right|^2.
+\end{equation}
+Therefore we can retrace the steps of Section \ref{sec:gravity_hydro_coupling} to obtain
+an update to $(\rho E)$ that conserves the total energy in the presence of rotation,
+\begin{equation}
+  (\rho E_{\text{tot}}) = (\rho E) + \frac{1}{2} \rho \Phi + \rho \Phi_R.
+\end{equation}
+In one dimension, this would be
+\begin{align}
+  \left.\Delta(\rho E_i)\right|_{\text{rot}} &= \frac{1}{2} \Delta m_{i-1/2} (\Phi_{R_{i}} - \Phi_{R_{i-1}}) \notag \\
+  &+ \frac{1}{2} \Delta m_{i+1/2} (\Phi_{R_{i+1}} - \Phi_{R_{i}}).
+\end{align}
+As with gravity, in three dimensions we also include the mass fluxes through all six cell faces.
 
 %==========================================================================
 % Initial Models and Problem Setup
@@ -1354,8 +1398,7 @@ Summary of changes:
 
 \subsection{Reference States}
 
-We use the Castro code as described in \citet{castro}.  For all the
-runs, the PPM reconstruction is done, using the original limiters for
+For all the runs, the PPM reconstruction is done using the original limiters for
 the parabolic profiles \citep{ppm}.  The prediction of the interface
 states appears as:
 \begin{equation}
@@ -1457,13 +1500,13 @@ itself, setting:
 
 
 
-\subsection{Gravity Tracing}
+\subsection{Gravity and Rotation Tracing}
 
 We note a few additional differences between the original PPM
-implementation of \citet{ppm} and Castro.  In the original PPM
-implementation, the gravitational was reconstructed as a parabola, and
+implementation of \citet{ppm} and CASTRO.  In the original PPM
+implementation, the gravitational acceleration was reconstructed as a parabola, and
 this was traced under to find the forcing that affects the interface
-for each wave.  Castro followed \citet{ppmunsplit} which instead adds
+for each wave.  CASTRO followed \citet{ppmunsplit} which instead adds
 $(\Delta t/2)g$ to the interface states at the end of the
 reconstruction.  In the current implementation, we do the original
 parabolic reconstruction and characteristic tracing of the gravitation
@@ -1509,8 +1552,16 @@ source is seen by all Riemann solves (including the transverse solves)
 whereas previously it was only added to the final unsplit interface
 states.  Both methods are second-order accurate.
 
-The tracing of gravity can be controlled in the public version of Castro
+The tracing of gravity can be controlled in the public version of CASTRO
 with the parameter {\tt castro.ppm\_trace\_grav}.
+
+Similarly, we also trace under the centrifugal and Coriolis forces to capture
+the effects of rotation on the edge states. For the primitive variables, the rotation
+source term is $F_R = (0, f_R, 0)^T$, where $f_R = -2\, {\bm{\omega}} \times \mathbf{u} - {\bm\omega}\times \left({\bm\omega} \times \mathbf{r}\right).$
+Just like the gravity source, the rotation source terms only update the velocities. Therefore 
+the rotation source terms can be included in a manner identical to that of the gravity source
+terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. This is controlled in CASTRO
+with the parameter {\tt castro.ppm\_trace\_rot}.
 
 \begin{figure}
   \centering
