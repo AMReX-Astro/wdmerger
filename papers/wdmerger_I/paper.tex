@@ -1,4 +1,5 @@
-\documentclass[12pt,preprint]{aastex}
+%\documentclass[12pt,preprint]{aastex}
+\documentclass{emulateapj}
 % for \sout
 \usepackage{ulem}
 % makes sure \em{} is italic rather than underlined (corrects ulem from line above)
@@ -12,6 +13,9 @@
 
 % allows Greek symbols to be bold
 \usepackage{bm}
+
+% allows comment sections
+\usepackage{verbatim}
 
 \newcommand{\rhocutoff}{\rho_\mathrm{cutoff}}
 \newcommand{\rhoanelastic}{\rho_\mathrm{anelastic}}
@@ -42,7 +46,7 @@
        Verification}
 
 \shorttitle{DWD Mergers. I. Methodology}
-\shortauthors{Max}
+\shortauthors{Katz et al. (2015)}
 
 \author{Max P. Katz, Michael Zingale, Alan C. Calder, F. Douglas Swesty, Ann S. Almgren, Weiqun Zhang}
 %==========================================================================
@@ -537,7 +541,8 @@ In practice, we would still actually evolve the total gas energy
 $E_G$, and so when discretized to second order in time from time level
 $n$ to time level $n+1$ the gas energy equation would look like
 \begin{align}
-  (\rho E_G)^{n+1} &= (\rho E_G)^{n} + \left(\frac{1}{2} (\rho \phi)^{n+1} - \frac{1}{2} (\rho \phi)^{n}\right) - \Delta t\, \bm{\nabla}\cdot\left(\rho \mathbf{u} E_{\text{tot}} + p\mathbf{u} - \frac{1}{2}\rho\mathbf{u}\phi\right) \notag \\
+  (\rho E_G)^{n+1} &= (\rho E_G)^{n} + \left(\frac{1}{2} (\rho \phi)^{n+1} - \frac{1}{2} (\rho \phi)^{n}\right) \notag \\
+   &- \Delta t\, \bm{\nabla}\cdot\left(\rho \mathbf{u} E_{\text{tot}} + p\mathbf{u} - \frac{1}{2}\rho\mathbf{u}\phi\right) \notag \\
    &+ \frac{\Delta t}{2}\left(\phi \frac{\partial \rho}{\partial t}\right)^{n+1/2} - \frac{\Delta t}{2} \left(\rho \frac{\partial \phi}{\partial t}\right)^{n+1/2}.
 \end{align}
 It is not immediately obvious that this is explicitly conservative for
@@ -650,10 +655,9 @@ edges of the computational domain. In principle, they can be computed
 by doing a direct sum over the mass distribution inside the domain,
 where the mass in each zone is treated as a point source:
 \begin{equation}
-  \Phi_{{lmn}} = G\, \sum_{{i, j, k}} \frac{G \rho_{{ijk}}}{|\mathbf{x}_{{lmn}} - \mathbf{x}_{{ijk}}|}\, \Delta V_{{ijk}}.\label{direct_sum}
-\end{equation} \MarginPar{should there really be 2 $G$'s?}
-Here $(i, j, k)$ are the indices of cells inside the domain, and $(l,
-m, n)$ \MarginPar{indices should be in normal math style, not roman}
+  \Phi_{{lmn}} = \sum_{{i, j, k}} \frac{G \rho_{{ijk}}}{|\mathbf{x}_{{lmn}} - \mathbf{x}_{{ijk}}|}\, \Delta V_{{ijk}}.\label{direct_sum}
+\end{equation}
+Here $(i, j, k)$ are the indices of cells inside the domain, and $(l,m, n)$ 
 are the indices of boundary locations. $\Delta V$ is the volume of the
 zone. We have implemented this as an option\footnote{It is controlled
   with the \texttt{gravity.direct\_sum\_bcs} input parameter.} in
@@ -708,9 +712,10 @@ spherical harmonics,
 \end{align}
 \end{comment}
 the potential outside of the mass distribution can be written as:
-\begin{equation}
-  \Phi(\mathbf{x}) = \sum_{l=0}^{\infty} \left[Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} + \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right].\label{multipole_potential}
-\end{equation}
+\begin{align}
+  \Phi(\mathbf{x}) &= \sum_{l=0}^{\infty} \left\{Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} \right. \notag \\
+    &+ \left. \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right\}.\label{multipole_potential}
+\end{align}
 $P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials. $Q_l^{(0)}$ and $Q_{lm}^{(C,S)}$ are variants of the multipole moments that involve integrals of $P_l$ and $P_l^m$, respectively, over the computational domain.
 \begin{comment}
 \begin{align}
@@ -754,13 +759,13 @@ a uniform sphere, which can be easily determined using Gauss' law:
   \phi_{\text{sphere}}(r) = \frac{GM}{r} \times \begin{cases} (3R^2 - r^2)/(2 r^2) & r \leq R \\ 1 & r > R \end{cases},\label{eq:sphere-analytical}
 \end{equation}
 where $M = 4\pi R^3 / 3$ is the mass of the sphere. Defining the $L^2$
-norm of a field $f$ as \MarginPar{We usually use $\| \ldots \|_2$ for a norm}
+norm of a field $f$ as
 \begin{equation}
-  L^2(f) = \left(\sum_{i,j,k} dx\, dy\, dz\, f_{ijk}^2\right)^{1/2},
+  \| f \|_2 = \left(\sum_{i,j,k} dx\, dy\, dz\, f_{ijk}^2\right)^{1/2},
 \end{equation}
 we measure the numerical error by calculating the $L^2$ norm of the error and normalizing it by the $L^2$ norm of the analytical solution:
 \begin{equation}
-  \text{Error} = \frac{L^2(\phi - \phi_{\text{sphere}})}{L^2(\phi_{\text{sphere}})}.
+  \text{Error} = \frac{\|\phi - \phi_{\text{sphere}}\|_2}{\|\phi_{\text{sphere}}\|_2}.
 \end{equation}
 
 \begin{figure}
@@ -802,8 +807,10 @@ $1/2$, which destroys the symmetry. Inserting this missing factor and
 performing a simple coordinate transformation so that the center of
 the cube is at the origin, the potential is
 \begin{align}
-  \phi_{\text{cube}}(x,y,z) &= G\rho\sum_{i,j,k=0}^1\left(x_i y_j\, \text{tanh}^{-1}\left(\frac{z_k}{r_{ijk}}\right) + y_j z_k\, \text{tanh}^{-1}\left(\frac{x_i}{r_{ijk}}\right) + z_k x_i\, \text{tanh}^{-1}\left(\frac{y_j}{r_{ijk}}\right) \right.\notag \\
-  &\left. - \frac{x_i^2}{2}\,\text{tan}^{-1}\left(\frac{y_j z_k}{x_i r_{ijk}}\right) - \frac{y_j^2}{2}\,\text{tan}^{-1}\left(\frac{z_k x_i}{y_j r_{ijk}}\right) - \frac{z_k^2}{2}\,\text{tan}^{-1}\left(\frac{x_i y_j}{z_k r_{ijk}}\right)\right)
+  \phi_{\text{cube}}(x,y,z) &= G\rho\sum_{i,j,k=0}^1\left[x_i y_j\, \text{tanh}^{-1}\left(\frac{z_k}{r_{ijk}}\right)\right. \notag \\
+  &+ \left. y_j z_k\, \text{tanh}^{-1}\left(\frac{x_i}{r_{ijk}}\right) + z_k x_i\, \text{tanh}^{-1}\left(\frac{y_j}{r_{ijk}}\right) \right.\notag \\
+  &\left. - \frac{x_i^2}{2}\,\text{tan}^{-1}\left(\frac{y_j z_k}{x_i r_{ijk}}\right) - \frac{y_j^2}{2}\,\text{tan}^{-1}\left(\frac{z_k x_i}{y_j r_{ijk}}\right) \right. \notag \\
+  &- \left. \frac{z_k^2}{2}\,\text{tan}^{-1}\left(\frac{x_i y_j}{z_k r_{ijk}}\right)\right]
 \end{align}
 where $x_0 = R + x$, $x_1 = R - x$, $y_0 = R + y$, $y_1 = R-y$, $z_0 =
 R+z$, $z_1 = R-z$, and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. In
@@ -1059,6 +1066,22 @@ coarser grid below it. CASTRO initially assigns $93\%$ of the domain
 to be covered by the intermediate resolution grids, and $0.05\%$ of
 the domain to be covered by the finest resolution grids.
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=1.0]{freefall/plot_freefall}
+  \caption{Time evolution of two initially stationary white dwarfs,
+    mutually attracted to each other by the gravitational force. The
+    horizontal axis gives the separation of the white dwarfs, scaled
+    to the initial separation, and the vertical axis gives the elapsed
+    time of the simulation, scaled to the total elapsed time
+    necessarily. The solid curve shows the analytical result,
+    calculated from Newtonian mechanics, and the circles show the
+    samples from the time evolution with CASTRO. The agreement between
+    theory and simulation is excellent, even for a simulation with
+    modest resolution.}
+  \label{Fig:Free Fall}
+\end{figure}
+
 The analytical result in Equation \ref{analyticalFreeFall} determines
 the total elapsed free-fall time,
 \begin{equation}
@@ -1182,8 +1205,8 @@ initial perturbation ($v^\prime_A$ and $v^\prime_B$ respectively), and
 the frequency of the perturbation ($n_A = 4$ and $n_B = 2$):
 \begin{align}
   R_A &= \begin{cases} 0 & |y - 0.5| > 0.25 \\ 1 & |y - 0.5| < 0.25 \end{cases} \\
-  R_B &= \Big\{\left[1 + \text{exp}(-2(y-0.25)/\Delta_y)\right]\left[1 + \text{exp}(2(y-0.75)/\Delta_y)\right]\Big\}^{-1} \\
-  v^\prime_A &= w_0\, \text{sin}\left(n_A\, \pi\, x\right) \left\{\text{exp}\left[-\frac{(y-0.25)^2}{2\sigma^2}\right] + \text{exp}\left[-\frac{(y-0.75)^2}{2\sigma^2}\right]\right\} \\
+  R_B &= \Big\{\left[1 + e^{-2(y-0.25)/\Delta_y}\right]\left[1 + e^{2(y-0.75)/\Delta_y}\right]\Big\}^{-1} \\
+  v^\prime_A &= w_0\, \text{sin}\left(n_A\, \pi\, x\right) \left\{e^{-(y-0.25)^2 / 2\sigma^2} + e^{-(y-0.75)^2/2\sigma^2}\right\} \\
   v^\prime_B &= w_0\, \text{sin}\left(n_B\, \pi\, x\right).
 \end{align}
 Here $w_0 = 0.1$ is the scale of the velocity perturbation, $\sigma =
@@ -1585,23 +1608,6 @@ and then we can find $(\rho u)^{n+1}$ from Eq.~\ref{eq:rhouupdate}.
 %\end{figure}
 
 \clearpage
-
-\begin{figure}
-  \centering
-  \includegraphics[scale=2.0]{freefall/plot_freefall}
-  \caption{Time evolution of two initially stationary white dwarfs,
-    mutually attracted to each other by the gravitational force. The
-    horizontal axis gives the separation of the white dwarfs, scaled
-    to the initial separation, and the vertical axis gives the elapsed
-    time of the simulation, scaled to the total elapsed time
-    necessarily. The solid curve shows the analytical result,
-    calculated from Newtonian mechanics, and the circles show the
-    samples from the time evolution with CASTRO. The agreement between
-    theory and simulation is excellent, even for a simulation with
-    modest resolution.}
-  \label{Fig:Free Fall}
-\end{figure}
-
 
 \end{document}
 
