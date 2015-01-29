@@ -43,14 +43,6 @@ contains
 
     double precision :: rho_c, rho_c_old, mass_wd, mass_wd_old, drho_c
 
-    double precision :: slope_T, slope_xn(nspec)
-
-    double precision :: A, B, dAdT, dAdrho, dBdT, dBdrho
-
-    logical :: isentropic
-
-    double precision :: test
-
     integer, parameter :: nvar = 3 + nspec
 
     double precision :: dens_zone, temp_zone, pres_zone, entropy
@@ -233,11 +225,6 @@ contains
                    fluff = .TRUE.
                    exit
 
-                endif
-
-                if (temp_zone < ambient_state % T .and. isentropic) then
-                   temp_zone = ambient_state % T
-                   isentropic = .false.
                 endif
 
              enddo
