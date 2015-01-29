@@ -130,6 +130,7 @@ make_inputs:
 		echo "castro.ppm_trace_grav = $(castro.ppm_trace_grav)" >> $(inputs) ; \
 		echo "castro.ppm_temp_fix = $(castro.ppm_temp_fix)" >> $(inputs) ; \
 		echo "castro.grav_source_type = $(castro.grav_source_type)" >> $(inputs) ; \
+		echo "castro.rot_source_type = $(castro.rot_source_type)" >> $(inputs) ; \
 		echo "castro.small_temp = $(castro.small_temp)" >> $(inputs) ; \
 		echo "castro.small_dens = $(castro.small_dens)" >> $(inputs) ; \
 		echo "castro.allow_negative_energy = $(castro.allow_negative_energy)" >> $(inputs) ; \
