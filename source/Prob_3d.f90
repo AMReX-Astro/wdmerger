@@ -60,13 +60,15 @@
 
      integer :: pt_index(3)
 
-     type (eos_t) :: zone_state
+     type (eos_t) :: zone_state, ambient_state
 
      integer :: i,j,k,ii,jj,kk,n
 
      ! Loop through the zones and set the zone state depending on whether we are
      ! inside the primary or secondary (in which case interpolate from the respective model)
      ! or if we are in an ambient zone.
+
+     call get_ambient(ambient_state)
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state, pt_index)
@@ -182,6 +184,10 @@
      integer i, j, k, n
      double precision :: vx, vy, vz
      double precision :: xx, yy
+
+     type (eos_t) :: ambient_state
+
+     call get_ambient(ambient_state)
 
      do n = 1,NVAR
         call filcc(adv(adv_l1,adv_l2,adv_l3,n), &

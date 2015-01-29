@@ -45,9 +45,6 @@ module probdata_module
   ! Smallest allowed velocity on the grid
   double precision :: smallu
   
-  ! EOS state type that describes the ambient gas around the stars
-  type (eos_t) :: ambient_state
-  
   ! Controls interpolation from 1D model to 3D model
   integer :: nsub
   logical :: interp_temp
@@ -106,9 +103,9 @@ contains
 
     call read_namelist
 
-    ! Finalize ambient state, and get small_pres
+    ! Set small_pres and small_ener
 
-    call set_ambient_and_small
+    call set_small
 
     ! Complete any grid related calculations like defining its center
 
@@ -189,6 +186,7 @@ contains
     stellar_O16  = HALF
 
     smallx = 1.d-10
+    smallu = 1.d-12
 
     inertial = .false.
     interp_temp = .false.
@@ -236,25 +234,15 @@ contains
 
 
 
-  ! Define the ambient state, and calculate small_pres
+  ! Calculate small_pres and small_ener
 
-  subroutine set_ambient_and_small
+  subroutine set_small
 
     use meth_params_module, only: small_temp, small_pres, small_dens, small_ener
 
     implicit none
 
     type (eos_t) :: eos_state
-
-    smallu = 1.d-12
-
-    ! Define ambient state and call EOS to get eint and pressure
-
-    ambient_state % rho = 1.0d-4
-    ambient_state % T   = 1.0d7
-    ambient_state % xn  = stellar_comp
-
-    call eos(eos_input_rt, ambient_state, .false.)
 
     ! Given the inputs of small_dens and small_temp, figure out small_pres.
  
@@ -267,7 +255,27 @@ contains
     small_pres = eos_state % p
     small_ener = eos_state % e
 
-  end subroutine set_ambient_and_small
+  end subroutine set_small
+
+
+
+  ! Returns the ambient state
+
+  subroutine get_ambient(ambient_state)
+
+    implicit none
+
+    type (eos_t) :: ambient_state
+
+    ! Define ambient state and call EOS to get eint and pressure
+
+    ambient_state % rho = 1.0d-4
+    ambient_state % T   = 1.0d7
+    ambient_state % xn  = stellar_comp
+
+    call eos(eos_input_rt, ambient_state, .false.)
+
+  end subroutine get_ambient
 
 
 
@@ -299,6 +307,9 @@ contains
     implicit none
 
     double precision :: dx
+    type (eos_t) :: ambient_state
+
+    call get_ambient(ambient_state)
 
     center_P_initial = center
     center_S_initial = center

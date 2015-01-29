@@ -37,8 +37,7 @@ module probdata_module
   ! Smallest allowed velocity on the grid
   double precision :: smallu
   
-  ! EOS state type that describes the ambient gas around the star
-  type (eos_t) :: ambient_state
+  ! Density of ambient gas around the star
   double precision :: ambient_density
   
   ! Controls interpolation from 1D model to 3D model
