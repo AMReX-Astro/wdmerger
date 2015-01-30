@@ -1041,6 +1041,20 @@ toward the equilibrium state using suitably defined damping
 terms. However, these issues are not considered for the present study,
 as we are not yet attempting to study the merger process.
 
+As a consequence of starting in a non-equilibrium setting, there are 
+large density and pressure gradients near the white dwarf surfaces
+that result in large amounts of mass flowing into the ambient
+medium. This can result in spurious non-physical consequences such as 
+the total density or energy going negative in a zone. To compensate 
+for this, we start the simulation with a timestep that is a few orders 
+of magnitude smaller than that required by the CFL criterion, and allow
+the timestep to increase by 1\% each timestep so that the timestep reaches 
+its maximum allowed by the velocities on the grid over a span of approximately 
+1000 timesteps. This allows the ambient medium just outside the white dwarf
+to come closer to equilibrium with the surface without having 
+discontinuous jumps in the density or energy. For all simulations, 
+the maximum timestep is set to be equal to one-half of the CFL limit.
+
 %==========================================================================
 % Numerical Test Problems
 %==========================================================================
