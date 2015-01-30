@@ -53,8 +53,29 @@
 % Abstract
 %==========================================================================
 \begin{abstract}
-We describe our numerical methodology for modeling double white dwarf
-systems with the AMR hydrodynamics code Castro.
+The Type Ia supernova progenitor problem is one of the most perplexing and 
+exciting problems in astrophysics, requiring detailed numerical modelling to 
+complement the observations of these explosions. One possibility that has 
+merited recent theoretical attention is the white dwarf merger scenario.
+This can naturally explain many of the observed characteristics of 
+Type Ia supernovae, as well as their distribution in time and space.
+However, to date there have been few fully self-consistent simulations 
+of binary white dwarf systems using mesh-based hydrodynamics, 
+relative to other methods. This is the first paper in a series designed to 
+describe simulations of these systems with the adaptive-mesh refinement 
+hydrodynamics code CASTRO. In this paper we describe our numerical 
+methodology. CASTRO solves the Euler equations of hydrodynamics 
+and the Poisson equation for self-gravity. Standard techniques for 
+coupling gravitation and rotation forces to the hydrodynamics do 
+not do an adequate job conserving the total energy of the system, 
+but recent advances in the literature have made advances on this 
+problem and we discuss our implementation here. We also run an 
+extensive set of test problems to verify that our software can sufficiently
+model a system where large amounts of mass are advected on the computational 
+domain over very long timescales. Future papers in this series will describe
+our treatment of the initial conditions of these systems, and will 
+examine the early phases of the merger to determine its viability
+for triggering a thermonuclear detonation.
 
 \end{abstract}
 \keywords{hydrodynamics - methods: numerical - supernovae: general - white dwarfs}
