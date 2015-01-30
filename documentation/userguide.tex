@@ -155,6 +155,105 @@ run this code, but you will need some other mechanism for analyzing the BoxLib o
 We have some routines for this purpose available in Fortran and may be able to provide them
 upon request.
 
+This software assumes that you have set several environment variables:
+\begin{itemize}
+  \item \texttt{BOXLIB\_HOME}, the location of the BoxLib code's top-level directory
+  \item \texttt{CASTRO\_DIR}, the location of the CASTRO code's top-level directory
+  \item \texttt{WDMERGER\_HOME}, the location of this software's top-level directory
+\end{itemize}
+
+In addition, you should include in your \texttt{PYTHONPATH} the location of the 
+\texttt{analysis} subdirectory. In \texttt{bash}, include the following in your 
+\texttt{.bashrc} profile file:
+
+\texttt{export PYTHONPATH=\$PYTHONPATH:\$WDMERGER\_HOME/analysis}
+
+\chapter{Code Structure}
+
+There are several top-level directories in the \texttt{wdmerger} project. Here we will describe
+the contents of each. There are also a \texttt{LICENSE.txt} file containing the software license,
+and a \texttt{README.md} file describing how to get started.
+
+The \texttt{documentation} directory contains this user's guide and is intended to provide information
+on how to use and run this software.
+
+The \texttt{source} directory contains all of the Fortran routines needed to build a CASTRO 
+executable file. It is not normally built directly, but you can type \texttt{make} in that directory
+to build a vanilla executable built with the default settings.
+
+The \texttt{analysis} directory contains the Python analysis scripts used for analyzing output
+data (both in BoxLib and plaintext format). 
+
+The \texttt{tests} directory includes problem setups that are used for testing 
+the hydrodynamics code CASTRO and exercises a wide range of its capabilities.
+
+The \texttt{job\_scripts} directory contains utilities that are used for building and running
+problem setups on various machine architectures.
+
+The \texttt{papers} directory includes the LaTeX source code for the journal articles
+that are being submitted as a result of this project.
+
+\chapter{Test Problems}
+
+The \texttt{tests} directory contains a number of example problems that we use
+to assess the reliability of CASTRO in performing hydrodynamics simulations 
+with self-gravity. This section includes a list of the existing problems 
+as well as the instructions for building and running a problem.
+
+\begin{itemize}
+  \item The \texttt{gravity} subdirectory includes problems that test the Poisson 
+self-gravity module in CASTRO.
+  \begin{itemize}
+    \item The \texttt{boundary\_condition\_comparison} test checks the validity of our 
+multipole approximation for the boundary conditions on the Poisson equation. It runs
+the gravity solve for several different choices of the number of expansion coefficients
+and compares the resulting gravitational potential to the exact result.
+    \item The \texttt{uniform\_cube\_sphere} test is designed to check the convergence
+properties of the Poisson solver. It loads either a sphere or cube of uniform density
+onto the computational domain and then calculates the potential at several different
+spatial resolutions to check if the potential converges.
+  \end{itemize}
+  \item The \texttt{hydro} subdirectory tests includes tests that use the hydrodynamics 
+module, including many with self-gravity.
+  \begin{itemize}
+    \item The \texttt{circular\_orbit} test loads two white dwarfs on a grid and then orbits
+them for a large number of periods, to test conservation of linear momentum,
+angular momentum and energy convergence.
+    \item The \texttt{evrard\_collapse} test runs the test problem described originally by 
+\cite{evrard:1988} and whose results for a grid-based code can be seen in \cite{arepo}. A spherical
+distribution of gas obeying a gamma-law equation of state is loaded onto a grid with negligible 
+pressure. The gas collapses, rebounds with a shock, and then settles into hydrodynamic equilibrium.
+It is a good test of the energy conservation properties of the code.
+    \item The \texttt{freefall} test loads two white dwarfs onto a grid and allows them to fall towards
+each other under their mutual gravitational influence. We check to see whether the timescale for them
+colliding matches the analytical expectation for two point masses.
+    \item The \texttt{kelvin\_helmoltz} test runs several varieties of a 2D shearing fluid that exhibits the 
+Kelvin-Helmholtz instability. The relevant papers are \cite{robertson:2010}, \cite{arepo}, and \cite{mcnally:2012}.
+    \item The \texttt{single\_star\_hse} test loads a single white dwarf on a grid and checks how well 
+hydrostatic equilibrium is maintained.
+  \end{itemize}
+  \item The \texttt{performance} subdirectory examines the scaling and performance properties of CASTRO.
+  \begin{itemize}
+    \item The \texttt{strong\_scaling} test runs the same problem with a varying number of processors and 
+checks the scaling properties.
+    \item The \texttt{weak\_scaling} test scales the size of the problem with the number of processors and
+checks the scaling properties.
+  \end{itemize}
+\end{itemize}
+
+Each test directory is set up with a uniform pattern. The \texttt{source/} subdirectory includes all of the source code
+needed to build the test. The \texttt{makefile} builds the executable and creates
+the inputs files needed for the simulation. The \texttt{run\_test.sh} script executes the test by creating a subdirectory
+for each parameter set and then submitting it with a batch submission script (for a vanilla Linux installation,
+this will use the \texttt{batch} utility; for a limited number of clusters and supercomputers, 
+there will be recommended options and specialized submission scripts). The \texttt{analysis.py} Python script
+is used to analyze the output and generature figures. In summary, to run a test, perform the following series of commands:
+\begin{itemize}
+  \item \texttt{make}
+  \item \texttt{bash run\_test.sh}
+  \item \texttt{python analysis.py} (after the execution has completed)
+\end{itemize}
+
 %------------------------------------------------------------------------------
 \backmatter
 
