@@ -79,14 +79,14 @@ contains
   ! This routine calls all of the other subroutines at the beginning
   ! of a simulation to fill in the basic problem data.
 
-  subroutine initialize(name, namlen)
+  subroutine initialize(name, namlen, init)
 
     use bl_constants_module, only: ZERO
     use bl_error_module, only: bl_error
 
     implicit none
 
-    integer :: namlen, i
+    integer :: namlen, i, init
     integer :: name(namlen)
 
     ! Build "probin" filename -- the name of the file containing the fortin namelist.
@@ -95,25 +95,27 @@ contains
        probin(i:i) = char(name(i))
     enddo
 
-    ! Determine if we are the I/O processor, and save it to the ioproc variable
-
-    call get_ioproc
-
-    ! Read in the namelist to set problem parameters
+    ! Read in the namelist to set problem parameters.
 
     call read_namelist
 
-    ! Set small_pres and small_ener
+    ! Set small_pres and small_ener.
 
     call set_small
 
-    ! Complete any grid related calculations like defining its center
+    ! Complete any grid related calculations like defining its center.
 
     call grid_data
 
-    ! Establish binary parameters
+    ! Determine if we are the I/O processor, and save it to the ioproc variable.
 
-    call binary_setup
+    call get_ioproc
+
+    ! Establish binary parameters and create initial models.
+
+    if (init == 1) then 
+       call binary_setup
+    endif
 
   end subroutine
 
@@ -238,7 +240,7 @@ contains
 
   subroutine set_small
 
-    use meth_params_module, only: small_temp, small_pres, small_dens, small_ener
+    use meth_params_module, only: small_temp, small_pres, small_dens !, small_ener
 
     implicit none
 
@@ -253,7 +255,7 @@ contains
     call eos(eos_input_rt, eos_state, .false.)
 
     small_pres = eos_state % p
-    small_ener = eos_state % e
+!    small_ener = eos_state % e
 
   end subroutine set_small
 

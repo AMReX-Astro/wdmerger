@@ -8,7 +8,7 @@
      integer :: name(namlen)
      double precision :: problo(3), probhi(3)
 
-     if (init == 1) call initialize(name, namlen)
+     call initialize(name, namlen, init)
 
    end subroutine PROBINIT
 
