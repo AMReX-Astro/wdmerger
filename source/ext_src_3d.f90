@@ -26,8 +26,9 @@
      double precision :: rho, px, py
      integer          :: i, j, k
 
-     src(:,:,:,:) = 0.d0
-
+     ! lo and hi specify work region     
+     src(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO ! Fill work region only
+     
      if ( damping ) then
 
        omega = 2.d0 * M_PI / rot_period
