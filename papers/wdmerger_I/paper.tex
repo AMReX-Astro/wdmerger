@@ -471,13 +471,14 @@ Reactions?
 
 We solve the Poisson equation for self-gravity for our problem,
 \begin{equation}
-  \nabla^2 \Phi(\mathbf{x}) = -4\pi G\, \rho(\mathbf{x}),
+  \nabla^2 \Phi(\mathbf{x}) = 4\pi G\, \rho(\mathbf{x}),
 \end{equation}
 where $\Phi$ is the gravitational potential, $G$ is the gravitational
-constant, and $\rho$ is the mass density. We note that the sign
-convention used in CASTRO is opposite to that commonly seen in the
-physics literature, so that $\Phi$ is positive everywhere. The
-solution of this equation in CASTRO is described in \cite{castro}, and
+constant, and $\rho$ is the mass density.\footnote{In the CASTRO code, the 
+right-hand side is negated and therefore $\Phi$ is positive. We use the 
+sign convention that is typical for astrophysics in this paper. 
+When $\Phi$ appears in the code it is negated to compensate for this.} 
+The solution of this equation in CASTRO is described in \cite{castro}, and
 consists of both level and composite solves, and a final
 synchronization at the end.
 
@@ -576,7 +577,7 @@ challenge is to write down a form of the discretized energy equation
 that explicitly conserves total energy when coupled to gravity. When
 gravity is included, the total energy is
 \begin{equation}
-  \rho E_{\text{tot}} = \rho E - \frac{1}{2}\rho\Phi = \frac{1}{2}\rho \mathbf{u}^2 + \rho e - \frac{1}{2}\rho\Phi, \label{eq:total_energy_gravity}
+  \rho E_{\text{tot}} = \rho E + \frac{1}{2}\rho\Phi = \frac{1}{2}\rho \mathbf{u}^2 + \rho e + \frac{1}{2}\rho\Phi, \label{eq:total_energy_gravity}
 \end{equation}
 where $\rho E$ is the total gas energy from the pure hydrodynamics equation,
 and the factor of $1/2$ in the gravitational energy term is necessary
@@ -661,7 +662,8 @@ energy conservation. This becomes apparent in Section
 
 We start with the integral formulation of the energy source term (Equation
 \ref{eq:cell_center_gravity_source}), but do not discretize it at
-the cell center.  Instead, we recognize that $\mathbf{u} = {\bm\nabla}\left[\mathbf{r}\cdot\mathbf{u}\right]$,
+the cell center.  Instead, we recognize that in the limit that the velocity is 
+constant, $\mathbf{u} = {\bm\nabla}\left[\mathbf{r}\cdot\mathbf{u}\right]$,
 where $\mathbf{r}$ is the position vector originating from the zone center.
 Then, since in the cell-centered approach we assume that the density, velocity,
 and gravitational acceleration are constant across the zone, we can include all terms
@@ -683,11 +685,13 @@ and away from the surface. In one dimension, this expression evaluates to
              &+ \frac{1}{2} \rho_{i+1/2} u_{x_{i+1/2}} g_{x_{i+1/2}}.\label{eq:edge_centered_gravity_source}
 \end{align}
 (We note that this differs slightly from Equation 94 in \cite{arepo} in that
-we evaluate the gravitational acceleration at the zone face rather than the zone center.)
+we evaluate the gravitational acceleration at the zone face rather than the zone center.
+We are free to do this since we assumed a uniform gravitational field to begin with.)
 In the limit of constant fields, this expression simply averages out to the standard 
 source term at the zone center. However, when the fields vary this can give very different results.
 
-As pointed out by \citeauthor{arepo}, $(\rho u)$ evaluated at the faces at time level $n+1/2$ is the mass flux,
+As pointed out by \citeauthor{arepo}, $(\rho u)$ evaluated at the faces at time level $n+1/2$ is the mass flux
+that is obtained from the Riemann solver in the hydrodynamics step,
 so $(\rho u)_{i-1/2}\, \Delta t\, \Delta A = \Delta m_{i-1/2}$ is the mass exchanged between zones $i$ and $i-1$.
 Additionally, to second order $g_{x_{i-1/2}} \Delta x = \Phi_{i} - \Phi_{i-1}$. Therefore the energy gained by the zone is
 \begin{align}
@@ -705,6 +709,15 @@ from numerical discretization errors. However, it does mean that there can be sh
 in regions near a white dwarf's surface, because the mass fluxes into the ambient medium can be quite large compared to
 the mass of the zone. This effect diminishes at higher resolutions as the gradients become better resolved.
 
+Our strategy for coupling the gravity to the hydrodynamics on a uniform grid can thus be summarized as follows. 
+At the beginning of a timestep, we solve the Poisson equation given the density $\rho^n$. We then solve the 
+Euler equations and advance the system in time by $\Delta t$ using zone-centered fluxes at time-level $n+1/2$. 
+We add $\Delta t \rho^n \mathbf{g}^n$ to the momentum equations. We then solve the Poisson equation again, given
+the density $\rho^{n+1}$. We then add $-(\Delta t/2) \rho^{n} \mathbf{g}^{n} + (\Delta t / 2) \rho^{n+1} \mathbf{g}^{n+1}$
+to the momentum equations, time-centering the source term. We simultaneously add $\sum_{j} -(1/2) \Delta m_{j} (\Phi - \Phi_j)$
+to the zone's energy, where the index $j$ runs over all adjacent zones. This conserves the total energy on the grid
+to roundoff error, modulo any losses from an open domain boundary.
+
 \subsubsection{Boundary Conditions}\label{sec:gravity_boundary_conditions}
 
 Analytic solutions to the Poisson equation customarily assume that the
@@ -717,7 +730,7 @@ edges of the computational domain. In principle, they can be computed
 by doing a direct sum over the mass distribution inside the domain,
 where the mass in each zone is treated as a point source:
 \begin{equation}
-  \Phi_{{lmn}} = \sum_{{i, j, k}} \frac{G \rho_{{ijk}}}{|\mathbf{x}_{{lmn}} - \mathbf{x}_{{ijk}}|}\, \Delta V_{{ijk}}.\label{direct_sum}
+  \Phi_{{lmn}} = -\sum_{{i, j, k}} \frac{G \rho_{{ijk}}}{|\mathbf{x}_{{lmn}} - \mathbf{x}_{{ijk}}|}\, \Delta V_{{ijk}}.\label{direct_sum}
 \end{equation}
 Here $(i, j, k)$ are the indices of cells inside the domain, and $(l,m, n)$ 
 are the indices of boundary locations. $\Delta V$ is the volume of the
@@ -751,7 +764,7 @@ higher-order multipole moments. If the entire mass distribution is
 enclosed, then the potential can be expanded in a series of spherical
 harmonics $Y_{lm}$:
 \begin{equation}
-  \Phi(\mathbf{x}) = \sum_{l=0}^{\infty}\sum_{m=-l}^{l} \frac{4\pi}{2l + 1} q_{lm} \frac{Y_{lm}(\theta,\phi)}{r^{l+1}}, \label{spherical_harmonic_expansion}
+  \Phi(\mathbf{x}) = -\sum_{l=0}^{\infty}\sum_{m=-l}^{l} \frac{4\pi}{2l + 1} q_{lm} \frac{Y_{lm}(\theta,\phi)}{r^{l+1}}, \label{spherical_harmonic_expansion}
 \end{equation}
 where $q_{lm}$ are the so-called multipole moments. The origin of the
 coordinate system is taken to be the center of the computational
@@ -775,7 +788,7 @@ spherical harmonics,
 \end{comment}
 the potential outside of the mass distribution can be written as:
 \begin{align}
-  \Phi(\mathbf{x}) &= \sum_{l=0}^{\infty} \left\{Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} \right. \notag \\
+  \Phi(\mathbf{x}) &= -\sum_{l=0}^{\infty} \left\{Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} \right. \notag \\
     &+ \left. \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right\}.\label{multipole_potential}
 \end{align}
 $P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials. $Q_l^{(0)}$ and $Q_{lm}^{(C,S)}$ are variants of the multipole moments that involve integrals of $P_l$ and $P_l^m$, respectively, over the computational domain.
@@ -818,7 +831,7 @@ multiple resolutions corresponding to jumps by a factor of two. For
 comparison, at each grid point we evaluate the analytical potential of
 a uniform sphere, which can be easily determined using Gauss' law:
 \begin{equation}
-  \Phi_{\text{sphere}}(r) = \frac{GM}{r} \times \begin{cases} (3R^2 - r^2)/(2 r^2) & r \leq R \\ 1 & r > R \end{cases},\label{eq:sphere-analytical}
+  \Phi_{\text{sphere}}(r) = -\frac{GM}{r} \times \begin{cases} (3R^2 - r^2)/(2 r^2) & r \leq R \\ 1 & r > R \end{cases},\label{eq:sphere-analytical}
 \end{equation}
 where $M = 4\pi R^3 / 3$ is the mass of the sphere. Defining the $L^2$
 norm of a field $f$ as
@@ -869,7 +882,7 @@ $1/2$, which destroys the symmetry. Inserting this missing factor and
 performing a simple coordinate transformation so that the center of
 the cube is at the origin, the potential is
 \begin{align}
-  \Phi_{\text{cube}}(x,y,z) &= G\rho\sum_{i,j,k=0}^1\left[x_i y_j\, \text{tanh}^{-1}\left(\frac{z_k}{r_{ijk}}\right)\right. \notag \\
+  \Phi_{\text{cube}}(x,y,z) &= -G\rho\sum_{i,j,k=0}^1\left[x_i y_j\, \text{tanh}^{-1}\left(\frac{z_k}{r_{ijk}}\right)\right. \notag \\
   &+ \left. y_j z_k\, \text{tanh}^{-1}\left(\frac{x_i}{r_{ijk}}\right) + z_k x_i\, \text{tanh}^{-1}\left(\frac{y_j}{r_{ijk}}\right) \right.\notag \\
   &\left. - \frac{x_i^2}{2}\,\text{tan}^{-1}\left(\frac{y_j z_k}{x_i r_{ijk}}\right) - \frac{y_j^2}{2}\,\text{tan}^{-1}\left(\frac{z_k x_i}{y_j r_{ijk}}\right) \right. \notag \\
   &- \left. \frac{z_k^2}{2}\,\text{tan}^{-1}\left(\frac{x_i y_j}{z_k r_{ijk}}\right)\right]
