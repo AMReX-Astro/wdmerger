@@ -114,7 +114,7 @@ make_inputs:
 		echo "amr.max_grid_size = $(amr.max_grid_size)" >> $(inputs) ; \
 		echo "amr.blocking_factor = $(amr.blocking_factor)" >> $(inputs) ; \
 		echo "amr.grid_eff = $(amr.grid_eff)" >> $(inputs) ; \
-		echo "castro.allow_utagging = $(castro.allow_untagging)" >> $(inputs) ; \
+		echo "castro.allow_untagging = $(castro.allow_untagging)" >> $(inputs) ; \
 		echo "castro.do_hydro = $(castro.do_hydro)" >> $(inputs) ; \
 		echo "castro.do_grav = $(castro.do_grav)" >> $(inputs) ; \
 		echo "castro.do_react = $(castro.do_react)" >> $(inputs) ; \
