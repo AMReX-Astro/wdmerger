@@ -75,23 +75,27 @@ module probdata_module
   double precision :: ambient_density
 
   ! Bulk system motion
-
   double precision :: bulk_velx, bulk_vely, bulk_velz
+
+  ! Whether we're doing an initialization or a restart
+  integer :: init
 
 contains
 
   ! This routine calls all of the other subroutines at the beginning
   ! of a simulation to fill in the basic problem data.
 
-  subroutine initialize(name, namlen, init)
+  subroutine initialize(name, namlen, init_in)
 
     use bl_constants_module, only: ZERO
     use bl_error_module, only: bl_error
 
     implicit none
 
-    integer :: namlen, i, init
+    integer :: namlen, i, init_in
     integer :: name(namlen)
+
+    init = init_in
 
     ! Build "probin" filename -- the name of the file containing the fortin namelist.
     allocate(character(len=namlen) :: probin)
@@ -117,9 +121,7 @@ contains
 
     ! Establish binary parameters and create initial models.
 
-    if (init == 1) then 
-       call binary_setup
-    endif
+    call binary_setup
 
   end subroutine
 
@@ -247,7 +249,7 @@ contains
 
   subroutine set_small
 
-    use meth_params_module, only: small_temp, small_pres, small_dens !, small_ener
+    use meth_params_module, only: small_temp, small_pres, small_dens, small_ener
 
     implicit none
 
@@ -262,7 +264,7 @@ contains
     call eos(eos_input_rt, eos_state, .false.)
 
     small_pres = eos_state % p
-!    small_ener = eos_state % e
+    small_ener = eos_state % e
 
   end subroutine set_small
 
@@ -343,7 +345,7 @@ contains
     call init_1d(model_P_r, model_P_state, npts_model, dx, radius_P_initial, mass_P, &
                  central_density_P, stellar_temp, stellar_comp, ambient_state)
 
-    if (ioproc == 1) then
+    if (ioproc == 1 .and. init == 1) then
         print *, "Generated initial model for primary WD of mass", mass_P, &
                  ", central density", central_density_P, ", and radius", radius_P_initial
     endif
@@ -353,7 +355,7 @@ contains
        call init_1d(model_S_r, model_S_state, npts_model, dx, radius_S_initial, mass_S, &
                     central_density_S, stellar_temp, stellar_comp, ambient_state)
 
-       if (ioproc == 1) then
+       if (ioproc == 1 .and. init == 1) then
           print *, "Generated initial model for secondary WD of mass", mass_S, &
                    ", central density", central_density_S, ", and radius", radius_S_initial
        endif
