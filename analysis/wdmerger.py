@@ -1,7 +1,8 @@
 import os
 import numpy as np
-
-
+import yt
+from yt.analysis_modules.level_sets.api import *
+import string
 
 #
 # Returns the current git hash of the wdmerger repo.
@@ -343,3 +344,93 @@ def get_column(col_name, diag_filename):
     col_index = col_names.index(col_name)
 
     return data[:,col_index]
+
+
+
+#
+# Given a plotfile, return the location of the primary and the secondary.
+#
+
+def get_star_locs(plotfile):
+
+    ds = yt.load(plotfile)
+
+    # Get a numpy array corresponding to the density.
+
+    problo = ds.domain_left_edge.v
+    probhi = ds.domain_right_edge.v
+    dim    = ds.domain_dimensions
+
+    dx = (probhi - problo) / dim
+
+    dens = (ds.covering_grid(level=0, left_edge=[0.0, 0.0, 0.0], dims=ds.domain_dimensions)['density']).v
+
+    # Calculate the orbital parameters
+
+    M_solar = 1.99e33
+    Gconst = 6.67e-8
+
+    M_P = 0.90
+    M_S = 0.60
+
+    M_P = M_P * M_solar
+    M_S = M_S * M_solar
+
+    # Get a numpy array corresponding to the density.
+
+    a = (Gconst * (M_P + M_S) * rot_period**2 / (4.0 * np.pi**2))**(1.0/3.0)
+
+    a_2 = a / (1 + M_S / M_P)
+    a_1 = (M_S / M_P) * a_2
+
+    # Guess the locations of the stars based on perfect circular rotation
+
+    f = open(plotfile + '/job_info', 'r')
+
+    for line in f:
+        if string.find(line, "rotational_period") > 0:
+            rot_period = float(string.split(line, "= ")[1])
+            break
+
+    f.close()
+
+    t = (ds.current_time).v
+
+    center = (probhi + problo) / 2.0
+
+    loc_P = [-a_1 * np.cos(2 * np.pi * t / rot_period) + center[0], -a_1 * np.sin(2 * np.pi * t / rot_period) + center[1], 0.0 + center[2]]
+    loc_S = [ a_2 * np.cos(2 * np.pi * t / rot_period) + center[0],  a_2 * np.sin(2 * np.pi * t / rot_period) + center[1], 0.0 + center[2]]
+
+    loc_P = np.array(loc_P)
+    loc_S = np.array(loc_S)
+
+    # Create an array of the zone positions
+
+    x = problo[0] + dx[0] * (np.arange(dim[0]) + 0.5e0)
+    y = problo[1] + dx[1] * (np.arange(dim[1]) + 0.5e0)
+    z = problo[2] + dx[2] * (np.arange(dim[2]) + 0.5e0)
+    xx, yy, zz = np.meshgrid(x, y, z, indexing="ij")
+
+    rr = (xx**2 + yy**2 + zz**2)**0.5
+
+    # Now what we'll do is to split up the grid into two parts.
+    # zones that are closer to the primary's expected location and 
+    # zones that are closer to the secondary's expected location.
+
+    rr_P = ( (xx - loc_P[0])**2 + (yy - loc_P[1])**2 + (zz - loc_P[2])**2 )**0.5
+    rr_S = ( (xx - loc_S[0])**2 + (yy - loc_S[1])**2 + (zz - loc_S[2])**2 )**0.5
+
+    P_idx = np.where( rr_P < rr_S )
+    S_idx = np.where( rr_S < rr_P )
+
+    # Now, do a center of mass sum on each star.
+
+    xx_P_com = np.sum( dens[P_idx] * xx[P_idx] ) / np.sum(dens[P_idx])
+    yy_P_com = np.sum( dens[P_idx] * yy[P_idx] ) / np.sum(dens[P_idx])
+    zz_P_com = np.sum( dens[P_idx] * zz[P_idx] ) / np.sum(dens[P_idx])
+
+    xx_S_com = np.sum( dens[S_idx] * xx[S_idx] ) / np.sum(dens[S_idx])
+    yy_S_com = np.sum( dens[S_idx] * yy[S_idx] ) / np.sum(dens[S_idx])
+    zz_S_com = np.sum( dens[S_idx] * zz[S_idx] ) / np.sum(dens[S_idx])
+
+    return [xx_P_com, yy_P_com, zz_P_com, xx_S_com, yy_S_com, zz_S_com]
