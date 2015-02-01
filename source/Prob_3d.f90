@@ -130,13 +130,24 @@
            do i = lo(1), hi(1)
              xx = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
 
-             ! x velocity is -omega * r * sin(theta) == -omega * y
+             ! If we're inside a star, give it a kick equal to its Keplerian orbital velocity.
+             ! Otherwise, give the ambient gas a rigid rotation speed corresponding to the system's orbital period.
 
-             state(i,j,k,UMX) = state(i,j,k,UMX) + state(i,j,k,URHO) * (-2.0d0 * M_PI / rot_period) * yy
-           
-             ! y velocity is +omega * r * cos(theta) == +omega * x
+             if (state(i,j,k,URHO) > TWO * ambient_density) then
 
-             state(i,j,k,UMY) = state(i,j,k,UMY) + state(i,j,k,URHO) * ( 2.0d0 * M_PI / rot_period) * xx
+                if (xx < ZERO) then                  
+                   state(i,j,k,UMY) = state(i,j,k,UMY) - state(i,j,k,URHO) * orbital_speed_P
+                else                 
+                   state(i,j,k,UMY) = state(i,j,k,UMY) + state(i,j,k,URHO) * orbital_speed_S
+                endif
+
+             else
+                ! x velocity is -omega * r * sin(theta) == -omega * y
+                state(i,j,k,UMX) = state(i,j,k,UMX) + state(i,j,k,URHO) * (-TWO * M_PI / rot_period) * yy
+
+                ! y velocity is +omega * r * cos(theta) == +omega * x
+                state(i,j,k,UMY) = state(i,j,k,UMY) + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * xx
+             endif
 
            enddo
          enddo

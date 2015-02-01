@@ -37,6 +37,7 @@ module probdata_module
   double precision :: mass_P, mass_S
   double precision :: central_density_P, central_density_S
   double precision :: radius_P_initial, radius_S_initial
+  double precision :: orbital_speed_P, orbital_speed_S
   double precision :: stellar_temp, stellar_comp(nspec)
 
   ! Smallest allowed mass fraction
@@ -69,6 +70,9 @@ module probdata_module
   double precision, dimension(3) :: center_P_initial, center_S_initial
 
   integer :: star_axis
+
+  ! Density of ambient medium
+  double precision :: ambient_density
 
   ! Bulk system motion
 
@@ -143,6 +147,7 @@ contains
          interp_temp, &
          damping, damping_alpha, &
          do_relax, relax_tau, &
+         ambient_density, &
          stellar_temp, stellar_C12, stellar_O16, &
          denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
          velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
@@ -189,6 +194,8 @@ contains
 
     smallx = 1.d-10
     smallu = 1.d-12
+
+    ambient_density = 1.d-4
 
     inertial = .false.
     interp_temp = .false.
@@ -271,8 +278,8 @@ contains
 
     ! Define ambient state and call EOS to get eint and pressure
 
-    ambient_state % rho = 1.0d-4
-    ambient_state % T   = 1.0d7
+    ambient_state % rho = ambient_density
+    ambient_state % T   = stellar_temp
     ambient_state % xn  = stellar_comp
 
     call eos(eos_input_rt, ambient_state, .false.)
@@ -354,7 +361,8 @@ contains
        ! Get the orbit from Kepler's third law
 
        call kepler_third_law(radius_P_initial, mass_P, radius_S_initial, mass_S, &
-                             rot_period, a_P_initial, a_S_initial, a)
+                             rot_period, a_P_initial, a_S_initial, a, &
+                             orbital_speed_P, orbital_speed_S)
 
        ! Star center positions -- we'll put them in the midplane on the
        ! axis specified by star_axis, with the center of mass at the center of the domain.
@@ -375,9 +383,9 @@ contains
   ! and returns the semimajor axis of the orbit (in cm),
   ! as well as the distances a_1 and a_2 from the center of mass.
 
-  subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, a_1, a_2, a)
+  subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, a_1, a_2, a, v_1, v_2)
 
-    use bl_constants_module, only: ONE, FOUR, THIRD, M_PI
+    use bl_constants_module, only: ONE, TWO, FOUR, THIRD, M_PI
     use fundamental_constants_module, only: Gconst, M_solar
     use prob_params_module, only: xmin, xmax, ymin, ymax, zmin, zmax
 
@@ -385,6 +393,7 @@ contains
 
     double precision, intent(in   ) :: mass_1, mass_2, period, radius_1, radius_2
     double precision, intent(inout) :: a, a_1, a_2
+    double precision, intent(inout) :: v_1, v_2
 
     double precision :: length
 
@@ -394,6 +403,12 @@ contains
 
     a_2 = a/(ONE + mass_2/mass_1)
     a_1 = (mass_2/mass_1)*a_2
+
+    ! Calculate the orbital speeds. This is simply equal to
+    ! orbital circumference over the orbital period.
+
+    v_1 = TWO * M_PI * a_1 / period
+    v_2 = TWO * M_PI * a_2 / period
 
     ! Make sure the domain is big enough to hold stars in an orbit this size
 
