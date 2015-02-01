@@ -61,9 +61,6 @@ module probdata_module
   logical          :: do_relax
   double precision :: relax_tau
 
-  ! Grid info
-  double precision :: center(3)
-
   ! Binary properties
   double precision :: a_P_initial, a_S_initial, a
   
@@ -110,10 +107,6 @@ contains
     ! Set small_pres and small_ener.
 
     call set_small
-
-    ! Complete any grid related calculations like defining its center.
-
-    call grid_data
 
     ! Determine if we are the I/O processor, and save it to the ioproc variable.
 
@@ -290,23 +283,6 @@ contains
 
 
 
-  ! Do any grid related calculations
-
-  subroutine grid_data
-
-    use bl_constants_module, only: HALF
-    use prob_params_module, only: xmin, xmax, ymin, ymax, zmin, zmax
-
-    implicit none
-
-    center(1) = HALF * (xmax - xmin)
-    center(2) = HALF * (ymax - ymin)
-    center(3) = HALF * (zmax - zmin)
-
-  end subroutine grid_data
-
-
-
   ! Set up a binary simulation
 
   subroutine binary_setup
@@ -314,6 +290,7 @@ contains
     use bl_constants_module, only: ZERO, ONE
     use meth_params_module, only: rot_period
     use initial_model_module, only: init_1d
+    use prob_params_module, only: center
 
     implicit none
 
@@ -389,7 +366,7 @@ contains
 
     use bl_constants_module, only: ONE, TWO, FOUR, THIRD, M_PI
     use fundamental_constants_module, only: Gconst, M_solar
-    use prob_params_module, only: xmin, xmax, ymin, ymax, zmin, zmax
+    use prob_params_module, only: problo, probhi
 
     implicit none
 
@@ -416,9 +393,9 @@ contains
 
     length = a + radius_1 + radius_2
 
-    if (length > (xmax-xmin) .or. &
-        length > (ymax-ymin) .or. &
-        length > (zmax-zmin)) then
+    if (length > (probhi(1)-problo(1)) .or. &
+        length > (probhi(2)-problo(2)) .or. &
+        length > (probhi(3)-problo(3))) then
         call bl_error("ERROR: The domain width is too small to include the binary orbit.")
     endif
 

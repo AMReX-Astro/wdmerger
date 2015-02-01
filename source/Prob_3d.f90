@@ -39,10 +39,11 @@
                           delta,xlo,xhi)
 
      use probdata_module
+     use prob_params_module, only: center
      use eos_module
-     use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
+     use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
           UEDEN, UEINT, UFS, rot_period
-     use network, only : nspec
+     use network, only: nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use initial_model_module, only: interpolate_3d_from_1d
@@ -178,8 +179,9 @@
    subroutine ca_hypfill(adv,adv_l1,adv_l2,adv_l3,adv_h1,adv_h2,adv_h3, &
                          domlo,domhi,delta,xlo,time,bc)
 
-     use meth_params_module, only : NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
+     use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
           UEDEN, UEINT, UFS, rot_period
+     use prob_params_module, only: center
      use bl_constants_module
      use probdata_module
      use eos_module
@@ -464,6 +466,7 @@
 
      implicit none
      include 'bc_types.fi'
+
      integer adv_l1,adv_l2,adv_l3,adv_h1,adv_h2,adv_h3
      integer bc(3,2,*)
      integer domlo(3), domhi(3)
@@ -481,7 +484,6 @@
    subroutine ca_gravxfill(grav,grav_l1,grav_l2,grav_l3,grav_h1,grav_h2,grav_h3, &
                            domlo,domhi,delta,xlo,time,bc)
 
-     use probdata_module
      implicit none
      include 'bc_types.fi'
 
@@ -501,7 +503,6 @@
    subroutine ca_gravyfill(grav,grav_l1,grav_l2,grav_l3,grav_h1,grav_h2,grav_h3, &
                            domlo,domhi,delta,xlo,time,bc)
 
-     use probdata_module
      implicit none
      include 'bc_types.fi'
 
@@ -521,7 +522,6 @@
    subroutine ca_gravzfill(grav,grav_l1,grav_l2,grav_l3,grav_h1,grav_h2,grav_h3, &
                            domlo,domhi,delta,xlo,time,bc)
 
-     use probdata_module
      implicit none
      include 'bc_types.fi'
 
@@ -541,7 +541,6 @@
    subroutine ca_reactfill(react,react_l1,react_l2,react_l3, &
                            react_h1,react_h2,react_h3,domlo,domhi,delta,xlo,time,bc)
 
-     use probdata_module
      implicit none
      include 'bc_types.fi'
 

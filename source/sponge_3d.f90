@@ -8,9 +8,9 @@ contains
                     uout_h1,uout_h2,uout_h3,lo,hi,time,dt, &
                     dx,dy,dz,domlo,domhi)
 
-    use bl_constants_module, ONLY: M_PI, HALF, ZERO, ONE
-    use meth_params_module , only : NVAR, URHO, UMX, UMY, UMZ, UEDEN
-    use prob_params_module, only: xmin, xmax, ymin, ymax, zmin, zmax
+    use bl_constants_module, only: M_PI, HALF, ZERO, ONE
+    use meth_params_module , only: NVAR, URHO, UMX, UMY, UMZ, UEDEN
+    use prob_params_module, only: problo, probhi, center
 
     implicit none
     integer          :: lo(3),hi(3),domlo(3),domhi(3)
@@ -26,27 +26,23 @@ contains
 
     double precision :: ke_old, ke_new, sponge_mult, delta_sponge, &
                         radius, r_sponge, fac
-    double precision :: problo(3),probhi(3)
 
     integer :: i,j,k
 
-    xctr = HALF*(xmin + xmax)
-    yctr = HALF*(ymin + ymax)
-    zctr = HALF*(zmin + zmax)
 
-    r_sponge = 0.25*(xmax-xmin)
-    delta_sponge = 0.025*(xmax-xmin)
+    r_sponge = 0.25*(probhi(1)-problo(1))
+    delta_sponge = 0.025*(probhi(1)-problo(1))
 
     do k = lo(3),hi(3)
-       zz = zmin + dble(k + HALF)*dz
+       zz = problo(3) + dble(k + HALF)*dz
 
        do j = lo(2),hi(2)
-          yy = ymin + dble(j + HALF)*dy
+          yy = problo(2) + dble(j + HALF)*dy
 
           do i = lo(1),hi(1)
-             xx = xmin + dble(i + HALF)*dx
+             xx = problo(1) + dble(i + HALF)*dx
 
-             radius = sqrt((xx-xctr)**2 + (yy-yctr)**2 + (zz-zctr)**2)
+             radius = sqrt((xx-center(1))**2 + (yy-center(2))**2 + (zz-center(3))**2)
 
              sponge_mult = ONE
 

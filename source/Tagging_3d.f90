@@ -518,9 +518,10 @@
                                   den,denl1,denl2,denl3,denh1,denh2,denh3, &
                                   lo,hi,nd,domlo,domhi, &
                                   delta,xlo,problo,time,level)
-      use probdata_module, only: center, radius_P_initial, radius_S_initial, &
+      use probdata_module, only: radius_P_initial, radius_S_initial, &
                                  a_P_initial, a_S_initial, &
                                  starBuffer, boundaryBuffer
+      use prob_params_module, only: center
       use bl_constants_module
       implicit none
 
