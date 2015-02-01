@@ -191,7 +191,8 @@ make_probin:
 
 # Clean everything up with make clean
 
-clean_targets = *.mod *.run plt* chk* *.out *.png helm_table.dat results $(inputs) $(probin)
+clean_targets = *.mod *.run helm_table.dat $(inputs) $(probin)
+realclean_targets = $(clean_targets) results/ plots/
 
 clean:
 	if [ -e $(local_makefile) ]; then \
@@ -199,6 +200,13 @@ clean:
 		rm -f $(local_makefile); \
 	fi
 	rm -rf $(clean_targets)
+
+realclean:
+	if [ -e $(local_makefile) ]; then \
+		make realclean -f $(local_makefile); \
+		rm -f $(local_makefile); \
+	fi
+	rm -rf $(realclean_targets)
 
 # Prints a variable VAR when makefile is called as
 # make print-VAR
