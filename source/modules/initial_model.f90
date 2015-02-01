@@ -62,7 +62,7 @@ contains
     ! to M_tot (defined below).  It can be reasonably small, since there
     ! will always be a central density value that can give the desired
     ! WD mass on the grid we use
-    double precision, parameter :: TOL_WD_MASS = 1.d-4
+    double precision, parameter :: TOL_WD_MASS = 1.d-6
 
     integer, parameter :: MAX_ITER = 250
 
