@@ -168,22 +168,33 @@ make_probin:
 		then \
 			touch $(probin) ; \
 			echo "&fortin" >> $(probin) ; \
-			echo "max_denerr_lev = $(max_denerr_lev)" >> $(probin) ; \
-			echo "denerr = $(denerr)" >> $(probin) ; \
-			echo "mass_P = $(mass_P)" >> $(probin) ; \
-			echo "mass_S = $(mass_S)" >> $(probin) ; \
-			echo "nsub = $(nsub)" >> $(probin) ; \
-			echo "inertial = $(inertial)" >> $(probin) ; \
-			echo "damping = $(damping)" >> $(probin) ; \
-			echo "damping_alpha = $(damping_alpha)" >> $(probin) ; \
-			echo "interp_temp = $(interp_temp)" >> $(probin) ; \
-			echo "starBuffer = $(starBuffer)" >> $(probin) ; \
-			echo "boundaryBuffer = $(boundaryBuffer)" >> $(probin) ; \
+			echo "" >> $(probin) ; \
+			echo "  mass_P = $(mass_P)" >> $(probin) ; \
+			echo "  mass_S = $(mass_S)" >> $(probin) ; \
+			echo "  nsub = $(nsub)" >> $(probin) ; \
+			echo "  inertial = $(inertial)" >> $(probin) ; \
+			echo "  damping = $(damping)" >> $(probin) ; \
+			echo "  damping_alpha = $(damping_alpha)" >> $(probin) ; \
+			echo "  interp_temp = $(interp_temp)" >> $(probin) ; \
+			echo "  starBuffer = $(starBuffer)" >> $(probin) ; \
+			echo "  boundaryBuffer = $(boundaryBuffer)" >> $(probin) ; \
+			echo "" >> $(probin) ; \
 			echo "/" >> $(probin) ; \
+			echo "" >> $(probin) ; \
+			echo "&tagging" >> $(probin) ; \
+			echo "" >> $(probin) ; \
+			echo "  max_denerr_lev = $(max_denerr_lev)" >> $(probin) ; \
+			echo "  denerr = $(denerr)" >> $(probin) ; \
+			echo "" >> $(probin) ; \
+			echo "/" >> $(probin) ; \
+			echo "" >> $(probin) ; \
 			echo "&extern" >> $(probin) ; \
-			echo "use_eos_coulomb = $(use_eos_coulomb)" >> $(probin) ; \
-			echo "eos_input_is_constant = $(eos_input_is_constant)" >> $(probin) ; \
+			echo "" >> $(probin) ; \
+			echo "  use_eos_coulomb = $(use_eos_coulomb)" >> $(probin) ; \
+			echo "  eos_input_is_constant = $(eos_input_is_constant)" >> $(probin) ; \
+			echo "" >> $(probin) ; \
 			echo "/" >> $(probin) ; \
+			echo "" >> $(probin) ; \
 		else \
 			cp source/probin . ; \
 		fi \

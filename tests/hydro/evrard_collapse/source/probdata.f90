@@ -7,20 +7,6 @@ module probdata_module
   ! Probin file
   character (len=:), allocatable :: probin
 
-  ! Refinement criteria
-  double precision ::    denerr,   dengrad
-  double precision ::    enterr,   entgrad
-  double precision ::    velerr,   velgrad
-  double precision ::   temperr,  tempgrad
-  double precision ::  presserr, pressgrad
-  double precision ::    raderr,   radgrad
-  integer          ::  max_denerr_lev,   max_dengrad_lev
-  integer          ::  max_enterr_lev,   max_entgrad_lev
-  integer          ::  max_velerr_lev,   max_velgrad_lev
-  integer          ::  max_temperr_lev,  max_tempgrad_lev
-  integer          ::  max_presserr_lev, max_pressgrad_lev
-  integer          ::  max_raderr_lev,   max_radgrad_lev
-
   ! Determine if we are the I/O processor
   integer :: ioproc
   
@@ -105,33 +91,9 @@ contains
          mass, radius, &
          ambient_density, &
          nsub, &
-         stellar_C12, stellar_O16, &
-         denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
-         velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
-         presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
-         temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev
+         stellar_C12, stellar_O16
 
     ! Set namelist defaults
-
-    denerr = 1.d20
-    dengrad = 1.d20
-    max_denerr_lev = 10
-    max_dengrad_lev = 10
-
-    presserr = 1.d20
-    pressgrad = 1.d20
-    max_presserr_lev = -1
-    max_pressgrad_lev = -1
-
-    velerr  = 1.d0
-    velgrad = 1.d20
-    max_velerr_lev = -1
-    max_velgrad_lev = -1
-
-    temperr  = 1.d0
-    tempgrad = 1.d20
-    max_temperr_lev = -1
-    max_tempgrad_lev = -1
 
     nsub = 1
 

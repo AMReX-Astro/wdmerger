@@ -16,10 +16,6 @@
      integer :: i
 
      namelist /fortin/ &
-          denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
-          velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
-          presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
-          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
           rho1, rho2, pressure, problem, bulk_velocity
 
      integer, parameter :: maxlen=127
@@ -44,25 +40,6 @@
      end do
 
      ! Set namelist defaults
-     denerr = 1.d20
-     dengrad = 1.d20
-     max_denerr_lev = 10
-     max_dengrad_lev = 10
-
-     presserr = 1.d20
-     pressgrad = 1.d20
-     max_presserr_lev = -1
-     max_pressgrad_lev = -1
-
-     velerr  = 1.d0
-     velgrad = 1.d20
-     max_velerr_lev = -1
-     max_velgrad_lev = -1
-
-     temperr  = 1.d0
-     tempgrad = 1.d20
-     max_temperr_lev = -1
-     max_tempgrad_lev = -1
 
      problem = 1
 
