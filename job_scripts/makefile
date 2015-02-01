@@ -114,7 +114,7 @@ make_inputs:
 		echo "amr.max_grid_size = $(amr.max_grid_size)" >> $(inputs) ; \
 		echo "amr.blocking_factor = $(amr.blocking_factor)" >> $(inputs) ; \
 		echo "amr.grid_eff = $(amr.grid_eff)" >> $(inputs) ; \
-		echo "castro.allow_utagging = $(castro.allow_untagging)" >> $(inputs) ; \
+		echo "castro.allow_untagging = $(castro.allow_untagging)" >> $(inputs) ; \
 		echo "castro.do_hydro = $(castro.do_hydro)" >> $(inputs) ; \
 		echo "castro.do_grav = $(castro.do_grav)" >> $(inputs) ; \
 		echo "castro.do_react = $(castro.do_react)" >> $(inputs) ; \
@@ -191,7 +191,8 @@ make_probin:
 
 # Clean everything up with make clean
 
-clean_targets = *.mod *.run plt* chk* *.out *.png helm_table.dat results $(inputs) $(probin)
+clean_targets = *.mod *.run helm_table.dat $(inputs) $(probin)
+realclean_targets = $(clean_targets) results/ plots/
 
 clean:
 	if [ -e $(local_makefile) ]; then \
@@ -199,6 +200,13 @@ clean:
 		rm -f $(local_makefile); \
 	fi
 	rm -rf $(clean_targets)
+
+realclean:
+	if [ -e $(local_makefile) ]; then \
+		make realclean -f $(local_makefile); \
+		rm -f $(local_makefile); \
+	fi
+	rm -rf $(realclean_targets)
 
 # Prints a variable VAR when makefile is called as
 # make print-VAR
