@@ -36,10 +36,12 @@ Castro::sum_integrated_quantities ()
     Real moment_of_inertia[3][3] = { 0.0 };
     Real m_r_squared[3]          = { 0.0 };
 #ifdef ROTATION
-    Real omega[3]     = { 0.0, 0.0, 2.0 * M_PI / rotational_period };
+    Real omega[3]       = { 0.0 };
     Real rot_kin_eng    = 0.0;
-    Real rot_mom[3] = { 0.0 };
+    Real rot_mom[3]     = { 0.0 };
     Real rot_ang_mom[3] = { 0.0 };
+
+    omega[rot_axis-1] = 2.0 * M_PI / rotational_period;
 #endif
 
     Real total_E_grid = 0.0;
@@ -257,27 +259,39 @@ Castro::sum_integrated_quantities ()
 	  data_log1 << std::setw(datawidth) << " TOTAL E GRID          ";
 	  data_log1 << std::setw(datawidth) << " GAS ENERGY            ";
           data_log1 << std::setw(datawidth) << " KIN. ENERGY           ";
+#ifdef ROTATION
+	  if (do_rotation) {
 	  data_log1 << std::setw(datawidth) << " ROT. ENERGY           ";
+	  }
+#endif	  
           data_log1 << std::setw(datawidth) << " GRAV. ENERGY          ";
           data_log1 << std::setw(datawidth) << " INT. ENERGY           ";
           data_log1 << std::setw(datawidth) << " XMOM                  ";
           data_log1 << std::setw(datawidth) << " YMOM                  ";
           data_log1 << std::setw(datawidth) << " ZMOM                  ";
+#ifdef ROTATION
+	  if (do_rotation) {
 	  data_log1 << std::setw(datawidth) << " XMOM GRID             ";
 	  data_log1 << std::setw(datawidth) << " YMOM GRID             ";
 	  data_log1 << std::setw(datawidth) << " ZMOM GRID             ";
 	  data_log1 << std::setw(datawidth) << " XMOM ROT.             ";
 	  data_log1 << std::setw(datawidth) << " XMOM ROT.             ";
 	  data_log1 << std::setw(datawidth) << " XMOM ROT.             ";
+	  }
+#endif
           data_log1 << std::setw(datawidth) << " ANG. MOM. X           ";
           data_log1 << std::setw(datawidth) << " ANG. MOM. Y           ";
           data_log1 << std::setw(datawidth) << " ANG. MOM. Z           ";
+#ifdef ROTATION
+	  if (do_rotation) {
           data_log1 << std::setw(datawidth) << " ANG. MOM. X GRID      ";
           data_log1 << std::setw(datawidth) << " ANG. MOM. Y GRID      ";
           data_log1 << std::setw(datawidth) << " ANG. MOM. Z GRID      ";
           data_log1 << std::setw(datawidth) << " ANG. MOM. X ROT.      ";
           data_log1 << std::setw(datawidth) << " ANG. MOM. Y ROT.      ";
           data_log1 << std::setw(datawidth) << " ANG. MOM. Z ROT.      ";
+	  }
+#endif
           data_log1 << std::setw(datawidth) << " MASS                  ";
           data_log1 << std::setw(datawidth) << " LEFT MASS             ";
           data_log1 << std::setw(datawidth) << " RIGHT MASS            ";
@@ -317,27 +331,39 @@ Castro::sum_integrated_quantities ()
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << total_E_grid;
  	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << gas_energy;
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << kinetic_energy;
+#ifdef ROTATION
+	  if (do_rotation) {
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rotational_energy;	  
+	  }
+#endif	  
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << gravitational_energy;
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << internal_energy;
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
+#ifdef ROTATION
+	  if (do_rotation) {
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[0];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[1];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[2];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[0];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[1];
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[2];
+	  }
+#endif	  
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[0];
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1]; 
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[2];
+#ifdef ROTATION
+	  if (do_rotation) {
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[0];
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[1]; 
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[2];
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[0];
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[1]; 
           data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[2];
+	  }
+#endif	  
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_left;
 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_right;
