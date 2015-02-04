@@ -54,6 +54,7 @@ module probdata_module
   double precision, dimension(3) :: center_P_initial, center_S_initial
 
   integer :: star_axis
+  integer :: initial_motion_dir
 
   ! Density of ambient medium
   double precision :: ambient_density
@@ -253,11 +254,14 @@ contains
     use meth_params_module, only: rot_period
     use initial_model_module, only: init_1d
     use prob_params_module, only: center
+    use meth_params_module, only: rot_axis
 
     implicit none
 
     double precision :: dx
     type (eos_t) :: ambient_state
+
+    double precision :: loc_P(3), loc_S(3)
 
     call get_ambient(ambient_state)
 
@@ -313,6 +317,22 @@ contains
        center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
        center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
+       ! Direction of initial motion -- essentially it's the position axis
+       ! that is not star axis and that is also not the rotation axis.
+
+       if (rot_axis .eq. 3) then
+          if (star_axis .eq. 1) initial_motion_dir = 2
+          if (star_axis .eq. 2) initial_motion_dir = 1
+       else if (rot_axis .eq. 2) then
+          if (star_axis .eq. 1) initial_motion_dir = 3
+          if (star_axis .eq. 3) initial_motion_dir = 1
+       else if (rot_axis .eq. 1) then
+          if (star_axis .eq. 2) initial_motion_dir = 3
+          if (star_axis .eq. 3) initial_motion_dir = 2
+       else
+          call bl_error("Error: probdata module: invalid choice for rot_axis.")
+       endif
+
     endif
 
   end subroutine binary_setup
@@ -367,6 +387,55 @@ contains
      endif
 
   end subroutine kepler_third_law
+
+
+
+  ! Predict the locations of the primary and secondary stars at a given time assuming circular orbits.
+
+  subroutine get_orbit_locations(time, loc_P, loc_S)
+
+    use bl_error_module, only: bl_error
+    use bl_constants_module, only: ZERO, TWO, FOUR, THIRD, M_PI
+    use fundamental_constants_module, only: Gconst, M_solar
+    use prob_params_module, only: center
+    use meth_params_module, only: do_rotation, rot_period
+
+    implicit none
+
+    double precision, intent (in   ) :: time
+    double precision, intent (inout) :: loc_P(3), loc_S(3)
+
+    double precision :: theta
+
+    ! Start off by assuming the stars are at the center of the grid.
+    ! If we're only doing a single star simulation, then we can just stop here.
+
+    loc_P = center
+    loc_S = center
+
+    if (mass_S < ZERO) return
+
+    ! If rotation is enabled, then the stars should be at their initial locations.
+    ! Otherwise, use the properties of a circular orbit to predict the locations.
+
+    if (do_rotation .eq. 1) then
+
+       theta = ZERO
+
+     else
+
+       theta = TWO * M_PI * time / rot_period
+
+    endif
+
+    loc_P(star_axis) = loc_P(star_axis) - a_P_initial * cos(theta)
+    loc_S(star_axis) = loc_S(star_axis) + a_S_initial * cos(theta)
+
+    loc_P(initial_motion_dir) = loc_P(initial_motion_dir) - a_P_initial * sin(theta)
+    loc_S(initial_motion_dir) = loc_S(initial_motion_dir) + a_S_initial * sin(theta)
+
+
+  end subroutine get_orbit_locations
 
 
 
