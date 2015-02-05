@@ -392,7 +392,7 @@ contains
 
   ! Predict the locations of the primary and secondary stars at a given time assuming circular orbits.
 
-  subroutine get_orbit_locations(time, loc_P, loc_S)
+  subroutine get_star_locations(time, loc_P, loc_S)
 
     use bl_error_module, only: bl_error
     use bl_constants_module, only: ZERO, TWO, FOUR, THIRD, M_PI
@@ -417,12 +417,15 @@ contains
 
     ! If rotation is enabled, then the stars should be at their initial locations.
     ! Otherwise, use the properties of a circular orbit to predict the locations.
+    ! If we're in the inertial reference frame *and* we aren't giving the stars
+    ! an initial kick, then the stars will be in free-fall toward each other;
+    ! however, we can still use the stationary approximation for the purposes of 
+    ! computing the stellar centers of mass because the stars will only move 
+    ! along their original axis.
 
-    if (do_rotation .eq. 1) then
+    theta = ZERO
 
-       theta = ZERO
-
-     else
+    if (do_rotation .ne. 1 .and. inertial) then
 
        theta = TWO * M_PI * time / rot_period
 
@@ -434,8 +437,7 @@ contains
     loc_P(initial_motion_dir) = loc_P(initial_motion_dir) - a_P_initial * sin(theta)
     loc_S(initial_motion_dir) = loc_S(initial_motion_dir) + a_S_initial * sin(theta)
 
-
-  end subroutine get_orbit_locations
+  end subroutine get_star_locations
 
 
 
@@ -466,3 +468,99 @@ contains
   end subroutine ensure_primary_mass_larger
 
 end module probdata_module
+
+
+
+
+  ! Return the mass-weighted center of mass and velocity for the primary and secondary, for a given FAB.
+  ! Since this will rely on a sum over processors, we should only add to the relevant variables
+  ! in anticipation of a MPI reduction, and not overwrite them.
+
+  subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
+                   xmom, x_l1, x_l2, x_l3, x_h1, x_h2, x_h3, &
+                   ymom, y_l1, y_l2, y_l3, y_h1, y_h2, y_h3, &
+                   zmom, z_l1, z_l2, z_l3, z_h1, z_h2, z_h3, &
+                   lo, hi, dx, time, &
+                   com_p, com_s, vel_p, vel_s, &
+                   mass_p, mass_s)
+
+    use bl_constants_module, only: HALF
+    use prob_params_module, only: problo, center
+    use probdata_module, only: get_star_locations
+
+    implicit none
+
+    integer         , intent(in   ) :: r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
+    integer         , intent(in   ) :: x_l1, x_l2, x_l3, x_h1, x_h2, x_h3
+    integer         , intent(in   ) :: y_l1, y_l2, y_l3, y_h1, y_h2, y_h3
+    integer         , intent(in   ) :: z_l1, z_l2, z_l3, z_h1, z_h2, z_h3
+
+    double precision, intent(in   ) :: rho(r_l1:r_h1,r_l2:r_h2,r_l3:r_h3)
+    double precision, intent(in   ) :: xmom(x_l1:x_h1,x_l2:x_h2,x_l3:x_h3)
+    double precision, intent(in   ) :: ymom(y_l1:y_h1,y_l2:y_h2,y_l3:y_h3)
+    double precision, intent(in   ) :: zmom(z_l1:z_h1,z_l2:z_h2,z_l3:z_h3)
+    integer         , intent(in   ) :: lo(3), hi(3)
+    double precision, intent(in   ) :: dx(3), time
+    double precision, intent(inout) :: com_p(3), com_s(3)
+    double precision, intent(inout) :: vel_p(3), vel_s(3)
+    double precision, intent(inout) :: mass_p, mass_s
+
+    integer          :: i, j, k
+    double precision :: x, y, z, loc_p(3), loc_s(3), r_p, r_s
+    double precision :: dV, dm
+
+    ! First, get the predicted locations of the primary and secondary.
+
+    call get_star_locations(time, loc_p, loc_s)
+
+    ! Volume of a zone
+
+    dV = dx(1) * dx(2) * dx(3)
+
+    ! Now, add to the COM locations and velocities depending on whether we're closer
+    ! to the primary or the secondary.
+
+    do k = lo(3), hi(3)
+       z = problo(3) + (dble(k) + HALF) * dx(3)
+       do j = lo(2), hi(2)
+          y = problo(2) + (dble(j) + HALF) * dx(2)
+          do i = lo(1), hi(1)
+             x = problo(1) + (dble(i) + HALF) * dx(1)
+
+             r_P = ( (x - loc_p(1))**2 + (y - loc_p(2))**2 + (z - loc_p(3))**2 )**0.5
+             r_S = ( (x - loc_s(1))**2 + (y - loc_s(2))**2 + (z - loc_s(3))**2 )**0.5
+
+             dm = rho(i,j,k) * dV
+
+             if (r_P < r_S) then
+
+                mass_p = mass_p + dm
+
+                com_p(1) = com_p(1) + dm * x
+                com_p(2) = com_p(2) + dm * y
+                com_p(3) = com_p(3) + dm * z
+
+                vel_p(1) = vel_p(1) + xmom(i,j,k) * dV
+                vel_p(2) = vel_p(2) + ymom(i,j,k) * dV
+                vel_p(3) = vel_p(3) + zmom(i,j,k) * dV              
+
+             else if (r_S < r_P) then
+
+                mass_s = mass_s + dm
+
+                com_s(1) = com_s(1) + dm * x
+                com_s(2) = com_s(2) + dm * y
+                com_s(3) = com_s(3) + dm * z
+
+                vel_s(1) = vel_s(1) + xmom(i,j,k) * dV
+                vel_s(2) = vel_s(2) + ymom(i,j,k) * dV
+                vel_s(3) = vel_s(3) + zmom(i,j,k) * dV
+
+             endif
+
+          enddo
+       enddo
+    enddo
+
+  end subroutine wdcom
+

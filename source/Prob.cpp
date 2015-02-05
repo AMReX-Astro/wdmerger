@@ -1,0 +1,81 @@
+#include "Castro.H"
+#include "Castro_F.H"
+#include "Problem_F.H"
+
+//
+// This function computes the center-of-mass locations (and velocities of the center of masses)
+// of the primary and secondary white dwarfs.
+// First, we predict where the center of mass locations will be
+// for these stars based on Keplerian circular orbits.
+// Then, we do a location-weighted sum that considers, for each respective star,
+// only the zones that are closer to one orbit location than the other.
+//
+
+void
+Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, Real* vel_p, Real* vel_s)
+{
+    BL_PROFILE("Castro::wdCOM()");
+
+    const Real* dx       = geom.CellSize();
+
+    MultiFab*   mfrho    = derive("density",time,0);
+    MultiFab*   mfxmom   = derive("xmom",time,0);
+    MultiFab*   mfymom   = derive("ymom",time,0);
+    MultiFab*   mfzmom   = derive("zmom",time,0);
+
+    BL_ASSERT(mfrho  != 0);
+    BL_ASSERT(mfxmom != 0);
+    BL_ASSERT(mfymom != 0);
+    BL_ASSERT(mfzmom != 0);
+
+    if (level < parent->finestLevel())
+    {
+	const MultiFab* mask = getLevel(level+1).build_fine_mask();
+
+	MultiFab::Multiply(*mfrho,  *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfxmom, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfymom, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:com_p[0],com_p[1],com_p[2],com_s[0],com_s[1],com_s[2]) \
+                     reduction(+:vel_p[0],vel_p[1],vel_p[2],vel_s[0],vel_s[1],vel_s[2]) \
+                     reduction(+:mass_p, mass_s)
+#endif    
+    for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi)
+    {
+        FArrayBox& fabrho  = (*mfrho )[mfi];
+	FArrayBox& fabxmom = (*mfxmom)[mfi];
+	FArrayBox& fabymom = (*mfymom)[mfi];
+	FArrayBox& fabzmom = (*mfzmom)[mfi];
+    
+        const Box& box  = mfi.tilebox();
+        const int* lo   = box.loVect();
+        const int* hi   = box.hiVect();
+
+	BL_FORT_PROC_CALL(WDCOM,wdcom)
+            (BL_TO_FORTRAN(fabrho),
+	     BL_TO_FORTRAN(fabxmom),
+	     BL_TO_FORTRAN(fabymom),
+	     BL_TO_FORTRAN(fabzmom),
+	     lo,hi,dx,&time,
+	     com_p, com_s,
+	     vel_p, vel_s,
+	     &mass_p, &mass_s);
+    }
+
+    delete mfrho;
+    delete mfxmom;
+    delete mfymom;
+    delete mfzmom;
+
+    ParallelDescriptor::ReduceRealSum(mass_p);
+    ParallelDescriptor::ReduceRealSum(mass_s);
+
+    ParallelDescriptor::ReduceRealSum(com_p,3);
+    ParallelDescriptor::ReduceRealSum(com_s,3);
+    ParallelDescriptor::ReduceRealSum(vel_p,3);
+    ParallelDescriptor::ReduceRealSum(vel_s,3);
+
+}

@@ -9,13 +9,10 @@ ncell = 256
 
 diag_filename = "results/" + str(ncell) + "/wdmerger_diag.out"
 
-# Get the desired columns for the time and the left and right centers of mass
+# Get the desired columns for the time and distance
 
-time      = wdmerger.get_column('TIME',        diag_filename)
-left_com  = wdmerger.get_column('LEFT X COM',  diag_filename)
-right_com = wdmerger.get_column('RIGHT X COM', diag_filename)
-
-dist = abs(right_com - left_com)
+time = wdmerger.get_column('TIME',        diag_filename)
+dist = wdmerger.get_column('WD DISTANCE', diag_filename)
 
 # Let's divide the time array by free-fall timescale
 

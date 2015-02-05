@@ -9,13 +9,10 @@ ncell = 128
 
 diag_filename = "results/" + str(ncell) + "/wdmerger_diag.out"
 
-# Obtain the time column, and the locations of the center of mass of both stars
+# Obtain the time column, and the distance between the stars
 
-time      = wdmerger.get_column('TIME',        diag_filename)
-left_com  = wdmerger.get_column('LEFT X COM',  diag_filename)
-right_com = wdmerger.get_column('RIGHT X COM', diag_filename)
-
-dist = abs(right_com - left_com)
+time = wdmerger.get_column('TIME',        diag_filename)
+dist = wdmerger.get_column('WD DISTANCE',  diag_filename)
 
 # Normalize disatnce by initial distance
 
