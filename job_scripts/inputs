@@ -124,5 +124,4 @@ mg.v                ?= 0       		      	   # Control verbosity in the multigrid 
 amr.derive_plot_vars ?= ALL			   # Calculate all variables for plotfiles, including derived variables
 castro.plot_phiGrav ?= 1			   # Include the gravitational potential in the plotfile
 
-amr.data_log ?= wdmerger_diag.out		   # Name of the diagnostic sum outputs
-
+amr.data_log ?= grid_diag.out star_diag.out        # Name of the diagnostic sum output files

@@ -249,11 +249,12 @@ Castro::sum_integrated_quantities ()
     if ( ParallelDescriptor::IOProcessor() )
     {
 
-      // The data log is only defined on the IO processor
+      // The data logs are only defined on the IO processor
       // for parallel runs, so the stream should only be opened inside.
 
-      std::ostream& data_log1 = parent->DataLog(0);
-      if ( data_log1.good() ) {
+      std::ostream& grid_log = parent->DataLog(0);
+
+      if ( grid_log.good() ) {
 
         // Write header row
 
@@ -264,146 +265,181 @@ Castro::sum_integrated_quantities ()
           const char* castro_hash = buildInfoGetGitHash(1);
 	  const char* boxlib_hash = buildInfoGetGitHash(2);
 
-	  data_log1 << "# Castro git hash: " << castro_hash << "\n";
-	  data_log1 << "# BoxLib git hash: " << boxlib_hash << "\n";
+	  grid_log << "# Castro git hash: " << castro_hash << "\n";
+	  grid_log << "# BoxLib git hash: " << boxlib_hash << "\n";
 
-          data_log1 << std::setw(12)        << " #  TIMESTEP";
-          data_log1 << std::setw(datawidth) << "     TIME              ";
-	  data_log1 << std::setw(datawidth) << "     DT                ";
-          data_log1 << std::setw(datawidth) << " TOTAL ENERGY          ";
-	  data_log1 << std::setw(datawidth) << " TOTAL E GRID          ";
-	  data_log1 << std::setw(datawidth) << " GAS ENERGY            ";
-          data_log1 << std::setw(datawidth) << " KIN. ENERGY           ";
+          grid_log << std::setw(12)        << "#   TIMESTEP";
+          grid_log << std::setw(datawidth) << "     TIME              ";
+	  grid_log << std::setw(datawidth) << "     DT                ";
+          grid_log << std::setw(datawidth) << " TOTAL ENERGY          ";
+	  grid_log << std::setw(datawidth) << " TOTAL E GRID          ";
+	  grid_log << std::setw(datawidth) << " GAS ENERGY            ";
+          grid_log << std::setw(datawidth) << " KIN. ENERGY           ";
 #ifdef ROTATION
 	  if (do_rotation) {
-	  data_log1 << std::setw(datawidth) << " ROT. ENERGY           ";
+	  grid_log << std::setw(datawidth) << " ROT. ENERGY           ";
 	  }
 #endif	  
-          data_log1 << std::setw(datawidth) << " GRAV. ENERGY          ";
-          data_log1 << std::setw(datawidth) << " INT. ENERGY           ";
-          data_log1 << std::setw(datawidth) << " XMOM                  ";
-          data_log1 << std::setw(datawidth) << " YMOM                  ";
-          data_log1 << std::setw(datawidth) << " ZMOM                  ";
+          grid_log << std::setw(datawidth) << " GRAV. ENERGY          ";
+          grid_log << std::setw(datawidth) << " INT. ENERGY           ";
+          grid_log << std::setw(datawidth) << " XMOM                  ";
+          grid_log << std::setw(datawidth) << " YMOM                  ";
+          grid_log << std::setw(datawidth) << " ZMOM                  ";
 #ifdef ROTATION
 	  if (do_rotation) {
-	  data_log1 << std::setw(datawidth) << " XMOM GRID             ";
-	  data_log1 << std::setw(datawidth) << " YMOM GRID             ";
-	  data_log1 << std::setw(datawidth) << " ZMOM GRID             ";
-	  data_log1 << std::setw(datawidth) << " XMOM ROT.             ";
-	  data_log1 << std::setw(datawidth) << " XMOM ROT.             ";
-	  data_log1 << std::setw(datawidth) << " XMOM ROT.             ";
+	  grid_log << std::setw(datawidth) << " XMOM GRID             ";
+	  grid_log << std::setw(datawidth) << " YMOM GRID             ";
+	  grid_log << std::setw(datawidth) << " ZMOM GRID             ";
+	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
+	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
+	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
 	  }
 #endif
-          data_log1 << std::setw(datawidth) << " ANG. MOM. X           ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Y           ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Z           ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. X           ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. Y           ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
 #ifdef ROTATION
 	  if (do_rotation) {
-          data_log1 << std::setw(datawidth) << " ANG. MOM. X GRID      ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Y GRID      ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Z GRID      ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. X ROT.      ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Y ROT.      ";
-          data_log1 << std::setw(datawidth) << " ANG. MOM. Z ROT.      ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. X GRID      ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. Y GRID      ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. Z GRID      ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. X ROT.      ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. Y ROT.      ";
+          grid_log << std::setw(datawidth) << " ANG. MOM. Z ROT.      ";
 	  }
 #endif
-          data_log1 << std::setw(datawidth) << " MASS                  ";
-          data_log1 << std::setw(datawidth) << " PRIMARY MASS          ";
-          data_log1 << std::setw(datawidth) << " SECONDARY MASS        ";
-          data_log1 << std::setw(datawidth) << " X COM                 ";
-          data_log1 << std::setw(datawidth) << " Y COM                 ";
-          data_log1 << std::setw(datawidth) << " Z COM                 ";
-          data_log1 << std::setw(datawidth) << " X COM VEL             ";
-          data_log1 << std::setw(datawidth) << " Y COM VEL             ";
-          data_log1 << std::setw(datawidth) << " Z COM VEL             ";
-          data_log1 << std::setw(datawidth) << " PRIMARY X COM         ";
-          data_log1 << std::setw(datawidth) << " SECONDARY X COM       ";
-          data_log1 << std::setw(datawidth) << " PRIMARY Y COM         ";
-          data_log1 << std::setw(datawidth) << " SECONDARY Y COM       ";
-          data_log1 << std::setw(datawidth) << " PRIMARY Z COM         ";
-          data_log1 << std::setw(datawidth) << " SECONDARY Z COM       ";
-          data_log1 << std::setw(datawidth) << " PRIMARY X VEL         ";
-          data_log1 << std::setw(datawidth) << " SECONDARY X VEL       ";
-          data_log1 << std::setw(datawidth) << " PRIMARY Y VEL         ";
-          data_log1 << std::setw(datawidth) << " SECONDARY Y VEL       ";
-          data_log1 << std::setw(datawidth) << " PRIMARY Z VEL         ";
-          data_log1 << std::setw(datawidth) << " SECONDARY Z VEL       ";
-          data_log1 << std::setw(datawidth) << " WD DISTANCE           ";
-         
-          data_log1 << std::endl;
-        }
+          grid_log << std::setw(datawidth) << " MASS                  ";
+          grid_log << std::setw(datawidth) << " X COM                 ";
+          grid_log << std::setw(datawidth) << " Y COM                 ";
+          grid_log << std::setw(datawidth) << " Z COM                 ";
+          grid_log << std::setw(datawidth) << " X COM VEL             ";
+          grid_log << std::setw(datawidth) << " Y COM VEL             ";
+          grid_log << std::setw(datawidth) << " Z COM VEL             ";
 
+          grid_log << std::endl;
+        }
+	
         // Write data for the present time
 
-	  data_log1 << std::fixed;
+	grid_log << std::fixed;
 
-	  data_log1 << std::setw(12)                                            << step;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << time;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
+	grid_log << std::setw(12)                                            << step;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
 
-	  data_log1 << std::scientific;
+	grid_log << std::scientific;
 
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << total_energy;
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << total_E_grid;
- 	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << gas_energy;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << kinetic_energy;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << total_energy;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << total_E_grid;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << gas_energy;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << kinetic_energy;
 #ifdef ROTATION
-	  if (do_rotation) {
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rotational_energy;	  
-	  }
+	if (do_rotation) {
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rotational_energy;	  
+	}
 #endif	  
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << gravitational_energy;
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << internal_energy;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << gravitational_energy;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << internal_energy;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
 #ifdef ROTATION
-	  if (do_rotation) {
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[2];
-	  }
+	if (do_rotation) {
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[1];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[2];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[1];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[2];
+	}
 #endif	  
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[0];
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1]; 
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[2];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1]; 
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[2];
 #ifdef ROTATION
-	  if (do_rotation) {
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[0];
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[1]; 
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[2];
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[0];
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[1]; 
-          data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[2];
-	  }
+	if (do_rotation) {
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[1]; 
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[2];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[1]; 
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[2];
+	}
 #endif	  
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_p;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << mass_s;
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[0];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[1];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[2];
-	  data_log1 << std::setw(datawidth) << std::setprecision(dataprecision) << separation;
-	
-	  data_log1 << std::endl;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[2];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
+
+	grid_log << std::endl;
+      }
+
+
+      std::ostream& star_log = parent->DataLog(1);
+
+      if ( star_log.good() ) {
+
+        if (time == 0.0) {
+
+	  // Output the git commit hashes used to build the executable.
+
+          const char* castro_hash = buildInfoGetGitHash(1);
+	  const char* boxlib_hash = buildInfoGetGitHash(2);
+
+	  star_log << "# Castro git hash: " << castro_hash << "\n";
+	  star_log << "# BoxLib git hash: " << boxlib_hash << "\n";
+
+          star_log << std::setw(12)        << "#   TIMESTEP";
+          star_log << std::setw(datawidth) << "     TIME              ";
+	  star_log << std::setw(datawidth) << "     DT                ";
+
+          star_log << std::setw(datawidth) << " PRIMARY MASS          ";
+          star_log << std::setw(datawidth) << " SECONDARY MASS        ";
+          star_log << std::setw(datawidth) << " PRIMARY X COM         ";
+          star_log << std::setw(datawidth) << " SECONDARY X COM       ";
+          star_log << std::setw(datawidth) << " PRIMARY Y COM         ";
+          star_log << std::setw(datawidth) << " SECONDARY Y COM       ";
+          star_log << std::setw(datawidth) << " PRIMARY Z COM         ";
+          star_log << std::setw(datawidth) << " SECONDARY Z COM       ";
+          star_log << std::setw(datawidth) << " PRIMARY X VEL         ";
+          star_log << std::setw(datawidth) << " SECONDARY X VEL       ";
+          star_log << std::setw(datawidth) << " PRIMARY Y VEL         ";
+          star_log << std::setw(datawidth) << " SECONDARY Y VEL       ";
+          star_log << std::setw(datawidth) << " PRIMARY Z VEL         ";
+          star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
+          star_log << std::setw(datawidth) << " WD DISTANCE           ";
+
+          star_log << std::endl;
+	}
+
+	star_log << std::fixed;
+
+	star_log << std::setw(12)                                            << step;
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
+
+	star_log << std::scientific;
+
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_p;
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_s;
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << separation;
+
+	star_log << std::endl;
         
       }
     }

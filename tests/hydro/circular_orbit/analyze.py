@@ -7,7 +7,7 @@ import wdmerger
 
 ncell = 128
 
-diag_filename = "results/" + str(ncell) + "/wdmerger_diag.out"
+diag_filename = "results/" + str(ncell) + "/star_diag.out"
 
 # Obtain the time column, and the distance between the stars
 
