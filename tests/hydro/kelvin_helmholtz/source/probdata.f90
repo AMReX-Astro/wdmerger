@@ -2,9 +2,6 @@ module probdata_module
 
   use network
 
-  ! grid info
-  double precision ::  center(3)
-
   ! problem setup data
   double precision :: rho1, rho2, pressure
 

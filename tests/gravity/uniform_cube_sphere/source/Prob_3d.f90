@@ -16,10 +16,6 @@
      integer :: i
 
      namelist /fortin/ &
-          denerr,     dengrad,   max_denerr_lev,   max_dengrad_lev, &
-          velerr,     velgrad,   max_velerr_lev,   max_velgrad_lev, &
-          presserr, pressgrad, max_presserr_lev, max_pressgrad_lev, &
-          temperr,   tempgrad,  max_temperr_lev,  max_tempgrad_lev, &
           density, diameter, ambient_dens, ambient_temp, problem
 
      integer, parameter :: maxlen=127
@@ -43,28 +39,6 @@
         probin(i:i) = char(name(i))
      end do
 
-
-     ! Set namelist defaults
-     denerr = 1.d20
-     dengrad = 1.d20
-     max_denerr_lev = 10
-     max_dengrad_lev = 10
-
-     presserr = 1.d20
-     pressgrad = 1.d20
-     max_presserr_lev = -1
-     max_pressgrad_lev = -1
-
-     velerr  = 1.d0
-     velgrad = 1.d20
-     max_velerr_lev = -1
-     max_velgrad_lev = -1
-
-     temperr  = 1.d0
-     tempgrad = 1.d20
-     max_temperr_lev = -1
-     max_tempgrad_lev = -1
-
      density  = 1.0d0
      diameter = 1.0d0
 
@@ -78,11 +52,6 @@
      open(untin,file=probin(1:namlen),form='formatted',status='old')
      read(untin,fortin)
      close(unit=untin)
-
-     ! Grid geometry
-     center(1) = HALF*(problo(1)+probhi(1))
-     center(2) = HALF*(problo(2)+probhi(2))
-     center(3) = HALF*(problo(3)+probhi(3))
 
    end subroutine PROBINIT
 
@@ -285,195 +254,6 @@
                    adv_l1,adv_l2,adv_l3,adv_h1,adv_h2,adv_h3, &
                    domlo,domhi,delta,xlo,bc(1,1,n))
      enddo
-
-     ! override the generic routine at the physical boundaries by
-     ! setting the material to the ambient state
-
-     ! -x
-     if (adv_l1 < domlo(1)) then
-        do k = adv_l3, adv_h3
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, domlo(1)-1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
-
-                 vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                 vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                 vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
-
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
-
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
-
-              enddo
-           enddo
-        enddo
-     endif
-
-     ! +x
-     if (adv_h1 > domhi(1)) then
-        do k = adv_l3, adv_h3
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = domhi(1)+1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
-
-                 vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
-                 vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
-                 vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
-
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
-
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
-
-              enddo
-           enddo
-        enddo
-     endif
-
-     ! -y
-     if (adv_l2 < domlo(2)) then
-        do k = adv_l3, adv_h3
-           do j = adv_l2, domlo(2)-1
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
-
-                 vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
-                 vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
-                 vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
-
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
-
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
-
-              enddo
-           enddo
-        enddo
-     endif
-
-     ! +y
-     if (adv_h2 > domhi(2)) then
-        do k = adv_l3, adv_h3
-           do j = domhi(2)+1, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
-
-                 vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
-                 vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
-                 vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
-
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
-
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
-
-              enddo
-           enddo
-        enddo
-     endif
-
-     ! -z
-     if (adv_l3 < domlo(3)) then
-        do k = adv_l3, domlo(3)-1
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
-
-                 vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
-                 vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
-                 vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
-
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
-
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
-
-              enddo
-           enddo
-        enddo
-     endif
-
-     ! +z
-     if (adv_h3 > domhi(3)) then
-        do k = domhi(3)+1, adv_h3
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                 adv(i,j,k,URHO) = dens_ambient
-                 adv(i,j,k,UTEMP) = temp_ambient
-                 adv(i,j,k,UFS:UFS-1+nspec) = dens_ambient*xn_ambient(:)
-
-                 vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
-                 vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
-                 vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
-
-                 adv(i,j,k,UMX) = dens_ambient*vx
-                 adv(i,j,k,UMY) = dens_ambient*vy
-                 adv(i,j,k,UMZ) = dens_ambient*vz
-
-                 adv(i,j,k,UEINT) = dens_ambient*eint_ambient
-                 adv(i,j,k,UEDEN) = dens_ambient*eint_ambient + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/dens_ambient
-
-              enddo
-           enddo
-        enddo
-     endif
 
    end subroutine ca_hypfill
 

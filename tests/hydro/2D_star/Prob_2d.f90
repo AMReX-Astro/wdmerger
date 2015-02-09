@@ -59,9 +59,6 @@ subroutine PROBINIT (init,name,namlen,problo,probhi)
 
   print *, u_s, u_a
   
-  center(1) = 0.5*(problo(1)+probhi(1))
-  center(2) = 0.5*(problo(2)+probhi(2))
-
   !     compute the internal energy (erg/cc) for the left and right state
   xn(:) = 0.0d0
   xn(1) = 1.0d0
@@ -140,6 +137,7 @@ subroutine ca_initdata(level,time,lo,hi,nscal, &
   use network, only: nspec
   use probdata_module
   use meth_params_module, only : NVAR, URHO, UMX, UMY, UEDEN, UEINT, UTEMP, UFS
+  use prob_params_module, only: center
 
   implicit none
   integer level, nscal

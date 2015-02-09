@@ -57,7 +57,6 @@ end subroutine problem_restart
 
 subroutine ca_volumeindensityboundary(rho,r_l1,r_l2,r_l3,r_h1,r_h2,r_h3,lo,hi,dx,vol,rho_cutoff)
 
-  use probdata_module, only : center
   use bl_constants_module
 
   implicit none

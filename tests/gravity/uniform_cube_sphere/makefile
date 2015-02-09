@@ -7,6 +7,8 @@ castro.do_hydro = 0
 
 castro.small_dens = 1.e-10
 
+max_step = 1
+
 # Main make target
 
 all: make_castro

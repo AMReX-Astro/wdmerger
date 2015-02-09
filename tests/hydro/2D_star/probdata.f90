@@ -9,7 +9,4 @@ module probdata_module
 !     These help specify which specific problem
       integer        , save ::  probtype,idir
 
-      double precision, save ::  center(3)
-
-      
 end module probdata_module

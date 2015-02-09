@@ -8,7 +8,7 @@
      integer :: name(namlen)
      double precision :: problo(3), probhi(3)
 
-     if (init == 1) call initialize(name, namlen)
+     call initialize(name, namlen)
 
    end subroutine PROBINIT
 
@@ -47,6 +47,7 @@
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use fundamental_constants_module, only: Gconst, M_solar
+     use prob_params_module, only: center
 
      implicit none
 

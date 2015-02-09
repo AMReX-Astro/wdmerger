@@ -7,6 +7,9 @@ USE_GRAV=FALSE
 
 geometry.is_periodic = 1 1
 
+geometry.prob_lo = 0.0 0.0
+geometry.prob_hi = 1.0 1.0
+
 castro.lo_bc       =  0 0
 castro.hi_bc       =  0 0
 

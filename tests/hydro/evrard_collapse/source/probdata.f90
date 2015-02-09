@@ -29,9 +29,6 @@ module probdata_module
   ! Controls interpolation from 1D model to 3D model
   integer :: nsub
 
-  ! Grid info
-  double precision :: center(3)
-
 contains
 
   ! This routine calls all of the other subroutines at the beginning
@@ -64,10 +61,6 @@ contains
     ! Finalize ambient state, and get small_pres
 
     call set_small
-
-    ! Complete any grid related calculations like defining its center
-
-    call grid_data
 
   end subroutine
 
@@ -164,22 +157,5 @@ contains
     small_ener = eos_state % e
 
   end subroutine set_small
-
-
-
-  ! Do any grid related calculations
-
-  subroutine grid_data
-
-    use bl_constants_module, only: HALF
-    use prob_params_module, only: xmin, xmax, ymin, ymax, zmin, zmax
-
-    implicit none
-
-    center(1) = HALF * (xmax - xmin)
-    center(2) = HALF * (ymax - ymin)
-    center(3) = HALF * (zmax - zmin)
-
-  end subroutine grid_data
 
 end module probdata_module
