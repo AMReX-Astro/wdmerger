@@ -250,6 +250,8 @@ Castro::sum_integrated_quantities ()
       // specified by two points with respect to the x-axis.
 
       angle = atan2( com_s[(rot_axis+1)%3] - com_p[(rot_axis+1)%3], com_s[(rot_axis)%3] - com_p[(rot_axis)%3] ) * 180.0 / M_PI;
+      if (angle < 0.0)
+	angle += 360.0;
     } 
 
     // Write data out to the log.
