@@ -72,6 +72,7 @@ Castro::sum_integrated_quantities ()
     Real lev_vel_s[3] = { 0.0 };
 
     Real separation = 0.0;
+    Real angle = 0.0;
 
     std::string name1; 
     std::string name2;
@@ -242,6 +243,13 @@ Castro::sum_integrated_quantities ()
       // Calculate the distance between the primary and secondary.
 
       separation = sqrt( pow(com_p[0] - com_s[0], 2.0) + pow(com_p[1] - com_s[1], 2.0) + pow(com_p[2] - com_s[2], 2.0) );
+
+      // Calculate the angle between the x-axis and the line joining the two stars.
+      // We will assume that the motion along the rotation axis is negligible. 
+      // We can use the atan2 function to calculate the angle of a line 
+      // specified by two points with respect to the x-axis.
+
+      angle = atan2( com_s[(rot_axis+1)%3] - com_p[(rot_axis+1)%3], com_s[(rot_axis)%3] - com_p[(rot_axis)%3] ) * 180.0 / M_PI;
     } 
 
     // Write data out to the log.
@@ -411,6 +419,7 @@ Castro::sum_integrated_quantities ()
           star_log << std::setw(datawidth) << " PRIMARY Z VEL         ";
           star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
           star_log << std::setw(datawidth) << " WD DISTANCE           ";
+	  star_log << std::setw(datawidth) << " WD ANGLE              ";
 
           star_log << std::endl;
 	}
@@ -438,6 +447,10 @@ Castro::sum_integrated_quantities ()
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[2];
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[2];
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << separation;
+
+	star_log << std::fixed;
+
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << angle;
 
 	star_log << std::endl;
         
