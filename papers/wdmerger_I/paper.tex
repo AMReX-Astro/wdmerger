@@ -1048,7 +1048,7 @@ separation $a$:
 \end{equation}
 Here $M = M_P + M_S$ is the total mass of the system, where $M_P$ is
 the specified \textit{primary} mass and $M_S$ is the specified
-\textit{secondary} mass. The primary WD will always be on the left
+\textit{secondary} mass. The primary WD will always start on the left
 side of the computational domain for our simulations, and is more
 massive than the secondary. This reflects the usual terminology in the
 literature where the primary WD is the accretor and the secondary is
@@ -1155,49 +1155,41 @@ deviation from equilibrium is affected by grid resolution.
 
 \subsection{Gravitational Free Fall}\label{sec:Gravitational Free Fall}
 
-A simple test to verify the Poisson solver implemented by CASTRO is
-the case of gravitational free fall. In this setup, two stars, each
-individually in an equilibrium state, are placed on the computational
-grid, separated by an initial distance $r_0$ along the $x$ axis with
-zero initial velocity. We choose stars of masses $0.6$ and $0.8\,
-M_\odot$, with the lower mass star on the left side (e.g. $x < 0$) of
-the domain and the higher mass star on the right, such that their
-center of mass coincides with the center of the
-domain. Gravitationally, the stars may be treated as point masses
-until the point of contact, so the equation of motion governing the
-distance $r$ between their centers of mass is that of simple free
-fall:
+A simple dynamical test to verify the gravitation physics in CASTRO is
+the case of gravitational free fall. We place two stars on the grid 
+in the manner of Section \ref{sec:initial_models}. The distance $a$ between 
+them corresponds to a chosen orbital period $T$, consistent with the total
+system mass $M$, but we disable the rotational source terms so that 
+the stars start at rest in an inertial reference frame. 
+Thus the stars will simply begin moving toward each other.
+As long as the stars remain approximately spherical, the stars can be 
+treated as point masses (this only seriously breaks down after the stars
+have come into contact). In dimensionless units where $r \to r / a$ and 
+$t \to 2\sqrt{2}\pi t / T$, the simple free fall equation of motion governing the
+distance $r$ between their centers of mass takes the form:
 \begin{equation}
-  \ddot{r}(t) = - \frac{GM}{r},
+  \ddot{r}(t) = - \frac{1}{2r^2}.
 \end{equation}
-where $G$ is the gravitational constant and $M$ is the total mass of
-the system. This differential equation has a closed-form solution for
-the evolution time as a function of separation:
+It is possible to derive a closed-form solution for the evolution time
+as a function of separation by starting with the integral formulation,
 \begin{equation}
-  t(r) = \sqrt{\frac{r_0^3}{2GM}} \left[ \text{arccos}\left(\sqrt{\frac{r}{r_0}}\,\right) + \sqrt{\frac{r}{r_0} \left(1 - \frac{r}{r_0}\right)}\ \right]. \label{analyticalFreeFall}
+  t(r) = \int_{1}^{r} \frac{dr}{v(r)}.
 \end{equation}
-This result can be derived by recognizing that
+The velocity $v$ (in dimensionless units) can be found by noting that 
+$\ddot{r} = v\, dv / dr$ and then separating and integrating the equation 
+of motion. This yields 
 \begin{equation}
-  t(r) = \int_{r_0}^r \frac{dr}{v(r)}
+  v(r) = \sqrt{\left(\frac{1}{r} - 1\right)}.
 \end{equation}
-and inserting the velocity as a function of radial separation,
+For our problem $0 \leq r \leq 1$, so this is always valid. Integrating, we find
 \begin{equation}
-  v(r) = \sqrt{\frac{2GM}{r_0}\left(\frac{r_0}{r} - 1\right)}.
+  t(r) = \text{arccos}\left(\sqrt{r}\right) + \sqrt{r \left(1 - r\right)}. \label{analyticalFreeFall}
 \end{equation}
-We determine the initial separation to be consistent with the
-simulation performed in Section \ref{sec:kepler}; that is, we select
-an initial orbital period and use Kepler's third law to calculate the
-radius of a circular orbit with that period. We select an initial
-orbital period of $T = 100$ s for this simulation, so that the separation is 
-$r_0 = 3.61 \times 10^{9}\ \text{cm}$.
-We chose a relatively low resolution simulation to demonstrate the
-capabilities of CASTRO even while using modest resources. The
-computational grid is covered by a coarse grid of $48^3$ zones, with
-two levels of refinement above the coarse grid. Each refined grid
-carries an increase in resolution by a factor of 4 relative to the
-coarser grid below it. CASTRO initially assigns $93\%$ of the domain
-to be covered by the intermediate resolution grids, and $0.05\%$ of
-the domain to be covered by the finest resolution grids.
+so that the point of contact would occur at $t = 1$. We actually stop the simulation
+at $t = 0.9$, which is when the effects from the extended sizes of the stars
+starts to become important. The results of our simulation for a $128^3$ zone 
+uniform grid are shown in Figure \ref{Fig:Free Fall}. They show excellent agreement
+between the theory and the simulation results, even for this very modest resolution.
 
 \begin{figure}
   \centering
@@ -1206,31 +1198,12 @@ the domain to be covered by the finest resolution grids.
     mutually attracted to each other by the gravitational force. The
     horizontal axis gives the separation of the white dwarfs, scaled
     to the initial separation, and the vertical axis gives the elapsed
-    time of the simulation, scaled to the total elapsed time
-    necessarily. The solid curve shows the analytical result,
+    time of the simulation, scaled to the time it would take two point masses
+    to collide. The solid curve shows the analytical result,
     calculated from Newtonian mechanics, and the circles show the
-    samples from the time evolution with CASTRO. The agreement between
-    theory and simulation is excellent, even for a simulation with
-    modest resolution.}
+    samples from the time evolution with CASTRO.}
   \label{Fig:Free Fall}
 \end{figure}
-
-The analytical result in Equation \ref{analyticalFreeFall} determines
-the total elapsed free-fall time,
-\begin{equation}
-  t_{\text{ff}} = \frac{\pi}{2} \sqrt{\frac{r_0^3}{2GM}} = \frac{T}{4\sqrt{2}}.
-\end{equation}
-The physical radius of each white dwarf is roughly $10\%$ of the
-initial separation, so we consider the evolution terminated when the
-radial separation reaches that value (at that point, the stars will no
-longer be in free-fall due to physical contact). Since the elapsed
-time goes roughly as the square root of the distance for small $r$, we
-consider the evolution terminated when $t = 0.99\, t_{\text{ff}}$. The
-results of our simulation are shown in Figure \ref{Fig:Free Fall}. The
-positions of the two stars are determined by calculating the center of
-mass of the right $(x > 0)$ and left $(x < 0)$ sides of the domain at 
-the end of each time step, and treating the centers of mass as the 
-respective location of the two stars.
 
 \subsection{Galilean Invariance}\label{sec:galileo}
 
