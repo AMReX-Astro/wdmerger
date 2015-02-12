@@ -74,14 +74,29 @@ Castro::sum_integrated_quantities ()
     Real separation = 0.0;
     Real angle = 0.0;
 
+    Real vol_p[7] = { 0.0 };
+    Real vol_s[7] = { 0.0 };
+
+    Real lev_vol_p[7] = { 0.0 };
+    Real lev_vol_s[7] = { 0.0 };
+
+    Real rad_p[7] = { 0.0 };
+    Real rad_s[7] = { 0.0 };
+
     std::string name1; 
     std::string name2;
 
     int index1;
     int index2;
 
-    int datawidth     =  24;
-    int dataprecision =  16;
+    int datawidth     = 24;
+    int dataprecision = 16;
+
+    int single_star;
+
+    // Determine whether we're doing a single star simulation
+
+    BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -234,25 +249,43 @@ Castro::sum_integrated_quantities ()
       com[i]       = com[i] / mass + center;
       com_vel[i]   = momentum[i] / mass;
 
-      com_p[i] = com_p[i] / mass_p;
-      com_s[i] = com_s[i] / mass_s;
-	
+      com_p[i] = com_p[i] / mass_p; 	
       vel_p[i] = vel_p[i] / mass_p;
-      vel_s[i] = vel_s[i] / mass_s;
 
-      // Calculate the distance between the primary and secondary.
+      if (single_star != 1) {
 
-      separation = sqrt( pow(com_p[0] - com_s[0], 2.0) + pow(com_p[1] - com_s[1], 2.0) + pow(com_p[2] - com_s[2], 2.0) );
+	 com_s[i] = com_s[i] / mass_s;
+	 vel_s[i] = vel_s[i] / mass_s;
 
-      // Calculate the angle between the x-axis and the line joining the two stars.
-      // We will assume that the motion along the rotation axis is negligible. 
-      // We can use the atan2 function to calculate the angle of a line 
-      // specified by two points with respect to the x-axis.
+	 // Calculate the distance between the primary and secondary.
 
-      angle = atan2( com_s[(rot_axis+1)%3] - com_p[(rot_axis+1)%3], com_s[(rot_axis)%3] - com_p[(rot_axis)%3] ) * 180.0 / M_PI;
-      if (angle < 0.0)
-	angle += 360.0;
+	 separation = sqrt( pow(com_p[0] - com_s[0], 2.0) + pow(com_p[1] - com_s[1], 2.0) + pow(com_p[2] - com_s[2], 2.0) );
+
+	 // Calculate the angle between the x-axis and the line joining the two stars.
+	 // We will assume that the motion along the rotation axis is negligible. 
+	 // We can use the atan2 function to calculate the angle of a line 
+	 // specified by two points with respect to the x-axis.
+
+	 angle = atan2( com_s[(rot_axis+1)%3] - com_p[(rot_axis+1)%3], com_s[(rot_axis)%3] - com_p[(rot_axis)%3] ) * 180.0 / M_PI;
+	 if (angle < 0.0)
+	   angle += 360.0;
+
+      }
     } 
+
+    // Compute effective radii of stars at various density cutoffs
+
+    for (int lev = 0; lev <= finest_level; lev++)
+        for (int i = 0; i <= 6; ++i) {
+	    getLevel(lev).volInBoundary(time, com_p, com_s, lev_vol_p[i], lev_vol_s[i], pow(10.0,i));
+	    vol_p[i] += lev_vol_p[i];
+	    vol_s[i] += lev_vol_s[i];
+	}
+
+    for (int i = 0; i <= 6; ++i) {
+        rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
+	rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
+    }
 
     // Write data out to the log.
 
@@ -406,22 +439,31 @@ Castro::sum_integrated_quantities ()
           star_log << std::setw(datawidth) << "     TIME              ";
 	  star_log << std::setw(datawidth) << "     DT                ";
 
-          star_log << std::setw(datawidth) << " PRIMARY MASS          ";
-          star_log << std::setw(datawidth) << " SECONDARY MASS        ";
-          star_log << std::setw(datawidth) << " PRIMARY X COM         ";
-          star_log << std::setw(datawidth) << " SECONDARY X COM       ";
-          star_log << std::setw(datawidth) << " PRIMARY Y COM         ";
-          star_log << std::setw(datawidth) << " SECONDARY Y COM       ";
-          star_log << std::setw(datawidth) << " PRIMARY Z COM         ";
-          star_log << std::setw(datawidth) << " SECONDARY Z COM       ";
-          star_log << std::setw(datawidth) << " PRIMARY X VEL         ";
-          star_log << std::setw(datawidth) << " SECONDARY X VEL       ";
-          star_log << std::setw(datawidth) << " PRIMARY Y VEL         ";
-          star_log << std::setw(datawidth) << " SECONDARY Y VEL       ";
-          star_log << std::setw(datawidth) << " PRIMARY Z VEL         ";
-          star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
+	  if (single_star != 1) {
           star_log << std::setw(datawidth) << " WD DISTANCE           ";
-	  star_log << std::setw(datawidth) << " WD ANGLE              ";
+	  star_log << std::setw(datawidth) << "   WD ANGLE            ";
+	  }
+          star_log << std::setw(datawidth) << " PRIMARY X COM         ";
+          star_log << std::setw(datawidth) << " PRIMARY Y COM         ";
+          star_log << std::setw(datawidth) << " PRIMARY Z COM         ";
+          star_log << std::setw(datawidth) << " PRIMARY X VEL         ";
+          star_log << std::setw(datawidth) << " PRIMARY Y VEL         ";
+          star_log << std::setw(datawidth) << " PRIMARY Z VEL         ";
+          star_log << std::setw(datawidth) << " PRIMARY MASS          ";
+	  for (int i = 0; i <= 6; ++i)
+	    star_log << "  PRIMARY 1E" << i << " RADIUS    ";
+
+	  if (single_star != 1) {
+	    star_log << std::setw(datawidth) << " SECONDARY X COM       ";
+	    star_log << std::setw(datawidth) << " SECONDARY Y COM       ";
+	    star_log << std::setw(datawidth) << " SECONDARY Z COM       ";
+	    star_log << std::setw(datawidth) << " SECONDARY X VEL       ";
+	    star_log << std::setw(datawidth) << " SECONDARY Y VEL       ";
+	    star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
+	    star_log << std::setw(datawidth) << " SECONDARY MASS        ";
+  	    for (int i = 0; i <= 6; ++i)
+	      star_log << "  SECONDARY 1E" << i << " RADIUS  ";
+          }
 
           star_log << std::endl;
 	}
@@ -432,27 +474,40 @@ Castro::sum_integrated_quantities ()
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
 
+	if (single_star != 1) {
 	star_log << std::scientific;
 
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_p;
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_s;
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[0];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[0];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[1];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[1];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[2];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[2];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[0];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[0];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[1];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[1];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[2];
-	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[2];
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << separation;
 
 	star_log << std::fixed;
 
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << angle;
+	}
+	
+	star_log << std::scientific;
+
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_p;
+        for (int i = 0; i <= 6; ++i)
+            star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rad_p[i];
+
+	if (single_star != 1) {
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[0];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[1];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[2];
+	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_s;
+
+        for (int i = 0; i <= 6; ++i)
+	    star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rad_s[i];
+	}
 
 	star_log << std::endl;
         

@@ -21,7 +21,7 @@ module probdata_module
 
   integer :: npts_model
 
-  double precision :: mass_P, mass_S
+  double precision :: mass_P_initial, mass_S_initial
   double precision :: central_density_P, central_density_S
   double precision :: radius_P_initial, radius_S_initial
   double precision :: orbital_speed_P, orbital_speed_S
@@ -64,6 +64,9 @@ module probdata_module
 
   ! Whether we're doing an initialization or a restart
   integer :: init
+
+  ! Are we doing a single star simulation?
+  logical :: single_star
 
 contains
 
@@ -121,6 +124,7 @@ contains
 
     integer :: iC12, iO16
     double precision :: stellar_C12, stellar_O16
+    double precision :: mass_p, mass_s
 
     namelist /fortin/ &
          mass_p, mass_s, &
@@ -143,8 +147,8 @@ contains
     central_density_P = -ONE
     central_density_S = -ONE
 
-    mass_p = 1.0
-    mass_s = 1.0
+    mass_P_initial = 1.0
+    mass_S_initial = 1.0
 
     stellar_temp = 1.0d7
     stellar_C12  = HALF
@@ -170,6 +174,11 @@ contains
     open(untin,file=probin,form='formatted',status='old')
     read(untin,fortin)
     close(unit=untin)
+
+    mass_P_initial = mass_p
+    mass_S_initial = mass_s
+
+    if (mass_S_initial < ZERO) single_star = .true.
 
     ! Fill in stellar composition using C12 and O16
 
@@ -285,27 +294,27 @@ contains
 
     ! Generate primary and secondary WD
 
-    call init_1d(model_P_r, model_P_state, npts_model, dx, radius_P_initial, mass_P, &
+    call init_1d(model_P_r, model_P_state, npts_model, dx, radius_P_initial, mass_P_initial, &
                  central_density_P, stellar_temp, stellar_comp, ambient_state)
 
     if (ioproc == 1 .and. init == 1) then
-        print *, "Generated initial model for primary WD of mass", mass_P, &
+        print *, "Generated initial model for primary WD of mass", mass_P_initial, &
                  ", central density", central_density_P, ", and radius", radius_P_initial
     endif
 
-    if (mass_S > ZERO) then
+    if (.not. single_star) then
 
-       call init_1d(model_S_r, model_S_state, npts_model, dx, radius_S_initial, mass_S, &
+       call init_1d(model_S_r, model_S_state, npts_model, dx, radius_S_initial, mass_S_initial, &
                     central_density_S, stellar_temp, stellar_comp, ambient_state)
 
        if (ioproc == 1 .and. init == 1) then
-          print *, "Generated initial model for secondary WD of mass", mass_S, &
+          print *, "Generated initial model for secondary WD of mass", mass_S_initial, &
                    ", central density", central_density_S, ", and radius", radius_S_initial
        endif
 
        ! Get the orbit from Kepler's third law
 
-       call kepler_third_law(radius_P_initial, mass_P, radius_S_initial, mass_S, &
+       call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
                              rot_period, a_P_initial, a_S_initial, a, &
                              orbital_speed_P, orbital_speed_S)
 
@@ -413,7 +422,7 @@ contains
     loc_P = center
     loc_S = center
 
-    if (mass_S < ZERO) return
+    if (single_star) return
 
     ! If rotation is enabled, then the stars should be at their initial locations.
     ! Otherwise, use the properties of a circular orbit to predict the locations.
@@ -453,15 +462,15 @@ contains
     ! We want the primary WD to be more massive. If what we're calling
     ! the primary is less massive, switch the stars.
 
-    if ( mass_p < mass_s ) then
+    if ( mass_P_initial < mass_S_initial ) then
 
       if (ioproc == 1) then
         print *, "Primary mass is less than secondary mass; switching the stars."
       endif
 
-      temp_mass = mass_p
-      mass_p = mass_s
-      mass_s = temp_mass
+      temp_mass = mass_P_initial
+      mass_P_initial = mass_S_initial
+      mass_S_initial = temp_mass
 
     endif
 
@@ -470,97 +479,4 @@ contains
 end module probdata_module
 
 
-
-
-  ! Return the mass-weighted center of mass and velocity for the primary and secondary, for a given FAB.
-  ! Since this will rely on a sum over processors, we should only add to the relevant variables
-  ! in anticipation of a MPI reduction, and not overwrite them.
-
-  subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
-                   xmom, x_l1, x_l2, x_l3, x_h1, x_h2, x_h3, &
-                   ymom, y_l1, y_l2, y_l3, y_h1, y_h2, y_h3, &
-                   zmom, z_l1, z_l2, z_l3, z_h1, z_h2, z_h3, &
-                   lo, hi, dx, time, &
-                   com_p, com_s, vel_p, vel_s, &
-                   mass_p, mass_s)
-
-    use bl_constants_module, only: HALF
-    use prob_params_module, only: problo, center
-    use probdata_module, only: get_star_locations
-
-    implicit none
-
-    integer         , intent(in   ) :: r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
-    integer         , intent(in   ) :: x_l1, x_l2, x_l3, x_h1, x_h2, x_h3
-    integer         , intent(in   ) :: y_l1, y_l2, y_l3, y_h1, y_h2, y_h3
-    integer         , intent(in   ) :: z_l1, z_l2, z_l3, z_h1, z_h2, z_h3
-
-    double precision, intent(in   ) :: rho(r_l1:r_h1,r_l2:r_h2,r_l3:r_h3)
-    double precision, intent(in   ) :: xmom(x_l1:x_h1,x_l2:x_h2,x_l3:x_h3)
-    double precision, intent(in   ) :: ymom(y_l1:y_h1,y_l2:y_h2,y_l3:y_h3)
-    double precision, intent(in   ) :: zmom(z_l1:z_h1,z_l2:z_h2,z_l3:z_h3)
-    integer         , intent(in   ) :: lo(3), hi(3)
-    double precision, intent(in   ) :: dx(3), time
-    double precision, intent(inout) :: com_p(3), com_s(3)
-    double precision, intent(inout) :: vel_p(3), vel_s(3)
-    double precision, intent(inout) :: mass_p, mass_s
-
-    integer          :: i, j, k
-    double precision :: x, y, z, loc_p(3), loc_s(3), r_p, r_s
-    double precision :: dV, dm
-
-    ! First, get the predicted locations of the primary and secondary.
-
-    call get_star_locations(time, loc_p, loc_s)
-
-    ! Volume of a zone
-
-    dV = dx(1) * dx(2) * dx(3)
-
-    ! Now, add to the COM locations and velocities depending on whether we're closer
-    ! to the primary or the secondary.
-
-    do k = lo(3), hi(3)
-       z = problo(3) + (dble(k) + HALF) * dx(3)
-       do j = lo(2), hi(2)
-          y = problo(2) + (dble(j) + HALF) * dx(2)
-          do i = lo(1), hi(1)
-             x = problo(1) + (dble(i) + HALF) * dx(1)
-
-             r_P = ( (x - loc_p(1))**2 + (y - loc_p(2))**2 + (z - loc_p(3))**2 )**0.5
-             r_S = ( (x - loc_s(1))**2 + (y - loc_s(2))**2 + (z - loc_s(3))**2 )**0.5
-
-             dm = rho(i,j,k) * dV
-
-             if (r_P < r_S) then
-
-                mass_p = mass_p + dm
-
-                com_p(1) = com_p(1) + dm * x
-                com_p(2) = com_p(2) + dm * y
-                com_p(3) = com_p(3) + dm * z
-
-                vel_p(1) = vel_p(1) + xmom(i,j,k) * dV
-                vel_p(2) = vel_p(2) + ymom(i,j,k) * dV
-                vel_p(3) = vel_p(3) + zmom(i,j,k) * dV              
-
-             else if (r_S < r_P) then
-
-                mass_s = mass_s + dm
-
-                com_s(1) = com_s(1) + dm * x
-                com_s(2) = com_s(2) + dm * y
-                com_s(3) = com_s(3) + dm * z
-
-                vel_s(1) = vel_s(1) + xmom(i,j,k) * dV
-                vel_s(2) = vel_s(2) + ymom(i,j,k) * dV
-                vel_s(3) = vel_s(3) + zmom(i,j,k) * dV
-
-             endif
-
-          enddo
-       enddo
-    enddo
-
-  end subroutine wdcom
 

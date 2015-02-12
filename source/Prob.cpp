@@ -79,3 +79,58 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
     ParallelDescriptor::ReduceRealSum(vel_s,3);
 
 }
+
+
+
+// This function uses the known center of mass of the two white dwarfs,
+// and given a density cutoff, computes the total volume of all zones
+// whose density is greater or equal to that density cutoff.
+// We also impose a distance requirement so that we only look 
+// at zones that are within twice the original radius of the white dwarf.
+
+void Castro::volInBoundary (Real               time,
+                	    Real*              com_p,
+			    Real*              com_s,
+			    Real&              vol_p,
+			    Real&              vol_s,
+                            Real               rho_cutoff)
+{
+    BL_PROFILE("Castro::volInBoundary()");
+
+    const Real* dx      = geom.CellSize();
+    MultiFab*   mf      = derive("density",time,0);
+
+    BL_ASSERT(mf != 0);
+
+    if (level < parent->finestLevel())
+    {
+	const MultiFab* mask = getLevel(level+1).build_fine_mask();
+	MultiFab::Multiply(*mf, *mask, 0, 0, 1, 0);
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:sum)
+#endif    
+    for (MFIter mfi(*mf,true); mfi.isValid(); ++mfi)
+    {
+        FArrayBox& fab = (*mf)[mfi];
+
+	Real sp = 0.0;
+	Real ss = 0.0;
+        const Box& box  = mfi.tilebox();
+        const int* lo   = box.loVect();
+        const int* hi   = box.hiVect();
+
+	BL_FORT_PROC_CALL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
+	                  (BL_TO_FORTRAN(fab),lo,hi,dx,com_p,com_s,&sp,&ss,&rho_cutoff);
+        vol_p += sp;
+	vol_s += ss;
+    }
+
+    delete mf;
+
+    ParallelDescriptor::ReduceRealSum(vol_p);
+    ParallelDescriptor::ReduceRealSum(vol_s);
+
+}
+

@@ -12,5 +12,13 @@ BL_FORT_PROC_DECL(WDCOM,wdcom)
      const int lo[], const int hi[],
      const Real dx[], const Real* time,
      Real com_p[], Real com_s[],
-     Real com_vel_p[], Real com_vel_s[],
+     Real vel_p[], Real vel_s[],
      Real* mass_p, Real* mass_s);
+
+BL_FORT_PROC_DECL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
+   (BL_FORT_FAB_ARG(rho), const int lo[], const int hi[],
+    const Real dx[], const Real com_p[], const Real com_s[], 
+    Real* volp, Real* vols, Real* rho_cutoff);
+
+BL_FORT_PROC_DECL(GET_SINGLE_STAR,get_single_star)
+   (int& flag);
