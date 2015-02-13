@@ -12,7 +12,7 @@ do
 
     # Loop over the resolutions in question
 
-    for ncell in 64 128 256 1024 2048 4096 #512 1024 #2048 4096
+    for ncell in 64 128 256 1024 2048 4096
     do
 
       # We only want to do the high-resolution convergence test
@@ -24,10 +24,10 @@ do
 
       dir=$results_dir/problem$problem/velocity$vel/$ncell
 
-      sed -i "/problem/c problem = $problem" $probin
-      sed -i "/bulk_velocity/c bulk_velocity = $vel" $probin
+      sed -i "/problem/c problem = $problem" $compile_dir/$probin
+      sed -i "/bulk_velocity/c bulk_velocity = $vel" $compile_dir/$probin
 
-      sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell" $inputs
+      sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell" $compile_dir/$inputs
 
       # Determine stopping time based on problem of interest
 
@@ -42,9 +42,9 @@ do
 	  plot_per=0.1
       fi
 
-      sed -i "/amr.plot_per/c amr.plot_per = $plot_per" $inputs
-      sed -i "/amr.check_per/c amr.check_per = $plot_per" $inputs
-      sed -i "/stop_time/c stop_time = $stop_time" $inputs
+      sed -i "/amr.plot_per/c amr.plot_per = $plot_per" $compile_dir/$inputs
+      sed -i "/amr.check_per/c amr.check_per = $plot_per" $compile_dir/$inputs
+      sed -i "/stop_time/c stop_time = $stop_time" $compile_dir/$inputs
 
       # Set number of processors based on amount of work
 

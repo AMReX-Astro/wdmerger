@@ -8,8 +8,8 @@ do
   do
     dir=$results_dir/gs$gst/ncell$ncell
     nprocs=16
-    sed -i "/castro.grav_source_type/c castro.grav_source_type = $gst" $inputs
-    sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $inputs
+    sed -i "/castro.grav_source_type/c castro.grav_source_type = $gst" $compile_dir/$inputs
+    sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $compile_dir/$inputs
     run $dir $nprocs
   done
 done

@@ -9,8 +9,8 @@ do
   do
 
     dir=$results_dir/problem$problem/$ncell
-    sed -i "/problem/c problem = $problem" $probin
-    sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $inputs
+    sed -i "/problem/c problem = $problem" $compile_dir/$probin
+    sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $compile_dir/$inputs
     run $dir
 
   done

@@ -20,12 +20,23 @@ include $(WDMERGER_HOME)/job_scripts/probin
 
 USE_MPI ?= TRUE
 USE_OMP ?= FALSE
-COMP ?= g++
-FCOMP ?= gfortran
 DIM ?= 3
 EOS_dir ?= helmeos
 USE_GRAV ?= TRUE
 DEBUG ?= FALSE
+
+include $(BOXLIB_HOME)/Tools/C_mk/Make.defs
+
+ifeq ($(WHICHLINUX), BLUE_WATERS)
+	COMP = Cray
+	FCOMP = Cray
+else ifeq ($(WHICHLINUX), TITAN)
+	COMP = Cray
+	FCOMP = Cray
+else
+	COMP = g++
+	FCOMP = gfortran
+endif
 
 # Determine where our source files are coming from
 # based on the relevant file in the source directory.
@@ -36,23 +47,22 @@ root_pack = $(WDMERGER_HOME)/source/Make.package
 module_locs = $(WDMERGER_HOME)/source/modules/
 module_pack = $(WDMERGER_HOME)/source/modules/Make.package
 
-curr_locs = source/
-curr_pack = source/Make.package
+curr_locs = ../source/
+curr_pack = ../source/Make.package
 
-ifneq ($(wildcard source/full_source),)
+ifneq ($(wildcard ../source/full_source),)
 	Blocs := $(curr_locs)
 	Bpack := $(curr_pack)
-else ifneq ($(wildcard source/partial_source),)
+else ifneq ($(wildcard ../source/partial_source),)
 	Blocs := $(curr_locs) $(root_locs) $(module_locs)
 	Bpack := $(curr_pack) $(root_pack) $(module_pack)
-else ifneq ($(wildcard source/modules_only),)
+else ifneq ($(wildcard ../source/modules_only),)
 	Blocs := $(curr_locs) $(module_locs)
 	Bpack := $(curr_pack) $(module_pack)
 else
 	Blocs := $(root_locs) $(module_locs)
 	Bpack := $(root_pack) $(module_pack)
 endif
-
 
 # Sets up the CASTRO makefile in the local directory
 # and inserts our preferred make options like compiler
@@ -88,7 +98,6 @@ make_castro: make_inputs make_probin
 
 make_inputs:
 
-	echo "$(variable)"
 	if [ ! -e $(inputs) ] ; \
 	then \
 		touch $(inputs) ; \
@@ -164,7 +173,7 @@ make_probin:
 
 	if [ ! -e $(probin) ]; \
 	then \
-		if [ ! -e "source/probin" ] ; \
+		if [ ! -e "../source/probin" ] ; \
 		then \
 			touch $(probin) ; \
 			echo "&fortin" >> $(probin) ; \
@@ -196,27 +205,24 @@ make_probin:
 			echo "/" >> $(probin) ; \
 			echo "" >> $(probin) ; \
 		else \
-			cp source/probin . ; \
+			cp ../source/probin . ; \
 		fi \
 	fi
 
 # Clean everything up with make clean
 
-clean_targets = *.mod *.run helm_table.dat $(inputs) $(probin)
-realclean_targets = $(clean_targets) results/ plots/
+clean_targets = *.mod *.run helm_table.dat $(inputs) $(probin) 
+realclean_targets = ../results/ ../plots/
 
 clean:
 	if [ -e $(local_makefile) ]; then \
 		make realclean -f $(local_makefile); \
 		rm -f $(local_makefile); \
 	fi
+
 	rm -rf $(clean_targets)
 
-realclean:
-	if [ -e $(local_makefile) ]; then \
-		make realclean -f $(local_makefile); \
-		rm -f $(local_makefile); \
-	fi
+realclean: clean
 	rm -rf $(realclean_targets)
 
 # Prints a variable VAR when makefile is called as

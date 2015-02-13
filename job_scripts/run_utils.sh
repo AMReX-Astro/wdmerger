@@ -7,20 +7,13 @@
 
 function get_wdmerger_make_var {
 
-    make print-$1 | tail -1 | awk '{ print $NF }'
+    make print-$1 -C $compile_dir | tail -2 | head -1 | awk '{ print $NF }'
 
 }
 
 function get_castro_make_var {
 
-    make print-$1 -f $local_makefile  | tail -1 | awk '{ print $NF }'
-
-}
-
-
-function get_machine {
-    
-    MACHINE=$(get_make_var WHICHLINUX)
+    make print-$1 -f $local_makefile -C $compile_dir  | tail -2 | head -1 | awk '{ print $NF }'
 
 }
 
@@ -43,13 +36,13 @@ function get_last_checkpoint {
 
 function copy_files {
 
-    cp $CASTRO $1
+    cp $compile_dir/$CASTRO $1
     if [ -e "helm_table.dat" ]; then
-	cp helm_table.dat $1
+	cp $compile_dir/helm_table.dat $1
     fi
-    cp $inputs $1
-    cp $probin $1
-    cp $job_script $1
+    cp $compile_dir/$inputs $1
+    cp $compile_dir/$probin $1
+    cp $compile_dir/$job_script $1
 
 }
 
@@ -97,11 +90,11 @@ function run {
     fi
 
     if [ $MACHINE == "GENERICLINUX" ] ; then 
-	echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $job_script
+	echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $compile_dir/$job_script
     elif [ $MACHINE == "BLUE_WATERS" ]; then
-	sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $job_script
-	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $job_script
-	sed -i "/aprun/c aprun -n $nprocs -N $ppn $CASTRO $inputs \$\{restartString\}" $job_script
+	sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $compile_dir/$job_script
+	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $compile_dir/$job_script
+	sed -i "/aprun/c aprun -n $nprocs -N $ppn $CASTRO $inputs \$\{restartString\}" $compile_dir/$job_script
     fi
 
     # Change into the run directory, submit the job, then come back to the main directory.
@@ -121,11 +114,11 @@ function run {
 
     checkpoint=$(get_last_checkpoint)
 
-    # Extract the checkpoint time -- it is stored in the third row of the Header file.
+    # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
     time=$(awk 'NR==3' $checkpoint/Header)
 
-    # Extract the current timestep. It is stored in row 12 of the header file.
+    # Extract the current timestep. It is stored in row 12 of the Header file.
 
     step=$(awk 'NR==12' $checkpoint/Header)
 
@@ -166,6 +159,10 @@ function run {
 
 }
 
+# Directory to compile the executable in
+
+compile_dir="compile"
+
 # Upon initialization, store some variables and create results directory.
 
 local_makefile=$(get_wdmerger_make_var local_makefile)
@@ -198,9 +195,11 @@ elif [ $MACHINE == "TITAN"]; then
     ppn="8"
 fi
 
-if [ ! -e $job_script ]; then
-    cp $WDMERGER_HOME/job_scripts/$job_script .
+if [ ! -e $compile_dir/$job_script ]; then
+    cp $WDMERGER_HOME/job_scripts/$job_script $compile_dir
 fi
+
+# Directory for executing and storing results
 
 results_dir="results"
 
@@ -208,10 +207,11 @@ if [ ! -d $results_dir ]; then
   mkdir $results_dir
 fi
 
-# Create the plots directory, for saving output
+# Directory for placing plots from analysis routines
 
 plots_dir="plots"
 
 if [ ! -d $plots_dir ]; then
     mkdir $plots_dir
 fi
+

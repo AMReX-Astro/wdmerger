@@ -238,14 +238,16 @@ checks the scaling properties.
 \end{itemize}
 
 Each test directory is set up with a uniform pattern. The \texttt{source/} subdirectory includes all of the source code
-needed to build the test. The \texttt{makefile} builds the executable and creates
+needed to build the test. The \texttt{compile/} directory contains the \texttt{makefile}, which builds the executable and creates
 the inputs files needed for the simulation. The \texttt{run\_test.sh} script executes the test by creating a subdirectory
 for each parameter set and then submitting it with a batch submission script (for a vanilla Linux installation,
 this will use the \texttt{batch} utility; for a limited number of clusters and supercomputers, 
 there will be recommended options and specialized submission scripts). The \texttt{analysis.py} Python script
 is used to analyze the output and generature figures. In summary, to run a test, perform the following series of commands:
 \begin{itemize}
+  \item \texttt{cd compile}
   \item \texttt{make}
+  \item \texttt{cd ..}
   \item \texttt{bash run\_test.sh}
   \item \texttt{python analysis.py} (after the execution has completed)
 \end{itemize}
