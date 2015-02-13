@@ -24,6 +24,21 @@ function get_machine {
 
 }
 
+# Given a directory as the first argument, return the numerically last checkpoint file.
+
+function get_last_checkpoint {
+
+    # The -V option to sort tells it to sort checkpoints in numerically increasing order, which is 
+    # necessary since some checkfiles will have five digits and others six. This may only work on
+    # certain GNU versions of sort; if it doesn't work for you, perhaps try one of these suggestions:
+    # http://stackoverflow.com/questions/7992689/bash-how-to-loop-all-files-in-sorted-order
+
+    checkpoint=$(find $1 -name "chk*" | sort -V | tail -1)
+
+    echo $checkpoint
+
+}
+
 # Copies all relevant files needed for a CASTRO run into the target directory.
 
 function copy_files {
@@ -64,7 +79,7 @@ function run {
 
   if [ ! -d $dir ]; then
 
-    echo "Submitting job in directory" $dir
+    echo "Submitting job in directory "$dir"."
 
     mkdir -p $dir
 
@@ -102,7 +117,50 @@ function run {
 
   else
 
-    echo "Directory" $1 "already exists; skipping it."
+    # If the directory already exists, check to see if we've reached the desired stopping point.
+
+    checkpoint=$(get_last_checkpoint)
+
+    # Extract the checkpoint time -- it is stored in the third row of the Header file.
+
+    time=$(awk 'NR==3' $checkpoint/Header)
+
+    # Extract the current timestep. It is stored in row 12 of the header file.
+
+    step=$(awk 'NR==12' $checkpoint/Header)
+
+    # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
+    # The job script already knows to start from the latest checkpoint file.
+
+    stop_time=$(grep "stop_time" $dir/$inputs | awk '{print $3}')
+    max_step=$(grep "max_step" $dir/$inputs | awk '{print $3}')
+
+    time_flag=$(echo "$time < $stop_time" | bc -l)
+    step_flag=$(echo "$step < $max_step" | bc -l)
+
+    # First as a sanity check, make sure the desired job isn't already running.
+
+    if [ -e $dir/*$run_ext ]; then
+
+	echo "Job currently in process in directory "$dir"."
+
+    else
+ 
+	if [ $time_flag -eq 1 ] && [ $step_flag -eq 1 ]; then
+
+	echo "Continuing job in directory "$dir"."
+
+	cd $dir
+	$exec $job_script
+	cd - > /dev/null
+
+	# If we make it here, then we've already reached either stop_time
+	# or max_step, so we should conclude that the run is done.
+
+	else
+	    echo "Job has already been completed in directory "$dir"."
+	fi
+    fi
 
   fi
 
@@ -131,6 +189,7 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
     COMP="Cray"
     FCOMP="Cray"
     ppn="16"
+    run_ext=".OU"
 elif [ $MACHINE == "TITAN"]; then
     exec="qsub"
     job_script="titan.run"

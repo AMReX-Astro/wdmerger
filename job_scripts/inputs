@@ -6,7 +6,7 @@
 
 amr.probin_file ?= probin			   # Name of the probin file
 
-max_step ?= 10000                                  # Maximum coarse timestep
+max_step ?= 1000000                                # Maximum coarse timestep
 stop_time ?= 100.0	                           # Simulation time to stop at
 
 geometry.is_periodic ?= 0 0 0                      # Non-periodic boundary conditions
