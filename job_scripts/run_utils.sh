@@ -21,14 +21,63 @@ function get_castro_make_var {
 
 function get_last_checkpoint {
 
-    # The -V option to sort tells it to sort checkpoints in numerically increasing order, which is 
-    # necessary since some checkfiles will have five digits and others six. This may only work on
-    # certain GNU versions of sort; if it doesn't work for you, perhaps try one of these suggestions:
-    # http://stackoverflow.com/questions/7992689/bash-how-to-loop-all-files-in-sorted-order
+    # Doing a search this way will treat first any checkpoint files 
+    # with six digits, and then will fall back to ones with five digits.
+    # On recent versions of GNU sort, one can simplify this with sort -V.
 
-    checkpoint=$(find $1 -name "chk*" | sort -V | tail -1)
+    # Note: if we do not hand this an argument, assume we want to look in the current directory.
+
+    if [ ! -z $1 ]; then
+	dir='.'
+    else
+	dir=$1
+    fi
+
+    checkpoint=$(find $dir -type d -name "*chk??????" -print | sort | tail -1)
+
+    # The Header is the last thing written -- check if it's there, otherwise,
+    # fall back to the second-to-last check file written, because it means 
+    # the latest checkpoint file is still being written.
+
+    if [ ! -f ${checkpoint}/Header ]; then
+
+	# How many *chk?????? files are there? if only one, then skip,
+	# as there are no valid and complete checkpoint files.
+
+	nl=$(find $dir -type d -name "*chk??????" -print | sort | wc -l)
+	if [ $nl -gt 1 ]; then
+	    checkpoint=$(find $dir -type d -name "*chk??????" -print | sort | tail -2 | head -1)    
+	else
+	    checkpoint=""
+	fi
+
+    fi
 
     echo $checkpoint
+
+}
+
+# Return a string that is used for restarting from the latest checkpoint.
+# Optionally you can hand this a directory, otherwise it will default 
+# to whatever get_last_checkpoint determines.
+
+function get_restart_string {
+
+    if [ ! -z $1 ]; then
+	checkpoint=$(get_last_checkpoint)
+    else
+	checkpoint=$(get_last_checkpoint $1)
+    fi
+
+    # restartString will be empty if no chk files are found -- i.e. this is a new run.
+
+    if [ $checkpoint == "" ]; then
+	restartString=""
+    else
+	restartString="amr.restart="$checkpoint
+    fi
+
+    echo $restartString
 
 }
 
@@ -164,54 +213,59 @@ function run {
 compile_dir="compile"
 
 # Upon initialization, store some variables and create results directory.
+# We only want to initialize these variables if we're currently in a root problem directory.
 
-local_makefile=$(get_wdmerger_make_var local_makefile)
-inputs=$(get_wdmerger_make_var inputs)
-probin=$(get_wdmerger_make_var probin)
-CASTRO=$(get_castro_make_var executable)
+if [ -d $compile_dir ]; then
 
-# This returns the Linux variant the current machine uses, defined in
-# $(BOXLIB_HOME)/Tools/C_mk/Make.defs.
-# This is used to select which batch submission script we want to use.
+    local_makefile=$(get_wdmerger_make_var local_makefile)
+    inputs=$(get_wdmerger_make_var inputs)
+    probin=$(get_wdmerger_make_var probin)
+    CASTRO=$(get_castro_make_var executable)
 
-MACHINE=$(get_castro_make_var WHICHLINUX)
+    # This returns the Linux variant the current machine uses, defined in
+    # $(BOXLIB_HOME)/Tools/C_mk/Make.defs.
+    # This is used to select which batch submission script we want to use.
 
-if [ $MACHINE == "GENERICLINUX" ]; then
-    exec="bash"
-    job_script="linux.run"
-    ppn="16"
-elif [ $MACHINE == "BLUE_WATERS" ]; then
-    exec="qsub"
-    job_script="bluewaters.run"
-    COMP="Cray"
-    FCOMP="Cray"
-    ppn="16"
-    run_ext=".OU"
-elif [ $MACHINE == "TITAN"]; then
-    exec="qsub"
-    job_script="titan.run"
-    COMP="Cray"
-    FCOMP="Cray"
-    ppn="8"
-fi
+    MACHINE=$(get_castro_make_var WHICHLINUX)
 
-if [ ! -e $compile_dir/$job_script ]; then
-    cp $WDMERGER_HOME/job_scripts/$job_script $compile_dir
-fi
+    if [ $MACHINE == "GENERICLINUX" ]; then
+	exec="bash"
+	job_script="linux.run"
+	ppn="16"
+    elif [ $MACHINE == "BLUE_WATERS" ]; then
+	exec="qsub"
+	job_script="bluewaters.run"
+	COMP="Cray"
+	FCOMP="Cray"
+	ppn="16"
+	run_ext=".OU"
+    elif [ $MACHINE == "TITAN"]; then
+	exec="qsub"
+	job_script="titan.run"
+	COMP="Cray"
+	FCOMP="Cray"
+	ppn="8"
+    fi
 
-# Directory for executing and storing results
+    if [ ! -e $compile_dir/$job_script ]; then
+	cp $WDMERGER_HOME/job_scripts/$job_script $compile_dir
+    fi
 
-results_dir="results"
+    # Directory for executing and storing results
 
-if [ ! -d $results_dir ]; then
-  mkdir $results_dir
-fi
+    results_dir="results"
 
-# Directory for placing plots from analysis routines
+    if [ ! -d $results_dir ]; then
+      mkdir $results_dir
+    fi
 
-plots_dir="plots"
+    # Directory for placing plots from analysis routines
 
-if [ ! -d $plots_dir ]; then
-    mkdir $plots_dir
+    plots_dir="plots"
+
+    if [ ! -d $plots_dir ]; then
+	mkdir $plots_dir
+    fi
+
 fi
 
