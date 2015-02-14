@@ -370,7 +370,7 @@ minima. As a result, we use the original limiter, which is strictly
 monotonicity preserving in the parabolic profiles it generates; this
 is activated with \texttt{castro.ppm\_type = 1}.
 
-A related issue that required a code improvement was that in cases of
+A related issue that required a code improvement is that in cases of
 large density gradients such as the edge of a star, it is possible to
 generate negative densities in zones even with the more strongly
 limited PPM. This can occur if a region of large density is moving
@@ -386,27 +386,20 @@ characteristic we value, which is to keep the edge of the stars
 relatively sharp, as they physically should be. Since the mass of the
 affected zones is typically already fairly low, this should not
 seriously affect the energy conservation properties of our
-simulation. Similarly, it is also possible in this physical situation
-for very large velocities to be generated in the material behind the
-star. The momentum transferred to the ambient zone is close to the
-momentum of the stellar material, but this is of much higher density
-and so the velocity of the ambient material must become very large to
-compensate. While this may be physically viable in certain
-circumstances, it poses a problem for our code, which uses subcycling
-in time (see below). The timestep is fixed at the beginning of the set
-of subcycled timesteps, and if in the middle of the cycle a velocity
-is generated that is so large that it violates the CFL criterion for
-this timestep, we cannot guarantee the stability of the resulting
-solution since we cannot alter the timestep. (Nor would we want to,
-because in some cases because the velocity becomes spuriously large
-and would drag down the global timestep.) Therefore we also insert a
-check at the end of every hydrodynamics timestep that resets the
-velocity and/or sound-speed (indirectly, using the temperature) of any
-zone that violates the CFL criterion given the timestep we chose at
-the beginning of the cycle. In practice, we find that this is mainly
-necessary only for simulations in the inertial reference frame of the
-white dwarf merger, which we do not normally do for the reasons stated
-in Section \ref{sec:kepler}.
+simulation. Our strategy for a reset is as follows: when the density of 
+a zone is below a pre-determined density floor (which is typically 
+$10^{-5}\ \text{g cm}^{-3}$ for our stellar simulations), we look
+at all adjacent zones and find the zone with the highest density.
+If it is above the density floor, then we set the field values 
+(density, momentum, energy, and temperature) of the
+resetted zone to be exactly equal to the field values of this 
+adjacent zone. If no adjacent zone reaches the density floor, then
+the zone is set to the density floor, and given a temperature equal 
+to the temperature floor for our simulations (which is typically 
+$10^{5}\ \text{K}$ for our stellar simulations). We then recompute 
+the thermodynamics to be consistent with these values. The 
+velocity of the zone is set to zero. This latter approach will only
+occur in very rare situations, and is mainly there as a safeguard.
 
 CASTRO's approach to adaptive mesh refinement, based on its underlying
 BoxLib framework, is to refine zones based on certain user-specified
