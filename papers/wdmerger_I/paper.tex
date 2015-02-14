@@ -1099,11 +1099,26 @@ the maximum timestep is set to be equal to one-half of the CFL limit.
 
 We track a number of diagnostic quantities at the end of every coarse grid timestep. 
 For all simulations, we record the total energy (including the breakdown into
-its components: kinetic, internal, gravitational potential, rotation), 
+its components: kinetic, internal, gravitational potential, rotation; we note
+that for the diagnostics we actually use $(\rho E)$ for calculation of the total energy,
+rather than explicitly calculating the sum of kinetic and internal, as this is
+the quantity that should be explicitly conserved), 
 the total angular momentum, and the center of mass of the system. 
 For stellar calculations, we separately record diagnostic 
 information about the stars, including their centers of mass, 
 and the volume contained within each star.
+
+The software used to generate the test problems in this paper
+(as well as the paper text itself),
+\texttt{wdmerger}\footnote{\url{https://github.com/BoxLib-Codes/wdmerger}},
+is freely available at an online repository hosting service.
+Version control in both the parent software (BoxLib, CASTRO) and in \texttt{wdmerger}
+permits us to reference the state of the code at the time a simulation
+was performed. To do so, in all plot files generated we store
+the complete set of parameters used in that simulation. We also store the 
+version commit hashes of the parent software in the plot files.
+We store the commit hashes of all three as comments in the metadata of 
+any EPS files generated as figures in this paper.
 
 %==========================================================================
 % Numerical Test Problems
