@@ -23,6 +23,7 @@ USE_OMP ?= FALSE
 DIM ?= 3
 EOS_dir ?= helmeos
 USE_GRAV ?= TRUE
+USE_ROTATION ?= TRUE
 DEBUG ?= FALSE
 
 include $(BOXLIB_HOME)/Tools/C_mk/Make.defs
@@ -44,24 +45,27 @@ endif
 root_locs = $(WDMERGER_HOME)/source/
 root_pack = $(WDMERGER_HOME)/source/Make.package
 
-module_locs = $(WDMERGER_HOME)/source/modules/
-module_pack = $(WDMERGER_HOME)/source/modules/Make.package
+mods_locs = $(WDMERGER_HOME)/source/modules/
+mods_pack = $(WDMERGER_HOME)/source/modules/Make.package
+
+diag_locs = $(WDMERGER_HOME)/source/diagnostics/
+diag_pack = $(WDMERGER_HOME)/source/diagnostics/Make.package
 
 curr_locs = ../source/
 curr_pack = ../source/Make.package
 
 ifneq ($(wildcard ../source/full_source),)
-	Blocs := $(curr_locs)
-	Bpack := $(curr_pack)
+	Blocs := $(curr_locs) $(diag_locs)
+	Bpack := $(curr_pack) $(diag_pack)
 else ifneq ($(wildcard ../source/partial_source),)
-	Blocs := $(curr_locs) $(root_locs) $(module_locs)
-	Bpack := $(curr_pack) $(root_pack) $(module_pack)
+	Blocs := $(curr_locs) $(root_locs) $(mods_locs) $(diag_locs)
+	Bpack := $(curr_pack) $(root_pack) $(mods_pack) $(diag_pack)
 else ifneq ($(wildcard ../source/modules_only),)
-	Blocs := $(curr_locs) $(module_locs)
-	Bpack := $(curr_pack) $(module_pack)
+	Blocs := $(curr_locs) $(mods_locs) $(diag_locs)
+	Bpack := $(curr_pack) $(mods_pack) $(diag_pack)
 else
-	Blocs := $(root_locs) $(module_locs)
-	Bpack := $(root_pack) $(module_pack)
+	Blocs := $(root_locs) $(mods_locs) $(diag_locs)
+	Bpack := $(root_pack) $(mods_pack) $(diag_pack)
 endif
 
 # Sets up the CASTRO makefile in the local directory
@@ -87,6 +91,7 @@ make_castro: make_inputs make_probin
 		sed -i "/DIM/c DIM = $(DIM)" $(local_makefile) ; \
 		sed -i "/EOS_dir/c EOS_dir := $(EOS_dir)" $(local_makefile) ; \
 		sed -i "/USE_GRAV/c USE_GRAV = $(USE_GRAV)" $(local_makefile) ; \
+		sed -i "/USE_ROTATION/c USE_ROTATION = $(USE_ROTATION)" $(local_makefile) ; \
 		sed -i "/USE_MPI/c USE_MPI = $(USE_MPI)" $(local_makefile) ; \
 		sed -i "/USE_OMP/c USE_OMP = $(USE_OMP)" $(local_makefile) ; \
 		sed -i "/DEBUG/c DEBUG = $(DEBUG)" $(local_makefile) ; \

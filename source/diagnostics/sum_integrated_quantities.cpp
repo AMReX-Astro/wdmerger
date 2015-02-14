@@ -9,6 +9,8 @@
 #include <Problem.H>
 #include <Problem_F.H>
 
+#include <Gravity.H>
+
 #include "buildInfo.H"
 
 void
@@ -51,20 +53,22 @@ Castro::sum_integrated_quantities ()
     Real mom_grid[3]  = { 0.0 };
     Real L_grid[3]    = { 0.0 };
 
+    Real com[3]       = { 0.0 };
+    Real lev_com[3]   = { 0.0 };
+    Real com_vel[3]   = { 0.0 };
+
+#ifdef merger
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
 
     Real lev_mass_p   = 0.0;
     Real lev_mass_s   = 0.0;
 
-    Real com[3]       = { 0.0 };
     Real com_p[3]     = { 0.0 };
     Real com_s[3]     = { 0.0 };
-    Real lev_com[3]   = { 0.0 };
     Real lev_com_p[3] = { 0.0 };
     Real lev_com_s[3] = { 0.0 };
  
-    Real com_vel[3]   = { 0.0 };
     Real vel_p[3] = { 0.0 };
     Real vel_s[3] = { 0.0 };
     
@@ -83,6 +87,9 @@ Castro::sum_integrated_quantities ()
     Real rad_p[7] = { 0.0 };
     Real rad_s[7] = { 0.0 };
 
+    int single_star;
+#endif
+
     std::string name1; 
     std::string name2;
 
@@ -92,11 +99,10 @@ Castro::sum_integrated_quantities ()
     int datawidth     = 24;
     int dataprecision = 16;
 
-    int single_star;
-
+#ifdef merger
     // Determine whether we're doing a single star simulation
-
     BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
+#endif
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -105,20 +111,9 @@ Castro::sum_integrated_quantities ()
 
       Castro& ca_lev = getLevel(lev);
 
-      // Compute the center of mass locations and velocities for the primary and secondary, and for the whole grid.
-
-      ca_lev.wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
-
-      mass_p       += lev_mass_p;
-      mass_s       += lev_mass_s;
-
-      for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+      for ( int i = 0; i < BL_SPACEDIM; i++ ) {
         lev_com[i]    = ca_lev.locWgtSum("density", time, i);
         com[i]       += lev_com[i];
-	com_p[i]     += lev_com_p[i];
-	com_s[i]     += lev_com_s[i];
-	vel_p[i]     += lev_vel_p[i];
-	vel_s[i]     += lev_vel_s[i];
       }
 
       // Calculate total mass, momentum and energy of system.
@@ -126,22 +121,30 @@ Castro::sum_integrated_quantities ()
       mass     += ca_lev.volWgtSum("density", time);
 
       mom_grid[0]     += ca_lev.volWgtSum("xmom", time);
+#if (BL_SPACEDIM >= 2)      
       mom_grid[1]     += ca_lev.volWgtSum("ymom", time);
+#endif
+#if (BL_SPACEDIM == 3)
       mom_grid[2]     += ca_lev.volWgtSum("zmom", time);
+#endif
 
       rho_E    += ca_lev.volWgtSum("rho_E", time);
       rho_K    += ca_lev.volWgtSum("kineng",time);
       rho_e    += ca_lev.volWgtSum("rho_e", time);
 
 #ifdef GRAVITY
-      if ( do_grav ) {
+#if (BL_SPACEDIM == 3)
+      if ( do_grav and gravity->get_gravity_type() == "PoissonGrav" ) {
         rho_phi  += ca_lev.volProductSum("density", "phi", time);
       }
+#endif
 #endif
 
       // Calculate total angular momentum on the grid using L = r x p
 
-      for ( int i = 0; i <= 2; i++ ) {
+#if (BL_SPACEDIM == 3)
+
+      for ( int i = 0; i < 3; i++ ) {
 
         index1 = (i+1) % 3; 
         index2 = (i+2) % 3;
@@ -157,9 +160,18 @@ Castro::sum_integrated_quantities ()
 
         L_grid[i] = ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
 
-        angular_momentum[i]  += L_grid[i];
+        angular_momentum[i] += L_grid[i];
 
       }
+
+#elif (BL_SPACEDIM == 2)
+
+      // If we're in 2D, only the z-component will be non-zero.
+
+      L_grid[2] = ca_lev.locWgtSum("ymom", time, 0) - ca_lev.locWgtSum("xmom", time, 1);
+      angular_momentum[2] += L_grid[2]; 
+
+#endif
 
       // Add rotation source terms
 #ifdef ROTATION
@@ -167,7 +179,7 @@ Castro::sum_integrated_quantities ()
 
         // Construct (symmetric) moment of inertia tensor
 
-	for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+	for ( int i = 0; i < BL_SPACEDIM; i++ ) {
           m_r_squared[i] = ca_lev.locWgtSum2D("density", time, i, i);
         }
 
@@ -205,10 +217,10 @@ Castro::sum_integrated_quantities ()
           }
 
         }
+
       } 
 #endif
     }
-
 
 
     // Complete calculations for energy and momenta
@@ -217,15 +229,16 @@ Castro::sum_integrated_quantities ()
     internal_energy = rho_e;
     kinetic_energy = rho_K;
     gas_energy = rho_E;
-    total_E_grid = gravitational_energy + rho_E;
-    total_energy = total_E_grid;
+    total_energy = gravitational_energy + rho_E;
 
-    for (int i = 0; i <= 2; i++) {
+    for (int i = 0; i < BL_SPACEDIM; i++) {
         momentum[i] = mom_grid[i];
         angular_momentum[i] = L_grid[i];
     }
 
 #ifdef ROTATION
+
+    total_E_grid = total_energy;
 
     rotational_energy = rot_kin_eng;
     total_energy += rotational_energy;
@@ -235,6 +248,27 @@ Castro::sum_integrated_quantities ()
     }
 
 #endif
+
+#ifdef merger
+
+    for (int lev = 0; lev <= finest_level; lev++)
+    {
+
+      // Compute the center of mass locations and velocities for the primary and secondary.
+
+      ca_lev.wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
+
+      mass_p       += lev_mass_p;
+      mass_s       += lev_mass_s;
+
+      for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+	com_p[i]     += lev_com_p[i];
+	com_s[i]     += lev_com_s[i];
+	vel_p[i]     += lev_vel_p[i];
+	vel_s[i]     += lev_vel_s[i];
+      }
+
+    }
 
     // Complete calculations for center of mass quantities
 
@@ -287,6 +321,10 @@ Castro::sum_integrated_quantities ()
 	rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
     }
 
+#endif
+
+
+
     // Write data out to the log.
 
     if ( ParallelDescriptor::IOProcessor() )
@@ -315,19 +353,27 @@ Castro::sum_integrated_quantities ()
           grid_log << std::setw(datawidth) << "     TIME              ";
 	  grid_log << std::setw(datawidth) << "     DT                ";
           grid_log << std::setw(datawidth) << " TOTAL ENERGY          ";
+#ifdef ROTATION
 	  grid_log << std::setw(datawidth) << " TOTAL E GRID          ";
+#endif
 	  grid_log << std::setw(datawidth) << " GAS ENERGY            ";
           grid_log << std::setw(datawidth) << " KIN. ENERGY           ";
 #ifdef ROTATION
 	  if (do_rotation) {
 	  grid_log << std::setw(datawidth) << " ROT. ENERGY           ";
 	  }
-#endif	  
+#endif
+#ifdef GRAVITY	  
           grid_log << std::setw(datawidth) << " GRAV. ENERGY          ";
+#endif
           grid_log << std::setw(datawidth) << " INT. ENERGY           ";
           grid_log << std::setw(datawidth) << " XMOM                  ";
+#if (BL_SPACEDIM >= 2)
           grid_log << std::setw(datawidth) << " YMOM                  ";
+#endif
+#if (BL_SPACEDIM == 3)
           grid_log << std::setw(datawidth) << " ZMOM                  ";
+#endif
 #ifdef ROTATION
 	  if (do_rotation) {
 	  grid_log << std::setw(datawidth) << " XMOM GRID             ";
@@ -353,11 +399,19 @@ Castro::sum_integrated_quantities ()
 #endif
           grid_log << std::setw(datawidth) << " MASS                  ";
           grid_log << std::setw(datawidth) << " X COM                 ";
+#if (BL_SPACEDIM >= 2)
           grid_log << std::setw(datawidth) << " Y COM                 ";
+#endif
+#if (BL_SPACEDIM == 3)
           grid_log << std::setw(datawidth) << " Z COM                 ";
+#endif
           grid_log << std::setw(datawidth) << " X COM VEL             ";
+#if (BL_SPACEDIM >= 2)
           grid_log << std::setw(datawidth) << " Y COM VEL             ";
+#endif
+#if (BL_SPACEDIM == 3)
           grid_log << std::setw(datawidth) << " Z COM VEL             ";
+#endif
 
           grid_log << std::endl;
         }
@@ -373,19 +427,27 @@ Castro::sum_integrated_quantities ()
 	grid_log << std::scientific;
 
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << total_energy;
+#ifdef ROTATION
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << total_E_grid;
+#endif
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << gas_energy;
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << kinetic_energy;
 #ifdef ROTATION
 	if (do_rotation) {
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rotational_energy;	  
 	}
-#endif	  
+#endif
+#ifdef GRAVITY	  
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << gravitational_energy;
+#endif
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << internal_energy;
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
+#if (BL_SPACEDIM >= 2)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
+#endif
+#if (BL_SPACEDIM == 3)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
+#endif
 #ifdef ROTATION
 	if (do_rotation) {
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[0];
@@ -411,16 +473,24 @@ Castro::sum_integrated_quantities ()
 #endif	  
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
+#if (BL_SPACEDIM >= 2)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
+#endif
+#if (BL_SPACEDIM == 3)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[2];
+#endif
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
+#if (BL_SPACEDIM >= 2)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
+#endif
+#if (BL_SPACEDIM == 3)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
+#endif
 
 	grid_log << std::endl;
       }
 
-
+#ifdef merger
       std::ostream& star_log = parent->DataLog(1);
 
       if ( star_log.good() ) {
@@ -512,6 +582,7 @@ Castro::sum_integrated_quantities ()
 	star_log << std::endl;
         
       }
+#endif
     }
 }
 

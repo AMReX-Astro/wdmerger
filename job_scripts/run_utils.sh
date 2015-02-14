@@ -37,7 +37,7 @@ function get_last_checkpoint {
 function copy_files {
 
     cp $compile_dir/$CASTRO $1
-    if [ -e "helm_table.dat" ]; then
+    if [ -e "$compile_dir/helm_table.dat" ]; then
 	cp $compile_dir/helm_table.dat $1
     fi
     cp $compile_dir/$inputs $1

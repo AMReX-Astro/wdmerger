@@ -26,10 +26,16 @@ EOS_dir     := helmeos
 Network_dir := general_null
 GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/triple_alpha_plus_o.net 
 
-modulepack := $(WDMERGER_HOME)/source/modules/Make.package
-modulelocs := $(WDMERGER_HOME)/source/modules/
+diagpack := $(WDMERGER_HOME)/diagnostics/Make.package
+diaglocs := $(WDMERGER_HOME)/diagnostics/
 
-Bpack   := $(WDMERGER_HOME)/source/Make.package $(modulepack)
-Blocs   := $(WDMERGER_HOME)/source/ $(modulelocs)
+modspack := $(WDMERGER_HOME)/source/modules/Make.package
+modslocs := $(WDMERGER_HOME)/source/modules/
+
+srcepack := $(WDMERGER_HOME)/source/Make.package
+srcelocs := $(WDMERGER_HOME)/source/
+
+Bpack   := $(srcepack) $(modspack) $(diagpack)
+Blocs   := $(srcelocs) $(modslocs) $(diagpack)
 
 include $(CASTRO_DIR)/Exec/Make.Castro
