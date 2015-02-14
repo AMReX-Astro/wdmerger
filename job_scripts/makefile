@@ -142,6 +142,7 @@ make_inputs:
 		echo "castro.ppm_reference_edge_limit = $(castro.ppm_reference_edge_limit)" >> $(inputs) ; \
 		echo "castro.use_colglaz = $(castro.use_colglaz)" >> $(inputs) ; \
 		echo "castro.ppm_trace_grav = $(castro.ppm_trace_grav)" >> $(inputs) ; \
+		echo "castro.ppm_trace_rot = $(castro.ppm_trace_rot)" >> $(inputs) ; \
 		echo "castro.ppm_temp_fix = $(castro.ppm_temp_fix)" >> $(inputs) ; \
 		echo "castro.grav_source_type = $(castro.grav_source_type)" >> $(inputs) ; \
 		echo "castro.rot_source_type = $(castro.rot_source_type)" >> $(inputs) ; \
