@@ -990,7 +990,15 @@ In one dimension, this would be
   \left.\Delta(\rho E_i)\right|_{\text{rot}} &= \frac{1}{2} \Delta m_{i-1/2} (\Phi_{R_{i}} - \Phi_{R_{i-1}}) \notag \\
   &+ \frac{1}{2} \Delta m_{i+1/2} (\Phi_{R_{i+1}} - \Phi_{R_{i}}).
 \end{align}
-As with gravity, in three dimensions we also include the mass fluxes through all six cell faces.
+As with gravity, in three dimensions we include the mass fluxes through all six cell faces.
+
+In all simulations performed in a rotating reference frame, we will transform all relevant
+quantities back to the inertial reference frame when reporting them in this paper. In particular,
+for every zone we add to the displayed kinetic energy the rotational energy associated with motion 
+at the circular velocity corresponding to the distance of that zone from the rotation axis.
+We do the analogous calculation for angular momentum as well. When plotting the locations of 
+stars on the grid, we rotate them by an angle corresponding to the amount of time that has 
+passed since the simulation started.
 
 %==========================================================================
 % Initial Models and Problem Setup
@@ -1088,6 +1096,14 @@ its maximum allowed by the velocities on the grid over a span of approximately
 to come closer to equilibrium with the surface without having 
 discontinuous jumps in the density or energy. For all simulations, 
 the maximum timestep is set to be equal to one-half of the CFL limit.
+
+We track a number of diagnostic quantities at the end of every coarse grid timestep. 
+For all simulations, we record the total energy (including the breakdown into
+its components: kinetic, internal, gravitational potential, rotation), 
+the total angular momentum, and the center of mass of the system. 
+For stellar calculations, we separately record diagnostic 
+information about the stars, including their centers of mass, 
+and the volume contained within each star.
 
 %==========================================================================
 % Numerical Test Problems
