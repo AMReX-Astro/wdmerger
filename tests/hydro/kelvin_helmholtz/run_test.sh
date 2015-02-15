@@ -22,7 +22,7 @@ do
 	  continue
       fi
 
-      dir=$results_dir/problem$problem/velocity$vel/$ncell
+      dir=$results_dir/problem$problem/velocity$vel/n$ncell
 
       sed -i "/problem/c problem = $problem" $compile_dir/$probin
       sed -i "/bulk_velocity/c bulk_velocity = $vel" $compile_dir/$probin
@@ -48,27 +48,31 @@ do
 
       # Set number of processors based on amount of work
 
-      if [ $ncell -eq 64 ]; then
-	  nprocs=16
-	  walltime=00:15:00
-      elif [ $ncell -eq 128 ]; then
-	  nprocs=128
-	  walltime=00:30:00
-      elif [ $ncell -eq 256 ]; then
-	  nprocs=1024
-	  walltime=02:00:00
-      elif [ $ncell -eq 512 ]; then
-	  nprocs=2048
-	  walltime=06:00:00
-      elif [ $ncell -eq 1024 ]; then
-	  nprocs=128
-	  walltime=02:00:00
-      elif [ $ncell -eq 2048 ]; then
-         nprocs=1024
-	 walltime=04:00:00
-      elif [ $ncell -eq 4096 ]; then
-         nprocs=1024
-	 walltime=20:00:00
+      if [ $MACHINE == "BLUE_WATERS" ]; then
+
+	if [ $ncell -eq 64 ]; then
+	    nprocs=16
+	    walltime=00:30:00
+	elif [ $ncell -eq 128 ]; then
+	    nprocs=128
+	    walltime=01:00:00
+	elif [ $ncell -eq 256 ]; then
+	    nprocs=1024
+	    walltime=04:00:00
+	elif [ $ncell -eq 512 ]; then
+	    nprocs=2048
+	    walltime=12:00:00
+	elif [ $ncell -eq 1024 ]; then
+	    nprocs=128
+	    walltime=02:00:00
+	elif [ $ncell -eq 2048 ]; then
+	   nprocs=1024
+	   walltime=04:00:00
+	elif [ $ncell -eq 4096 ]; then
+	   nprocs=1024
+	   walltime=20:00:00
+	fi
+
       fi
 
       run $dir $nprocs $walltime
