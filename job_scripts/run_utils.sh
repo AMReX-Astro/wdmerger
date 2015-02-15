@@ -1,4 +1,4 @@
-# First, define some functions that are useful.
+# run_utils.sh: helper functions for job submission scripts.
 
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
@@ -16,6 +16,25 @@ function get_castro_make_var {
     make print-$1 -f $local_makefile -C $compile_dir  | tail -2 | head -1 | awk '{ print $NF }'
 
 }
+
+
+
+# Return the name of the machine we're currently working on.
+
+function get_machine {
+
+  UNAMEN=$(uname -n)
+  if   [[ $UNAMEN == *"h2o"*   ]]; then
+    MACHINE=BLUE_WATERS
+  elif [[ $UNAMEN == *"titan"* ]]; then
+    MACHINE=TITAN
+  fi
+
+  echo $MACHINE
+
+}
+
+
 
 # Given a directory as the first argument, return the numerically last checkpoint file.
 
@@ -57,6 +76,8 @@ function get_last_checkpoint {
 
 }
 
+
+
 # Return a string that is used for restarting from the latest checkpoint.
 # Optionally you can hand this a directory, otherwise it will default 
 # to whatever get_last_checkpoint determines.
@@ -71,7 +92,7 @@ function get_restart_string {
 
     # restartString will be empty if no chk files are found -- i.e. this is a new run.
 
-    if [ $checkpoint == "" ]; then
+    if [ ! -n "$checkpoint" ]; then
 	restartString=""
     else
 	restartString="amr.restart="$checkpoint
@@ -80,6 +101,42 @@ function get_restart_string {
     echo $restartString
 
 }
+
+
+
+# Achive the file given in the first argument, in the directory given
+# in the second argument.
+
+function archive {
+
+  # We may get a directory to archive, so call basename to make sure $file
+  # doesn't appear with a trailing slash.
+
+  file=$(basename $1)
+  storage_dir=$2
+
+  if   [ $MACHINE == "TITAN"       ]; then
+
+      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar ${file}
+
+  elif [ $MACHINE == "BLUE_WATERS" ]; then
+
+      storage_dir=/projects/sciteam/jni/mkatz/$storage_dir
+
+  fi
+
+  # Mark this file as processed so we skip it next time
+  date > ${file}.processed
+
+  # Move the file into the output directory
+  mv ${file} output/
+
+  # ..and the corresponding .processed file too.
+  mv ${file}.processed output/
+
+}
+
+
 
 # Copies all relevant files needed for a CASTRO run into the target directory.
 
@@ -94,6 +151,8 @@ function copy_files {
     cp $compile_dir/$job_script $1
 
 }
+
+
 
 # Main submission script. Checks which Linux variant we're on,
 # and uses the relevant batch submission script. If you want to
@@ -125,7 +184,7 @@ function run {
 
     mkdir -p $dir
 
-    ntasks=$(expr $nprocs / $ppn)
+    nodes=$(expr $nprocs / $ppn)
 
     # If the number of processors is less than the number of processors per node,
     # there are scaling tests where this is necessary; we'll assume the user understands
@@ -133,17 +192,21 @@ function run {
 
     old_ppn=$ppn
 
-    if [ $ntasks -eq 0 ]; then
-	ntasks="1"
+    if [ $nodes -eq 0 ]; then
+	nodes="1"
 	ppn=$nprocs
     fi
 
     if [ $MACHINE == "GENERICLINUX" ] ; then 
 	echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $compile_dir/$job_script
     elif [ $MACHINE == "BLUE_WATERS" ]; then
-	sed -i "/#PBS -l nodes/c #PBS -l nodes=$ntasks:ppn=$ppn:xe" $compile_dir/$job_script
+	sed -i "/#PBS -l nodes/c #PBS -l nodes=$nodes:ppn=$ppn:xe" $compile_dir/$job_script
 	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $compile_dir/$job_script
 	sed -i "/aprun/c aprun -n $nprocs -N $ppn $CASTRO $inputs \$\{restartString\}" $compile_dir/$job_script
+    elif [ $MACHINE == "TITAN" ]; then
+	sed -i "/#PBS -l nodes/c #PBS -l nodes=$nodes" $compile_dir/$job_script
+	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $compile_dir/$job_script
+	sed -i "/aprun/c aprun -n $nprocs -N $ppn -j 1 $CASTRO $inputs \$\{restartString\}" $compile_dir/$job_script
     fi
 
     # Change into the run directory, submit the job, then come back to the main directory.
@@ -208,6 +271,38 @@ function run {
 
 }
 
+
+
+########################################################################
+
+# Define variables
+
+# Get current machine and set preferences accordingly.
+
+MACHINE=$(get_machine)
+
+if [ $MACHINE == "GENERICLINUX" ]; then
+    exec="bash"
+    job_script="linux.run"
+    ppn="16"
+elif [ $MACHINE == "BLUE_WATERS" ]; then
+    exec="qsub"
+    job_script="bluewaters.run"
+    COMP="Cray"
+    FCOMP="Cray"
+    ppn="16"
+    run_ext=".OU"
+    workdir="/scratch/sciteam/mkatz/"
+elif [ $MACHINE == "TITAN" ]; then
+    exec="qsub"
+    job_script="titan.run"
+    COMP="Cray"
+    FCOMP="Cray"
+    ppn="8"
+    run_ext=".OU"
+    workdir="/lustre/atlas1/ast106/scratch/maxpkatz/"
+fi
+
 # Directory to compile the executable in
 
 compile_dir="compile"
@@ -225,27 +320,6 @@ if [ -d $compile_dir ]; then
     # This returns the Linux variant the current machine uses, defined in
     # $(BOXLIB_HOME)/Tools/C_mk/Make.defs.
     # This is used to select which batch submission script we want to use.
-
-    MACHINE=$(get_castro_make_var WHICHLINUX)
-
-    if [ $MACHINE == "GENERICLINUX" ]; then
-	exec="bash"
-	job_script="linux.run"
-	ppn="16"
-    elif [ $MACHINE == "BLUE_WATERS" ]; then
-	exec="qsub"
-	job_script="bluewaters.run"
-	COMP="Cray"
-	FCOMP="Cray"
-	ppn="16"
-	run_ext=".OU"
-    elif [ $MACHINE == "TITAN"]; then
-	exec="qsub"
-	job_script="titan.run"
-	COMP="Cray"
-	FCOMP="Cray"
-	ppn="8"
-    fi
 
     if [ ! -e $compile_dir/$job_script ]; then
 	cp $WDMERGER_HOME/job_scripts/$job_script $compile_dir

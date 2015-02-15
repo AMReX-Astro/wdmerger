@@ -1,25 +1,25 @@
 #!/bin/bash
 
-#PBS -A ast006
+#PBS -A ast106
 #PBS -N wdmerger
 #PBS -j oe
 #PBS -q batch
-#PBS -l walltime=02:00:00,nodes=8
+#PBS -l walltime=01:00:00
+#PBS -l nodes=1
 #PBS -l gres=atlas2
 
-export OMP_NUM_THREADS=8
+export OMP_NUM_THREADS=1
 
 cd $PBS_O_WORKDIR
 
-# Run the compression script to tar up the plot and checkpoint files
-# as they are created.
-./process.titan &
-PID=$!
-trap 'kill -s TERM $PID' EXIT TERM HUP XCPU KILL
+# Run the compression script to tar up the plot and checkpoint files # as they are created.
+$WDMERGER_HOME/job_scripts/process.sh &
+
+source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 restartString=$(get_restart_string)
 
-aprun -n 128 ./Castro3d.Linux.Cray.Cray.MPI.ex inputs_3d.test ${restartString}
+aprun -n 8  ./Castro3d.Linux.Cray.Cray.MPI.ex inputs_3d.test ${restartString}
 
 rm -f process.pid
 
