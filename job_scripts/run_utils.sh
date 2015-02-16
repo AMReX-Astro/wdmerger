@@ -25,12 +25,7 @@ function get_machine {
 
   UNAMEN=$(uname -n)
 
-  # Blue Waters doesn't retain the h2o in the name when running on
-  # a compute node, so as a hack we'll go with the nid.* signifier.
-  # This may cause conflicts with other systems, so we should 
-  # replace this at some point with a better system.
-
-  if   [[ $UNAMEN == *"h2o"*   ]] || [[ $UNAMEN == *"nid"* ]]; then
+  if   [[ $UNAMEN == *"h2o"*   ]]; then
     MACHINE=BLUE_WATERS
   elif [[ $UNAMEN == *"titan"* ]]; then
     MACHINE=TITAN
@@ -397,22 +392,29 @@ function run {
 
     checkpoint=$(get_last_checkpoint $dir)
 
-    # Extract the checkpoint time. It is stored in row 3 of the Header file.
+    time_flag=1
+    step_flag=1
 
-    time=$(awk 'NR==3' $dir/$checkpoint/Header)
+    if [ -e $dir/$checkpoint/Header ]; then
+ 
+	# Extract the checkpoint time. It is stored in row 3 of the Header file.
 
-    # Extract the current timestep. It is stored in row 12 of the Header file.
+	time=$(awk 'NR==3' $dir/$checkpoint/Header)
 
-    step=$(awk 'NR==12' $dir/$checkpoint/Header)
+	# Extract the current timestep. It is stored in row 12 of the Header file.
 
-    # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
-    # The job script already knows to start from the latest checkpoint file.
+	step=$(awk 'NR==12' $dir/$checkpoint/Header)
 
-    stop_time=$(grep "stop_time" $dir/$inputs | awk '{print $3}')
-    max_step=$(grep "max_step" $dir/$inputs | awk '{print $3}')
+	# Now determine if we are both under max_step and stop_time. If so, re-submit the job.
+	# The job script already knows to start from the latest checkpoint file.
 
-    time_flag=$(echo "$time < $stop_time" | bc -l)
-    step_flag=$(echo "$step < $max_step" | bc -l)
+	stop_time=$(grep "stop_time" $dir/$inputs | awk '{print $3}')
+	max_step=$(grep "max_step" $dir/$inputs | awk '{print $3}')
+
+	time_flag=$(echo "$time < $stop_time" | bc -l)
+	step_flag=$(echo "$step < $max_step" | bc -l)
+
+    fi
 
     # First as a sanity check, make sure the desired job isn't already running.
 
