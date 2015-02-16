@@ -12,9 +12,6 @@ export OMP_NUM_THREADS=1
 
 cd $PBS_O_WORKDIR
 
-# Run the compression script to tar up the plot and checkpoint files # as they are created.
-$WDMERGER_HOME/job_scripts/process.sh &
-
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 restartString=$(get_restart_string)

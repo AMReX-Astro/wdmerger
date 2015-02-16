@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 #PBS -A m1400
 #PBS -N wdmerger
 #PBS -j oe
@@ -8,53 +8,11 @@
 
 export OMP_NUM_THREADS=24
 
-
 cd $PBS_O_WORKDIR
 
-# run the compression script to tar up the plot and checkpoint files
-# as they are created.
-./process.jaguar &
-PID=$!
-trap 'kill -s TERM $PID' EXIT TERM HUP XCPU KILL
+source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# find the latest restart file -- first look for one with 6 digits then fall
-# back to 5
-restartFile=$(find . -type d -name "*chk??????" -print | sort | tail -1)
-
-# the Header is the last thing written -- check if it's there, otherwise,
-# fall back to the second-to-last check file written
-if [ ! -f ${restartFile}/Header ]; then
-
-    # how many *chk?????? files are there? if only one, then skip
-    nl=$(find . -type d -name "*chk??????" -print | sort | wc -l)
-    if [ $nl -gt 1 ]; then
-	restartFile=$(find . -type d -name "*chk??????" -print | sort | tail -2 | head -1)    
-    else
-	restartFile=""
-    fi
-fi
-
-
-# if the above checks failed, then there are no valid 6-digit chk files, so
-# check the 5-digit ones
-if [ "${restartFile}" = "" ]; then
-    restartFile=$(find . -type d -name "*chk?????" -print | sort | tail -1)
-
-    # make sure the Header was written, otherwise, check the second-to-last
-    # file
-    if [ ! -f ${restartFile}/Header ]; then
-	restartFile=$(find . -type d -name "*chk?????" -print | sort | tail -2 | head -1)    
-    fi
-fi
-
-
-# restartString will be empty if no chk files are found -- i.e. new run
-if [ "${restartFile}" = "" ]; then
-    restartString=""
-else
-    restartString="amr.restart=${restartFile}"
-fi
-
+restartString=$(get_restart_string)
 
 # -n is the total number of MPI tasks
 # -N is the number of MPI tasks PER compute node
@@ -62,8 +20,6 @@ fi
 #
 # see http://www.nersc.gov/users/computational-systems/hopper/running-jobs/using-openmp-with-mpi/
 
-aprun -n 16 -N 1 -d 24 ./Castro3d.Linux.g++.gfortran.MPI.OMP.ex inputs_3d ${restartString}
+aprun -n 16 -N 1 -d 24 Castro3d.Linux.g++.gfortran.MPI.OMP.ex ${restartString}
 
-
-rm -f process.pid
 

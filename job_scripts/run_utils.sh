@@ -301,6 +301,10 @@ function run {
 
   else
 
+    # Archive any files that have not yet been saved to the storage system.
+
+    archive_all $cwd/$dir
+
     # If the directory already exists, check to see if we've reached the desired stopping point.
 
     checkpoint=$(get_last_checkpoint)

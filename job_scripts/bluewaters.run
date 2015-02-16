@@ -24,9 +24,6 @@ cd $PBS_O_WORKDIR
 
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Run the compression script to tar up the plot and checkpoint files # as they are created.
-$WDMERGER_HOME/job_scripts/process.sh &
-
 restartString=$(get_restart_string)
 
 aprun -n 64 -N 16 Castro3d.Linux.g++.gfortran.MPI.ex inputs $restartString
