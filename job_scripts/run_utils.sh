@@ -34,6 +34,8 @@ function get_machine {
     MACHINE=BLUE_WATERS
   elif [[ $UNAMEN == *"titan"* ]]; then
     MACHINE=TITAN
+  else
+    MACHINE=GENERICLINUX
   fi
 
   echo $MACHINE
@@ -46,19 +48,24 @@ function get_machine {
 
 function get_last_checkpoint {
 
-    # Doing a search this way will treat first any checkpoint files 
-    # with six digits, and then will fall back to ones with five digits.
-    # On recent versions of GNU sort, one can simplify this with sort -V.
-
-    # Note: if we do not hand this an argument, assume we want to look in the current directory.
-
-    if [ ! -z $1 ]; then
-	dir='.'
+    if [ -z $1 ]; then
+	echo "No directory passed to get_last_checkpoint; exiting."
+	return
     else
 	dir=$1
     fi
 
-    checkpoint=$(find $dir -type d -name "*chk??????" -print | sort | tail -1)
+    # Doing a search this way will treat first any checkpoint files 
+    # with six digits, and then will fall back to ones with five digits.
+    # On recent versions of GNU sort, one can simplify this with sort -V.
+
+    checkpoint=$(find $dir -type d -name "*chk??????" | sort | tail -1)
+
+    if [ -z $checkpoint ]; then
+
+        checkpoint=$(find $dir -type d -name "*chk?????"  | sort | tail -1)
+
+    fi
 
     # The Header is the last thing written -- check if it's there, otherwise,
     # fall back to the second-to-last check file written, because it means 
@@ -78,6 +85,11 @@ function get_last_checkpoint {
 
     fi
 
+    # Extract out the search directory from the result.
+
+    checkpoint=$(echo ${checkpoint#$dir/})
+    checkpoint=$(echo ${checkpoint#$dir})
+
     echo $checkpoint
 
 }
@@ -90,11 +102,13 @@ function get_last_checkpoint {
 
 function get_restart_string {
 
-    if [ ! -z $1 ]; then
-	checkpoint=$(get_last_checkpoint)
+    if [ -z $1 ]; then
+	dir="./"
     else
-	checkpoint=$(get_last_checkpoint $1)
+	dir=$1
     fi
+
+    checkpoint=$(get_last_checkpoint $dir)
 
     # restartString will be empty if no chk files are found -- i.e. this is a new run.
 
@@ -128,17 +142,21 @@ function archive {
   file=$(basename $1)
   dir=$(dirname $1)
 
+  # Remove the $workdir from the name. We test on both $workdir and $workdir/
+  # so that the trailing slash doesn't matter here.
+
+  storage_dir=$(echo ${dir#$workdir/})
   storage_dir=$(echo ${dir#$workdir})
 
   # Move the file into the output directory to signify that we've archived it.
 
-  mv ${file} $dir/output/
+  mv $dir/$file $dir/output/
 
   # Determine archiving tool based on machine.
 
   if   [ $MACHINE == "TITAN"       ]; then
 
-      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar $dir/$file
+      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar $dir/output/$file
 
   elif [ $MACHINE == "BLUE_WATERS" ]; then
 
@@ -227,7 +245,94 @@ function copy_files {
     fi
     cp $compile_dir/$inputs $1
     cp $compile_dir/$probin $1
-    cp $compile_dir/$job_script $1
+
+}
+
+
+
+# Generate a run script in the given directory.
+
+function create_job_script {
+
+  if [ ! -z $1 ]; then
+      dir=$1
+  else
+      echo "No directory given to create_job_script; exiting."
+      return
+  fi
+
+  if [ ! -z $2 ]; then
+      nprocs=$2
+  else
+      echo "Number of processors not given to create_job_script; exiting."
+      return
+  fi
+
+  if [ ! -z $3 ]; then
+      walltime=$3
+  else
+      echo "Walltime not given to create_job_script; exiting."
+      return
+  fi
+
+  nodes=$(expr $nprocs / $ppn)
+
+  # If the number of processors is less than the number of processors per node,
+  # there are scaling tests where this is necessary; we'll assume the user understands
+  # what they are doing and set it up accordingly.
+
+  old_ppn=$ppn
+
+  if [ $nodes -eq 0 ]; then
+      nodes="1"
+      ppn=$nprocs
+  fi
+
+  if [ $batch_system == "PBS" ]; then
+
+      echo "#!/bin/bash" > $dir/$job_script
+
+      # Select the project allocation we're charging this job to
+      echo "#PBS -A $allocation" >> $dir/$job_script
+
+      # Set the name of the job
+      echo "#PBS -N $job_name" >> $dir/$job_script
+
+      # Combine standard error into the standard out file
+      echo "#PBS -j oe" >> $dir/$job_script
+
+      # Amount of wall time for the simulation
+      echo "#PBS -l walltime=$walltime" >> $dir/$job_script
+
+      # Number of nodes, the number of MPI tasks per node, and the node type to use
+      if [ $MACHINE == "BLUE_WATERS" ]; then
+	  echo "#PBS -l nodes=$nodes:ppn=$ppn:$node_type" >> $dir/$job_script
+      else
+	  echo "#PBS -l nodes=$nodes" >> $dir/$job_script
+      fi
+
+      # We assume that the directory we submitted from is eligible to 
+      # work in, so cd to that directory.
+
+      echo "cd \$PBS_O_WORKDIR" >> $dir/$job_script
+
+      # Number of threads for OpenMP
+
+      echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
+
+      restartString=$(get_restart_string $dir)
+
+      echo "aprun -n $nprocs -N $ppn $CASTRO $inputs $restartString" >> $dir/$job_script
+
+   elif [ $batch_system == "batch" ]; then
+
+      echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $dir/$job_script
+
+   fi
+
+   # Restore the number of processors per node in case we changed it.
+
+   ppn=$old_ppn
 
 }
 
@@ -241,16 +346,23 @@ function copy_files {
 # submit this job from.
 # The second argument is the number of processors you want to run the job on.
 # The third argument is the walltime you want the job to run for.
-# The last two are optional and default to one processor running for one hour.
+# The last two are optional and default to one node running for one hour.
 
 function run {
 
-  dir=$1
+  if [ ! -z $1 ]; then
+      dir=$1
+  else
+      echo "No directory given to run; exiting."
+      return
+  fi
+
   if [ ! -z $2 ]; then
       nprocs=$2
   else
-      nprocs=1
+      nprocs=$ppn
   fi
+
   if [ ! -z $3 ]; then
       walltime=$3
   else
@@ -263,59 +375,33 @@ function run {
 
     mkdir -p $dir
 
-    nodes=$(expr $nprocs / $ppn)
-
-    # If the number of processors is less than the number of processors per node,
-    # there are scaling tests where this is necessary; we'll assume the user understands
-    # what they are doing and set it up accordingly.
-
-    old_ppn=$ppn
-
-    if [ $nodes -eq 0 ]; then
-	nodes="1"
-	ppn=$nprocs
-    fi
-
-    if [ $MACHINE == "GENERICLINUX" ] ; then 
-	echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $compile_dir/$job_script
-    elif [ $MACHINE == "BLUE_WATERS" ]; then
-	sed -i "/#PBS -l nodes/c #PBS -l nodes=$nodes:ppn=$ppn:xe" $compile_dir/$job_script
-	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $compile_dir/$job_script
-	sed -i "/aprun/c aprun -n $nprocs -N $ppn $CASTRO $inputs \$\{restartString\}" $compile_dir/$job_script
-    elif [ $MACHINE == "TITAN" ]; then
-	sed -i "/#PBS -l nodes/c #PBS -l nodes=$nodes" $compile_dir/$job_script
-	sed -i "/#PBS -l walltime/c #PBS -l walltime=$walltime" $compile_dir/$job_script
-	sed -i "/aprun/c aprun -n $nprocs -N $ppn -j 1 $CASTRO $inputs \$\{restartString\}" $compile_dir/$job_script
-    fi
-
     # Change into the run directory, submit the job, then come back to the main directory.
 
     copy_files $dir
+    create_job_script $dir $nprocs $walltime
     cd $dir
     $exec $job_script
     cd - > /dev/null
-
-    # Restore the number of processors per node in case we changed it.
-
-    ppn=$old_ppn
 
   else
 
     # Archive any files that have not yet been saved to the storage system.
 
+    cwd=$(pwd)
+     
     archive_all $cwd/$dir
 
     # If the directory already exists, check to see if we've reached the desired stopping point.
 
-    checkpoint=$(get_last_checkpoint)
+    checkpoint=$(get_last_checkpoint $dir)
 
     # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
-    time=$(awk 'NR==3' $checkpoint/Header)
+    time=$(awk 'NR==3' $dir/$checkpoint/Header)
 
     # Extract the current timestep. It is stored in row 12 of the Header file.
 
-    step=$(awk 'NR==12' $checkpoint/Header)
+    step=$(awk 'NR==12' $dir/$checkpoint/Header)
 
     # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
     # The job script already knows to start from the latest checkpoint file.
@@ -338,6 +424,7 @@ function run {
 
 	echo "Continuing job in directory "$dir"."
 
+	create_job_script $dir $nprocs $walltime
 	cd $dir
 	$exec $job_script
 	cd - > /dev/null
@@ -366,23 +453,30 @@ function run {
 
 MACHINE=$(get_machine)
 
+job_name="wdmerger"
+
+OMP_NUM_THREADS="1"
+
 if [ $MACHINE == "GENERICLINUX" ]; then
 
     exec="bash"
     job_script="linux.run"
     ppn="16"
+    batch_system="batch"
 
 elif [ $MACHINE == "BLUE_WATERS" ]; then
 
     allocation="jni"
     exec="qsub"
-    job_script="bluewaters.run"
+    job_script="blue_waters.run"
     COMP="Cray"
     FCOMP="Cray"
     ppn="16"
+    node_type="xe"
     run_ext=".OU"
-    workdir="/scratch/sciteam/$USER"
+    workdir="/scratch/sciteam/$USER/"
     globus=T
+    batch_system="PBS"
     globus_src_endpoint="ncsa#BlueWaters"
     globus_dst_endpoint="ncsa#Nearline"
 
@@ -395,12 +489,13 @@ elif [ $MACHINE == "TITAN" ]; then
     FCOMP="Cray"
     ppn="8"
     run_ext=".OU"
-    workdir="/lustre/atlas/scratch/$USER/$allocation"
+    workdir="/lustre/atlas/scratch/$USER/$allocation/"
+    batch_system="PBS"
 
 fi
 
 # If we're using Globus Online, set some useful parameters.
-if [ $globus == T ]; then
+if [ ! -z $globus ]; then
     globus_username="mkatz"
     globus_hostname="cli.globusonline.org"
 fi
@@ -421,14 +516,6 @@ if [ -d $compile_dir ]; then
 	probin=$(get_wdmerger_make_var probin)
 	CASTRO=$(get_castro_make_var executable)
 
-    fi
-
-    # This returns the Linux variant the current machine uses, defined in
-    # $(BOXLIB_HOME)/Tools/C_mk/Make.defs.
-    # This is used to select which batch submission script we want to use.
-
-    if [ ! -e $compile_dir/$job_script ]; then
-	cp $WDMERGER_HOME/job_scripts/$job_script $compile_dir
     fi
 
     # Directory for executing and storing results
