@@ -389,7 +389,9 @@ function run {
 
     cwd=$(pwd)
      
-    archive_all $cwd/$dir
+    if [ $archive == "T" ]; then
+	archive_all $cwd/$dir
+    fi
 
     # If the directory already exists, check to see if we've reached the desired stopping point.
 
@@ -454,13 +456,15 @@ function run {
 MACHINE=$(get_machine)
 
 job_name="wdmerger"
+job_script="run_script"
 
 OMP_NUM_THREADS="1"
+
+archive="F"
 
 if [ $MACHINE == "GENERICLINUX" ]; then
 
     exec="bash"
-    job_script="linux.run"
     ppn="16"
     batch_system="batch"
 
@@ -468,7 +472,6 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
 
     allocation="jni"
     exec="qsub"
-    job_script="blue_waters.run"
     COMP="Cray"
     FCOMP="Cray"
     ppn="16"
@@ -477,6 +480,7 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
     workdir="/scratch/sciteam/$USER/"
     globus=T
     batch_system="PBS"
+    archive="T"
     globus_src_endpoint="ncsa#BlueWaters"
     globus_dst_endpoint="ncsa#Nearline"
 
@@ -484,13 +488,13 @@ elif [ $MACHINE == "TITAN" ]; then
 
     allocation="ast106"
     exec="qsub"
-    job_script="titan.run"
     COMP="Cray"
     FCOMP="Cray"
     ppn="8"
     run_ext=".OU"
     workdir="/lustre/atlas/scratch/$USER/$allocation/"
     batch_system="PBS"
+    archive="T"
 
 fi
 
