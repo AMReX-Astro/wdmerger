@@ -177,18 +177,24 @@ function archive_all {
   fi
 
   # Archive the plotfiles and checkpoint files.
+  # Make sure that they have been completed by checking if
+  # the Header file exists, which is the last thing created.
 
   pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
   chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
 
   for file in $pltlist
   do
-      archive $file
+      if [ -e $file/Header ]; then
+	  archive $file
+      fi
   done
 
   for file in $chklist
   do
-      archive $file
+      if [ -e $file/Header ]; then
+	  archive $file
+      fi
   done
 
   diaglist=$(find $dir -maxdepth 1 -name "*diag*.out")
