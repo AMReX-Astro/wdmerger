@@ -15,17 +15,17 @@
 # Number of nodes, the number of MPI tasks per node, and the node type to use
 #PBS -l nodes=1:ppn=1:xe
 
-source $WDMERGER_HOME/job_scripts/run_utils.sh
-
-export OMP_NUM_THREADS=1
-
-# Run the compression script to tar up the plot and checkpoint files # as they are created.
-$WDMERGER_HOME/job_scripts/process.sh &
-
 # We assume that the directory we submitted from is eligible to 
 # work in, so cd to that directory.
 
+export OMP_NUM_THREADS=1
+
 cd $PBS_O_WORKDIR
+
+source $WDMERGER_HOME/job_scripts/run_utils.sh
+
+# Run the compression script to tar up the plot and checkpoint files # as they are created.
+$WDMERGER_HOME/job_scripts/process.sh &
 
 restartString=$(get_restart_string)
 

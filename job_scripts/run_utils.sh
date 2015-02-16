@@ -24,7 +24,13 @@ function get_castro_make_var {
 function get_machine {
 
   UNAMEN=$(uname -n)
-  if   [[ $UNAMEN == *"h2o"*   ]]; then
+
+  # Blue Waters doesn't retain the h2o in the name when running on
+  # a compute node, so as a hack we'll go with the nid.* signifier.
+  # This may cause conflicts with other systems, so we should 
+  # replace this at some point with a better system.
+
+  if   [[ $UNAMEN == *"h2o"*   ]] || [[ $UNAMEN == *"nid"* ]]; then
     MACHINE=BLUE_WATERS
   elif [[ $UNAMEN == *"titan"* ]]; then
     MACHINE=TITAN
@@ -104,35 +110,102 @@ function get_restart_string {
 
 
 
-# Achive the file given in the first argument, in the directory given
-# in the second argument.
+# Achive the file given in the first argument, to the same path
+# on the archive machine relative to the machine's $workdir.
 
 function archive {
+
+  if [ ! -z $1 ]; then
+      echo "Archiving file " $1"."
+  else
+      echo "No file to archive; exiting."
+      return
+  fi
 
   # We may get a directory to archive, so call basename to make sure $file
   # doesn't appear with a trailing slash.
 
   file=$(basename $1)
-  storage_dir=$2
+  dir=$(dirname $1)
+
+  storage_dir=$(echo ${dir#$workdir})
+
+  # Move the file into the output directory to signify that we've archived it.
+
+  mv ${file} $dir/output/
+
+  # Determine archiving tool based on machine.
 
   if   [ $MACHINE == "TITAN"       ]; then
 
-      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar ${file}
+      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar $dir/$file
 
   elif [ $MACHINE == "BLUE_WATERS" ]; then
 
-      storage_dir=/projects/sciteam/jni/mkatz/$storage_dir
+      archive_dir=/projects/sciteam/$allocation/$USER/$storage_dir
+
+      cwd=$(pwd)
+
+      src=$globus_src_endpoint$dir/output/$file
+      dst=$globus_dst_endpoint$archive_dir/output/$file
+
+      if [ -d $dir/output/$file ]; then
+          # If we're transferring a directory, Globus needs to explicitly know
+          # that it is recursive, and needs to have trailing slashes.
+          ssh $globus_username@$globus_hostname transfer -- $src/ $dst/ -r
+      else
+	  # We're copying a normal file.
+	  ssh $globus_username@$globus_hostname transfer -- $src $dst
+      fi
 
   fi
 
-  # Mark this file as processed so we skip it next time
-  date > ${file}.processed
+}
 
-  # Move the file into the output directory
-  mv ${file} output/
 
-  # ..and the corresponding .processed file too.
-  mv ${file}.processed output/
+
+# Archive all the output files in the directory given in the first argument.
+# The directory must be an absolute path.
+
+function archive_all {
+
+  if [ ! -z $1 ]; then
+      dir=$1
+  else
+      echo "No directory passed to function archive_all; exiting."
+      return
+  fi
+
+  # Archive the plotfiles and checkpoint files.
+
+  pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
+  chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
+
+  for file in $pltlist
+  do
+      archive $file
+  done
+
+  for file in $chklist
+  do
+      archive $file
+  done
+
+  diaglist=$(find $dir -maxdepth 1 -name "*diag*.out")
+
+  # For the diagnostic files, we want to make a copy with the current date
+  # before archiving it, since the diagnostic files need to remain there
+  # for the duration of the simulation.
+
+  datestr=$(date +"%Y%m%d_%H%M_%S_")
+
+  for file in $diaglist
+  do
+      filebasename=$(basename $file)
+      archivefile=$datestr$filebasename
+      cp $file $dir/$archivefile
+      archive $dir/$archivefile
+  done
 
 }
 
@@ -278,29 +351,48 @@ function run {
 # Define variables
 
 # Get current machine and set preferences accordingly.
+# Note: workdir is the name of the directory you submit 
+# jobs from (usually scratch directories).
 
 MACHINE=$(get_machine)
 
 if [ $MACHINE == "GENERICLINUX" ]; then
+
     exec="bash"
     job_script="linux.run"
     ppn="16"
+
 elif [ $MACHINE == "BLUE_WATERS" ]; then
+
+    allocation="jni"
     exec="qsub"
     job_script="bluewaters.run"
     COMP="Cray"
     FCOMP="Cray"
     ppn="16"
     run_ext=".OU"
-    workdir="/scratch/sciteam/mkatz/"
+    workdir="/scratch/sciteam/$USER"
+    globus=T
+    globus_src_endpoint="ncsa#BlueWaters"
+    globus_dst_endpoint="ncsa#Nearline"
+
 elif [ $MACHINE == "TITAN" ]; then
+
+    allocation="ast106"
     exec="qsub"
     job_script="titan.run"
     COMP="Cray"
     FCOMP="Cray"
     ppn="8"
     run_ext=".OU"
-    workdir="/lustre/atlas1/ast106/scratch/maxpkatz/"
+    workdir="/lustre/atlas/scratch/$USER/$allocation"
+
+fi
+
+# If we're using Globus Online, set some useful parameters.
+if [ $globus == T ]; then
+    globus_username="mkatz"
+    globus_hostname="cli.globusonline.org"
 fi
 
 # Directory to compile the executable in
@@ -312,10 +404,14 @@ compile_dir="compile"
 
 if [ -d $compile_dir ]; then
 
-    local_makefile=$(get_wdmerger_make_var local_makefile)
-    inputs=$(get_wdmerger_make_var inputs)
-    probin=$(get_wdmerger_make_var probin)
-    CASTRO=$(get_castro_make_var executable)
+    if [ -e $compile_dir/makefile ]; then
+
+	local_makefile=$(get_wdmerger_make_var local_makefile)
+	inputs=$(get_wdmerger_make_var inputs)
+	probin=$(get_wdmerger_make_var probin)
+	CASTRO=$(get_castro_make_var executable)
+
+    fi
 
     # This returns the Linux variant the current machine uses, defined in
     # $(BOXLIB_HOME)/Tools/C_mk/Make.defs.
@@ -342,4 +438,3 @@ if [ -d $compile_dir ]; then
     fi
 
 fi
-

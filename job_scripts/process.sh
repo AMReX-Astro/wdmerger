@@ -103,7 +103,7 @@ function process_files
 
       if [ ! -f ${dir}.processed ] && [ ! -f output/${dir}.processed ]; then
         # Store the file on the archive system
-        archive $dir $storage_dir
+        archive $cwd/$dir
       fi
 
     fi 
@@ -138,7 +138,7 @@ function process_files
 
       if [ ! -f ${dir}.processed ] && [ ! -f checkfiles/${dir}.processed ]; then
 	# Store the file on the archive system
-	archive $dir $storage_dir
+	archive $cwd/$dir
       fi
 
     fi
@@ -158,7 +158,7 @@ function process_files
       filebasename=$(basename $file)
       archivefile=$datestr$filebasename
       cp $file $archivefile
-      archive $archivefile $storage_dir
+      archive $cwd/$archivefile
   done
 
 }
