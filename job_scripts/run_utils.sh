@@ -25,10 +25,12 @@ function get_machine {
 
   UNAMEN=$(uname -n)
 
-  if   [[ $UNAMEN == *"h2o"*   ]]; then
+  if   [[ $UNAMEN == *"h2o"*    ]]; then
     MACHINE=BLUE_WATERS
-  elif [[ $UNAMEN == *"titan"* ]]; then
+  elif [[ $UNAMEN == *"titan"*  ]]; then
     MACHINE=TITAN
+  elif [[ $UNAMEN == *"hopper"* ]]; then
+    MACHINE=HOPPER
   else
     MACHINE=GENERICLINUX
   fi
@@ -302,8 +304,15 @@ function create_job_script {
       # Number of nodes, the number of MPI tasks per node, and the node type to use
       if [ $MACHINE == "BLUE_WATERS" ]; then
 	  echo "#PBS -l nodes=$nodes:ppn=$ppn:$node_type" >> $dir/$job_script
+      elif [ $MACHINE == "HOPPER" ]; then
+	  echo "#PBS -l mppwidth=$nprocs" >> $dir/$job_script
       else
 	  echo "#PBS -l nodes=$nodes" >> $dir/$job_script
+      fi
+
+      # Queue to submit to. This is required for some systems.
+      if [ ! -z $queue ]; then
+	  echo "#PBS -q $queue" >> $dir/$job_script
       fi
 
       # We assume that the directory we submitted from is eligible to 
@@ -497,6 +506,17 @@ elif [ $MACHINE == "TITAN" ]; then
     workdir="/lustre/atlas/scratch/$USER/$allocation/"
     batch_system="PBS"
     archive="T"
+
+elif [ $MACHINE == "HOPPER" ]; then
+    
+    allocation="m1400"
+    exec="qsub"
+    COMP="Cray"
+    FCOMP="Cray"
+    ppn="24"
+    run_ext=".OU"
+    batch_system="PBS"
+    queue="regular"
 
 fi
 
