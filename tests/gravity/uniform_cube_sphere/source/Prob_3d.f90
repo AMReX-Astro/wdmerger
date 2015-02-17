@@ -162,66 +162,10 @@
                  state(i,j,k,UFS+n-1) = state(i,j,k,URHO) * state(i,j,k,UFS+n-1)
               end do
 
-              ! Fill in the true phi state
-
-!              c(0,2) = -diameter/2 - zz
-!              c(1,2) =  diameter/2 - zz
-!              c(0,1) = -diameter/2 - yy
-!              c(1,1) =  diameter/2 - yy
-!              c(0,0) = -diameter/2 - xx
-!              c(1,0) =  diameter/2 - xx
-
-!              phi = 0.0
-
-!              do ii = 0, 1
-!                 do jj = 0, 1
-!                    do ll = 0, 2
-
-!                       num1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) + c(1,mod(ll+2,3)) )**3
-!                       num2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) - c(0,mod(ll+2,3)) )
-!                       den1 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(1,mod(ll+2,3))**2)**(0.5) - c(1,mod(ll+2,3)) )
-!                       den2 = ( (c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(0,mod(ll+2,3))**2)**(0.5) + c(0,mod(ll+2,3)) )**3
-
-!                       phi = phi + 0.5 * (-1)**(ii+jj) * ( c(ii,ll) * c(jj,mod(ll+1,3)) * &
-!                                         log( num1 * num2 / (den1 * den2) ) )
-
-!                    enddo
-!                 enddo
-!              enddo
-
-!              do ii = 0, 1
-!                 do jj = 0, 1
-!                    do kk = 0, 1
-!                       do ll = 0, 2
-!                          phi = phi + (-1)**(ii+jj+kk+1) * c(ii,ll)**2 * &
-!                                      atan2( c(ii,ll) * c(kk,mod(ll+2,3)), c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + &
-!                                             c(jj,mod(ll+1,3))*(c(ii,ll)**2 + c(jj,mod(ll+1,3))**2 + c(kk,mod(ll+2,3))**2)**(0.5) )
-!                       enddo
-!                    enddo
-!                 enddo
-!              enddo
-
-!              state(i,j,k,UFA) = phi * 0.5 * Gconst * rho
-
            enddo
         enddo
      enddo
      !$OMP END PARALLEL DO
-
-!     true_mass = 4.0d0 / 3.0d0 * M_PI * (diameter / 2.0d0)**3 * rho
-
-!     call parallel_reduce_d(actual_mass, my_mass, MPI_SUM)
-
-!     do k = lo(3), hi(3)
-!        do j = lo(2), hi(2)
-!           do i = lo(1), hi(1)
-!              if (state(i,j,k,URHO) .gt. 2.d-8) then
-!                 state(i,j,k,URHO) = state(i,j,k,URHO) * true_mass / actual_mass
-!                 state(i,j,k,UFS:UFS+nspec-1) = state(i,j,k,UFS:UFS+nspec-1) * true_mass / actual_mass
-!              endif
-!           enddo
-!        enddo
-!     enddo
 
    end subroutine ca_initdata
 
