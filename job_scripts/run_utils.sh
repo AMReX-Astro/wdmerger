@@ -167,10 +167,10 @@ function archive {
       if [ -d $dir/output/$file ]; then
           # If we're transferring a directory, Globus needs to explicitly know
           # that it is recursive, and needs to have trailing slashes.
-          ssh $globus_username@$globus_hostname transfer -- $src/ $dst/ -r
+          ssh $globus_username@$globus_hostname transfer -d "1h" -- $src/ $dst/ -r
       else
 	  # We're copying a normal file.
-	  ssh $globus_username@$globus_hostname transfer -- $src $dst
+	  ssh $globus_username@$globus_hostname transfer -d "1h" -- $src $dst
       fi
 
   fi
@@ -200,7 +200,7 @@ function archive_all {
   pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
   chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
 
-  if [ -z $pltlist ] && [ -z $chklist ]; then
+  if [[ -z $pltlist ]] && [[ -z $chklist ]]; then
       return
   fi
 
