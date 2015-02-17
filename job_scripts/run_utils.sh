@@ -121,13 +121,17 @@ function get_restart_string {
 
 
 
-# Achive the file given in the first argument, to the same path
-# on the archive machine relative to the machine's $workdir.
+# Archive the file or directory given in the first argument, 
+# to the same path on the archive machine relative to the machine's $workdir.
 
 function archive {
 
   if [ ! -z $1 ]; then
-      echo "Archiving file " $1"."
+      if [ -d $1 ]; then
+	  echo "Archiving directory "$1"."
+      else
+	  echo "Archiving file " $1"."
+      fi
   else
       echo "No file to archive; exiting."
       return
@@ -145,32 +149,36 @@ function archive {
   storage_dir=$(echo ${dir#$workdir/})
   storage_dir=$(echo ${dir#$workdir})
 
-  # Move the file into the output directory to signify that we've archived it.
+  # Archive based on the method chosen for this machine.
 
-  mv $dir/$file $dir/output/
+  if   [ $archive_method == "htar" ]; then
 
-  # Determine archiving tool based on machine.
+      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar $dir/$file
 
-  if   [ $MACHINE == "TITAN"       ]; then
+  elif [ $archive_method == "globus" ]; then
 
-      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar $dir/output/$file
+      # Give Globus Online a one hour time limit.
 
-  elif [ $MACHINE == "BLUE_WATERS" ]; then
+      time_limit="1h"
+
+      # If we're transferring a directory, tell Globus to only sync new files in it.
+
+      sync_level=0
 
       archive_dir=/projects/sciteam/$allocation/$USER/$storage_dir
 
       cwd=$(pwd)
 
-      src=$globus_src_endpoint$dir/output/$file
-      dst=$globus_dst_endpoint$archive_dir/output/$file
+      src=$globus_src_endpoint$dir/$file
+      dst=$globus_dst_endpoint$archive_dir/$file
 
-      if [ -d $dir/output/$file ]; then
+      if [ -d $dir/$file ]; then
           # If we're transferring a directory, Globus needs to explicitly know
           # that it is recursive, and needs to have trailing slashes.
-          ssh $globus_username@$globus_hostname transfer -d "1h" -- $src/ $dst/ -r
+          ssh $globus_username@$globus_hostname transfer -d $time_limit -s $sync_level -- $src/ $dst/ -r
       else
-	  # We're copying a normal file.
-	  ssh $globus_username@$globus_hostname transfer -d "1h" -- $src $dst
+          # We're copying a normal file.
+	  ssh $globus_username@$globus_hostname transfer -d $time_limit -- $src $dst
       fi
 
   fi
@@ -180,7 +188,9 @@ function archive {
 
 
 # Archive all the output files in the directory given in the first argument.
-# The directory must be an absolute path.
+# The directory must be an absolute path. The strategy will be to determine 
+# all files we want to archive, then create a list and pass that list to the
+# main archive function.
 
 function archive_all {
 
@@ -190,6 +200,8 @@ function archive_all {
       echo "No directory passed to function archive_all; exiting."
       return
   fi
+
+  archivelist=""
 
   # Archive the plotfiles and checkpoint files.
   # Make sure that they have been completed by checking if
@@ -204,35 +216,62 @@ function archive_all {
       return
   fi
 
+  # Move all completed plotfiles and checkpoints to the output
+  # directory, and add them to the list of things to archive.
+
   for file in $pltlist
   do
       if [ -e $file/Header ]; then
-	  archive $file
+	  mv $file $dir/output/
+	  f=$(basename $file)
+	  archivelist=$archivelist" "$f
       fi
   done
 
   for file in $chklist
   do
       if [ -e $file/Header ]; then
-	  archive $file
+	  mv $file $dir/output/
+	  f=$(basename $file)
+	  archivelist=$archivelist" "$f
       fi
   done
 
   diaglist=$(find $dir -maxdepth 1 -name "*diag*.out")
 
-  # For the diagnostic files, we want to make a copy with the current date
-  # before archiving it, since the diagnostic files need to remain there
-  # for the duration of the simulation.
-
-  datestr=$(date +"%Y%m%d_%H%M_%S_")
+  # For the diagnostic files, we just want to make a copy and move it to the 
+  # output directory; we can't move it, since the same file needs to be there
+  # for the duration of the simulation if we want a continuous record.
 
   for file in $diaglist
   do
-      filebasename=$(basename $file)
-      archivefile=$datestr$filebasename
-      cp $file $dir/$archivefile
-      archive $dir/$archivefile
+      cp $file $dir/output/
+      f=$(basename $file)
+      archivelist=$archivelist" "$f
   done
+
+  # Now we'll do the archiving for all files in $archivelist.
+  # Determine the archiving method based on machine.
+
+  if   [ $MACHINE == "TITAN"       ]; then
+
+      # For Titan, just loop over every file we're archiving and htar it.
+
+      for file in $archivelist
+      do
+	  archive $dir/output/$file
+      done
+
+  elif [ $MACHINE == "BLUE_WATERS" ]; then
+
+      # For Blue Waters, we're using Globus Online, which has a cap on the number 
+      # of simultaneous transfers a user can have. Therefore our strategy is
+      # to sync the entire output directory of this location rather than 
+      # transferring the files independently.
+
+      archive $dir/output/
+
+  fi
 
 }
 
@@ -395,42 +434,6 @@ function run {
 
   else
 
-    # Archive any files that have not yet been saved to the storage system.
-
-    cwd=$(pwd)
-     
-    if [ $archive == "T" ]; then
-	archive_all $cwd/$dir
-    fi
-
-    # If the directory already exists, check to see if we've reached the desired stopping point.
-
-    checkpoint=$(get_last_checkpoint $dir)
-
-    time_flag=1
-    step_flag=1
-
-    if [ -e $dir/$checkpoint/Header ]; then
- 
-	# Extract the checkpoint time. It is stored in row 3 of the Header file.
-
-	time=$(awk 'NR==3' $dir/$checkpoint/Header)
-
-	# Extract the current timestep. It is stored in row 12 of the Header file.
-
-	step=$(awk 'NR==12' $dir/$checkpoint/Header)
-
-	# Now determine if we are both under max_step and stop_time. If so, re-submit the job.
-	# The job script already knows to start from the latest checkpoint file.
-
-	stop_time=$(grep "stop_time" $dir/$inputs | awk '{print $3}')
-	max_step=$(grep "max_step" $dir/$inputs | awk '{print $3}')
-
-	time_flag=$(echo "$time < $stop_time" | bc -l)
-	step_flag=$(echo "$step < $max_step" | bc -l)
-
-    fi
-
     # First as a sanity check, make sure the desired job isn't already running.
 
     if [ -e $dir/*$run_ext ]; then
@@ -438,22 +441,60 @@ function run {
 	echo "Job currently in process in directory "$dir"."
 
     else
- 
-	if [ $time_flag -eq 1 ] && [ $step_flag -eq 1 ]; then
 
-	echo "Continuing job in directory "$dir"."
+      # Archive any files that have not yet been saved to the storage system.
 
-	create_job_script $dir $nprocs $walltime
-	cd $dir
-	$exec $job_script
-	cd - > /dev/null
+      cwd=$(pwd)
 
-	# If we make it here, then we've already reached either stop_time
-	# or max_step, so we should conclude that the run is done.
+      if [ $archive == "T" ]; then
+	  archive_all $cwd/$dir
+      fi
 
-	else
-	    echo "Job has already been completed in directory "$dir"."
-	fi
+      # If the directory already exists, check to see if we've reached the desired stopping point.
+
+      checkpoint=$(get_last_checkpoint $dir)
+
+      time_flag=1
+      step_flag=1
+
+      if [ -e $dir/$checkpoint/Header ]; then
+
+	  # Extract the checkpoint time. It is stored in row 3 of the Header file.
+
+	  time=$(awk 'NR==3' $dir/$checkpoint/Header)
+
+	  # Extract the current timestep. It is stored in row 12 of the Header file.
+
+	  step=$(awk 'NR==12' $dir/$checkpoint/Header)
+
+	  # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
+	  # The job script already knows to start from the latest checkpoint file.
+
+	  stop_time=$(grep "stop_time" $dir/$inputs | awk '{print $3}')
+	  max_step=$(grep "max_step" $dir/$inputs | awk '{print $3}')
+
+	  time_flag=$(echo "$time < $stop_time" | bc -l)
+	  step_flag=$(echo "$step < $max_step" | bc -l)
+
+      fi
+
+      if [ $time_flag -eq 1 ] && [ $step_flag -eq 1 ]; then
+
+	  echo "Continuing job in directory "$dir"."
+
+	  create_job_script $dir $nprocs $walltime
+	  cd $dir
+	  $exec $job_script
+	  cd - > /dev/null
+
+	  # If we make it here, then we've already reached either stop_time
+	  # or max_step, so we should conclude that the run is done.
+
+      else
+
+	  echo "Job has already been completed in directory "$dir"."
+
+      fi
     fi
 
   fi
@@ -477,7 +518,7 @@ job_script="run_script"
 
 OMP_NUM_THREADS="1"
 
-archive="F"
+archive_method="none"
 
 if [ $MACHINE == "GENERICLINUX" ]; then
 
@@ -495,9 +536,8 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
     node_type="xe"
     run_ext=".OU"
     workdir="/scratch/sciteam/$USER/"
-    globus=T
     batch_system="PBS"
-    archive="T"
+    archive_method="globus"
     globus_src_endpoint="ncsa#BlueWaters"
     globus_dst_endpoint="ncsa#Nearline"
 
@@ -511,7 +551,7 @@ elif [ $MACHINE == "TITAN" ]; then
     run_ext=".OU"
     workdir="/lustre/atlas/scratch/$USER/$allocation/"
     batch_system="PBS"
-    archive="T"
+    archive_method="htar"
 
 elif [ $MACHINE == "HOPPER" ]; then
     
@@ -527,7 +567,7 @@ elif [ $MACHINE == "HOPPER" ]; then
 fi
 
 # If we're using Globus Online, set some useful parameters.
-if [ ! -z $globus ]; then
+if [ arhive_method == "globus" ]; then
     globus_username="mkatz"
     globus_hostname="cli.globusonline.org"
 fi
