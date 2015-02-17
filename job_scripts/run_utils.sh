@@ -194,9 +194,15 @@ function archive_all {
   # Archive the plotfiles and checkpoint files.
   # Make sure that they have been completed by checking if
   # the Header file exists, which is the last thing created.
+  # If there are no plotfiles or checkpoints to archive,
+  # then assume we have completed the run and exit.
 
   pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
   chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
+
+  if [ -z $pltlist ] && [ -z $chklist ]; then
+      return
+  fi
 
   for file in $pltlist
   do
