@@ -115,6 +115,7 @@ make_inputs:
 			echo "geometry.coord_sys = $(geometry.coord_sys)" >> $(inputs) ; \
 			echo "geometry.prob_lo = $(geometry.prob_lo)" >> $(inputs) ; \
 			echo "geometry.prob_hi = $(geometry.prob_hi)" >> $(inputs) ; \
+			echo "castro.center = $(castro.center)" >> $(inputs) ; \
 			echo "castro.dt_cutoff = $(castro.dt_cutoff)" >> $(inputs) ; \
 			echo "castro.cfl = $(castro.cfl)" >> $(inputs) ; \
 			echo "castro.init_shrink = $(castro.init_shrink)" >> $(inputs) ; \

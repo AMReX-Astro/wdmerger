@@ -256,7 +256,7 @@ Castro::sum_integrated_quantities ()
 
       // Compute the center of mass locations and velocities for the primary and secondary.
 
-      ca_lev.wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
+      getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
 
       mass_p       += lev_mass_p;
       mass_s       += lev_mass_s;
