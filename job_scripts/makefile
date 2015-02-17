@@ -194,6 +194,9 @@ make_probin:
 			echo "  damping = $(damping)" >> $(probin) ; \
 			echo "  damping_alpha = $(damping_alpha)" >> $(probin) ; \
 			echo "  interp_temp = $(interp_temp)" >> $(probin) ; \
+			echo "  bulk_velx = $(bulk_velx)" >> $(probin) ; \
+			echo "  bulk_vely = $(bulk_vely)" >> $(probin) ; \
+			echo "  bulk_velz = $(bulk_velz)" >> $(probin) ; \
 			echo "  starBuffer = $(starBuffer)" >> $(probin) ; \
 			echo "  boundaryBuffer = $(boundaryBuffer)" >> $(probin) ; \
 			echo "" >> $(probin) ; \
