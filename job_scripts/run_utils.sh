@@ -250,6 +250,17 @@ function archive_all {
       archivelist=$archivelist" "$f
   done
 
+  # Same thing for the runtime stdout files.
+
+  outlist=$(find $dir -maxdepth 1 -name *$job_name*)
+
+  for file in $outlist
+  do
+      cp $file $dir/output/
+      f=$(basename $file)
+      archivelist=$archivelist" "$f
+  done
+
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
 
@@ -567,7 +578,7 @@ elif [ $MACHINE == "HOPPER" ]; then
 fi
 
 # If we're using Globus Online, set some useful parameters.
-if [ arhive_method == "globus" ]; then
+if [ $archive_method == "globus" ]; then
     globus_username="mkatz"
     globus_hostname="cli.globusonline.org"
 fi
