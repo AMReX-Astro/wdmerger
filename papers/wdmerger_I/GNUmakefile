@@ -2,9 +2,7 @@ EPStoPDF = epstopdf
 
 ALL: paper.ps paper.pdf 
 
-eps_source = $(wildcard *.eps) \
-             $(wildcard plots/*.eps) \
-             $(wildcard hotspot_animations/*.eps)
+eps_source = $(wildcard plots/*.eps)
 
 pdf_source = $(eps_source:.eps=.pdf)
 

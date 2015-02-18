@@ -738,7 +738,7 @@ edges of the computational domain. In principle, they can be computed
 by doing a direct sum over the mass distribution inside the domain,
 where the mass in each zone is treated as a point source:
 \begin{equation}
-  \Phi_{{lmn}} = -\sum_{{i, j, k}} \frac{G \rho_{{ijk}}}{|\mathbf{x}_{{lmn}} - \mathbf{x}_{{ijk}}|}\, \Delta V_{{ijk}}.\label{direct_sum}
+  \Phi_{{lmn}} = -\sum_{{i, j, k}} \frac{G \rho_{{ijk}}}{|\mathbf{x}_{{lmn}} - \mathbf{x}_{{ijk}}|}\, \Delta V_{{ijk}}.\label{eq:direct_sum}
 \end{equation}
 Here $(i, j, k)$ are the indices of cells inside the domain, and $(l,m, n)$ 
 are the indices of boundary locations. $\Delta V$ is the volume of the
@@ -821,7 +821,42 @@ required to calculate the boundary conditions will be directly related
 to the chosen value of $l_{\text{max}}$, so there is a trade-off
 between computational expense and accuracy of the result.
 
-% Insert multipole vs. exact calculation here
+As a demonstration of the method's accuracy, we consider the case of two 
+white dwarfs of mass ratio 2/3, loaded onto the grid by the method described 
+in Section \ref{sec:initial_models}. We terminated the simulation just after
+initialization, so that we perform only an initial Poisson solve for this 
+density distribution. We did this for values of $l_{\text{max}}$ ranging
+from 0 to 20, and we also did this using the numerically exact solution 
+provided by Equation \ref{eq:direct_sum}.  Defining the $L^2$
+norm of a field $f$ as
+\begin{equation}
+  \| f \|_2 = \left(\sum_{i,j,k} dx\, dy\, dz\, f_{ijk}^2\right)^{1/2},
+\end{equation}
+we computed the $L^2$ error of $\Phi$ on the entire domain for multipole 
+boundary conditions, which we will call $\Phi_l$, relative to $\Phi$ 
+obtained using the exact boundary conditions:
+\begin{equation}
+  \text{Error}_l = \frac{\|\Phi_l - \Phi_{\text{exact}}\|_2}{\|\Phi_{\text{exact}}\|_2}.
+\end{equation}
+The result is shown in Figure \ref{fig:bc_comparison}. At $l_{\text{max}} = 6$,
+the error is already well below $10^{-4}$ and we adopt this as our default 
+choice for all simulations with Poisson gravity. Our choice is also motivated by the 
+fact that at this value, the time for computing the boundary conditions on the
+coarse grid is comparable to the time for the multigrid solve itself; at higher values 
+the boundary condition calculation becomes much more expensive than the multigrid solve
+and so the overall returns are severely diminished. We note that in our implementation 
+there are no gains at all for going beyond $l_{\text{max}} \gtrsim 16$, as we 
+become limited by error due to the machine precision.
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.45]{plots/bc_comparison}
+  \caption{Error of $\Phi$ on the computational domain for a binary white dwarf simulation 
+    whose boundary conditions were computed using various values of the maximum multipole order,
+    relative to the exact solution determined by a brute force sum on the boundaries.
+    Circles represent the error at integer values, and they have been connected by a smooth 
+    line to guide the eye.\label{fig:bc_comparison}}
+\end{figure}
+
 
 \subsubsection{Convergence Testing}\label{sec:gravity_convergence_testing}
 
@@ -841,12 +876,9 @@ a uniform sphere, which can be easily determined using Gauss' law:
 \begin{equation}
   \Phi_{\text{sphere}}(r) = -\frac{GM}{r} \times \begin{cases} (3R^2 - r^2)/(2 r^2) & r \leq R \\ 1 & r > R \end{cases},\label{eq:sphere-analytical}
 \end{equation}
-where $M = 4\pi R^3 / 3$ is the mass of the sphere. Defining the $L^2$
-norm of a field $f$ as
-\begin{equation}
-  \| f \|_2 = \left(\sum_{i,j,k} dx\, dy\, dz\, f_{ijk}^2\right)^{1/2},
-\end{equation}
-we measure the numerical error by calculating the $L^2$ norm of the error and normalizing it by the $L^2$ norm of the analytical solution:
+where $M = 4\pi R^3 / 3$ is the mass of the sphere. We measure the 
+numerical error by calculating the $L^2$ norm of the error and 
+normalizing it by the $L^2$ norm of the analytical solution:
 \begin{equation}
   \text{Error} = \frac{\|\Phi - \Phi_{\text{sphere}}\|_2}{\|\Phi_{\text{sphere}}\|_2}.
 \end{equation}
@@ -1636,7 +1668,7 @@ with the parameter {\tt castro.ppm\_trace\_rot}.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=1.0]{reference}
+  \includegraphics[scale=1.0]{plots/reference}
   \caption{ \label{Fig:sod} Solution to Sod's problem with the original
     reference state and the new reference state, as compared to the
     exact solution.  We note that the new reference state shows a
@@ -1648,8 +1680,8 @@ with the parameter {\tt castro.ppm\_trace\_rot}.
 
 %\begin{figure}
 %  \centering
-%  \includegraphics[width=3.1in]{nested2}\hspace{1em}
-%  \includegraphics[width=3.1in]{nested3}
+%  \includegraphics[width=3.1in]{plots/nested2}\hspace{1em}
+%  \includegraphics[width=3.1in]{plots/nested3}
 %  \caption{\label{fig:2levgrav} Schematic showing the solve for $\phi$ for a 2-level grid.}
 %\end{figure}
 
