@@ -148,9 +148,9 @@ function archive {
 
   if [ ! -z $1 ]; then
       if [ -d $1 ]; then
-	  echo "Archiving directory "$1"."
+	  echo "Archiving contents of directory "$1"."
       else
-	  echo "Archiving file " $1"."
+	  echo "Archiving location " $1"."
       fi
   else
       echo "No file to archive; exiting."
@@ -160,29 +160,29 @@ function archive {
   # We may get a directory to archive, so call basename to make sure $file
   # doesn't appear with a trailing slash.
 
-  file=$(basename $1)
-  dir=$(dirname $1)
+  f=$(basename $1)
+  d=$(dirname $1)
 
   # Remove the $workdir from the name. We test on both $workdir and $workdir/
   # so that the trailing slash doesn't matter here.
 
-  storage_dir=$(echo ${dir#$workdir/})
-  storage_dir=$(echo ${dir#$workdir})
+  storage_dir=$(echo ${d#$workdir/})
+  storage_dir=$(echo ${d#$workdir})
 
   # Archive based on the method chosen for this machine.
 
   if   [ $archive_method == "htar" ]; then
 
-      $HTAR ${storage_dir}/${file}.tar $dir/$file
+      $HTAR ${storage_dir}/${f}.tar $d/$f
 
   elif [ $archive_method == "globus" ]; then
 
       archive_dir=/projects/sciteam/$allocation/$USER/$storage_dir
 
-      src=$globus_src_endpoint$dir/$file
-      dst=$globus_dst_endpoint$archive_dir/$file
+      src=$globus_src_endpoint$d/$f
+      dst=$globus_dst_endpoint$archive_dir/$f
 
-      if [ -d $dir/$file ]; then
+      if [ -d $d/$f ]; then
           # If we're transferring a directory, Globus needs to explicitly know
           # that it is recursive, and needs to have trailing slashes.
           $globus_archive -- $src/ $dst/ -r
@@ -209,6 +209,10 @@ function archive_all {
   else
       echo "No directory passed to function archive_all; exiting."
       return
+  fi
+
+  if [ ! -d $dir/output/ ]; then
+      mkdir $dir/output/
   fi
 
   archivelist=""
@@ -274,12 +278,15 @@ function archive_all {
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
 
+  echo $archivelist
+
   if   [ $MACHINE == "TITAN"       ]; then
 
       # For Titan, just loop over every file we're archiving and htar it.
 
       for file in $archivelist
       do
+	  echo $dir/output/$file
 	  archive $dir/output/$file
       done
 
