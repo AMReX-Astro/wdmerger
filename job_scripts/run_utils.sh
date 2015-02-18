@@ -121,6 +121,26 @@ function get_restart_string {
 
 
 
+# Return 1 if a job is running in the directory given in the first argument.
+
+function is_job_running {
+
+    if [ -z $1 ]; then
+	return 0;
+    else
+	dir=$1
+    fi
+
+    if [ -e $dir/*$run_ext ]; then
+	echo "1"
+    else
+	echo "0"
+    fi
+
+}
+
+
+
 # Archive the file or directory given in the first argument, 
 # to the same path on the archive machine relative to the machine's $workdir.
 
@@ -437,7 +457,9 @@ function run {
 
     # First as a sanity check, make sure the desired job isn't already running.
 
-    if [ -e $dir/*$run_ext ]; then
+    job_running_status=$(is_job_running $dir)
+
+    if [ $job_running_status -eq 1 ]; then
 
 	echo "Job currently in process in directory "$dir"."
 
