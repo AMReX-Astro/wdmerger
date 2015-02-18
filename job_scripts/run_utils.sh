@@ -278,8 +278,6 @@ function archive_all {
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
 
-  echo $archivelist
-
   if   [ $MACHINE == "TITAN"       ]; then
 
       # For Titan, just loop over every file we're archiving and htar it.
