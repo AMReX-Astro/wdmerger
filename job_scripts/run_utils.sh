@@ -153,21 +153,11 @@ function archive {
 
   if   [ $archive_method == "htar" ]; then
 
-      htar -H copies=2 -Pcvf ${storage_dir}/${file}.tar $dir/$file
+      $HTAR ${storage_dir}/${file}.tar $dir/$file
 
   elif [ $archive_method == "globus" ]; then
 
-      # Give Globus Online a one hour time limit.
-
-      time_limit="1h"
-
-      # If we're transferring a directory, tell Globus to only sync new files in it.
-
-      sync_level=0
-
       archive_dir=/projects/sciteam/$allocation/$USER/$storage_dir
-
-      cwd=$(pwd)
 
       src=$globus_src_endpoint$dir/$file
       dst=$globus_dst_endpoint$archive_dir/$file
@@ -175,10 +165,10 @@ function archive {
       if [ -d $dir/$file ]; then
           # If we're transferring a directory, Globus needs to explicitly know
           # that it is recursive, and needs to have trailing slashes.
-          ssh $globus_username@$globus_hostname transfer -d $time_limit -s $sync_level -- $src/ $dst/ -r
+          $globus_archive -- $src/ $dst/ -r
       else
           # We're copying a normal file.
-	  ssh $globus_username@$globus_hostname transfer -d $time_limit -- $src $dst
+	  $globus_archive -- $src $dst
       fi
 
   fi
@@ -457,9 +447,7 @@ function run {
 
       cwd=$(pwd)
 
-      if [ $archive == "T" ]; then
-	  archive_all $cwd/$dir
-      fi
+      archive_all $cwd/$dir
 
       # If the directory already exists, check to see if we've reached the desired stopping point.
 
@@ -577,11 +565,27 @@ elif [ $MACHINE == "HOPPER" ]; then
 
 fi
 
-# If we're using Globus Online, set some useful parameters.
-if [ $archive_method == "globus" ]; then
+# Set parameters for our archiving scripts.
+if   [ $archive_method == "htar" ]; then
+    copies=2
+    HTAR="htar -H copies=$copies -Pcvf"
+elif [ $archive_method == "globus" ]; then
     globus_username="mkatz"
     globus_hostname="cli.globusonline.org"
+
+    # Give Globus Online a one hour time limit.
+
+    time_limit="1h"
+
+    # If we're transferring a directory, tell Globus to only sync either new files or altered files.
+
+    sync_level=2
+
+    # Main archiving command
+
+    globus_archive="ssh $globus_username@$globus_hostname transfer -d $time_limit -s $sync_level"
 fi
+
 
 # Directory to compile the executable in
 
