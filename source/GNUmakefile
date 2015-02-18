@@ -38,4 +38,8 @@ srcelocs := $(WDMERGER_HOME)/source/
 Bpack   := $(srcepack) $(modspack) $(diagpack)
 Blocs   := $(srcelocs) $(modslocs) $(diaglocs)
 
+BUILD_GIT_NAME := wdmerger
+BUILD_GIT_DIR := $(WDMERGER_HOME)
+
 include $(CASTRO_DIR)/Exec/Make.Castro
+
