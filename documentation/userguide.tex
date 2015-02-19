@@ -252,7 +252,103 @@ is used to analyze the output and generature figures. In summary, to run a test,
   \item \texttt{python analysis.py} (after the execution has completed)
 \end{itemize}
 
+
+
+\chapter{System Configuration}
+
+Running the wdmerger software will require a little setup in terms of configuring the 
+scripts to work with the system you are currently using. The software is currently actively 
+maintained only for a small number of supercomputing resources (Blue Waters at NCSA 
+and Titan at OLCF, in particular). If you are using one of these machines, then 
+modifying the code for your purposes is straightforward. If you are not, you'll need to do a 
+small bit of ground work to get everything set up, but once you do the automated scripts 
+will handle everything else for you. Feel free to contact us for advice on how to do so 
+(see Section \ref{sec:contributors} for contact information), but be aware that it will be 
+hard for us to debug on systems that we do not have access to. 
+
+It is important to note that although we have attempted to 
+make sure that this software builds and runs on a generic Linux workstation, most of the test 
+problems are simply too large to run on anything smaller than a medium-sized cluster. To get a flavor 
+of what is going on, though, you can comment out the larger runs from the various loops in the 
+\texttt{run\_test.sh} file and then run the smaller problem setup.
+
+\section{Account Details and System Options}
+
+All of the machine-dependent functionality exists in the file \texttt{job\_scripts/run\_utils.sh}.
+In particular, near the end of the file you can find a bash conditional that tests on the name of 
+certain machines. Each machine definition includes a number of variables that are needed to 
+properly configure all of the helper functions. If you are using a system already known to us,
+then the only thing you need to change is the \text{allocation} variable: this is the account 
+that jobs will be charged to on the machine. 
+
+If you are establishing a new machine, then there are a few steps you will need to take. First, 
+add a section to this conditional that tests on what you want to call the name of the machine. 
+Then, make entries for the necessary variables:
+\begin{itemize}
+  \item \texttt{allocation}: the account jobs are charged to.
+  \item \texttt{exec}: the function used to submit batch scripts. For PBS-style submission 
+systems such as TORQUE, this will be \texttt{qsub}.
+  \item \texttt{ppn}: the number of processors per node on the system. Be careful with how 
+you define this. Many systems have nodes that have two integer cores for every floating point
+unit and will report the number of integer cores as the number of processors per node, 
+and for floating point-intensive applications like hydrodynamics adding as many threads/MPI tasks
+as there are integer cores may actually slow you down. You will have to test to find 
+the best setting for you.
+  \item \texttt{run\_ext}: the file extension of the standard output file when a job is in operation. 
+This is used by the run scripts to ensure that we don't submit a job in a directory where one is 
+already running. For many systems this will be ``.OU''.
+  \item \texttt{batch\_system}: the job submission system used on the machine. For many supercomputers 
+``PBS'' will be what you should insert here, which is a catchall for any derivative such as TORQUE 
+that uses normal PBS options for accepting jobs.
+  \item \texttt{archive\_method} (optional): the method used by the machine for saving files to 
+long-term storage. See Section \ref{sec:archiving}. This is optional, and if you don't set it then
+the scripts won't attempt to copy your data off the machine.
+\end{itemize}
+When you submit a job through a \texttt{run\_test.sh} file using the \texttt{run} command, 
+a batch script will be automatically created for you. For PBS systems you should be mostly 
+good to go as-is, but some systems vary particularly in the \texttt{-l nodes} option, so 
+you should make sure that the job script construction is in sync with how batch jobs 
+on that machine should appear. Locate the \texttt{create\_job\_script} function and adjust it 
+accordingly by changing the relevant \texttt{echo} statements. If you are using a different submission
+system, create a new section of the conditional in that function, and model it off what we do for PBS
+so that the relevant information is output to the newly-created job script (called \texttt{run\_script} 
+by default; you can change this in the definitions section as well).
+
+The last step is to tell the script how to know that you're using the machine you just defined. 
+Locate the \texttt{get\_machine} command and use the output of \texttt{uname -n} to uniquely determine 
+which system you are using.
+
+\section{Archiving}
+\label{sec:archiving}
+
+This software has some capability to automatically handle archiving of data to long-term storage,
+at least for systems we already know. Each time we run a job and we are continuing from an old checkpoint,
+we move all new plotfiles and checkpoints to the \texttt{output/} subdirectory of the job submission 
+location. We also make copies of the diagnostics files, and the standard output files. By default this is 
+all we do. But on systems where archiving is supported, we copy these files to the long-term storage.
+
+There are currently two methods we know about: \texttt{htar} for Titan, and Globus Online for Blue Waters.
+\texttt{htar} is a command that both creates a tar file and then copies it to the high-performance storage system 
+(HPSS) using the \texttt{hsi} command. It works on a file-by-file basis, so we loop over all of the files to 
+archive and run \texttt{htar} on them individually. If your system uses \texttt{htar}, then you should be all set.
+
+\href{https://www.globus.org/}{Globus Online} is an internet service that handles data transfer requests 
+between certain known endpoints. This is the choice used by Blue Waters for copying and retrieving data
+to their storage system. You will need to set up your account and authenticate through Globus before using it.
+Once you know your Globus username, you can adjust the \texttt{globus\_username} in \texttt{run\_utils.sh}. 
+We note that the Globus archive strategy is different. There is a cap on the number of simultaneous transfers 
+one can have, so submitting transfers for every plotfile and checkpoint will not work. Instead, when we 
+run the archiving script, we first move all the files to the output directory, and then we do a transfer 
+on the entire \texttt{output/} subdirectory. Globus will automatically sync the source and destination 
+directories, so no extra work is required of us. We choose the \texttt{sync\_level = 2} option, which 
+overwrites existing files if the source has a newer date than the destination. This allows us to 
+continually update the diagnostic files, which always have the same name.
+
+If your system uses a different archive strategy, you will need to update the \texttt{archive\_all} 
+and \texttt{archive} functions.
+
 \chapter{Contributors}
+\label{sec:contributors}
 
 This project was started as the Ph.D. dissertation project for Max Katz at Stony Brook University. 
 Michael Zingale is Max's primary thesis advisor. Correspondence and requests for information 
