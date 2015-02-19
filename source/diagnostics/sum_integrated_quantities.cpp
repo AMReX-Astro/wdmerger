@@ -343,11 +343,13 @@ Castro::sum_integrated_quantities ()
 
 	  // Output the git commit hashes used to build the executable.
 
-          const char* castro_hash = buildInfoGetGitHash(1);
-	  const char* boxlib_hash = buildInfoGetGitHash(2);
+          const char* castro_hash   = buildInfoGetGitHash(1);
+	  const char* boxlib_hash   = buildInfoGetGitHash(2);
+	  const char* wdmerger_hash = buildInfoGetBuildGitHash();
 
-	  grid_log << "# Castro git hash: " << castro_hash << "\n";
-	  grid_log << "# BoxLib git hash: " << boxlib_hash << "\n";
+	  grid_log << "# Castro   git hash: " << castro_hash   << "\n";
+	  grid_log << "# BoxLib   git hash: " << boxlib_hash   << "\n";
+	  grid_log << "# wdmerger git hash: " << wdmerger_hash << "\n";
 
           grid_log << std::setw(12)        << "#   TIMESTEP";
           grid_log << std::setw(datawidth) << "     TIME              ";
@@ -499,11 +501,13 @@ Castro::sum_integrated_quantities ()
 
 	  // Output the git commit hashes used to build the executable.
 
-          const char* castro_hash = buildInfoGetGitHash(1);
-	  const char* boxlib_hash = buildInfoGetGitHash(2);
+          const char* castro_hash   = buildInfoGetGitHash(1);
+	  const char* boxlib_hash   = buildInfoGetGitHash(2);
+	  const char* wdmerger_hash = buildInfoGetBuildGitHash();
 
-	  star_log << "# Castro git hash: " << castro_hash << "\n";
-	  star_log << "# BoxLib git hash: " << boxlib_hash << "\n";
+	  star_log << "# Castro   git hash: " << castro_hash   << "\n";
+	  star_log << "# BoxLib   git hash: " << boxlib_hash   << "\n";
+	  star_log << "# wdmerger git hash: " << wdmerger_hash << "\n";
 
           star_log << std::setw(12)        << "#   TIMESTEP";
           star_log << std::setw(datawidth) << "     TIME              ";
