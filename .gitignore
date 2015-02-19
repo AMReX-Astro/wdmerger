@@ -4,6 +4,7 @@
 *.dvi
 *.toc
 *.bbl
+*.bib
 *.blg
 *.lof
 *.lot
