@@ -29,16 +29,21 @@ def get_git_commits_from_plotfile(plotfile):
     job_info = open(plotfile + "/job_info", 'r')
     lines = job_info.readlines()
     lines = [line.split() for line in lines]
+    castro_hash   = ""
+    boxlib_hash   = ""
+    wdmerger_hash = ""
     for line in lines:
         if (len(line) == 4):
             if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
                 castro_hash = line[3]
             elif (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
                 boxlib_hash = line[3]
+            elif (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
+                wdmerger_hash = line[3]
 
     job_info.close()
 
-    return [castro_hash, boxlib_hash]
+    return [castro_hash, boxlib_hash, wdmerger_hash]
 
 
 
@@ -48,11 +53,29 @@ def get_git_commits_from_plotfile(plotfile):
 
 def get_git_commits_from_diagfile(diagfile):
     diagfile = open(diagfile, 'r')
-    castro_hash = (diagfile.readline().split())[4]
-    boxlib_hash = (diagfile.readline().split())[4]
+
+    castro_hash   = ""
+    boxlib_hash   = ""
+    wdmerger_hash = ""
+
+    line = diagfile.readline().split()
+
+    if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
+        castro_hash = line[4]
+
+    line = diagfile.readline().split()
+
+    if (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
+        boxlib_hash = line[4]
+
+    line = diagfile.readline().split()
+
+    if (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
+        wdmerger_hash = line[4]
+
     diagfile.close()
 
-    return [castro_hash, boxlib_hash]
+    return [castro_hash, boxlib_hash, wdmerger_hash]
 
 
 
@@ -64,16 +87,21 @@ def get_git_commits_from_infofile(infofile):
     infofile = open(infofile, 'r')
     lines = infofile.readlines()
     lines = [line.split() for line in lines]
+    castro_hash   = ""
+    boxlib_hash   = ""
+    wdmerger_hash = ""
     for line in lines:
         if (len(line) == 4):
             if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
                 castro_hash = line[3]
             elif (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
                 boxlib_hash = line[3]
+            elif (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
+                wdmerger_hash = line[3]
 
     infofile.close()
 
-    return [castro_hash, boxlib_hash]
+    return [castro_hash, boxlib_hash, wdmerger_hash]
 
 
 
@@ -90,15 +118,13 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
     import fileinput
 
     if (data_file_type == 'plot'):
-        [castro_hash, boxlib_hash] = get_git_commits_from_plotfile(data_file)
+        [castro_hash, boxlib_hash, wdmerger_hash] = get_git_commits_from_plotfile(data_file)
     elif (data_file_type == 'diag'):
-        [castro_hash, boxlib_hash] = get_git_commits_from_diagfile(data_file)
+        [castro_hash, boxlib_hash, wdmerger_hash] = get_git_commits_from_diagfile(data_file)
     elif (data_file_type == 'info'):
-        [castro_hash, boxlib_hash] = get_git_commits_from_infofile(data_file)
+        [castro_hash, boxlib_hash, wdmerger_hash] = get_git_commits_from_infofile(data_file)
     else:
         print "Error: Data file type not recognized."
-
-    wdmerger_hash = get_wdmerger_git_commit_hash();
 
     input = fileinput.input(eps_file, inplace=True)
 
@@ -319,9 +345,22 @@ def get_column(col_name, diag_filename):
     # with all the data.
 
     diag_file = open(diag_filename,'r')
-    castro_hash_line = diag_file.readline()
-    boxlib_hash_line = diag_file.readline()
-    col_names = diag_file.readline().split('  ')
+
+    vc_line = 'git'
+
+    # Skip the first few lines, they store the version control information
+
+    line = diag_file.readline()
+
+    while (line == vc_line):
+        line = diag_file.readline()
+
+    # The very next line will be the column headers
+
+    col_names = line.split('  ')
+
+    # Now read in the data
+
     diag_list = diag_file.readlines()
     data = []
     for line in diag_list:
