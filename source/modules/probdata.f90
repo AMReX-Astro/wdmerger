@@ -446,6 +446,17 @@ contains
     loc_P(initial_motion_dir) = loc_P(initial_motion_dir) - a_P_initial * sin(theta)
     loc_S(initial_motion_dir) = loc_S(initial_motion_dir) + a_S_initial * sin(theta)
 
+    ! If the system has any uniform motion, add it to our prediction.
+
+    loc_P(1) = loc_P(1) + bulk_velx * time
+    loc_S(1) = loc_S(1) + bulk_velx * time
+
+    loc_P(2) = loc_P(2) + bulk_vely * time
+    loc_S(2) = loc_S(2) + bulk_vely * time
+
+    loc_P(3) = loc_P(3) + bulk_velz * time
+    loc_S(3) = loc_S(3) + bulk_velz * time
+
   end subroutine get_star_locations
 
 
