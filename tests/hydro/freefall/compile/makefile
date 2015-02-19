@@ -6,8 +6,8 @@ mass_S = 0.81
 castro.do_rotation = 0
 castro.rotational_period = 100.0
 
-amr.plot_per = 0.1
-amr.check_per = 0.1
+amr.plot_per = 1.0
+amr.check_per = 1.0
 
 # We can work out the stopping time using the formula
 # t_freefall = rotational_period / (4 * sqrt(2))

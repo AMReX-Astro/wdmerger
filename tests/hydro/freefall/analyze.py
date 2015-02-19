@@ -7,7 +7,7 @@ import wdmerger
 
 ncell = 256
 
-diag_filename = "results/" + str(ncell) + "/star_diag.out"
+diag_filename = "results/n" + str(ncell) + "/output/star_diag.out"
 
 # Get the desired columns for the time and distance
 
@@ -36,11 +36,17 @@ t_exact *= 2.0 / np.pi
 
 eps_filename = 'plots/freefall.eps'
 
-plt.plot(dist[::5], time[::5], 'o', d_exact, t_exact, '-')
+# Stride for our arrays; the markers will be too dense if we plot every data point
+
+stride = 25
+
+plt.plot(dist[::stride], time[::stride], 'o', ms=12.0)
+plt.plot(d_exact, t_exact, '-', lw=4.0)
 plt.axis([0.0, 1.0, 0.0, 1.0])
 plt.gca().invert_xaxis()
 plt.gca().invert_yaxis()
-plt.xlabel("Distance / Initial Distance")
-plt.ylabel("Time / Free Fall Timescale")
+plt.xlabel("Distance / Initial Distance", fontsize=20)
+plt.ylabel("Time / Free Fall Timescale", fontsize=20)
+plt.tick_params(labelsize=16)
 plt.savefig(eps_filename)
 wdmerger.insert_commits_into_eps(eps_filename, diag_filename, 'diag')
