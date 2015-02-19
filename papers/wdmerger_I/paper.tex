@@ -1032,6 +1032,20 @@ In one dimension, this would be
 \end{align}
 As with gravity, in three dimensions we include the mass fluxes through all six cell faces.
 
+We apply the rotation forces after the gravitation forces, but 
+there is some freedom in the order in which to apply the gravitational and rotational terms.
+This order may matter because the Coriolis force depends on the fluid velocity, and 
+in the predictor-corrector approach, we use the velocities both at 
+time-level $n$ and time-level $n+1$. If we update the latter with the gravitational force, 
+then the Coriolis force will see a different velocity than the one obtained through the 
+pure hydrodynamics step. (This does not matter for the energy equation in our new formulation,
+because the velocities used are always the time-level $n+1/2$ values coming from the Riemann solver.)
+In practice, this will not matter significantly for our simulations in this work 
+because the centrifugal force plays the dominant role in maintaining stability of non-contact 
+binary systems, and the centrifugal force does not depend on the fluid velocity.
+However, this issue may be worth exploring in future work in situations where the Coriolis 
+term is non-negligible in determining the system evolution.
+
 In all simulations performed in a rotating reference frame, we will transform all relevant
 quantities back to the inertial reference frame when reporting them in this paper. In particular,
 for every zone we add to the displayed kinetic energy the rotational energy associated with motion 
