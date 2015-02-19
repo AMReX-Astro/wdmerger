@@ -1270,13 +1270,14 @@ For our problem $0 \leq r \leq 1$, so this is always valid. Integrating, we find
 \end{equation}
 so that the point of contact would occur at $t = 1$. We actually stop the simulation
 at $t = 0.9$, which is when the effects from the extended sizes of the stars
-starts to become important. The results of our simulation for a $128^3$ zone 
+starts to become important. The results of our simulation for our default $256^3$ zone 
 uniform grid are shown in Figure \ref{Fig:Free Fall}. They show excellent agreement
-between the theory and the simulation results, even for this very modest resolution.
+between the theory and the simulation results, and this agreement holds even for 
+a more moderate $128^3$ zone simulation.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=1.0]{plots/freefall}
+  \includegraphics[scale=0.45]{plots/freefall}
   \caption{Time evolution of two initially stationary white dwarfs,
     mutually attracted to each other by the gravitational force. The
     horizontal axis gives the separation of the white dwarfs, scaled
@@ -1284,7 +1285,8 @@ between the theory and the simulation results, even for this very modest resolut
     time of the simulation, scaled to the time it would take two point masses
     to collide. The solid curve shows the analytical result,
     calculated from Newtonian mechanics, and the circles show the
-    samples from the time evolution with CASTRO.}
+    samples from the time evolution with CASTRO. For visual clarity, we 
+    show only a small fraction of the timesteps.}
   \label{Fig:Free Fall}
 \end{figure}
 

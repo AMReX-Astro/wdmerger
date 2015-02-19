@@ -1,1145 +1,1337 @@
-%!PS-Adobe-2.0 EPSF-2.0
-%%Title: plot_freefall.eps
-%%Creator: gnuplot 4.4 patchlevel 4
-%%CreationDate: Tue Nov  6 00:41:29 2012
-%%DocumentFonts: (atend)
-%%BoundingBox: 50 50 284 213
+%!PS-Adobe-3.0 EPSF-3.0
+%%Title: plots/freefall.eps
+%%Creator: matplotlib version 1.4.0, http://matplotlib.org/
+%%CreationDate: Thu Feb 19 02:16:06 2015
+%%CASTRO git hash: 0694af6349557a1b8fa302ad9759e31ac0c586d3
+%%BoxLib git hash: 3fcc394f2774d4dd80e974316327665672537eb5
+%%wdmerger git hash: e3b62236d216f9bcb7401a722f976eb2f2f7c420
+%%Orientation: portrait
+%%BoundingBox: 18 180 594 612
 %%EndComments
 %%BeginProlog
-/gnudict 256 dict def
-gnudict begin
-%
-% The following true/false flags may be edited by hand if desired.
-% The unit line width and grayscale image gamma correction may also be changed.
-%
-/Color true def
-/Blacktext false def
-/Solid false def
-/Dashlength 1 def
-/Landscape false def
-/Level1 false def
-/Rounded false def
-/ClipToBoundingBox false def
-/TransparentPatterns false def
-/gnulinewidth 5.000 def
-/userlinewidth gnulinewidth def
-/Gamma 1.0 def
-%
-/vshift -46 def
-/dl1 {
-  10.0 Dashlength mul mul
-  Rounded { currentlinewidth 0.75 mul sub dup 0 le { pop 0.01 } if } if
-} def
-/dl2 {
-  10.0 Dashlength mul mul
-  Rounded { currentlinewidth 0.75 mul add } if
-} def
-/hpt_ 31.5 def
-/vpt_ 31.5 def
-/hpt hpt_ def
-/vpt vpt_ def
-Level1 {} {
-/SDict 10 dict def
-systemdict /pdfmark known not {
-  userdict /pdfmark systemdict /cleartomark get put
-} if
-SDict begin [
-  /Title (plot_freefall.eps)
-  /Subject (gnuplot plot)
-  /Creator (gnuplot 4.4 patchlevel 4)
-  /Author (mkatz)
-%  /Producer (gnuplot)
-%  /Keywords ()
-  /CreationDate (Tue Nov  6 00:41:29 2012)
-  /DOCINFO pdfmark
-end
-} ifelse
-/doclip {
-  ClipToBoundingBox {
-    newpath 50 50 moveto 284 50 lineto 284 213 lineto 50 213 lineto closepath
-    clip
-  } if
-} def
-%
-% Gnuplot Prolog Version 4.4 (August 2010)
-%
-%/SuppressPDFMark true def
-%
-/M {moveto} bind def
-/L {lineto} bind def
-/R {rmoveto} bind def
-/V {rlineto} bind def
-/N {newpath moveto} bind def
-/Z {closepath} bind def
-/C {setrgbcolor} bind def
-/f {rlineto fill} bind def
-/g {setgray} bind def
-/Gshow {show} def   % May be redefined later in the file to support UTF-8
-/vpt2 vpt 2 mul def
-/hpt2 hpt 2 mul def
-/Lshow {currentpoint stroke M 0 vshift R 
-	Blacktext {gsave 0 setgray show grestore} {show} ifelse} def
-/Rshow {currentpoint stroke M dup stringwidth pop neg vshift R
-	Blacktext {gsave 0 setgray show grestore} {show} ifelse} def
-/Cshow {currentpoint stroke M dup stringwidth pop -2 div vshift R 
-	Blacktext {gsave 0 setgray show grestore} {show} ifelse} def
-/UP {dup vpt_ mul /vpt exch def hpt_ mul /hpt exch def
-  /hpt2 hpt 2 mul def /vpt2 vpt 2 mul def} def
-/DL {Color {setrgbcolor Solid {pop []} if 0 setdash}
- {pop pop pop 0 setgray Solid {pop []} if 0 setdash} ifelse} def
-/BL {stroke userlinewidth 2 mul setlinewidth
-	Rounded {1 setlinejoin 1 setlinecap} if} def
-/AL {stroke userlinewidth 2 div setlinewidth
-	Rounded {1 setlinejoin 1 setlinecap} if} def
-/UL {dup gnulinewidth mul /userlinewidth exch def
-	dup 1 lt {pop 1} if 10 mul /udl exch def} def
-/PL {stroke userlinewidth setlinewidth
-	Rounded {1 setlinejoin 1 setlinecap} if} def
-3.8 setmiterlimit
-% Default Line colors
-/LCw {1 1 1} def
-/LCb {0 0 0} def
-/LCa {0 0 0} def
-/LC0 {1 0 0} def
-/LC1 {0 1 0} def
-/LC2 {0 0 1} def
-/LC3 {1 0 1} def
-/LC4 {0 1 1} def
-/LC5 {1 1 0} def
-/LC6 {0 0 0} def
-/LC7 {1 0.3 0} def
-/LC8 {0.5 0.5 0.5} def
-% Default Line Types
-/LTw {PL [] 1 setgray} def
-/LTb {BL [] LCb DL} def
-/LTa {AL [1 udl mul 2 udl mul] 0 setdash LCa setrgbcolor} def
-/LT0 {PL [] LC0 DL} def
-/LT1 {PL [4 dl1 2 dl2] LC1 DL} def
-/LT2 {PL [2 dl1 3 dl2] LC2 DL} def
-/LT3 {PL [1 dl1 1.5 dl2] LC3 DL} def
-/LT4 {PL [6 dl1 2 dl2 1 dl1 2 dl2] LC4 DL} def
-/LT5 {PL [3 dl1 3 dl2 1 dl1 3 dl2] LC5 DL} def
-/LT6 {PL [2 dl1 2 dl2 2 dl1 6 dl2] LC6 DL} def
-/LT7 {PL [1 dl1 2 dl2 6 dl1 2 dl2 1 dl1 2 dl2] LC7 DL} def
-/LT8 {PL [2 dl1 2 dl2 2 dl1 2 dl2 2 dl1 2 dl2 2 dl1 4 dl2] LC8 DL} def
-/Pnt {stroke [] 0 setdash gsave 1 setlinecap M 0 0 V stroke grestore} def
-/Dia {stroke [] 0 setdash 2 copy vpt add M
-  hpt neg vpt neg V hpt vpt neg V
-  hpt vpt V hpt neg vpt V closepath stroke
-  Pnt} def
-/Pls {stroke [] 0 setdash vpt sub M 0 vpt2 V
-  currentpoint stroke M
-  hpt neg vpt neg R hpt2 0 V stroke
- } def
-/Box {stroke [] 0 setdash 2 copy exch hpt sub exch vpt add M
-  0 vpt2 neg V hpt2 0 V 0 vpt2 V
-  hpt2 neg 0 V closepath stroke
-  Pnt} def
-/Crs {stroke [] 0 setdash exch hpt sub exch vpt add M
-  hpt2 vpt2 neg V currentpoint stroke M
-  hpt2 neg 0 R hpt2 vpt2 V stroke} def
-/TriU {stroke [] 0 setdash 2 copy vpt 1.12 mul add M
-  hpt neg vpt -1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt 1.62 mul V closepath stroke
-  Pnt} def
-/Star {2 copy Pls Crs} def
-/BoxF {stroke [] 0 setdash exch hpt sub exch vpt add M
-  0 vpt2 neg V hpt2 0 V 0 vpt2 V
-  hpt2 neg 0 V closepath fill} def
-/TriUF {stroke [] 0 setdash vpt 1.12 mul add M
-  hpt neg vpt -1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt 1.62 mul V closepath fill} def
-/TriD {stroke [] 0 setdash 2 copy vpt 1.12 mul sub M
-  hpt neg vpt 1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt -1.62 mul V closepath stroke
-  Pnt} def
-/TriDF {stroke [] 0 setdash vpt 1.12 mul sub M
-  hpt neg vpt 1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt -1.62 mul V closepath fill} def
-/DiaF {stroke [] 0 setdash vpt add M
-  hpt neg vpt neg V hpt vpt neg V
-  hpt vpt V hpt neg vpt V closepath fill} def
-/Pent {stroke [] 0 setdash 2 copy gsave
-  translate 0 hpt M 4 {72 rotate 0 hpt L} repeat
-  closepath stroke grestore Pnt} def
-/PentF {stroke [] 0 setdash gsave
-  translate 0 hpt M 4 {72 rotate 0 hpt L} repeat
-  closepath fill grestore} def
-/Circle {stroke [] 0 setdash 2 copy
-  hpt 0 360 arc stroke Pnt} def
-/CircleF {stroke [] 0 setdash hpt 0 360 arc fill} def
-/C0 {BL [] 0 setdash 2 copy moveto vpt 90 450 arc} bind def
-/C1 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 0 90 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C2 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 90 180 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C3 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 0 180 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C4 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 180 270 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C5 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 0 90 arc
-	2 copy moveto
-	2 copy vpt 180 270 arc closepath fill
-	vpt 0 360 arc} bind def
-/C6 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 90 270 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C7 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 0 270 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C8 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 270 360 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C9 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 270 450 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C10 {BL [] 0 setdash 2 copy 2 copy moveto vpt 270 360 arc closepath fill
-	2 copy moveto
-	2 copy vpt 90 180 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C11 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 0 180 arc closepath fill
-	2 copy moveto
-	2 copy vpt 270 360 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C12 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 180 360 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C13 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 0 90 arc closepath fill
-	2 copy moveto
-	2 copy vpt 180 360 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/C14 {BL [] 0 setdash 2 copy moveto
-	2 copy vpt 90 360 arc closepath fill
-	vpt 0 360 arc} bind def
-/C15 {BL [] 0 setdash 2 copy vpt 0 360 arc closepath fill
-	vpt 0 360 arc closepath} bind def
-/Rec {newpath 4 2 roll moveto 1 index 0 rlineto 0 exch rlineto
-	neg 0 rlineto closepath} bind def
-/Square {dup Rec} bind def
-/Bsquare {vpt sub exch vpt sub exch vpt2 Square} bind def
-/S0 {BL [] 0 setdash 2 copy moveto 0 vpt rlineto BL Bsquare} bind def
-/S1 {BL [] 0 setdash 2 copy vpt Square fill Bsquare} bind def
-/S2 {BL [] 0 setdash 2 copy exch vpt sub exch vpt Square fill Bsquare} bind def
-/S3 {BL [] 0 setdash 2 copy exch vpt sub exch vpt2 vpt Rec fill Bsquare} bind def
-/S4 {BL [] 0 setdash 2 copy exch vpt sub exch vpt sub vpt Square fill Bsquare} bind def
-/S5 {BL [] 0 setdash 2 copy 2 copy vpt Square fill
-	exch vpt sub exch vpt sub vpt Square fill Bsquare} bind def
-/S6 {BL [] 0 setdash 2 copy exch vpt sub exch vpt sub vpt vpt2 Rec fill Bsquare} bind def
-/S7 {BL [] 0 setdash 2 copy exch vpt sub exch vpt sub vpt vpt2 Rec fill
-	2 copy vpt Square fill Bsquare} bind def
-/S8 {BL [] 0 setdash 2 copy vpt sub vpt Square fill Bsquare} bind def
-/S9 {BL [] 0 setdash 2 copy vpt sub vpt vpt2 Rec fill Bsquare} bind def
-/S10 {BL [] 0 setdash 2 copy vpt sub vpt Square fill 2 copy exch vpt sub exch vpt Square fill
-	Bsquare} bind def
-/S11 {BL [] 0 setdash 2 copy vpt sub vpt Square fill 2 copy exch vpt sub exch vpt2 vpt Rec fill
-	Bsquare} bind def
-/S12 {BL [] 0 setdash 2 copy exch vpt sub exch vpt sub vpt2 vpt Rec fill Bsquare} bind def
-/S13 {BL [] 0 setdash 2 copy exch vpt sub exch vpt sub vpt2 vpt Rec fill
-	2 copy vpt Square fill Bsquare} bind def
-/S14 {BL [] 0 setdash 2 copy exch vpt sub exch vpt sub vpt2 vpt Rec fill
-	2 copy exch vpt sub exch vpt Square fill Bsquare} bind def
-/S15 {BL [] 0 setdash 2 copy Bsquare fill Bsquare} bind def
-/D0 {gsave translate 45 rotate 0 0 S0 stroke grestore} bind def
-/D1 {gsave translate 45 rotate 0 0 S1 stroke grestore} bind def
-/D2 {gsave translate 45 rotate 0 0 S2 stroke grestore} bind def
-/D3 {gsave translate 45 rotate 0 0 S3 stroke grestore} bind def
-/D4 {gsave translate 45 rotate 0 0 S4 stroke grestore} bind def
-/D5 {gsave translate 45 rotate 0 0 S5 stroke grestore} bind def
-/D6 {gsave translate 45 rotate 0 0 S6 stroke grestore} bind def
-/D7 {gsave translate 45 rotate 0 0 S7 stroke grestore} bind def
-/D8 {gsave translate 45 rotate 0 0 S8 stroke grestore} bind def
-/D9 {gsave translate 45 rotate 0 0 S9 stroke grestore} bind def
-/D10 {gsave translate 45 rotate 0 0 S10 stroke grestore} bind def
-/D11 {gsave translate 45 rotate 0 0 S11 stroke grestore} bind def
-/D12 {gsave translate 45 rotate 0 0 S12 stroke grestore} bind def
-/D13 {gsave translate 45 rotate 0 0 S13 stroke grestore} bind def
-/D14 {gsave translate 45 rotate 0 0 S14 stroke grestore} bind def
-/D15 {gsave translate 45 rotate 0 0 S15 stroke grestore} bind def
-/DiaE {stroke [] 0 setdash vpt add M
-  hpt neg vpt neg V hpt vpt neg V
-  hpt vpt V hpt neg vpt V closepath stroke} def
-/BoxE {stroke [] 0 setdash exch hpt sub exch vpt add M
-  0 vpt2 neg V hpt2 0 V 0 vpt2 V
-  hpt2 neg 0 V closepath stroke} def
-/TriUE {stroke [] 0 setdash vpt 1.12 mul add M
-  hpt neg vpt -1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt 1.62 mul V closepath stroke} def
-/TriDE {stroke [] 0 setdash vpt 1.12 mul sub M
-  hpt neg vpt 1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt -1.62 mul V closepath stroke} def
-/PentE {stroke [] 0 setdash gsave
-  translate 0 hpt M 4 {72 rotate 0 hpt L} repeat
-  closepath stroke grestore} def
-/CircE {stroke [] 0 setdash 
-  hpt 0 360 arc stroke} def
-/Opaque {gsave closepath 1 setgray fill grestore 0 setgray closepath} def
-/DiaW {stroke [] 0 setdash vpt add M
-  hpt neg vpt neg V hpt vpt neg V
-  hpt vpt V hpt neg vpt V Opaque stroke} def
-/BoxW {stroke [] 0 setdash exch hpt sub exch vpt add M
-  0 vpt2 neg V hpt2 0 V 0 vpt2 V
-  hpt2 neg 0 V Opaque stroke} def
-/TriUW {stroke [] 0 setdash vpt 1.12 mul add M
-  hpt neg vpt -1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt 1.62 mul V Opaque stroke} def
-/TriDW {stroke [] 0 setdash vpt 1.12 mul sub M
-  hpt neg vpt 1.62 mul V
-  hpt 2 mul 0 V
-  hpt neg vpt -1.62 mul V Opaque stroke} def
-/PentW {stroke [] 0 setdash gsave
-  translate 0 hpt M 4 {72 rotate 0 hpt L} repeat
-  Opaque stroke grestore} def
-/CircW {stroke [] 0 setdash 
-  hpt 0 360 arc Opaque stroke} def
-/BoxFill {gsave Rec 1 setgray fill grestore} def
-/Density {
-  /Fillden exch def
-  currentrgbcolor
-  /ColB exch def /ColG exch def /ColR exch def
-  /ColR ColR Fillden mul Fillden sub 1 add def
-  /ColG ColG Fillden mul Fillden sub 1 add def
-  /ColB ColB Fillden mul Fillden sub 1 add def
-  ColR ColG ColB setrgbcolor} def
-/BoxColFill {gsave Rec PolyFill} def
-/PolyFill {gsave Density fill grestore grestore} def
-/h {rlineto rlineto rlineto gsave closepath fill grestore} bind def
-%
-% PostScript Level 1 Pattern Fill routine for rectangles
-% Usage: x y w h s a XX PatternFill
-%	x,y = lower left corner of box to be filled
-%	w,h = width and height of box
-%	  a = angle in degrees between lines and x-axis
-%	 XX = 0/1 for no/yes cross-hatch
-%
-/PatternFill {gsave /PFa [ 9 2 roll ] def
-  PFa 0 get PFa 2 get 2 div add PFa 1 get PFa 3 get 2 div add translate
-  PFa 2 get -2 div PFa 3 get -2 div PFa 2 get PFa 3 get Rec
-  gsave 1 setgray fill grestore clip
-  currentlinewidth 0.5 mul setlinewidth
-  /PFs PFa 2 get dup mul PFa 3 get dup mul add sqrt def
-  0 0 M PFa 5 get rotate PFs -2 div dup translate
-  0 1 PFs PFa 4 get div 1 add floor cvi
-	{PFa 4 get mul 0 M 0 PFs V} for
-  0 PFa 6 get ne {
-	0 1 PFs PFa 4 get div 1 add floor cvi
-	{PFa 4 get mul 0 2 1 roll M PFs 0 V} for
- } if
-  stroke grestore} def
-%
-/languagelevel where
- {pop languagelevel} {1} ifelse
- 2 lt
-	{/InterpretLevel1 true def}
-	{/InterpretLevel1 Level1 def}
- ifelse
-%
-% PostScript level 2 pattern fill definitions
-%
-/Level2PatternFill {
-/Tile8x8 {/PaintType 2 /PatternType 1 /TilingType 1 /BBox [0 0 8 8] /XStep 8 /YStep 8}
-	bind def
-/KeepColor {currentrgbcolor [/Pattern /DeviceRGB] setcolorspace} bind def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop 0 0 M 8 8 L 0 8 M 8 0 L stroke} 
->> matrix makepattern
-/Pat1 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop 0 0 M 8 8 L 0 8 M 8 0 L stroke
-	0 4 M 4 8 L 8 4 L 4 0 L 0 4 L stroke}
->> matrix makepattern
-/Pat2 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop 0 0 M 0 8 L
-	8 8 L 8 0 L 0 0 L fill}
->> matrix makepattern
-/Pat3 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop -4 8 M 8 -4 L
-	0 12 M 12 0 L stroke}
->> matrix makepattern
-/Pat4 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop -4 0 M 8 12 L
-	0 -4 M 12 8 L stroke}
->> matrix makepattern
-/Pat5 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop -2 8 M 4 -4 L
-	0 12 M 8 -4 L 4 12 M 10 0 L stroke}
->> matrix makepattern
-/Pat6 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop -2 0 M 4 12 L
-	0 -4 M 8 12 L 4 -4 M 10 8 L stroke}
->> matrix makepattern
-/Pat7 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop 8 -2 M -4 4 L
-	12 0 M -4 8 L 12 4 M 0 10 L stroke}
->> matrix makepattern
-/Pat8 exch def
-<< Tile8x8
- /PaintProc {0.5 setlinewidth pop 0 -2 M 12 4 L
-	-4 0 M 12 8 L -4 4 M 8 10 L stroke}
->> matrix makepattern
-/Pat9 exch def
-/Pattern1 {PatternBgnd KeepColor Pat1 setpattern} bind def
-/Pattern2 {PatternBgnd KeepColor Pat2 setpattern} bind def
-/Pattern3 {PatternBgnd KeepColor Pat3 setpattern} bind def
-/Pattern4 {PatternBgnd KeepColor Landscape {Pat5} {Pat4} ifelse setpattern} bind def
-/Pattern5 {PatternBgnd KeepColor Landscape {Pat4} {Pat5} ifelse setpattern} bind def
-/Pattern6 {PatternBgnd KeepColor Landscape {Pat9} {Pat6} ifelse setpattern} bind def
-/Pattern7 {PatternBgnd KeepColor Landscape {Pat8} {Pat7} ifelse setpattern} bind def
-} def
-%
-%
-%End of PostScript Level 2 code
-%
-/PatternBgnd {
-  TransparentPatterns {} {gsave 1 setgray fill grestore} ifelse
-} def
-%
-% Substitute for Level 2 pattern fill codes with
-% grayscale if Level 2 support is not selected.
-%
-/Level1PatternFill {
-/Pattern1 {0.250 Density} bind def
-/Pattern2 {0.500 Density} bind def
-/Pattern3 {0.750 Density} bind def
-/Pattern4 {0.125 Density} bind def
-/Pattern5 {0.375 Density} bind def
-/Pattern6 {0.625 Density} bind def
-/Pattern7 {0.875 Density} bind def
-} def
-%
-% Now test for support of Level 2 code
-%
-Level1 {Level1PatternFill} {Level2PatternFill} ifelse
-%
-/Symbol-Oblique /Symbol findfont [1 0 .167 1 0 0] makefont
-dup length dict begin {1 index /FID eq {pop pop} {def} ifelse} forall
-currentdict end definefont pop
-/MFshow {
-   { dup 5 get 3 ge
-     { 5 get 3 eq {gsave} {grestore} ifelse }
-     {dup dup 0 get findfont exch 1 get scalefont setfont
-     [ currentpoint ] exch dup 2 get 0 exch R dup 5 get 2 ne {dup dup 6
-     get exch 4 get {Gshow} {stringwidth pop 0 R} ifelse }if dup 5 get 0 eq
-     {dup 3 get {2 get neg 0 exch R pop} {pop aload pop M} ifelse} {dup 5
-     get 1 eq {dup 2 get exch dup 3 get exch 6 get stringwidth pop -2 div
-     dup 0 R} {dup 6 get stringwidth pop -2 div 0 R 6 get
-     show 2 index {aload pop M neg 3 -1 roll neg R pop pop} {pop pop pop
-     pop aload pop M} ifelse }ifelse }ifelse }
-     ifelse }
-   forall} def
-/Gswidth {dup type /stringtype eq {stringwidth} {pop (n) stringwidth} ifelse} def
-/MFwidth {0 exch { dup 5 get 3 ge { 5 get 3 eq { 0 } { pop } ifelse }
- {dup 3 get{dup dup 0 get findfont exch 1 get scalefont setfont
-     6 get Gswidth pop add} {pop} ifelse} ifelse} forall} def
-/MLshow { currentpoint stroke M
-  0 exch R
-  Blacktext {gsave 0 setgray MFshow grestore} {MFshow} ifelse } bind def
-/MRshow { currentpoint stroke M
-  exch dup MFwidth neg 3 -1 roll R
-  Blacktext {gsave 0 setgray MFshow grestore} {MFshow} ifelse } bind def
-/MCshow { currentpoint stroke M
-  exch dup MFwidth -2 div 3 -1 roll R
-  Blacktext {gsave 0 setgray MFshow grestore} {MFshow} ifelse } bind def
-/XYsave    { [( ) 1 2 true false 3 ()] } bind def
-/XYrestore { [( ) 1 2 true false 4 ()] } bind def
+/mpldict 8 dict def
+mpldict begin
+/m { moveto } bind def
+/l { lineto } bind def
+/r { rlineto } bind def
+/c { curveto } bind def
+/cl { closepath } bind def
+/box {
+m
+1 index 0 r
+0 exch r
+neg 0 r
+cl
+} bind def
+/clipbox {
+box
+clip
+newpath
+} bind def
+%!PS-Adobe-3.0 Resource-Font
+%%Title: Bitstream Vera Sans
+%%Copyright: Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved.
+%%Creator: Converted from TrueType to type 3 by PPR
+25 dict begin
+/_d{bind def}bind def
+/_m{moveto}_d
+/_l{lineto}_d
+/_cl{closepath eofill}_d
+/_c{curveto}_d
+/_sc{7 -1 roll{setcachedevice}{pop pop pop pop pop pop}ifelse}_d
+/_e{exec}_d
+/FontName /BitstreamVeraSans-Roman def
+/PaintType 0 def
+/FontMatrix[.001 0 0 .001 0 0]def
+/FontBBox[-183 -236 1287 928]def
+/FontType 3 def
+/Encoding [ /space /period /slash /zero /one /two /four /six /eight /D /F /I /T /a /c /e /i /l /m /n /r /s /t ] def
+/FontInfo 10 dict dup begin
+/FamilyName (Bitstream Vera Sans) def
+/FullName (Bitstream Vera Sans) def
+/Notice (Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc.) def
+/Weight (Roman) def
+/Version (Release 1.10) def
+/ItalicAngle 0.0 def
+/isFixedPitch false def
+/UnderlinePosition -213 def
+/UnderlineThickness 143 def
+end readonly def
+/CharStrings 23 dict dup begin
+/space{318 0 0 0 0 0 _sc
+}_d
+/period{318 0 107 0 210 124 _sc
+107 124 _m
+210 124 _l
+210 0 _l
+107 0 _l
+107 124 _l
+_cl}_d
+/slash{337 0 0 -92 337 729 _sc
+254 729 _m
+337 729 _l
+83 -92 _l
+0 -92 _l
+254 729 _l
+_cl}_d
+/zero{636 0 66 -13 570 742 _sc
+318 664 _m
+267 664 229 639 203 589 _c
+177 539 165 464 165 364 _c
+165 264 177 189 203 139 _c
+229 89 267 64 318 64 _c
+369 64 407 89 433 139 _c
+458 189 471 264 471 364 _c
+471 464 458 539 433 589 _c
+407 639 369 664 318 664 _c
+318 742 _m
+399 742 461 709 505 645 _c
+548 580 570 486 570 364 _c
+570 241 548 147 505 83 _c
+461 19 399 -13 318 -13 _c
+236 -13 173 19 130 83 _c
+87 147 66 241 66 364 _c
+66 486 87 580 130 645 _c
+173 709 236 742 318 742 _c
+_cl}_d
+/one{636 0 110 0 544 729 _sc
+124 83 _m
+285 83 _l
+285 639 _l
+110 604 _l
+110 694 _l
+284 729 _l
+383 729 _l
+383 83 _l
+544 83 _l
+544 0 _l
+124 0 _l
+124 83 _l
+_cl}_d
+/two{{636 0 73 0 536 742 _sc
+192 83 _m
+536 83 _l
+536 0 _l
+73 0 _l
+73 83 _l
+110 121 161 173 226 239 _c
+290 304 331 346 348 365 _c
+380 400 402 430 414 455 _c
+426 479 433 504 433 528 _c
+433 566 419 598 392 622 _c
+365 646 330 659 286 659 _c
+255 659 222 653 188 643 _c
+154 632 117 616 78 594 _c
+78 694 _l
+118 710 155 722 189 730 _c
+223 738 255 742 284 742 _c
+}_e{359 742 419 723 464 685 _c
+509 647 532 597 532 534 _c
+532 504 526 475 515 449 _c
+504 422 484 390 454 354 _c
+446 344 420 317 376 272 _c
+332 227 271 164 192 83 _c
+_cl}_e}_d
+/four{636 0 49 0 580 729 _sc
+378 643 _m
+129 254 _l
+378 254 _l
+378 643 _l
+352 729 _m
+476 729 _l
+476 254 _l
+580 254 _l
+580 172 _l
+476 172 _l
+476 0 _l
+378 0 _l
+378 172 _l
+49 172 _l
+49 267 _l
+352 729 _l
+_cl}_d
+/six{{636 0 70 -13 573 742 _sc
+330 404 _m
+286 404 251 388 225 358 _c
+199 328 186 286 186 234 _c
+186 181 199 139 225 109 _c
+251 79 286 64 330 64 _c
+374 64 409 79 435 109 _c
+461 139 474 181 474 234 _c
+474 286 461 328 435 358 _c
+409 388 374 404 330 404 _c
+526 713 _m
+526 623 _l
+501 635 476 644 451 650 _c
+425 656 400 659 376 659 _c
+310 659 260 637 226 593 _c
+}_e{192 549 172 482 168 394 _c
+187 422 211 444 240 459 _c
+269 474 301 482 336 482 _c
+409 482 467 459 509 415 _c
+551 371 573 310 573 234 _c
+573 159 550 99 506 54 _c
+462 9 403 -13 330 -13 _c
+246 -13 181 19 137 83 _c
+92 147 70 241 70 364 _c
+70 479 97 571 152 639 _c
+206 707 280 742 372 742 _c
+396 742 421 739 447 735 _c
+472 730 498 723 526 713 _c
+_cl}_e}_d
+/eight{{636 0 68 -13 568 742 _sc
+318 346 _m
+271 346 234 333 207 308 _c
+180 283 167 249 167 205 _c
+167 161 180 126 207 101 _c
+234 76 271 64 318 64 _c
+364 64 401 76 428 102 _c
+455 127 469 161 469 205 _c
+469 249 455 283 429 308 _c
+402 333 365 346 318 346 _c
+219 388 _m
+177 398 144 418 120 447 _c
+96 476 85 511 85 553 _c
+85 611 105 657 147 691 _c
+188 725 245 742 318 742 _c
+}_e{390 742 447 725 489 691 _c
+530 657 551 611 551 553 _c
+551 511 539 476 515 447 _c
+491 418 459 398 417 388 _c
+464 377 501 355 528 323 _c
+554 291 568 251 568 205 _c
+568 134 546 80 503 43 _c
+459 5 398 -13 318 -13 _c
+237 -13 175 5 132 43 _c
+89 80 68 134 68 205 _c
+68 251 81 291 108 323 _c
+134 355 171 377 219 388 _c
+183 544 _m
+183 506 194 476 218 455 _c
+}_e{242 434 275 424 318 424 _c
+360 424 393 434 417 455 _c
+441 476 453 506 453 544 _c
+453 582 441 611 417 632 _c
+393 653 360 664 318 664 _c
+275 664 242 653 218 632 _c
+194 611 183 582 183 544 _c
+_cl}_e}_d
+/D{770 0 98 0 711 729 _sc
+197 648 _m
+197 81 _l
+316 81 _l
+416 81 490 103 537 149 _c
+583 195 607 267 607 365 _c
+607 463 583 534 537 580 _c
+490 625 416 648 316 648 _c
+197 648 _l
+98 729 _m
+301 729 _l
+442 729 546 699 612 641 _c
+678 582 711 490 711 365 _c
+711 239 677 147 611 88 _c
+545 29 441 0 301 0 _c
+98 0 _l
+98 729 _l
+_cl}_d
+/F{575 0 98 0 517 729 _sc
+98 729 _m
+517 729 _l
+517 646 _l
+197 646 _l
+197 431 _l
+486 431 _l
+486 348 _l
+197 348 _l
+197 0 _l
+98 0 _l
+98 729 _l
+_cl}_d
+/I{295 0 98 0 197 729 _sc
+98 729 _m
+197 729 _l
+197 0 _l
+98 0 _l
+98 729 _l
+_cl}_d
+/T{611 0 -2 0 614 729 _sc
+-2 729 _m
+614 729 _l
+614 646 _l
+355 646 _l
+355 0 _l
+256 0 _l
+256 646 _l
+-2 646 _l
+-2 729 _l
+_cl}_d
+/a{{613 0 60 -13 522 560 _sc
+343 275 _m
+270 275 220 266 192 250 _c
+164 233 150 205 150 165 _c
+150 133 160 107 181 89 _c
+202 70 231 61 267 61 _c
+317 61 357 78 387 114 _c
+417 149 432 196 432 255 _c
+432 275 _l
+343 275 _l
+522 312 _m
+522 0 _l
+432 0 _l
+432 83 _l
+411 49 385 25 355 10 _c
+325 -5 287 -13 243 -13 _c
+187 -13 142 2 109 33 _c
+76 64 60 106 60 159 _c
+}_e{60 220 80 266 122 298 _c
+163 329 224 345 306 345 _c
+432 345 _l
+432 354 _l
+432 395 418 427 391 450 _c
+364 472 326 484 277 484 _c
+245 484 215 480 185 472 _c
+155 464 127 453 100 439 _c
+100 522 _l
+132 534 164 544 195 550 _c
+226 556 256 560 286 560 _c
+365 560 424 539 463 498 _c
+502 457 522 395 522 312 _c
+_cl}_e}_d
+/c{{550 0 55 -13 488 560 _sc
+488 526 _m
+488 442 _l
+462 456 437 466 411 473 _c
+385 480 360 484 334 484 _c
+276 484 230 465 198 428 _c
+166 391 150 339 150 273 _c
+150 206 166 154 198 117 _c
+230 80 276 62 334 62 _c
+360 62 385 65 411 72 _c
+437 79 462 90 488 104 _c
+488 21 _l
+462 9 436 0 410 -5 _c
+383 -10 354 -13 324 -13 _c
+242 -13 176 12 128 64 _c
+}_e{79 115 55 185 55 273 _c
+55 362 79 432 128 483 _c
+177 534 244 560 330 560 _c
+358 560 385 557 411 551 _c
+437 545 463 537 488 526 _c
+_cl}_e}_d
+/e{{615 0 55 -13 562 560 _sc
+562 296 _m
+562 252 _l
+149 252 _l
+153 190 171 142 205 110 _c
+238 78 284 62 344 62 _c
+378 62 412 66 444 74 _c
+476 82 509 95 541 113 _c
+541 28 _l
+509 14 476 3 442 -3 _c
+408 -9 373 -13 339 -13 _c
+251 -13 182 12 131 62 _c
+80 112 55 181 55 268 _c
+55 357 79 428 127 481 _c
+175 533 241 560 323 560 _c
+397 560 455 536 498 489 _c
+}_e{540 441 562 377 562 296 _c
+472 322 _m
+471 371 457 410 431 440 _c
+404 469 368 484 324 484 _c
+274 484 234 469 204 441 _c
+174 413 156 373 152 322 _c
+472 322 _l
+_cl}_e}_d
+/i{278 0 94 0 184 760 _sc
+94 547 _m
+184 547 _l
+184 0 _l
+94 0 _l
+94 547 _l
+94 760 _m
+184 760 _l
+184 646 _l
+94 646 _l
+94 760 _l
+_cl}_d
+/l{278 0 94 0 184 760 _sc
+94 760 _m
+184 760 _l
+184 0 _l
+94 0 _l
+94 760 _l
+_cl}_d
+/m{{974 0 91 0 889 560 _sc
+520 442 _m
+542 482 569 511 600 531 _c
+631 550 668 560 711 560 _c
+767 560 811 540 842 500 _c
+873 460 889 403 889 330 _c
+889 0 _l
+799 0 _l
+799 327 _l
+799 379 789 418 771 444 _c
+752 469 724 482 686 482 _c
+639 482 602 466 575 435 _c
+548 404 535 362 535 309 _c
+535 0 _l
+445 0 _l
+445 327 _l
+445 379 435 418 417 444 _c
+398 469 369 482 331 482 _c
+}_e{285 482 248 466 221 435 _c
+194 404 181 362 181 309 _c
+181 0 _l
+91 0 _l
+91 547 _l
+181 547 _l
+181 462 _l
+201 495 226 520 255 536 _c
+283 552 317 560 357 560 _c
+397 560 430 550 458 530 _c
+486 510 506 480 520 442 _c
+_cl}_e}_d
+/n{634 0 91 0 549 560 _sc
+549 330 _m
+549 0 _l
+459 0 _l
+459 327 _l
+459 379 448 417 428 443 _c
+408 469 378 482 338 482 _c
+289 482 251 466 223 435 _c
+195 404 181 362 181 309 _c
+181 0 _l
+91 0 _l
+91 547 _l
+181 547 _l
+181 462 _l
+202 494 227 519 257 535 _c
+286 551 320 560 358 560 _c
+420 560 468 540 500 501 _c
+532 462 549 405 549 330 _c
+_cl}_d
+/r{411 0 91 0 411 560 _sc
+411 463 _m
+401 469 390 473 378 476 _c
+366 478 353 480 339 480 _c
+288 480 249 463 222 430 _c
+194 397 181 350 181 288 _c
+181 0 _l
+91 0 _l
+91 547 _l
+181 547 _l
+181 462 _l
+199 495 224 520 254 536 _c
+284 552 321 560 365 560 _c
+371 560 378 559 386 559 _c
+393 558 401 557 411 555 _c
+411 463 _l
+_cl}_d
+/s{{521 0 54 -13 472 560 _sc
+443 531 _m
+443 446 _l
+417 458 391 468 364 475 _c
+336 481 308 485 279 485 _c
+234 485 200 478 178 464 _c
+156 450 145 430 145 403 _c
+145 382 153 366 169 354 _c
+185 342 217 330 265 320 _c
+296 313 _l
+360 299 405 279 432 255 _c
+458 230 472 195 472 151 _c
+472 100 452 60 412 31 _c
+372 1 316 -13 246 -13 _c
+216 -13 186 -10 154 -5 _c
+}_e{122 0 89 8 54 20 _c
+54 113 _l
+87 95 120 82 152 74 _c
+184 65 216 61 248 61 _c
+290 61 323 68 346 82 _c
+368 96 380 117 380 144 _c
+380 168 371 187 355 200 _c
+339 213 303 226 247 238 _c
+216 245 _l
+160 257 119 275 95 299 _c
+70 323 58 356 58 399 _c
+58 450 76 490 112 518 _c
+148 546 200 560 268 560 _c
+301 560 332 557 362 552 _c
+391 547 418 540 443 531 _c
+}_e{_cl}_e}_d
+/t{392 0 27 0 368 702 _sc
+183 702 _m
+183 547 _l
+368 547 _l
+368 477 _l
+183 477 _l
+183 180 _l
+183 135 189 106 201 94 _c
+213 81 238 75 276 75 _c
+368 75 _l
+368 0 _l
+276 0 _l
+206 0 158 13 132 39 _c
+106 65 93 112 93 180 _c
+93 477 _l
+27 477 _l
+27 547 _l
+93 547 _l
+93 702 _l
+183 702 _l
+_cl}_d
+end readonly def
+
+/BuildGlyph
+ {exch begin
+ CharStrings exch
+ 2 copy known not{pop /.notdef}if
+ true 3 1 roll get exec
+ end}_d
+
+/BuildChar {
+ 1 index /Encoding get exch get
+ 1 index /BuildGlyph get exec
+}_d
+
+FontName currentdict end definefont pop
 end
 %%EndProlog
-gnudict begin
+mpldict begin
+18 180 translate
+576 432 0 0 clipbox
 gsave
-doclip
-50 50 translate
-0.050 0.050 scale
-0 setgray
+0 0 m
+576 0 l
+576 432 l
+0 432 l
+cl
+1.000 setgray
+fill
+grestore
+gsave
+72 43.2 m
+518.4 43.2 l
+518.4 388.8 l
+72 388.8 l
+cl
+1.000 setgray
+fill
+grestore
+0.500 setlinewidth
+1 setlinejoin
+0 setlinecap
+[] 0 setdash
+0.000 setgray
+gsave
+446.4 345.6 72 43.2 clipbox
+/o {
+gsave
 newpath
-(Helvetica) findfont 140 scalefont setfont
-1.000 UL
-LTb
-686 588 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 588 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 842 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 842 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.1)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 1097 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 1097 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.2)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 1351 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 1351 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.3)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 1606 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 1606 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.4)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 1860 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 1860 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.5)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 2115 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 2115 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.6)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 2369 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 2369 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.7)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 2624 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 2624 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.8)]
-] -46.7 MRshow
-1.000 UL
-LTb
-686 2878 M
-63 0 V
-3678 0 R
--63 0 V
-stroke
-602 2878 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.9)]
-] -46.7 MRshow
-1.000 UL
-LTb
-4427 588 M
-0 63 V
-0 2456 R
-0 -63 V
-stroke
-4427 448 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0)]
-] -46.7 MCshow
-1.000 UL
-LTb
-3679 588 M
-0 63 V
-0 2456 R
-0 -63 V
-stroke
-3679 448 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.2)]
-] -46.7 MCshow
-1.000 UL
-LTb
-2931 588 M
-0 63 V
-0 2456 R
-0 -63 V
-stroke
-2931 448 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.4)]
-] -46.7 MCshow
-1.000 UL
-LTb
-2182 588 M
-0 63 V
-0 2456 R
-0 -63 V
-stroke
-2182 448 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.6)]
-] -46.7 MCshow
-1.000 UL
-LTb
-1434 588 M
-0 63 V
-0 2456 R
-0 -63 V
-stroke
-1434 448 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 0.8)]
-] -46.7 MCshow
-1.000 UL
-LTb
-686 588 M
-0 63 V
-0 2456 R
-0 -63 V
-stroke
-686 448 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( 1)]
-] -46.7 MCshow
-1.000 UL
-LTb
-1.000 UL
-LTb
-686 3107 N
-686 588 L
-3741 0 V
-0 2519 V
--3741 0 V
-Z stroke
-LCb setrgbcolor
-112 1847 M
-currentpoint gsave translate -270 rotate 0 0 moveto
-[ [(Helvetica) 140.0 0.0 true true 0 ( t / t)]
-[(Helvetica) 112.0 -42.0 true true 0 (ff)]
-[(Helvetica) 140.0 0.0 true true 0 ( )]
-] -32.7 MCshow
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 -6 m
+1.59122 -6 3.11748 -5.3678 4.24264 -4.24264 c
+5.3678 -3.11748 6 -1.59122 6 0 c
+6 1.59122 5.3678 3.11748 4.24264 4.24264 c
+3.11748 5.3678 1.59122 6 0 6 c
+-1.59122 6 -3.11748 5.3678 -4.24264 4.24264 c
+-5.3678 3.11748 -6 1.59122 -6 0 c
+-6 -1.59122 -5.3678 -3.11748 -4.24264 -4.24264 c
+-3.11748 -5.3678 -1.59122 -6 0 -6 c
+cl
+gsave
+0.000 0.000 1.000 setrgbcolor
+fill
 grestore
-LTb
-LCb setrgbcolor
-2556 238 M
-[ [(Helvetica) 140.0 0.0 true true 0 ( r / r)]
-[(Helvetica) 112.0 -42.0 true true 0 (0)]
-[(Helvetica) 140.0 0.0 true true 0 ( )]
-] -32.7 MCshow
-LTb
-1.000 UP
-1.000 UL
-LTb
-% Begin plot #1
-3.000 UL
-LT0
-0.00 0.00 1.00 C LCb setrgbcolor
-3776 861 M
-[ [(Helvetica) 140.0 0.0 true true 0 (Analytical Solution)]
-] -46.7 MRshow
-LT0
-0.00 0.00 1.00 C 3860 861 M
-399 0 V
-4125 3107 M
--7 -1 V
--10 -1 V
--9 -1 V
--10 -2 V
--9 -1 V
--9 -1 V
--10 -2 V
--9 -1 V
--9 -1 V
--10 -2 V
--9 -1 V
--10 -1 V
--9 -2 V
--9 -1 V
--10 -2 V
--9 -1 V
--9 -2 V
--10 -1 V
--9 -2 V
--10 -2 V
--9 -1 V
--9 -2 V
--10 -1 V
--9 -2 V
--9 -2 V
--10 -1 V
--9 -2 V
--10 -2 V
--9 -1 V
--9 -2 V
--10 -2 V
--9 -2 V
--9 -1 V
--10 -2 V
--9 -2 V
--10 -2 V
--9 -2 V
--9 -2 V
--10 -1 V
--9 -2 V
--9 -2 V
--10 -2 V
--9 -2 V
--10 -2 V
--9 -2 V
--9 -2 V
--10 -2 V
--9 -2 V
--9 -2 V
--10 -2 V
--9 -2 V
--10 -2 V
--9 -2 V
--9 -3 V
--10 -2 V
--9 -2 V
--9 -2 V
--10 -2 V
--9 -2 V
--10 -3 V
--9 -2 V
--9 -2 V
--10 -2 V
--9 -3 V
--9 -2 V
--10 -2 V
--9 -3 V
--10 -2 V
--9 -2 V
--9 -3 V
--10 -2 V
--9 -2 V
--9 -3 V
--10 -2 V
--9 -3 V
--10 -2 V
--9 -3 V
--9 -2 V
--10 -3 V
--9 -2 V
--9 -3 V
--10 -2 V
--9 -3 V
--10 -2 V
--9 -3 V
--9 -3 V
--10 -2 V
--9 -3 V
--9 -3 V
--10 -2 V
--9 -3 V
--10 -3 V
--9 -2 V
--9 -3 V
--10 -3 V
--9 -3 V
--9 -3 V
--10 -2 V
--9 -3 V
--10 -3 V
--9 -3 V
--9 -3 V
-stroke 3171 2896 M
--10 -3 V
--9 -3 V
--10 -3 V
--9 -2 V
--9 -3 V
--10 -3 V
--9 -3 V
--9 -3 V
--10 -3 V
--9 -3 V
--10 -4 V
--9 -3 V
--9 -3 V
--10 -3 V
--9 -3 V
--9 -3 V
--10 -3 V
--9 -3 V
--10 -4 V
--9 -3 V
--9 -3 V
--10 -3 V
--9 -4 V
--9 -3 V
--10 -3 V
--9 -3 V
--10 -4 V
--9 -3 V
--9 -4 V
--10 -3 V
--9 -3 V
--9 -4 V
--10 -3 V
--9 -4 V
--10 -3 V
--9 -4 V
--9 -3 V
--10 -4 V
--9 -3 V
--9 -4 V
--10 -3 V
--9 -4 V
--10 -3 V
--9 -4 V
--9 -4 V
--10 -3 V
--9 -4 V
--9 -4 V
--10 -4 V
--9 -3 V
--10 -4 V
--9 -4 V
--9 -4 V
--10 -3 V
--9 -4 V
--9 -4 V
--10 -4 V
--9 -4 V
--10 -4 V
--9 -4 V
--9 -4 V
--10 -4 V
--9 -4 V
--9 -4 V
--10 -4 V
--9 -4 V
--10 -4 V
--9 -4 V
--9 -4 V
--10 -4 V
--9 -4 V
--9 -5 V
--10 -4 V
--9 -4 V
--10 -4 V
--9 -5 V
--9 -4 V
--10 -4 V
--9 -5 V
--9 -4 V
--10 -4 V
--9 -5 V
--10 -4 V
--9 -5 V
--9 -4 V
--10 -5 V
--9 -4 V
--9 -5 V
--10 -4 V
--9 -5 V
--10 -4 V
--9 -5 V
--9 -5 V
--10 -4 V
--9 -5 V
--9 -5 V
--10 -4 V
--9 -5 V
--10 -5 V
--9 -5 V
--9 -5 V
--10 -5 V
--9 -4 V
--9 -5 V
-stroke 2196 2498 M
--10 -5 V
--9 -5 V
--10 -5 V
--9 -5 V
--9 -5 V
--10 -5 V
--9 -6 V
--9 -5 V
--10 -5 V
--9 -5 V
--10 -5 V
--9 -6 V
--9 -5 V
--10 -5 V
--9 -5 V
--9 -6 V
--10 -5 V
--9 -6 V
--10 -5 V
--9 -5 V
--9 -6 V
--10 -6 V
--9 -5 V
--9 -6 V
--10 -5 V
--9 -6 V
--10 -6 V
--9 -5 V
--9 -6 V
--10 -6 V
--9 -6 V
--10 -6 V
--9 -6 V
--9 -5 V
--10 -6 V
--9 -6 V
--9 -6 V
--10 -7 V
--9 -6 V
--10 -6 V
--9 -6 V
--9 -6 V
--10 -6 V
--9 -7 V
--9 -6 V
--10 -6 V
--9 -7 V
--10 -6 V
--9 -7 V
--9 -6 V
--10 -7 V
--9 -6 V
--9 -7 V
--10 -7 V
--9 -6 V
--10 -7 V
--9 -7 V
--9 -7 V
--10 -7 V
--9 -7 V
--9 -7 V
--10 -7 V
--9 -7 V
--10 -7 V
--9 -7 V
--9 -7 V
--10 -8 V
--9 -7 V
--9 -7 V
--10 -8 V
--9 -7 V
--10 -8 V
--9 -7 V
--9 -8 V
--10 -8 V
--9 -8 V
--9 -7 V
--10 -8 V
--9 -8 V
--10 -8 V
--9 -8 V
--9 -9 V
--10 -8 V
--9 -8 V
--9 -8 V
--10 -9 V
--9 -8 V
--10 -9 V
--9 -8 V
--9 -9 V
--10 -9 V
--9 -9 V
--9 -9 V
--10 -9 V
--9 -9 V
--10 -9 V
--9 -9 V
--9 -9 V
--10 -10 V
--9 -9 V
--9 -10 V
--10 -10 V
--9 -9 V
--10 -10 V
-stroke 1220 1783 M
--9 -10 V
--9 -10 V
--10 -11 V
--9 -10 V
--9 -10 V
--10 -11 V
--9 -11 V
--10 -10 V
--9 -11 V
--9 -11 V
--10 -12 V
--9 -11 V
--9 -11 V
--10 -12 V
--9 -12 V
--10 -12 V
--9 -12 V
--9 -12 V
--10 -12 V
--9 -13 V
--9 -13 V
--10 -13 V
--9 -13 V
--10 -13 V
--9 -14 V
--9 -14 V
--10 -14 V
--9 -14 V
--9 -15 V
--10 -15 V
--9 -15 V
--10 -16 V
--9 -15 V
--9 -17 V
--10 -16 V
--9 -17 V
--9 -18 V
--10 -18 V
--9 -18 V
--10 -19 V
--9 -20 V
--9 -20 V
--10 -21 V
--9 -21 V
--9 -23 V
--10 -24 V
--9 -24 V
--10 -26 V
--9 -28 V
--9 -29 V
-742 984 L
--9 -34 V
--9 -38 V
-714 869 L
--9 -52 V
-695 750 L
-686 588 L
-% End plot #1
-% Begin plot #2
-1.000 UP
-stroke
-1.500 UL
-LT1
-LCb setrgbcolor
-3776 721 M
-[ [(Helvetica) 140.0 0.0 true true 0 (CASTRO Solution)]
-] -46.7 MRshow
-LT1
-686 588 Circle
-686 614 Circle
-687 642 Circle
-689 673 Circle
-691 708 Circle
-695 746 Circle
-700 787 Circle
-707 830 Circle
-715 870 Circle
-723 910 Circle
-733 949 Circle
-743 987 Circle
-756 1029 Circle
-771 1072 Circle
-786 1115 Circle
-803 1157 Circle
-821 1199 Circle
-840 1240 Circle
-860 1281 Circle
-881 1320 Circle
-901 1357 Circle
-923 1393 Circle
-943 1426 Circle
-966 1461 Circle
-990 1498 Circle
-1016 1534 Circle
-1040 1567 Circle
-1065 1600 Circle
-1092 1634 Circle
-1121 1669 Circle
-1153 1707 Circle
-1187 1745 Circle
-1222 1782 Circle
-1258 1820 Circle
-1296 1858 Circle
-1333 1894 Circle
-1372 1930 Circle
-1413 1967 Circle
-1457 2005 Circle
-1499 2040 Circle
-1542 2074 Circle
-1585 2108 Circle
-1630 2142 Circle
-1675 2175 Circle
-1722 2209 Circle
-1769 2241 Circle
-1819 2274 Circle
-1869 2306 Circle
-1921 2339 Circle
-1974 2371 Circle
-2022 2399 Circle
-2069 2426 Circle
-2117 2453 Circle
-2170 2482 Circle
-2230 2513 Circle
-2295 2546 Circle
-2356 2576 Circle
-2420 2607 Circle
-2486 2637 Circle
-2559 2669 Circle
-2631 2699 Circle
-2707 2730 Circle
-2789 2762 Circle
-2875 2794 Circle
-2974 2830 Circle
-3088 2867 Circle
-3215 2907 Circle
-3357 2948 Circle
-3509 2987 Circle
-3672 3026 Circle
-3845 3064 Circle
-4019 3101 Circle
-4059 721 Circle
-% End plot #2
-1.000 UL
-LTb
-686 3107 N
-686 588 L
-3741 0 V
-0 2519 V
--3741 0 V
-Z stroke
-1.000 UP
-1.000 UL
-LTb
 stroke
 grestore
+} bind def
+72 388.8 o
+72 388.798 o
+72 388.796 o
+72 388.793 o
+72 388.789 o
+72 388.783 o
+72 388.777 o
+72 388.768 o
+72 388.757 o
+72 388.744 o
+72.0001 388.726 o
+72.0001 388.703 o
+72.0001 388.673 o
+72.0002 388.636 o
+72.0002 388.588 o
+72.0003 388.526 o
+72.0005 388.446 o
+72.0007 388.344 o
+72.0011 388.214 o
+72.0017 388.046 o
+72.0026 387.832 o
+72.0041 387.556 o
+72.0065 387.203 o
+72.0103 386.75 o
+72.0166 386.169 o
+72.0268 385.424 o
+72.0437 384.469 o
+72.0715 383.244 o
+72.1174 381.673 o
+72.1931 379.658 o
+72.3175 377.074 o
+72.5222 373.76 o
+72.8594 369.51 o
+73.4145 364.06 o
+74.3278 357.071 o
+75.8248 348.138 o
+77.681 339.276 o
+80.1239 329.64 o
+83.4841 318.564 o
+87.2818 307.895 o
+91.2955 298.036 o
+96.1841 287.378 o
+101.456 277.097 o
+106.469 268.198 o
+111.645 259.722 o
+117.463 250.887 o
+123.629 242.187 o
+130.279 233.438 o
+136.848 225.344 o
+144.186 216.852 o
+152.133 208.216 o
+160.771 199.403 o
+168.965 191.524 o
+176.73 184.441 o
+186.133 176.311 o
+194.569 169.392 o
+202.555 163.137 o
+210.123 157.455 o
+216.562 152.795 o
+224.356 147.356 o
+233.152 141.467 o
+243.94 134.578 o
+253.455 128.789 o
+264.11 122.602 o
+273.97 117.14 o
+284.497 111.572 o
+294.659 106.442 o
+306.1 100.94 o
+317.878 95.5652 o
+330.407 90.156 o
+342.843 85.0895 o
+352.473 81.3649 o
+grestore
+4.000 setlinewidth
+2 setlinecap
+0.000 0.500 0.000 setrgbcolor
+gsave
+446.4 345.6 72 43.2 clipbox
+518.4 43.2 m
+513.936 43.3471 l
+506.794 43.8198 l
+498.312 44.6195 l
+488.938 45.7381 l
+479.117 47.1352 l
+468.85 48.8166 l
+458.136 50.7935 l
+446.976 53.0811 l
+435.816 55.5922 l
+424.21 58.4343 l
+412.603 61.5077 l
+400.997 64.8103 l
+389.39 68.3423 l
+377.784 72.1052 l
+366.178 76.1019 l
+354.571 80.3367 l
+342.965 84.8154 l
+331.805 89.3584 l
+320.645 94.141 l
+309.485 99.1723 l
+298.771 104.246 l
+288.058 109.569 l
+277.79 114.917 l
+267.523 120.517 l
+257.702 126.125 l
+247.882 131.993 l
+238.507 137.851 l
+229.133 143.979 l
+220.205 150.084 l
+211.723 156.144 l
+203.242 162.477 l
+195.206 168.751 l
+187.171 175.314 l
+179.582 181.802 l
+172.44 188.19 l
+165.298 194.878 l
+158.602 201.449 l
+151.906 208.343 l
+145.656 215.103 l
+139.853 221.695 l
+134.05 228.628 l
+128.693 235.371 l
+123.336 242.49 l
+118.426 249.394 l
+113.962 256.033 l
+109.498 263.075 l
+105.48 269.816 l
+101.462 277.01 l
+97.8912 283.86 l
+94.32 291.232 l
+91.1952 298.211 l
+88.5168 304.683 l
+85.8384 311.727 l
+83.6064 318.156 l
+81.3744 325.257 l
+79.5888 331.59 l
+77.8032 338.738 l
+76.464 344.87 l
+75.1248 352.027 l
+74.232 357.711 l
+73.3392 364.711 l
+72.8928 369.128 l
+72.4464 374.887 l
+72.4464 374.887 l
+stroke
+grestore
+1.000 setlinewidth
+0 setlinejoin
+0.000 setgray
+gsave
+72 388.8 m
+518.4 388.8 l
+stroke
+grestore
+gsave
+518.4 43.2 m
+518.4 388.8 l
+stroke
+grestore
+gsave
+72 43.2 m
+518.4 43.2 l
+stroke
+grestore
+gsave
+72 43.2 m
+72 388.8 l
+stroke
+grestore
+0.500 setlinewidth
+1 setlinejoin
+0 setlinecap
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 43.2 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 -4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 388.8 o
+grestore
+/BitstreamVeraSans-Roman findfont
+16.000 scalefont
+setfont
+gsave
+506.728125 27.043750 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /zero glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+429.12 43.2 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 -4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+429.12 388.8 o
+grestore
+gsave
+417.721563 27.043750 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /two glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+339.84 43.2 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 -4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+339.84 388.8 o
+grestore
+gsave
+328.090000 27.043750 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /four glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+250.56 43.2 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 -4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+250.56 388.8 o
+grestore
+gsave
+238.864687 27.043750 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /six glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+161.28 43.2 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 -4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+161.28 388.8 o
+grestore
+gsave
+149.623750 27.043750 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /eight glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 43.2 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+0 -4 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 388.8 o
+grestore
+gsave
+60.679688 27.043750 translate
+0.000000 rotate
+0.000000 0.000000 m /one glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /zero glyphshow
+grestore
+/BitstreamVeraSans-Roman findfont
+20.000 scalefont
+setfont
+gsave
+167.684375 3.512500 translate
+0.000000 rotate
+0.000000 0.000000 m /D glyphshow
+15.400391 0.000000 m /i glyphshow
+20.957031 0.000000 m /s glyphshow
+31.376953 0.000000 m /t glyphshow
+39.218750 0.000000 m /a glyphshow
+51.474609 0.000000 m /n glyphshow
+64.150391 0.000000 m /c glyphshow
+75.146484 0.000000 m /e glyphshow
+87.451172 0.000000 m /space glyphshow
+93.808594 0.000000 m /slash glyphshow
+100.546875 0.000000 m /space glyphshow
+106.904297 0.000000 m /I glyphshow
+112.802734 0.000000 m /n glyphshow
+125.478516 0.000000 m /i glyphshow
+131.035156 0.000000 m /t glyphshow
+138.876953 0.000000 m /i glyphshow
+144.433594 0.000000 m /a glyphshow
+156.689453 0.000000 m /l glyphshow
+162.246094 0.000000 m /space glyphshow
+168.603516 0.000000 m /D glyphshow
+184.003906 0.000000 m /i glyphshow
+189.560547 0.000000 m /s glyphshow
+199.980469 0.000000 m /t glyphshow
+207.822266 0.000000 m /a glyphshow
+220.078125 0.000000 m /n glyphshow
+232.753906 0.000000 m /c glyphshow
+243.750000 0.000000 m /e glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 388.8 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+-4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 388.8 o
+grestore
+/BitstreamVeraSans-Roman findfont
+16.000 scalefont
+setfont
+gsave
+44.656250 384.385938 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /zero glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 319.68 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+-4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 319.68 o
+grestore
+gsave
+45.203125 315.265938 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /two glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 250.56 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+-4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 250.56 o
+grestore
+gsave
+44.500000 246.145938 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /four glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 181.44 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+-4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 181.44 o
+grestore
+gsave
+44.609375 177.025937 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /six glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 112.32 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+-4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 112.32 o
+grestore
+gsave
+44.687500 107.905937 translate
+0.000000 rotate
+0.000000 0.000000 m /zero glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /eight glyphshow
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+72 43.2 o
+grestore
+gsave
+/o {
+gsave
+newpath
+translate
+0.5 setlinewidth
+1 setlinejoin
+0 setlinecap
+0 0 m
+-4 0 l
+gsave
+0.000 setgray
+fill
+grestore
+stroke
+grestore
+} bind def
+518.4 43.2 o
+grestore
+gsave
+45.359375 38.785937 translate
+0.000000 rotate
+0.000000 0.000000 m /one glyphshow
+10.179688 0.000000 m /period glyphshow
+15.265625 0.000000 m /zero glyphshow
+grestore
+/BitstreamVeraSans-Roman findfont
+20.000 scalefont
+setfont
+gsave
+35.343750 88.023438 translate
+90.000000 rotate
+0.000000 0.000000 m /T glyphshow
+11.591797 0.000000 m /i glyphshow
+17.148438 0.000000 m /m glyphshow
+36.630859 0.000000 m /e glyphshow
+48.935547 0.000000 m /space glyphshow
+55.292969 0.000000 m /slash glyphshow
+62.031250 0.000000 m /space glyphshow
+68.388672 0.000000 m /F glyphshow
+78.392578 0.000000 m /r glyphshow
+86.115234 0.000000 m /e glyphshow
+98.419922 0.000000 m /e glyphshow
+110.724609 0.000000 m /space glyphshow
+117.082031 0.000000 m /F glyphshow
+126.710938 0.000000 m /a glyphshow
+138.966797 0.000000 m /l glyphshow
+144.523438 0.000000 m /l glyphshow
+150.080078 0.000000 m /space glyphshow
+156.437500 0.000000 m /T glyphshow
+168.029297 0.000000 m /i glyphshow
+173.585938 0.000000 m /m glyphshow
+193.068359 0.000000 m /e glyphshow
+205.373047 0.000000 m /s glyphshow
+215.792969 0.000000 m /c glyphshow
+226.789062 0.000000 m /a glyphshow
+239.044922 0.000000 m /l glyphshow
+244.601562 0.000000 m /e glyphshow
+grestore
+
 end
 showpage
-%%Trailer
-%%DocumentFonts: Helvetica
