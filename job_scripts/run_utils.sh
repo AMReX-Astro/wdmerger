@@ -53,14 +53,20 @@ function get_last_checkpoint {
     fi
 
     # Doing a search this way will treat first any checkpoint files 
-    # with six digits, and then will fall back to ones with five digits.
+    # with seven digits, and then will fall back to ones with six and then five digits.
     # On recent versions of GNU sort, one can simplify this with sort -V.
 
-    checkpoint=$(find $dir -type d -name "*chk??????" | sort | tail -1)
+    checkpoint=$(find $dir -type d -name "*chk???????" | sort | tail -1)
 
     if [ -z $checkpoint ]; then
 
-        checkpoint=$(find $dir -type d -name "*chk?????"  | sort | tail -1)
+	checkpoint=$(find $dir -type d -name "*chk??????" | sort | tail -1)
+
+	if [ -z $checkpoint ]; then
+
+            checkpoint=$(find $dir -type d -name "*chk?????"  | sort | tail -1)
+
+	fi
 
     fi
 
