@@ -22,6 +22,16 @@ def get_wdmerger_git_commit_hash():
 
 
 #
+# Return the CASTRO directory on the current machine, based on your environment variables.
+#
+
+def get_castro_dir():
+    CASTRO_DIR = os.getenv('CASTRO_DIR')
+    return CASTRO_DIR
+
+
+
+#
 # Given a plotfile directory, return the CASTRO and BoxLib git commit hashes.
 #
 
