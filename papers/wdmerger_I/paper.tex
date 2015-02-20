@@ -868,9 +868,10 @@ onto our grid, and used CASTRO to calculate the gravitational
 potential $\Phi$ of this setup. We ensure that $R$ is an integer
 multiple of the grid spacing, and the center of the sphere is at the
 origin. The problem domain for our simulations is $[-1.6, 1.6]^3$, and
-we take $R = 0.5$ and $\rho = 10^3$. The zones with $r > R$ are filled
-with an ambient material of very low density. We run this problem at
-multiple resolutions corresponding to jumps by a factor of two. For
+we take $R = 1.0 \text{cm}$ and $\rho = 10^3\ \text{g cm}^{-3}$. 
+The zones with $r > R$ are filled with an ambient material of very low density 
+$\rho = 10^{-8}\ \text{g cm}^{-3}$. We run this problem at multiple 
+resolutions corresponding to jumps by a factor of two. For
 comparison, at each grid point we evaluate the analytical potential of
 a uniform sphere, which can be easily determined using Gauss' law:
 \begin{equation}
@@ -882,39 +883,55 @@ normalizing it by the $L^2$ norm of the analytical solution:
 \begin{equation}
   \text{Error} = \frac{\|\Phi - \Phi_{\text{sphere}}\|_2}{\|\Phi_{\text{sphere}}\|_2}.
 \end{equation}
+We define the order of convergence $p$ between two simulations with a jump 
+in resolution of integer factor $m > 1$ as
+\begin{equation}
+  p = \text{log}_{m}\left(\frac{\text{Error}_{\text{low}}}{\text{Error}_{\text{high}}}\right).
+\end{equation}
+Here $\text{Error}_{\text{low}}$ is the $L^2$ error at the lower resolution 
+and $\text{Error}_{\text{high}}$ is the $L^2$ error at the higher resolution.
+We expect the error to converge at $p = 2$ given the discretization we choose. 
+For all simulations in this section and for all our main science simulations,
+we choose a relative error tolerance of $10^{-10}$ to be satisfied in the multigrid solve.
 
 \begin{figure}
-  \label{fig:gravity_convergence}
+  \centering
+  \includegraphics[scale=0.45]{plots/phi_comparison}
+  \caption{Comparison of the CASTRO gravitational potential to the analytical solution for: 
+    a sphere of uniform density; the same sphere, but with the potential normalized using the 
+    actual amount of mass on the grid instead of the mass of a perfect sphere; and, a 
+    cube of uniform density. Plotted also is a notional curve whose slope represents
+    perfect second order convergence.\label{fig:gravity_convergence}}
 \end{figure}
 
 The results of this test are plotted in Figure
-\ref{fig:gravity_convergence}. We find that convergence is actually
-substantially better than second-order, and that the difference is
-largest at low resolutions. The explanation for this is that we are
-attempting to model a spherical object on a rectangular grid. At very
-low resolution, the object does not look very spherical. As the
-resolution is increased, the total amount of mass on the grid, as well
-as its location, will change as the sphere fills out. This means we
-are combining the true accuracy bonus from increased resolution with
-the artificial accuracy bonus from getting closer to solving the
-problem we are supposed to be solving.
+\ref{fig:gravity_convergence}. We find that at low resolution 
+convergence is actually substantially better than second-order. The 
+explanation for this is that we are attempting to model a spherical 
+object on a rectangular grid. At very low resolution, the object does 
+not look very spherical. As the resolution is increased, the total 
+amount of mass on the grid, as well as its location, will change 
+as the sphere fills out. This means we are combining the true accuracy 
+bonus from increased resolution with the artificial accuracy bonus 
+from getting closer to solving the problem we are supposed to be solving. 
+On the other hand, at the highest resolution shown the error slightly increases.
 
 We can solve one of these two sources of error by evaluating Equation
 \ref{eq:sphere-analytical} with a mass $M$ that corresponds to the
 amount of mass actually on the grid, defined as the sum of the density
-multiplied by the volume of each cell for all cells that have greater
-than ambient density. The resolution study for this case is also
+multiplied by the volume of each cell for all cells whose density is 
+greater than ambient. The resolution study for this case is also
 plotted in Figure \ref{fig:gravity_convergence}. We still obtain
-convergence better than second-order, indicating that we still have
-the geometrical problem.
+convergence slightly better than second-order, indicating that we 
+still have the geometrical problem of the mass distribution changing.
 
-The only way to fully eliminate this effect is to test a problem that
+The only way to fully eliminate this effect is to use a test problem that
 does not change with resolution. The obvious companion is a cube of
 uniform density $\rho$, where now $R$ is half of the side length of
 the cube. At each resolution we use the same $R$ as for the sphere,
 which ensures that the cube always fills exactly the same fraction of
 the domain and thus has the same mass, so the only improvement comes
-from better sampling at higher resolution. The potential for this
+from better sampling at higher resolution. The gravitational potential for this
 object has been worked out analytically by \citet{waldvogel:1976} (see
 also a similar result in \citealt{hummer:1996}). The potential is in
 Equation 15 of that paper, though the last term is missing a factor of
@@ -929,17 +946,17 @@ the cube is at the origin, the potential is
 \end{align}
 where $x_0 = R + x$, $x_1 = R - x$, $y_0 = R + y$, $y_1 = R-y$, $z_0 =
 R+z$, $z_1 = R-z$, and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. In
-\texttt{FORTRAN} and \texttt{C}, the inverse hyperbolic tangent is
+\texttt{Fortran} and \texttt{C}, the inverse hyperbolic tangent is
 \texttt{atanh} and the inverse tangent is \texttt{atan} (\textit{not}
 \texttt{atan2}). This formula is valid both inside and outside the
-cube. The normalized $L^2$ error norm for this problem is also shown
-in Figure \ref{fig:gravity_convergence}, and indeed we see
-near-perfect second-order scaling.
+cube. The normalized $L^2$ error for this problem is also shown
+in Figure \ref{fig:gravity_convergence}, and only for this problem 
+do we obtain perfect second-order scaling at all resolutions.
 
 The main lesson here is that in a convergence study, it is important
 to ensure that the physical problem does not change with
 resolution. Since in the case of spherical objects on rectangular
-grids the effect is to artificially boost convergence with resolution,
+grids the effect may be to artificially boost convergence with resolution,
 in a simulation with spherical objects like stars one can envision a
 scenario of being fooled into believing apparently good convergence
 results that are simply a convolution of artificially high
@@ -947,15 +964,6 @@ gravitational convergence and poor convergence in the hydrodynamics. A
 convergence study in this case is only fully valid if there is reason
 to be confident that this effect is negligible compared to other
 factors.
-
-Another factor that may affect convergence testing is easily seen in
-Figure \ref{fig:gravity_convergence}, where at the highest resolution
-the error flattens out. This occurs because of a limitation in the
-accuracy of the multigrid solver. For problems of this size we find
-empirically that the multigrid solver does not converge for error
-tolerances smaller than about $10^{-11}$, which enforces a lower limit
-on the total error. This is also something to be aware of in assessing
-convergence for our full simulations.
 
 \subsection{Rotation}\label{sec:rotation}
 
