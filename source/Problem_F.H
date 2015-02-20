@@ -11,8 +11,10 @@ BL_FORT_PROC_DECL(WDCOM,wdcom)
      BL_FORT_FAB_ARG(zmom),
      const int lo[], const int hi[],
      const Real dx[], const Real* time,
-     Real com_p[], Real com_s[],
-     Real vel_p[], Real vel_s[],
+     Real* com_p_x, Real* com_p_y, Real* com_p_z,
+     Real* com_s_x, Real* com_s_y, Real* com_s_z,
+     Real* vel_p_x, Real* vel_p_y, Real* vel_p_z,
+     Real* vel_s_x, Real* vel_s_y, Real* vel_s_z,
      Real* mass_p, Real* mass_s);
 
 BL_FORT_PROC_DECL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)

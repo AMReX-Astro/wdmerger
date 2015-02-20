@@ -72,7 +72,10 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
                  ymom, y_l1, y_l2, y_l3, y_h1, y_h2, y_h3, &
                  zmom, z_l1, z_l2, z_l3, z_h1, z_h2, z_h3, &
                  lo, hi, dx, time, &
-                 com_p, com_s, vel_p, vel_s, &
+                 com_p_x, com_p_y, com_p_z, & 
+                 com_s_x, com_s_y, com_s_z, &
+                 vel_p_x, vel_p_y, vel_p_z, &
+                 vel_s_x, vel_s_y, vel_s_z, &
                  mass_p, mass_s)
 
   use bl_constants_module, only: HALF, ZERO
@@ -92,8 +95,10 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
   double precision, intent(in   ) :: zmom(z_l1:z_h1,z_l2:z_h2,z_l3:z_h3)
   integer         , intent(in   ) :: lo(3), hi(3)
   double precision, intent(in   ) :: dx(3), time
-  double precision, intent(inout) :: com_p(3), com_s(3)
-  double precision, intent(inout) :: vel_p(3), vel_s(3)
+  double precision, intent(inout) :: com_p_x, com_p_y, com_p_z
+  double precision, intent(inout) :: com_s_x, com_s_y, com_s_z
+  double precision, intent(inout) :: vel_p_x, vel_p_y, vel_p_z
+  double precision, intent(inout) :: vel_s_x, vel_s_y, vel_s_z
   double precision, intent(inout) :: mass_p, mass_s
 
   integer          :: i, j, k
@@ -127,25 +132,25 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
 
               mass_p = mass_p + dm
 
-              com_p(1) = com_p(1) + dm * x
-              com_p(2) = com_p(2) + dm * y
-              com_p(3) = com_p(3) + dm * z
+              com_p_x = com_p_x + dm * x
+              com_p_y = com_p_y + dm * y
+              com_p_z = com_p_z + dm * z
 
-              vel_p(1) = vel_p(1) + xmom(i,j,k) * dV
-              vel_p(2) = vel_p(2) + ymom(i,j,k) * dV
-              vel_p(3) = vel_p(3) + zmom(i,j,k) * dV              
+              vel_p_x = vel_p_x + xmom(i,j,k) * dV
+              vel_p_y = vel_p_y + ymom(i,j,k) * dV
+              vel_p_z = vel_p_z + zmom(i,j,k) * dV              
 
            else if (r_S < r_P) then
 
               mass_s = mass_s + dm
 
-              com_s(1) = com_s(1) + dm * x
-              com_s(2) = com_s(2) + dm * y
-              com_s(3) = com_s(3) + dm * z
+              com_s_x = com_s_x + dm * x
+              com_s_y = com_s_y + dm * y
+              com_s_z = com_s_z + dm * z
 
-              vel_s(1) = vel_s(1) + xmom(i,j,k) * dV
-              vel_s(2) = vel_s(2) + ymom(i,j,k) * dV
-              vel_s(3) = vel_s(3) + zmom(i,j,k) * dV
+              vel_s_x = vel_s_x + xmom(i,j,k) * dV
+              vel_s_y = vel_s_y + ymom(i,j,k) * dV
+              vel_s_z = vel_s_z + zmom(i,j,k) * dV
 
            endif
 

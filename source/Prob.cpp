@@ -38,10 +38,25 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 	MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
     }
 
+    Real com_p_x = 0.0;
+    Real com_p_y = 0.0;
+    Real com_p_z = 0.0;
+    Real com_s_x = 0.0;
+    Real com_s_y = 0.0;
+    Real com_s_z = 0.0;
+    Real vel_p_x = 0.0;
+    Real vel_p_y = 0.0;
+    Real vel_p_z = 0.0;
+    Real vel_s_x = 0.0;
+    Real vel_s_y = 0.0;
+    Real vel_s_z = 0.0;
+    Real mp      = 0.0;
+    Real ms      = 0.0;
+
 #ifdef _OPENMP
-#pragma omp parallel reduction(+:com_p[0],com_p[1],com_p[2],com_s[0],com_s[1],com_s[2]) \
-                     reduction(+:vel_p[0],vel_p[1],vel_p[2],vel_s[0],vel_s[1],vel_s[2]) \
-                     reduction(+:mass_p, mass_s)
+#pragma omp parallel reduction(+:com_p_x,com_p_y,com_p_z,com_s_x,com_s_y,com_s_z) \
+                     reduction(+:vel_p_x,vel_p_y,vel_p_z,vel_s_x,vel_s_y,vel_s_z) \
+                     reduction(+:mp, ms)
 #endif    
     for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi)
     {
@@ -60,9 +75,11 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 	     BL_TO_FORTRAN(fabymom),
 	     BL_TO_FORTRAN(fabzmom),
 	     lo,hi,dx,&time,
-	     com_p, com_s,
-	     vel_p, vel_s,
-	     &mass_p, &mass_s);
+	     &com_p_x, &com_p_y, &com_p_z,
+	     &com_s_x, &com_s_y, &com_s_z,
+	     &vel_p_x, &vel_p_y, &vel_p_z,
+	     &vel_s_x, &vel_s_y, &vel_s_z,
+	     &mp, &ms);
     }
 
     delete mfrho;
@@ -70,13 +87,28 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
     delete mfymom;
     delete mfzmom;
 
-    ParallelDescriptor::ReduceRealSum(mass_p);
-    ParallelDescriptor::ReduceRealSum(mass_s);
+    com_p[0] = com_p_x;
+    com_p[1] = com_p_y;
+    com_p[2] = com_p_z;
+    com_s[0] = com_s_x;
+    com_s[1] = com_s_y;
+    com_s[2] = com_s_z;
+    vel_p[0] = vel_p_x;
+    vel_p[1] = vel_p_y;
+    vel_p[2] = vel_p_z;
+    vel_s[0] = vel_s_x;
+    vel_s[1] = vel_s_y;
+    vel_s[2] = vel_s_z;
+    mass_p   = mp;
+    mass_s   = ms;
 
     ParallelDescriptor::ReduceRealSum(com_p,3);
     ParallelDescriptor::ReduceRealSum(com_s,3);
     ParallelDescriptor::ReduceRealSum(vel_p,3);
     ParallelDescriptor::ReduceRealSum(vel_s,3);
+
+    ParallelDescriptor::ReduceRealSum(mass_p);
+    ParallelDescriptor::ReduceRealSum(mass_s);
 
 }
 
@@ -108,8 +140,11 @@ void Castro::volInBoundary (Real               time,
 	MultiFab::Multiply(*mf, *mask, 0, 0, 1, 0);
     }
 
+    Real vp = 0.0;
+    Real vs = 0.0;
+
 #ifdef _OPENMP
-#pragma omp parallel reduction(+:sum)
+#pragma omp parallel reduction(+:vp,vs)
 #endif    
     for (MFIter mfi(*mf,true); mfi.isValid(); ++mfi)
     {
@@ -123,11 +158,14 @@ void Castro::volInBoundary (Real               time,
 
 	BL_FORT_PROC_CALL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
 	                  (BL_TO_FORTRAN(fab),lo,hi,dx,com_p,com_s,&sp,&ss,&rho_cutoff);
-        vol_p += sp;
-	vol_s += ss;
+        vp += sp;
+	vs += ss;
     }
 
     delete mf;
+
+    vol_p = vp;
+    vol_s = vs;
 
     ParallelDescriptor::ReduceRealSum(vol_p);
     ParallelDescriptor::ReduceRealSum(vol_s);
