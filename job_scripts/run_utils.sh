@@ -238,10 +238,16 @@ function archive_all {
 
   # Move all completed plotfiles and checkpoints to the output
   # directory, and add them to the list of things to archive.
+  # It is possible that a plotfile or checkpoint of the same name
+  # will be duplicated if we started from an earlier checkpoint;
+  # in this case, delete the old one and replace it with the new.
 
   for file in $pltlist
   do
       if [ -e $file/Header ]; then
+	  if [ -e output/$file ]; then
+	      rm -rf output/$file
+	  fi
 	  mv $file $dir/output/
 	  f=$(basename $file)
 	  archivelist=$archivelist" "$f
@@ -251,6 +257,9 @@ function archive_all {
   for file in $chklist
   do
       if [ -e $file/Header ]; then
+	  if [ -e output/$file ]; then
+	      rm -rf output/$file
+	  fi
 	  mv $file $dir/output/
 	  f=$(basename $file)
 	  archivelist=$archivelist" "$f
