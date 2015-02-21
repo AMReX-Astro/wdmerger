@@ -121,8 +121,6 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 // at zones that are within twice the original radius of the white dwarf.
 
 void Castro::volInBoundary (Real               time,
-                	    Real*              com_p,
-			    Real*              com_s,
 			    Real&              vol_p,
 			    Real&              vol_s,
                             Real               rho_cutoff)
@@ -157,7 +155,7 @@ void Castro::volInBoundary (Real               time,
         const int* hi   = box.hiVect();
 
 	BL_FORT_PROC_CALL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
-	                  (BL_TO_FORTRAN(fab),lo,hi,dx,com_p,com_s,&sp,&ss,&rho_cutoff);
+	                  (BL_TO_FORTRAN(fab),lo,hi,dx,&sp,&ss,&rho_cutoff);
         vp += sp;
 	vs += ss;
     }

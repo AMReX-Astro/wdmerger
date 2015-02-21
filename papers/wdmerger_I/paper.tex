@@ -1167,8 +1167,26 @@ rather than explicitly calculating the sum of kinetic and internal, as this is
 the quantity that should be explicitly conserved), 
 the total angular momentum, and the center of mass of the system. 
 For stellar calculations, we separately record diagnostic 
-information about the stars, including their centers of mass, 
-and the volume contained within each star.
+information about the stars. Our strategy for tracking their 
+locations is as follows: at the beginning of the calculation, we store the 
+physical center of mass $\mathbf{x}_{\text{COM}}$ of the stars as determined 
+by Kepler's third law. We also store the space velocity $\mathbf{v}_{\text{COM}}$ 
+of the stars. Then, at each new time step we make a preliminary guess for their 
+location by updating the location using the old velocity, 
+$\mathbf{x}_{\text{COM}} \rightarrow \mathbf{x}_{\text{COM}} + \mathbf{v}_{\text{COM}} \Delta t$.
+We then refine our guess for the location and velocity of each star by computing a
+location-weighted sum of the mass and velocity over the computational domain. 
+To do this, we need a cutoff for determining what counts as part of the primary 
+and what counts as part of the secondary. For this we can use the formula provided by 
+\citet{eggleton:1983} for the effective Roche radius $r_L$ of a star in a binary,
+\begin{equation}
+  \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.
+\end{equation}
+In this formula we can use $q = M_S / M_P$ for obtaining the Roche radius of the secondary,
+and use the inverse value of $q$ to obtain the Roche radius of the primary.
+To a reasonable approximation, all material within the effective Roche radius
+of each star can be counted as belonging to that star. From this we obtain the mass
+of each star as well as its location and velocity.
 
 The software used to generate the test problems in this paper
 (as well as the manuscript itself),

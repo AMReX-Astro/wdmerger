@@ -21,6 +21,8 @@ module probdata_module
 
   integer :: npts_model
 
+  ! Initial binary orbit characteristics
+
   double precision :: mass_P_initial, mass_S_initial
   double precision :: central_density_P, central_density_S
   double precision :: radius_P_initial, radius_S_initial
@@ -67,6 +69,14 @@ module probdata_module
 
   ! Are we doing a single star simulation?
   logical :: single_star
+
+  ! Stores the center of mass location of the stars throughout the run
+  double precision :: com_P(3), com_S(3)
+  double precision :: vel_P(3), vel_S(3)
+  double precision :: mass_P,   mass_S
+
+  ! Stores the effective Roche radii
+  double precision :: roche_rad_P, roche_rad_S
 
 contains
 
@@ -260,7 +270,8 @@ contains
   subroutine binary_setup
 
     use bl_constants_module, only: ZERO, ONE
-    use meth_params_module, only: rot_period
+    use fundamental_constants_module, only: M_solar
+    use meth_params_module, only: do_rotation, rot_period
     use initial_model_module, only: init_1d
     use prob_params_module, only: center
     use meth_params_module, only: rot_axis
@@ -283,6 +294,15 @@ contains
     npts_model = 1024
 
     dx = 1.0d6
+
+    com_P = center
+    com_S = center
+
+    vel_P = ZERO
+    vel_S = ZERO
+
+    mass_P = mass_P_initial * M_solar
+    mass_S = mass_S_initial * M_solar
 
     ! Allocate arrays to hold the stellar models
 
@@ -326,6 +346,9 @@ contains
        center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
        center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
+       com_P = center_P_initial
+       com_S = center_S_initial
+
        ! Direction of initial motion -- essentially it's the position axis
        ! that is not star axis and that is also not the rotation axis.
 
@@ -340,6 +363,11 @@ contains
           if (star_axis .eq. 3) initial_motion_dir = 2
        else
           call bl_error("Error: probdata module: invalid choice for rot_axis.")
+       endif
+
+       if ( (do_rotation .ne. 1) .and. inertial ) then
+          vel_P(initial_motion_dir) = - orbital_speed_P
+          vel_S(initial_motion_dir) =   orbital_speed_S
        endif
 
     endif
@@ -399,68 +427,6 @@ contains
 
 
 
-  ! Predict the locations of the primary and secondary stars at a given time assuming circular orbits.
-
-  subroutine get_star_locations(time, loc_P, loc_S)
-
-    use bl_error_module, only: bl_error
-    use bl_constants_module, only: ZERO, TWO, FOUR, THIRD, M_PI
-    use fundamental_constants_module, only: Gconst, M_solar
-    use prob_params_module, only: center
-    use meth_params_module, only: do_rotation, rot_period
-
-    implicit none
-
-    double precision, intent (in   ) :: time
-    double precision, intent (inout) :: loc_P(3), loc_S(3)
-
-    double precision :: theta
-
-    ! Start off by assuming the stars are at the center of the grid.
-    ! If we're only doing a single star simulation, then we can just stop here.
-
-    loc_P = center
-    loc_S = center
-
-    if (single_star) return
-
-    ! If rotation is enabled, then the stars should be at their initial locations.
-    ! Otherwise, use the properties of a circular orbit to predict the locations.
-    ! If we're in the inertial reference frame *and* we aren't giving the stars
-    ! an initial kick, then the stars will be in free-fall toward each other;
-    ! however, we can still use the stationary approximation for the purposes of 
-    ! computing the stellar centers of mass because the stars will only move 
-    ! along their original axis.
-
-    theta = ZERO
-
-    if (do_rotation .ne. 1 .and. inertial) then
-
-       theta = TWO * M_PI * time / rot_period
-
-    endif
-
-    loc_P(star_axis) = loc_P(star_axis) - a_P_initial * cos(theta)
-    loc_S(star_axis) = loc_S(star_axis) + a_S_initial * cos(theta)
-
-    loc_P(initial_motion_dir) = loc_P(initial_motion_dir) - a_P_initial * sin(theta)
-    loc_S(initial_motion_dir) = loc_S(initial_motion_dir) + a_S_initial * sin(theta)
-
-    ! If the system has any uniform motion, add it to our prediction.
-
-    loc_P(1) = loc_P(1) + bulk_velx * time
-    loc_S(1) = loc_S(1) + bulk_velx * time
-
-    loc_P(2) = loc_P(2) + bulk_vely * time
-    loc_S(2) = loc_S(2) + bulk_vely * time
-
-    loc_P(3) = loc_P(3) + bulk_velz * time
-    loc_S(3) = loc_S(3) + bulk_velz * time
-
-  end subroutine get_star_locations
-
-
-
   ! This routine checks to see if the primary mass is actually larger
   ! than the secondary mass, and switches them if not.
 
@@ -486,8 +452,5 @@ contains
     endif
 
   end subroutine ensure_primary_mass_larger
-
+  
 end module probdata_module
-
-
-
