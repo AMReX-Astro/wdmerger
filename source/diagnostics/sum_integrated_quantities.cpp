@@ -251,10 +251,32 @@ Castro::sum_integrated_quantities ()
 
 #ifdef merger
 
+    // Compute the center of mass locations and velocities for the primary and secondary.
+    // We'll start by predicting the current locations of their centers by taking the 
+    // old locations and updating them using the old velocities and the time passed 
+    // since the last update. Send it back to Fortran, then clear it out so we can update
+    // using the full calculation.
+
+    BL_FORT_PROC_CALL(GET_STAR_LOCATIONS,get_star_locations)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);   
+
+    for ( int i = 0; i <= BL_SPACEDIM; i++ ) {
+      com_p[i] += vel_p[i] * dt * sum_interval;
+      com_s[i] += vel_s[i] * dt * sum_interval;
+    }
+
+    BL_FORT_PROC_CALL(SET_STAR_LOCATIONS,set_star_locations)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);   
+
+    for ( int i = 0; i <= BL_SPACEDIM; i++ ) {
+      com_p[i] = 0.0;
+      com_s[i] = 0.0;
+      mass_p   = 0.0;
+      mass_s   = 0.0;
+    }
+
     for (int lev = 0; lev <= finest_level; lev++)
     {
-
-      // Compute the center of mass locations and velocities for the primary and secondary.
 
       getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
 
@@ -307,11 +329,16 @@ Castro::sum_integrated_quantities ()
       }
     } 
 
+    // Send this information back to the Fortran probdata module
+
+    BL_FORT_PROC_CALL(SET_STAR_LOCATIONS,set_star_locations)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+
     // Compute effective radii of stars at various density cutoffs
 
     for (int lev = 0; lev <= finest_level; lev++)
         for (int i = 0; i <= 6; ++i) {
-	    getLevel(lev).volInBoundary(time, com_p, com_s, lev_vol_p[i], lev_vol_s[i], pow(10.0,i));
+	    getLevel(lev).volInBoundary(time, lev_vol_p[i], lev_vol_s[i], pow(10.0,i));
 	    vol_p[i] += lev_vol_p[i];
 	    vol_s[i] += lev_vol_s[i];
 	}
