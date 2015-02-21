@@ -80,7 +80,7 @@ castro.grav_source_type ?= 4		      	   # How to include the gravity source term
 castro.rot_source_type ?= 4                        # How to include the rotation source term in the hydro equations
 
 ############################################################################################
-# Thermodyanmics
+# Thermodynamics
 ############################################################################################
 
 castro.small_temp ?= 1.e5                      	   # Minimum allowable temperature (K)
