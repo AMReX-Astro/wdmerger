@@ -156,8 +156,6 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
 
   call get_roche_radii(q, roche_rad_S, roche_rad_P)
 
-  print *, q, mass_S, mass_P, com_P, com_S, roche_rad_S, roche_rad_P, wd_dist
-
   roche_rad_P = roche_rad_P * wd_dist
   roche_rad_S = roche_rad_S * wd_dist
 
