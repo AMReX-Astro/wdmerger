@@ -1,3 +1,0 @@
-f90EXE_sources += probdata.f90     initial_model.f90
-
-

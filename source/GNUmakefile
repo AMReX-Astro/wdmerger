@@ -1,10 +1,9 @@
 SHELL=/bin/bash
 
-merger_makefile=$(WDMERGER_HOME)/source/GNUmakefile
-local_makefile=castro_makefile
+# Default inputs and probin names
+
 inputs=inputs
 probin=probin
-run_utils=$(WDMERGER_HOME)/job_scripts/run_utils.sh
 
 # Bring in the CASTRO inputs
 
@@ -38,9 +37,11 @@ USE_ROTATION ?= TRUE
 UNAMEN := $(shell uname -n)
 
 ifeq ($(findstring titan, $(UNAMEN)), titan)
+	# OLCF Titan
 	COMP ?= Cray
 	FCOMP ?= Cray
 else ifeq ($(findstring h2o, $(UNAMEN)), h2o)
+	# NCSA Blue Waters
 	COMP ?= Cray
 	FCOMP ?= Cray
 else
@@ -55,45 +56,27 @@ EOS_dir     := helmeos
 Network_dir := general_null
 GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/triple_alpha_plus_o.net 
 
-diagpack := $(WDMERGER_HOME)/source/diagnostics/Make.package
-diaglocs := $(WDMERGER_HOME)/source/diagnostics/
-
-modspack := $(WDMERGER_HOME)/source/modules/Make.package
-modslocs := $(WDMERGER_HOME)/source/modules/
-
-srcepack := $(WDMERGER_HOME)/source/Make.package
-srcelocs := $(WDMERGER_HOME)/source/
-
-Bpack   := $(srcepack) $(modspack) $(diagpack)
-Blocs   := $(srcelocs) $(modslocs) $(diaglocs)
-
 # Determine where our source files are coming from
 # based on the relevant file in the source directory.
 # For building the full program, this will be irrelevant
 # and we will simply compile everything in the 
 # WDMERGER_HOME source directory.
 
-root_locs = $(WDMERGER_HOME)/source/
-root_pack = $(WDMERGER_HOME)/source/Make.package
-
-mods_locs = $(WDMERGER_HOME)/source/modules/
-mods_pack = $(WDMERGER_HOME)/source/modules/Make.package
-
 diag_locs = $(WDMERGER_HOME)/source/diagnostics/
 diag_pack = $(WDMERGER_HOME)/source/diagnostics/Make.package
 
-curr_locs = ../source/
-curr_pack = ../source/Make.package
+root_locs = $(WDMERGER_HOME)/source/
+root_pack = $(WDMERGER_HOME)/source/Make.package
+
+prob_locs = ../source/
+prob_pack = ../source/Make.package
 
 ifneq ($(wildcard ../source/full_source),)
-	Blocs := $(curr_locs) $(diag_locs)
-	Bpack := $(curr_pack) $(diag_pack)
-else ifneq ($(wildcard ../source/modules_only),)
-	Blocs := $(curr_locs) $(mods_locs) $(diag_locs)
-	Bpack := $(curr_pack) $(mods_pack) $(diag_pack)
+	Blocs := $(prob_locs) $(diag_locs)
+	Bpack := $(prob_pack) $(diag_pack)
 else
-	Blocs := $(root_locs) $(mods_locs) $(diag_locs)
-	Bpack := $(root_pack) $(mods_pack) $(diag_pack)
+	Blocs := $(root_locs) $(diag_locs)
+	Bpack := $(root_pack) $(diag_pack)
 endif
 
 BUILD_GIT_NAME := wdmerger
