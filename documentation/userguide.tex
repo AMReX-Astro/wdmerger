@@ -9,6 +9,28 @@
 
 \usepackage{natbib}
 
+\usepackage[usenames]{color}
+
+% For inserting code snippets;
+% use the lstlisting environment to access.
+% emacs doesn't parse $'s in code sections 
+% propertly, so that is why I have sprinkled 
+% some %$'s through the code. The coloring 
+% on the environment itself is still broken though.
+\usepackage{listings}
+
+\definecolor{gray}{rgb}       {0.8,0.8,0.8}
+\definecolor{light-blue}{rgb} {0.8,0.8,1.0}
+\definecolor{light-green}{rgb}{0.8,1.0,0.8}
+\definecolor{light-red}{rgb}  {1.0,0.9,0.9}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  frame=shadowbox, 
+  rulesepcolor=\color{gray},                                                             
+  backgroundcolor=\color{white}
+}
+
 % chapter title styles
 \usepackage[Sonny]{fncychap}
 \ChNameVar{\LARGE}
@@ -164,7 +186,15 @@ In addition, you should include in your \texttt{PYTHONPATH} the location of the
 
 \texttt{export PYTHONPATH=\$PYTHONPATH:\$WDMERGER\_HOME/analysis}
 
-\chapter{Code Structure}
+A note on machine compatibility: this software is currently only developed and tested on
+machines that run Linux and come with the common GNU flavors of most pieces of software
+like \texttt{sed}. We do not guarantee that this software will work out of the box on OS X
+or other Unix derivatives; however, we generally try to avoid GNU-specific options, so that 
+trying to run this software on OS X will not be too painful. With that being said, this 
+software does heavily rely on \texttt{bash} and at present there are no plans to maintain
+compatibility with any other shell.
+
+\chapter{Directory Layout}
 
 There are several top-level directories in the \texttt{wdmerger} project. Here we will describe
 the contents of each. There are also a \texttt{LICENSE.txt} file containing the software license,
@@ -175,7 +205,7 @@ on how to use and run this software.
 
 The \texttt{source} directory contains all of the Fortran routines needed to build a CASTRO 
 executable file. It is not normally built directly, but you can type \texttt{make} in that directory
-to build a vanilla executable built with the default settings.
+to build a vanilla executable with the default settings.
 
 The \texttt{analysis} directory contains the Python analysis scripts used for analyzing output
 data (both in BoxLib and plaintext format). 
@@ -183,11 +213,142 @@ data (both in BoxLib and plaintext format).
 The \texttt{tests} directory includes problem setups that are used for testing 
 the hydrodynamics code CASTRO and exercises a wide range of its capabilities.
 
-The \texttt{job\_scripts} directory contains utilities that are used for building and running
+The \texttt{job\_scripts} directory contains utilities that are used for running
 problem setups on various machine architectures.
 
 The \texttt{papers} directory includes the LaTeX source code for the journal articles
 that are being submitted as a result of this project.
+
+\chapter{How to Build a Problem}
+
+This chapter describes the necessary steps you need to take to build your own problem setup,
+and describes the underlying code that facilitates the job submission. If you are interested in
+doing white dwarf mergers and want to use the default settings, read Section \ref{sec:standard_problems}.
+If you are interested in setting up a different problem but using this software's job submission 
+system, you can do so; read Section \ref{sec:non-standard_problems} for more information.
+
+\section{Standard Problems}
+\label{sec:standard_problems}
+
+At a minimum, your working directory needs a \texttt{compile/} subdirectory with a \texttt{makefile}
+in it, and some \texttt{bash} script that you run to submit the jobs. If you want to build 
+with the default settings, then your makefile needs only to have the line:
+\begin{lstlisting}
+  include $(WDMERGER_HOME)/source/GNUmakefile
+\end{lstlisting}%$
+This includes the main makefile from the \texttt{source/} directory in \texttt{wdmerger}. 
+The main makefile sets all of our build options (compiler, number of space dimensions, 
+equation of state, etc.) and then includes the CASTRO makefile, which then runs as normal.
+If you want to adjust the build options, then simply add a line before this include. As an 
+example, if you want to build using a gamma-law equation of state, set:
+\begin{lstlisting}
+  EOS_dir = gamma_law_general/
+
+  include $(WDMERGER_HOME)/source/GNUmakefile 
+\end{lstlisting}%$
+
+The \texttt{make} variables in the main makefile are all set conditionally, so as long 
+as you set your variable before including the main makefile, it will be built as you expect.
+
+Once your makefile is setup, you can simply type \texttt{make} (or \texttt{make -j} 
+to use more processors and speed up the operation) at the command line. 
+If you're using Cray compilers on a supercomputer this will take several minutes;
+with GNU compilers it should be quick. When everything is compiled, if it was
+successful you should have an executable that looks like \texttt{Castro3d.Linux.Cray.Cray.MPI.ex}
+in the \texttt{compile} directory.
+
+Now \texttt{cd} up one level, and use your favorite text editor to create a simple 
+\texttt{bash} script, which for example purposes we will call \texttt{run.sh}.
+The first thing we should do is tell the script where to look to pull in 
+all the helper functions we'll need to execute a job:
+
+\begin{lstlisting}
+source $WDMERGER_HOME/job_scripts/run_utils.sh
+\end{lstlisting}%$
+
+Decide what directory you want to build the problem in. It is expected 
+to be a subdirectory of the \texttt{results/} directory, which will be
+automatically created for you:
+\begin{lstlisting}
+dir=results/test_problem/
+\end{lstlisting}
+Now, optionally decide how many processors you want to run with, and 
+how long you want the job to run:
+\begin{lstlisting}
+nprocs=128
+walltime=4:00:00
+\end{lstlisting}
+If you do not, the job submission script will default to running the job
+using one node for one hour. Finally, run your job:
+\begin{lstlisting}
+run $dir $nprocs $walltime
+\end{lstlisting}%$
+That is all you need to submit a job. Return to the terminal, and type \texttt{bash run.sh}
+and your job will execute. The helper function \texttt{run} does several things. First, 
+it creates the directory named \texttt{\$dir}. Then, it copies into \texttt{\$dir} the \texttt{inputs}
+and \texttt{probin} files from the root \texttt{wdmerger} source directory; these are the runtime
+files CASTRO needs to determine what your problem setup will be. They contain the default 
+parameters for merger runs. It also copies any auxiliary files one might need, like the 
+table for the equation of state, as well as the actual CASTRO executable you just built in the 
+\texttt{compile/} directory. Finally, it builds a script that you'll use for actually submitting 
+the job to the batch submission system on the machine you're on, and then submits that job. 
+Thus for a typical setup, your run directory will contain the following files when you submit:
+\begin{itemize}
+  \item \texttt{Castro3d*.ex}
+  \item \texttt{helm\_table.dat}
+  \item \texttt{inputs}
+  \item \texttt{probin}
+  \item \texttt{run\_script}
+\end{itemize}
+Typically you'll want to run multiple jobs at once, that vary things like the number of processors 
+or the runtime parameters. For example, suppose we want to run the same problem but we want to 
+explore what happens when we change the rotational period of the system. The main helper functions 
+will automatically handle this for you as long as your variable is part of a valid namespace in the inputs files.
+The orbital period is handled by the inputs parameter \texttt{castro.rotational\_period}. Therefore 
+we simply need to update \texttt{rotational\_period}. A sample script follows:
+
+\begin{lstlisting}
+source $WDMERGER_HOME/job_scripts/run_utils.sh
+
+nprocs=512
+walltime=12:00:00
+
+for period in 25.0 50.0 75.0 100.0
+do
+  dir=results/period$period/
+  rotational_period=$period
+  stop_time=$period
+  run $dir $nprocs $walltime
+done
+\end{lstlisting}%$
+This will create the subdirectories \texttt{results/period25.0} through \texttt{results/period100.0}
+and in each directory the inputs file will have the corresponding \texttt{castro.rotational\_period}.
+Each job will stop after one rotational period has been completed. When all have been completed, you should 
+type \texttt{bash run.sh} once more; this will move all output files (checkpoints, plot files, diagnostics)
+to the \texttt{output/} subdirectory of that problem location, and on supported HPC systems will also copy these 
+files to the long-term storage system (see Section \ref{sec:archiving} for more details). 
+Generally our analysis scripts expect all the output to be in the 
+\texttt{output/} subdirectory. Also, if the machine crashes before your run completes, running \texttt{bash run.sh}
+again will automatically restart your job from the most recent checkpoint.
+
+\section{Non-Standard Problems}
+\label{sec:non-standard_problems}
+
+If you want to build your own problem setup, you can do that too. The makefile and job submission 
+requirements are the same as in Section \ref{sec:standard_problems}, but you will need to provide 
+your own source files. They should all go in a \texttt{source/} subdirectory in your problem location.
+At minimum, you'll need a \texttt{Prob\_3d.f90} file (or the equivalent for lower dimensions) and a 
+probin file. The probin file can be empty, it just needs to be there because otherwise the helper 
+routines will make a copy of the default probin file. To get a sense of how this is done, look at 
+some of the existing test problems, in particular the \texttt{kelvin\_helmholtz} test. To tell the 
+code that you want to compile this source code instead of the default code, make a file called 
+\texttt{full\_source} and place it in the \texttt{source/} directory (you can just use \texttt{touch}
+to create an empty file). Then follow the rest of the instructions as normal, starting with the 
+compile step.
+
+The only source code that will be built from the default location is \texttt{sum\_integrated\_quantities.cpp},
+which controls the diagnostic output. Our version is a bit more extensive than what comes in CASTRO
+by default, so we include this in every build.
 
 \chapter{Test Problems}
 
@@ -238,17 +399,18 @@ checks the scaling properties.
 \end{itemize}
 
 Each test directory is set up with a uniform pattern. The \texttt{source/} subdirectory includes all of the source code
-needed to build the test. The \texttt{compile/} directory contains the \texttt{makefile}, which builds the executable and creates
-the inputs files needed for the simulation. The \texttt{run\_test.sh} script executes the test by creating a subdirectory
+needed to build the test. The \texttt{compile/} directory contains the \texttt{GNUmakefile}, which builds the executable.
+The \texttt{run\_test.sh} script executes the test by creating a subdirectory
 for each parameter set and then submitting it with a batch submission script (for a vanilla Linux installation,
 this will use the \texttt{batch} utility; for a limited number of clusters and supercomputers, 
 there will be recommended options and specialized submission scripts). The \texttt{analysis.py} Python script
-is used to analyze the output and generature figures. In summary, to run a test, perform the following series of commands:
+is used to analyze the output and generate figures. In summary, to run a test, perform the following series of commands:
 \begin{itemize}
   \item \texttt{cd compile}
   \item \texttt{make}
   \item \texttt{cd ..}
   \item \texttt{bash run\_test.sh}
+  \item \texttt{bash run\_test.sh} (after the execution has completed, to archive output)
   \item \texttt{python analysis.py} (after the execution has completed)
 \end{itemize}
 
