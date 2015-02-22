@@ -1,5 +1,16 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
+# Set up problem-specific inputs
+
+mass_P=0.90
+mass_S=0.60
+
+do_hydro=0
+do_rotation=0
+max_step=0
+
+# Now set up the runs
+
 minell=0
 maxell=20
 
@@ -13,8 +24,8 @@ fi
 for l in $(seq $minell $maxell)
 do
   dir=$results_dir/$l
-  sed -i "/gravity.direct_sum_bcs/c gravity.direct_sum_bcs = 0" $compile_dir/$inputs
-  sed -i "/gravity.max_multipole_order/c gravity.max_multipole_order = $l" $compile_dir/$inputs
+  direct_sum_bcs=0
+  max_multipole_order=$l
   run $dir $nprocs $walltime
 done
 
@@ -26,6 +37,5 @@ fi
 # Now do the 'exact' direct summation, for comparison purposes
 
 dir=$results_dir/true
-sed -i "/gravity.direct_sum_bcs/c gravity.direct_sum_bcs = 1" $compile_dir/$inputs
+direct_sum_bcs=1
 run $dir $nprocs $walltime
-

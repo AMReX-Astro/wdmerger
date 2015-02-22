@@ -1,15 +1,24 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
+# Problem-specific variables
+
+stop_time=15.0
+
+prob_lo=" -2.56e9 -2.56e9 -2.56e9"
+prob_hi="  2.56e9  2.56e9  2.56e9"
+
+do_rotation=0
+
 # Loop over the resolutions in question
 
-for gst in 1 2 3 4
+for gs in 1 2 3 4
 do
   for ncell in 64 128
   do
-    dir=$results_dir/gs$gst/n$ncell
+    dir=$results_dir/gs$gs/n$ncell
 
-    sed -i "/castro.grav_source_type/c castro.grav_source_type = $gst" $compile_dir/$inputs
-    sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $compile_dir/$inputs
+    grav_source_type=$gs
+    n_cell="$ncell $ncell $ncell"
 
     if [ $MACHINE == "BLUE_WATERS" ]; then
 

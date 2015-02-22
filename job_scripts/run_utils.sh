@@ -312,16 +312,83 @@ function archive_all {
 
 
 
-# Copies all relevant files needed for a CASTRO run into the target directory.
+# Copies all relevant files needed for a CASTRO run into the target directory,
+# and updates the inputs and probin according to any shell variables we set.
 
 function copy_files {
 
-    cp $compile_dir/$CASTRO $1
-    if [ -e "$compile_dir/helm_table.dat" ]; then
-	cp $compile_dir/helm_table.dat $1
+    if [ -z $1 ]
+    then
+	echo "No directory passed to copy_files; exiting."
+    return
+    else
+	dir=$1
     fi
-    cp $compile_dir/$inputs $1
-    cp $compile_dir/$probin $1
+
+     cp $compile_dir/$CASTRO $dir
+
+     if [ -e "$compile_dir/helm_table.dat" ]; then
+ 	cp $compile_dir/helm_table.dat $dir
+     fi
+
+     if [ -e "$source_dir/inputs" ]; then
+ 	cp $source_dir/inputs $dir
+     else
+ 	cp $WDMERGER_HOME/source/inputs $dir
+     fi
+
+     if [ -e "$source_dir/probin" ]; then
+ 	cp $source_dir/probin $dir
+     else
+ 	cp $WDMERGER_HOME/source/probin $dir
+     fi
+
+    # Now determine all the variables that have been added
+    # since we started; then search for them in the inputs
+    # file and do a replace as needed. This relies on the 
+    # comm function, which when run with the -3 option 
+    # returns only the strings that aren't common to 
+    # both of two files. To get our variable list to 
+    # play nice with it, we use tr to replace spaces
+    # with newlines, so that comm thinks it's being 
+    # handled a file in the same format as if you did ls.
+
+    shell_list_new=$(compgen -v)
+
+    input_vars=$(comm -3 <( echo $shell_list | tr " " "\n" | sort) <( echo $shell_list_new | tr " " "\n" | sort))
+
+    for var in $input_vars
+    do
+
+	# The -q option to grep means be quiet and only 
+	# return a flag indicating whether $var is in $inputs.
+	# The [[:space:]]* tells grep to ignore any whitespace between the 
+	# variable and the equals sign. See:
+        # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
+
+	if grep -q "$var[[:space:]]*=" $dir/inputs 
+	then
+
+	    # OK, so the parameter name does exist in the inputs file;
+	    # now we just need to get its value in there. We can do this using
+	    # bash indirect references -- if $var is a variable name, then
+	    # ${!var} is the value held by that variable. See:
+	    # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
+	    # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
+
+	    echo inputs $var
+            sed -i "s/$var.*=.*/$var = ${!var}/g" $dir/inputs
+	fi
+
+	# Do the same thing for the probin file.
+
+	if grep -q "$var[[:space:]]*=" $dir/probin
+	then
+	    echo probin $var
+            sed -i "s/$var.*=.*/$var = ${!var}/g" $dir/probin
+	fi
+
+    done
 
 }
 
@@ -467,7 +534,7 @@ function run {
     copy_files $dir
     create_job_script $dir $nprocs $walltime
     cd $dir
-    $exec $job_script
+#    $exec $job_script
     cd - > /dev/null
 
   else
@@ -544,6 +611,12 @@ function run {
 ########################################################################
 
 # Define variables
+
+# Before we get started, save the list of current shell variables.
+# We'll use this to be able to sort out only the ones that have been 
+# set by this script or the including script.
+
+shell_list=$(compgen -v)
 
 # Get current machine and set preferences accordingly.
 # Note: workdir is the name of the directory you submit 
@@ -623,6 +696,7 @@ fi
 # Directory to compile the executable in
 
 compile_dir="compile"
+source_dir="source"
 
 # Upon initialization, store some variables and create results directory.
 # We only want to initialize these variables if we're currently in a root problem directory.
@@ -631,8 +705,6 @@ if [ -d $compile_dir ]; then
 
     if [ -e $compile_dir/GNUmakefile ]; then
 
-	inputs=$(get_make_var inputs)
-	probin=$(get_make_var probin)
 	CASTRO=$(get_make_var executable)
 
     fi
@@ -654,3 +726,4 @@ if [ -d $compile_dir ]; then
     fi
 
 fi
+

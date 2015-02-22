@@ -1,16 +1,32 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Loop over the resolutions in question
+# Problem inputs choices
 
-for problem in 1 2 3
+prob_lo="-1.6 -1.6 -1.6"
+prob_hi=" 1.6  1.6  1.6"
+
+do_hydro=0
+do_rotation=0
+
+small_dens="1.e-10"
+
+max_step=0
+
+direct_sum_bcs=1
+
+# Loop over problem choices
+
+for p in 1 2 3
 do
+
+  # Loop over resolutions
 
   for ncell in 16 32 64 128 256
   do
 
     dir=$results_dir/p$problem/n$ncell
-    sed -i "/problem/c problem = $problem" $compile_dir/$probin
-    sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $compile_dir/$inputs
+    problem=$p
+    n_cell="$ncell $ncell $ncell"
 
     if [ $MACHINE == "BLUE_WATERS" ]; then
 	if   [ $ncell -eq 16  ]; then

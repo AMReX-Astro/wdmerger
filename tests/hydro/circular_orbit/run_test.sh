@@ -1,10 +1,16 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Some global variables we'll need
+# Problem-specific variables
 
-num_periods=$(get_make_var num_periods)
-period=$(get_make_var castro.rotational_period)
-stop_time=$(echo "$num_periods * $period" | bc -l)
+mass_P=0.90
+mass_S=0.90
+
+rotational_period=100.0
+stop_time=$rotational_period
+
+num_periods=50
+
+final_stop_time=$(echo "$(num_periods) * $(rotational_period)" | bc -l)
 
 # Loop over the resolutions in question
 
@@ -18,16 +24,16 @@ do
 
       # First do the relevant updates in the inputs file.
       
-      sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $compile_dir/$inputs
-      sed -i "/castro.grav_source_type/c castro.grav_source_type = $gs" $compile_dir/$inputs
+      n_cell="$ncell $ncell $ncell"
+      grav_source_type=$gs
 
       if [ $rs == 0 ]; then
-	  sed -i "/castro.do_rotation/c castro.do_rotation = 0" $compile_dir/$inputs
-	  sed -i "/orbital_kick/c orbital_kick = T" $compile_dir/$probin
+	  do_rotation=0
+	  orbital_kick=T
       else
-	  sed -i "/castro.do_rotation/c castro.do_rotation = 1" $compile_dir/$inputs
-	  sed -i "/castro.rot_source_type/c castro.rot_source_type = $rs" $compile_dir/$inputs
-	  sed -i "/orbital_kick/c orbital_kick = F" $compile_dir/$probin
+	  do_rotation=1
+	  rot_source_type=$rs
+	  orbital_kick=F
       fi
 
       # For this test we want to perform many orbits in succession. It is not feasible
@@ -44,23 +50,23 @@ do
 	checkpoint=$(get_last_checkpoint $dir)
         time=$(awk 'NR==3' $checkpoint/Header)
 
-        if [ $(echo "$time < $stop_time" | bc -l) -eq 1 ]; then
+        if [ $(echo "$time < $final_stop_time" | bc -l) -eq 1 ]; then
 
 	    # Now we have two cases. If we're less than one orbital period away, set 
 	    # the stopping time equal to the final stopping time.
 	    # Otherwise, add a full orbital period.
 
-	    if [ $(echo "$time > ($stop_time - $period)" | bc -l) -eq 1 ]; then
-		new_time=$stop_time
+	    if [ $(echo "$time > ($final_stop_time - $rotational_period)" | bc -l) -eq 1 ]; then
+		new_time=$final_stop_time
 	    else
-		new_time=$(echo "$time + $period" | bc -l)
+		new_time=$(echo "$time + $rotational_period" | bc -l)
 	    fi
 
 	    # While we are here, we don't want to do too many orbits for the options
 	    # we do not prefer. We will stop at a single orbit for everytning but our
 	    # preferred options in both the rotating and inertial frames.
 
-	    new_time_flag=$(echo "$new_time >= $period" | bc -l)
+	    new_time_flag=$(echo "$new_time >= $rotational_period" | bc -l)
 
 	    if [ $new_time_flag -eq 1 ]; then
 		if [[ $gs -ne 4 ]]; then
@@ -71,7 +77,7 @@ do
 		fi
 	    fi
 
-	    sed -i "/stop_time/c stop_time = $new_time" $dir/$inputs
+	    stop_time=$new_time
 
         fi
 

@@ -1,8 +1,18 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
+# Problem-specific variables
+
+is_periodic="1 1"
+
+prob_lo="0.0 0.0"
+prob_hi="1.0 1.0"
+
+lo_bc="0 0"
+hi_bc="0 0"
+
 # Loop over problem choices
 
-for problem in 1 2 3
+for p in 1 2 3
 do
 
   # Loop over possible bulk flow velocities
@@ -22,29 +32,26 @@ do
 	  continue
       fi
 
-      dir=$results_dir/problem$problem/velocity$vel/n$ncell
+      dir=$results_dir/problem$p/velocity$vel/n$ncell
 
-      sed -i "/problem/c problem = $problem" $compile_dir/$probin
-      sed -i "/bulk_velocity/c bulk_velocity = $vel" $compile_dir/$probin
-
-      sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell" $compile_dir/$inputs
-
+      problem=$p
+      bulk_velocity=$vel
+      n_cell="$ncell $ncell $ncell"
+      
       # Determine stopping time based on problem of interest
 
-      if [ $problem -eq 1 ]; then
+      if [ $p -eq 1 ]; then
 	  stop_time=2.0
 	  plot_per=0.05
-      elif [ $problem -eq 2 ]; then
+      elif [ $p -eq 2 ]; then
 	  stop_time=2.0
 	  plot_per=0.05
-      elif [ $problem -eq 3 ]; then
+      elif [ $p -eq 3 ]; then
 	  stop_time=10.0
 	  plot_per=0.1
       fi
 
-      sed -i "/amr.plot_per/c amr.plot_per = $plot_per" $compile_dir/$inputs
-      sed -i "/amr.check_per/c amr.check_per = $plot_per" $compile_dir/$inputs
-      sed -i "/stop_time/c stop_time = $stop_time" $compile_dir/$inputs
+      check_per=$plot_per
 
       # Set number of processors based on amount of work
 

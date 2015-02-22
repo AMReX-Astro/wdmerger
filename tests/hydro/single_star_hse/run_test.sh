@@ -1,11 +1,16 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Loop over the resolutions in question
+# Problem-specific variables
 
-for ncell in 32 64 128
+mass_P=" 0.90"
+mass_S="-1.00"
+
+# Loop over resolutions
+
+for ncell in 64 128 256
 do
   dir=$results_dir/n$ncell
-  sed -i "/amr.n_cell/c amr.n_cell = $ncell $ncell $ncell" $compile_dir/$inputs
+  n_cell="$ncell $ncell $ncell"
 
   if [ $MACHINE == "BLUE_WATERS" ]; then
 
