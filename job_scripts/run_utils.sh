@@ -534,7 +534,7 @@ function run {
     copy_files $dir
     create_job_script $dir $nprocs $walltime
     cd $dir
-#    $exec $job_script
+    $exec $job_script
     cd - > /dev/null
 
   else
