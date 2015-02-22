@@ -1,8 +1,11 @@
-max_denerr_lev     ?= 4
-denerr             ?= 1.d-2
+max_denerr_lev     ?= 1
+denerr             ?= 1.d0
+
+max_temperr_lev    ?= 4
+temperr            ?= 1.d8 5.d8 1.0d9
 
 mass_P ?= 0.90
-mass_S ?= 0.81
+mass_S ?= 0.90
 
 nsub ?= 4
 
@@ -17,8 +20,7 @@ bulk_velx ?= 0.0d0
 bulk_vely ?= 0.0d0
 bulk_velz ?= 0.0d0
 
-starBuffer  ?= 1.5d0
-boundaryBuffer ?= 0.6d0
+maxTaggingRadius ?= 0.75d0
 
 use_eos_coulomb ?= F
 eos_input_is_constant ?= T

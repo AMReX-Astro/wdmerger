@@ -7,8 +7,6 @@ module probdata_module
   ! Probin file
   character (len=:), allocatable :: probin
 
-  double precision ::  starBuffer, boundaryBuffer
-
   ! Determine if we are the I/O processor
   integer :: ioproc
   
@@ -70,6 +68,9 @@ module probdata_module
 
   ! Are we doing a single star simulation?
   logical :: single_star
+
+  ! Tagging criteria
+  double precision :: maxTaggingRadius
 
   ! Stores the center of mass location of the stars throughout the run
   double precision :: com_P(3), com_S(3)
@@ -147,25 +148,25 @@ contains
          do_relax, relax_tau, &
          ambient_density, &
          stellar_temp, stellar_C12, stellar_O16, &
-         starBuffer, boundaryBuffer, star_axis, &
+         star_axis, &
+         maxTaggingRadius, &
          bulk_velx, bulk_vely, bulk_velz
 
-    starBuffer = 1.5d0
-    boundaryBuffer = 0.6d0
+    maxTaggingRadius = 0.75d0
 
     nsub = 1
 
     central_density_P = -ONE
     central_density_S = -ONE
 
-    mass_P_initial = 1.0
-    mass_S_initial = 1.0
+    mass_P_initial = 1.0d0
+    mass_S_initial = 1.0d0
 
     stellar_temp = 1.0d7
     stellar_C12  = HALF
     stellar_O16  = HALF
 
-    smallx = 1.d-10
+    smallx = 1.d-12
     smallu = 1.d-12
 
     ambient_density = 1.d-4

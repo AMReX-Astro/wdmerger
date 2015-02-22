@@ -187,8 +187,7 @@ make_probin:
 			echo "  bulk_velx = $(bulk_velx)" >> $(probin) ; \
 			echo "  bulk_vely = $(bulk_vely)" >> $(probin) ; \
 			echo "  bulk_velz = $(bulk_velz)" >> $(probin) ; \
-			echo "  starBuffer = $(starBuffer)" >> $(probin) ; \
-			echo "  boundaryBuffer = $(boundaryBuffer)" >> $(probin) ; \
+			echo "  maxTaggingRadius = $(maxTaggingRadius)" >> $(probin) ; \
 			echo "" >> $(probin) ; \
 			echo "/" >> $(probin) ; \
 			echo "" >> $(probin) ; \
@@ -196,6 +195,8 @@ make_probin:
 			echo "" >> $(probin) ; \
 			echo "  max_denerr_lev = $(max_denerr_lev)" >> $(probin) ; \
 			echo "  denerr = $(denerr)" >> $(probin) ; \
+			echo "  max_temperr_lev = $(max_temperr_lev)" >> $(probin) ; \
+			echo "  temperr = $(temperr)" >> $(probin) ; \
 			echo "" >> $(probin) ; \
 			echo "/" >> $(probin) ; \
 			echo "" >> $(probin) ; \
