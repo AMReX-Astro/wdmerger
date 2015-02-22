@@ -5,15 +5,9 @@
 # variable list and prints it out to stdout. It is the last word
 # on the last line of the make output.
 
-function get_wdmerger_make_var {
+function get_make_var {
 
     make print-$1 -C $compile_dir | tail -2 | head -1 | awk '{ print $NF }'
-
-}
-
-function get_castro_make_var {
-
-    make print-$1 -f $local_makefile -C $compile_dir  | tail -2 | head -1 | awk '{ print $NF }'
 
 }
 
@@ -574,8 +568,6 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
 
     allocation="jni"
     exec="qsub"
-    COMP="Cray"
-    FCOMP="Cray"
     ppn="16"
     node_type="xe"
     run_ext=".OU"
@@ -589,8 +581,6 @@ elif [ $MACHINE == "TITAN" ]; then
 
     allocation="ast106"
     exec="qsub"
-    COMP="Cray"
-    FCOMP="Cray"
     ppn="8"
     run_ext=".OU"
     workdir="/lustre/atlas/scratch/$USER/$allocation/"
@@ -601,8 +591,6 @@ elif [ $MACHINE == "HOPPER" ]; then
     
     allocation="m1400"
     exec="qsub"
-    COMP="Cray"
-    FCOMP="Cray"
     ppn="24"
     run_ext=".OU"
     batch_system="PBS"
@@ -641,12 +629,11 @@ compile_dir="compile"
 
 if [ -d $compile_dir ]; then
 
-    if [ -e $compile_dir/makefile ]; then
+    if [ -e $compile_dir/GNUmakefile ]; then
 
-	local_makefile=$(get_wdmerger_make_var local_makefile)
-	inputs=$(get_wdmerger_make_var inputs)
-	probin=$(get_wdmerger_make_var probin)
-	CASTRO=$(get_castro_make_var executable)
+	inputs=$(get_make_var inputs)
+	probin=$(get_make_var probin)
+	CASTRO=$(get_make_var executable)
 
     fi
 

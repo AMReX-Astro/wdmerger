@@ -8,10 +8,6 @@ castro.do_rotation = 0
 
 max_step = 0
 
-# Main make target
-
-all: make_castro
-
 # Pull in main makefile
 
-include $(WDMERGER_HOME)/job_scripts/makefile
+include $(WDMERGER_HOME)/source/GNUmakefile

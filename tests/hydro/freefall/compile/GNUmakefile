@@ -22,10 +22,6 @@ amr.check_per = 1.0
 
 stop_time = $$(echo "0.90 * $(castro.rotational_period) / 4.0 / e(0.5*l(2))" | bc -l)
 
-# Main make target
-
-all: make_castro
-
 # Pull in the main make targets
 
-include $(WDMERGER_HOME)/job_scripts/makefile
+include $(WDMERGER_HOME)/source/GNUmakefile

@@ -9,10 +9,6 @@ num_periods = 50
 
 stop_time = $$(echo "$(num_periods) * $(castro.rotational_period)" | bc -l)
 
-# Main make target
-
-all: make_castro
-
 # Pull in main makefile
 
-include $(WDMERGER_HOME)/job_scripts/makefile
+include $(WDMERGER_HOME)/source/GNUmakefile

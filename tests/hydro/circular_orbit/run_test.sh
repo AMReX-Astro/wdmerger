@@ -2,8 +2,8 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 # Some global variables we'll need
 
-num_periods=$(get_wdmerger_make_var num_periods)
-period=$(get_wdmerger_make_var castro.rotational_period)
+num_periods=$(get_make_var num_periods)
+period=$(get_make_var castro.rotational_period)
 stop_time=$(echo "$num_periods * $period" | bc -l)
 
 # Loop over the resolutions in question
