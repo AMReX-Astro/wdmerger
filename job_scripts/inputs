@@ -50,8 +50,6 @@ amr.blocking_factor ?= 16                      	   # Grid sizes must be a multip
 
 amr.grid_eff        ?= 0.9                     	   # What constitutes an efficient grid
 
-castro.allow_untagging ?= 1    		      	   # Allow zones to be untagged when they no longer satisfy the tagging criteria
-
 ############################################################################################
 # Physics to include
 ############################################################################################
