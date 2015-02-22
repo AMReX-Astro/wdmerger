@@ -56,7 +56,7 @@
      double precision :: xlo(3), xhi(3), time, delta(3)
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
-     double precision :: loc(3), xx, yy
+     double precision :: loc(3)
      double precision :: dist_P(3), dist_S(3)
 
      integer :: pt_index(3)
@@ -124,18 +124,21 @@
 
      if ( inertial ) then
  
-       !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy)
+       !$OMP PARALLEL DO PRIVATE(i, j, k, loc)
        do k = lo(3), hi(3)
-         do j = lo(2), hi(2)
-           yy = xlo(2) + dble(j - lo(2) + HALF)*delta(2) - center(2)
-           do i = lo(1), hi(1)
-             xx = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
+          loc(3) = xlo(3) + dble(k - lo(3) + HALF)*delta(3) - center(3)
+          do j = lo(2), hi(2)
+             loc(2) = xlo(2) + dble(j - lo(2) + HALF)*delta(2) - center(2)
+             do i = lo(1), hi(1)
+                loc(1) = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
 
-             ! x velocity is -omega * r * sin(theta) == -omega * y
-             state(i,j,k,UMX) = state(i,j,k,UMX) + state(i,j,k,URHO) * (-TWO * M_PI / rot_period) * yy
+                ! x velocity is -omega * r * sin(theta) == -omega * y
+                state(i,j,k,UMX+star_axis-1) = state(i,j,k,UMX+star_axis-1) &
+                                             + state(i,j,k,URHO) * (-TWO * M_PI / rot_period) * loc(initial_motion_dir)
 
-             ! y velocity is +omega * r * cos(theta) == +omega * x
-             state(i,j,k,UMY) = state(i,j,k,UMY) + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * xx
+                ! y velocity is +omega * r * cos(theta) == +omega * x
+                state(i,j,k,UMX+initial_motion_dir-1) = state(i,j,k,UMX+initial_motion_dir-1) &
+                                                      + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * loc(star_axis)
 
            enddo
          enddo
