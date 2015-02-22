@@ -371,6 +371,9 @@ function create_job_script {
       ppn=$nprocs
   fi
 
+  num_mpi_tasks=$(echo "$nprocs / $OMP_NUM_THREADS" | bc)
+  tasks_per_node=$(echo "$ppn / $OMP_NUM_THREADS" | bc)
+
   if [ $batch_system == "PBS" ]; then
 
       echo "#!/bin/bash" > $dir/$job_script
@@ -412,7 +415,7 @@ function create_job_script {
 
       restartString=$(get_restart_string $dir)
 
-      echo "aprun -n $nprocs -N $ppn $CASTRO $inputs $restartString" >> $dir/$job_script
+      echo "aprun -n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS -j 1 $CASTRO $inputs $restartString" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 

@@ -190,7 +190,7 @@ make_probin:
 			echo "  mass_P = $(mass_P)" >> $(probin) ; \
 			echo "  mass_S = $(mass_S)" >> $(probin) ; \
 			echo "  nsub = $(nsub)" >> $(probin) ; \
-			echo "  inertial = $(inertial)" >> $(probin) ; \
+			echo "  orbital_kick = $(orbital_kick)" >> $(probin) ; \
 			echo "  damping = $(damping)" >> $(probin) ; \
 			echo "  damping_alpha = $(damping_alpha)" >> $(probin) ; \
 			echo "  interp_temp = $(interp_temp)" >> $(probin) ; \

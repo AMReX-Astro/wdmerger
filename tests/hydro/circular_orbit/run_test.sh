@@ -23,11 +23,11 @@ do
 
       if [ $rs == 0 ]; then
 	  sed -i "/castro.do_rotation/c castro.do_rotation = 0" $compile_dir/$inputs
-	  sed -i "/inertial/c inertial = T" $compile_dir/$probin
+	  sed -i "/orbital_kick/c orbital_kick = T" $compile_dir/$probin
       else
 	  sed -i "/castro.do_rotation/c castro.do_rotation = 1" $compile_dir/$inputs
 	  sed -i "/castro.rot_source_type/c castro.rot_source_type = $rs" $compile_dir/$inputs
-	  sed -i "/inertial/c inertial = F" $compile_dir/$probin
+	  sed -i "/orbital_kick/c orbital_kick = F" $compile_dir/$probin
       fi
 
       # For this test we want to perform many orbits in succession. It is not feasible

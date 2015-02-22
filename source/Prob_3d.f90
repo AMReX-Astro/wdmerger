@@ -122,7 +122,7 @@
      ! If we're in the inertial reference frame, 
      ! set counter-clockwise rigid body rotation
 
-     if ( inertial ) then
+     if ( orbital_kick ) then
  
        !$OMP PARALLEL DO PRIVATE(i, j, k, loc)
        do k = lo(3), hi(3)
@@ -213,7 +213,7 @@
                  adv(i,j,k,UTEMP) = ambient_state % T
                  adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)
 
-                 if ( inertial ) then
+                 if ( orbital_kick ) then
 
                    vx = (-2.0d0 * M_PI / rot_period) * yy
                    vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -254,7 +254,7 @@
                  adv(i,j,k,UTEMP) = ambient_state % T
                  adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( inertial ) then
+                 if ( orbital_kick ) then
 
                    vx = (-2.0d0 * M_PI / rot_period) * yy
                    vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -295,7 +295,7 @@
                  adv(i,j,k,UTEMP) = ambient_state % T
                  adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( inertial ) then
+                 if ( orbital_kick ) then
 
                    vx = (-2.0d0 * M_PI / rot_period) * yy
                    vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -336,7 +336,7 @@
                  adv(i,j,k,UTEMP) = ambient_state % T
                  adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( inertial ) then
+                 if ( orbital_kick ) then
 
                    vx = (-2.0d0 * M_PI / rot_period) * yy
                    vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -377,7 +377,7 @@
                  adv(i,j,k,UTEMP) = ambient_state % T
                  adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( inertial ) then
+                 if ( orbital_kick ) then
 
                    vx = (-2.0d0 * M_PI / rot_period) * yy
                    vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -418,7 +418,7 @@
                  adv(i,j,k,UTEMP) = ambient_state % T
                  adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( inertial ) then
+                 if ( orbital_kick ) then
 
                    vx = (-2.0d0 * M_PI / rot_period) * yy
                    vy = ( 2.0d0 * M_PI / rot_period) * xx

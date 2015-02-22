@@ -39,8 +39,9 @@ module probdata_module
   integer :: nsub
   logical :: interp_temp
 
-  ! Inertial reference frame flag
-  logical :: inertial
+  ! Whether or not to give stars an initial orbital velocity
+  ! consistent with their Keplerian orbit speed.
+  logical :: orbital_kick
 
   ! Damping
   logical          :: damping
@@ -140,7 +141,7 @@ contains
          mass_p, mass_s, &
          central_density_P, central_density_S, &
          nsub, &
-         inertial, &
+         orbital_kick, &
          interp_temp, &
          damping, damping_alpha, &
          do_relax, relax_tau, &
@@ -169,7 +170,7 @@ contains
 
     ambient_density = 1.d-4
 
-    inertial = .false.
+    orbital_kick = .false.
     interp_temp = .false.
     damping  = .false.
     do_relax = .false.
@@ -365,7 +366,7 @@ contains
           call bl_error("Error: probdata module: invalid choice for rot_axis.")
        endif
 
-       if ( (do_rotation .ne. 1) .and. inertial ) then
+       if ( (do_rotation .ne. 1) .and. orbital_kick ) then
           vel_P(initial_motion_dir) = - orbital_speed_P
           vel_S(initial_motion_dir) =   orbital_speed_S
        endif

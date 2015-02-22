@@ -6,7 +6,7 @@ mass_S ?= 0.81
 
 nsub ?= 4
 
-inertial ?= F
+orbital_kick ?= F
   
 damping  ?= F
 damping_alpha ?= 1.d-2
