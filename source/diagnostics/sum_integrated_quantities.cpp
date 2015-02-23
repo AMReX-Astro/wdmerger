@@ -47,6 +47,8 @@ Castro::sum_integrated_quantities ()
     Real rot_ang_mom[3] = { 0.0 };
 
     omega[rot_axis-1] = 2.0 * M_PI / rotational_period;
+#else
+    int rot_axis = 3;
 #endif
 
     Real total_E_grid = 0.0;
