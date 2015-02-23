@@ -375,7 +375,6 @@ function copy_files {
 	    # ${!var} is the value held by that variable. See:
 	    # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	    # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
-
             sed -i "s/$var.*=.*/$var = ${!var}/g" $dir/inputs
 	fi
 
@@ -564,20 +563,20 @@ function run {
 
 	  # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
-	  time=$(awk 'NR==3' $dir/$checkpoint/Header)
+	  chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
 
 	  # Extract the current timestep. It is stored in row 12 of the Header file.
 
-	  step=$(awk 'NR==12' $dir/$checkpoint/Header)
+	  chk_step=$(awk 'NR==12' $dir/$checkpoint/Header)
 
 	  # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
 	  # The job script already knows to start from the latest checkpoint file.
 
-	  stop_time=$(grep "stop_time" $dir/inputs | awk '{print $3}')
-	  max_step=$(grep "max_step" $dir/inputs | awk '{print $3}')
+	  chk_stop_time=$(grep "stop_time" $dir/inputs | awk '{print $3}')
+	  chk_max_step=$(grep "max_step" $dir/inputs | awk '{print $3}')
 
-	  time_flag=$(echo "$time < $stop_time" | bc -l)
-	  step_flag=$(echo "$step < $max_step" | bc -l)
+	  time_flag=$(echo "$chk_time < $chk_stop_time" | bc -l)
+	  step_flag=$(echo "$chk_step < $chk_max_step" | bc -l)
 
       fi
 
