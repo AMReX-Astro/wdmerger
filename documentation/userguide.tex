@@ -148,8 +148,6 @@
 %\setcounter{tocdepth}{2}
 \tableofcontents
 
-\clearpage
-
 \mainmatter
 
 \chapter{Getting Started}
@@ -218,6 +216,84 @@ problem setups on various machine architectures.
 
 The \texttt{papers} directory includes the LaTeX source code for the journal articles
 that are being submitted as a result of this project.
+
+
+
+\chapter{Merger Problem}
+
+This chapter describes the setup of the white dwarf merger problem. It includes descriptions of 
+the physics involved, the code options and runtime parameters, the diagnostic output 
+and other I/O information, and the analysis routines. A full description of the physics 
+and the associated numerical algorithms is included in the CASTRO code paper \cite{castro}.
+
+\section{Physical Description}
+
+We model two white dwarfs in a rotating binary system. The white dwarfs are composed of 
+a mixture of elements that is principally carbon and oxygen, and are individually supported 
+against gravity by degenerate electron material at non-zero temperature. This matter is described well 
+for arbitrary degeneracy and relativity levels by the Helmholtz equation of state \cite{timmes_swesty:2000}.
+It includes ideal gas contributions from the ions, a simple blackbody recipe for the contribution from 
+the radiation field, and optionally Coulomb corrections. 
+
+CASTRO includes full self-gravity with the Poisson equation, as well as the ability to perform a
+simulation in a rotating reference frame with fixed rotation period. By default the $z$ axis will 
+be the rotation axis, with the stars initially aligned along the $x$ axis. We select the 
+orbital period of the system, and the masses of the \textit{primary} (more massive) and 
+\textit{secondary} (less massive) white dwarfs. We then use Kepler's third law to determine the 
+appropriate initial orbital distance. The center of mass of the system corresponds with the center 
+of the domain, which is the origin; the domain is $1.024 \times 10^{10}\ \text{cm}$ wide in each 
+coordinate direction, so that each dimension runs from $-5.12 \times 10^{9}\ \text{cm}$ to 
+$+5.12 \times 10^{9}\ \text{cm}$. In a rotating reference frame, we set the stars at rest. 
+We can instead run a simulation in the inertial reference frame. To make it equivalent, we
+start all zones in the domain with a velocity corresponding to the equivalent rotating 
+reference frame velocity. This means that the stars will be synchronously rotating (though we
+may relax this assumption in future work).
+
+At present nuclear reactions are not enabled, but they will be soon.
+
+\section{Runtime Parameters}
+
+There are a few CASTRO input parameters that you will typically want to control when running problems. 
+Among the most major is whether we are doing rotation (\texttt{castro.do\_rotation}) and if so, 
+what the rotational period is (\texttt{castro.rotational\_period}). You'll also want to change the 
+\texttt{stop\_time}, which is when the simulation will terminate. You should also avoid flooding 
+yourself with plotfiles and checkpoints by setting \texttt{amr.plot\_files\_output} and 
+\texttt{amr.checkpoint\_files\_output}, respectively; these are the simulation time differences
+between successive plotfiles and checkpoints. Note that CASTRO does not adjust the timestep 
+to meet this criterion, so it will generate these at the first timestep that passes this interval.
+
+The \texttt{wdmerger} parameters of interest are all controlled through the \texttt{probin} file. 
+These control the layout of the stars on the grid, the tagging options for refinement, and some other things. 
+A \texttt{probin} file is composed of three Fortran namelists; a namelist is enclosed in 
+\texttt{\&namelist ... /}. The \texttt{fortin} namelist controls the main system parameters. 
+In the following list we describe the parameters; you can see their current defaults by 
+examining \texttt{source/probin}.
+\begin{itemize}
+  \item \texttt{mass\_P}: mass of the primary white dwarf, in solar masses (real)
+  \item \texttt{mass\_S}: mass of the secondary white dwarf, in solar masses (real; if less than zero, 
+    then no secondary star will be generated, and the primary star will be loaded onto the grid at the 
+    center of the domain)
+  \item \texttt{nsub}: number of sub-intervals to divide a zone into when interpolating from the initial model (integer)
+  \item \texttt{orbital\_kick}: whether or not to kick the stars with an orbital velocity corresponding to their 
+    Keplerian rotation rate (logical; this only makes sense in the inertial reference frame with \texttt{castro.do\_rotation = 0})
+  \item \texttt{damping}: whether or not to exert a constant damping force on the orbit (logical)
+  \item \texttt{damping\_alpha}: strength of damping force (real)
+  \item \texttt{bulk\_velx}: uniform velocity to give to all gas in the domain in the $x$-direction (real)
+  \item \texttt{bulk\_vely}: uniform velocity to give to all gas in the domain in the $y$-direction (real)
+  \item \texttt{bulk\_velz}: uniform velocity to give to all gas in the domain in the $z$-direction (real)
+  \item \texttt{interp\_temp}: whether or not to take temperature as given when interpolating from our initial model (logical;
+    if false, we will interpolate based on pressure)
+  \item \texttt{maxTaggingRadius}: fractional size of the domain outside of which we won't perform any refinement (real)
+\end{itemize}
+
+The \texttt{tagging} namelist is described in the AMR chapter of the CASTRO user's guide. At present, we 
+only tag based on absolute values of the density and temperature.
+
+The \texttt{extern} namelist contains parameters that are used by the microphysics modules. In particular, 
+the equation of state usually relies on parameters passed in this way. For the Helmholtz EOS, the relevant 
+parameters are \texttt{eos\_input\_is\_constant}, which determines whether or not we update the internal 
+energy on an EOS call, and \texttt{use\_eos\_coulomb}, which determines whether we include Coulomb 
+interactions in the EOS evaluation.
 
 \chapter{How to Build a Problem}
 
