@@ -361,7 +361,7 @@ function copy_files {
     do
 
 	# The -q option to grep means be quiet and only 
-	# return a flag indicating whether $var is in $inputs.
+	# return a flag indicating whether $var is in inputs.
 	# The [[:space:]]* tells grep to ignore any whitespace between the 
 	# variable and the equals sign. See:
         # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
@@ -376,7 +376,6 @@ function copy_files {
 	    # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	    # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
 
-	    echo inputs $var
             sed -i "s/$var.*=.*/$var = ${!var}/g" $dir/inputs
 	fi
 
@@ -384,7 +383,6 @@ function copy_files {
 
 	if grep -q "$var[[:space:]]*=" $dir/probin
 	then
-	    echo probin $var
             sed -i "s/$var.*=.*/$var = ${!var}/g" $dir/probin
 	fi
 
@@ -476,11 +474,11 @@ function create_job_script {
 
       restartString=$(get_restart_string $dir)
 
-      echo "aprun -n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS -j 1 $CASTRO $inputs $restartString" >> $dir/$job_script
+      echo "aprun -n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS -j 1 $CASTRO inputs $restartString" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 
-      echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > info.out\" | batch" > $dir/$job_script
+      echo "echo \"mpiexec -n $nprocs $CASTRO inputs > info.out\" | batch" > $dir/$job_script
 
    fi
 
@@ -575,8 +573,8 @@ function run {
 	  # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
 	  # The job script already knows to start from the latest checkpoint file.
 
-	  stop_time=$(grep "stop_time" $dir/$inputs | awk '{print $3}')
-	  max_step=$(grep "max_step" $dir/$inputs | awk '{print $3}')
+	  stop_time=$(grep "stop_time" $dir/inputs | awk '{print $3}')
+	  max_step=$(grep "max_step" $dir/inputs | awk '{print $3}')
 
 	  time_flag=$(echo "$time < $stop_time" | bc -l)
 	  step_flag=$(echo "$step < $max_step" | bc -l)
