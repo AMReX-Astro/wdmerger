@@ -2,17 +2,17 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 # Problem inputs choices
 
-prob_lo="-1.6 -1.6 -1.6"
-prob_hi=" 1.6  1.6  1.6"
+geometry_prob_lo="-1.6 -1.6 -1.6"
+geometry_prob_hi=" 1.6  1.6  1.6"
 
-do_hydro=0
-do_rotation=0
+castro_do_hydro=0
+castro_do_rotation=0
 
-small_dens="1.e-10"
+castro_small_dens="1.e-10"
 
 max_step=0
 
-direct_sum_bcs=1
+gravity_direct_sum_bcs=1
 
 # Loop over problem choices
 
@@ -26,7 +26,7 @@ do
 
     dir=$results_dir/p$problem/n$ncell
     problem=$p
-    n_cell="$ncell $ncell $ncell"
+    amr_n_cell="$ncell $ncell $ncell"
 
     if [ $MACHINE == "BLUE_WATERS" ]; then
 	if   [ $ncell -eq 16  ]; then

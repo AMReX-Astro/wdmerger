@@ -5,8 +5,8 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 mass_P=0.90
 mass_S=0.60
 
-do_hydro=0
-do_rotation=0
+castro_do_hydro=0
+castro_do_rotation=0
 max_step=0
 
 # Now set up the runs
@@ -24,8 +24,8 @@ fi
 for l in $(seq $minell $maxell)
 do
   dir=$results_dir/$l
-  direct_sum_bcs=0
-  max_multipole_order=$l
+  gravity_direct_sum_bcs=0
+  gravity_max_multipole_order=$l
   run $dir $nprocs $walltime
 done
 
@@ -37,5 +37,5 @@ fi
 # Now do the 'exact' direct summation, for comparison purposes
 
 dir=$results_dir/true
-direct_sum_bcs=1
+gravity_direct_sum_bcs=1
 run $dir $nprocs $walltime

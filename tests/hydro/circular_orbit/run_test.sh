@@ -5,12 +5,12 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 mass_P=0.90
 mass_S=0.90
 
-rotational_period=100.0
-stop_time=$rotational_period
+castro_rotational_period=100.0
+stop_time=$castro_rotational_period
 
 num_periods=50
 
-final_stop_time=$(echo "$(num_periods) * $(rotational_period)" | bc -l)
+final_stop_time=$(echo "$(num_periods) * $(castro_rotational_period)" | bc -l)
 
 # Loop over the resolutions in question
 
@@ -24,15 +24,15 @@ do
 
       # First do the relevant updates in the inputs file.
       
-      n_cell="$ncell $ncell $ncell"
-      grav_source_type=$gs
+      amr_n_cell="$ncell $ncell $ncell"
+      castro_grav_source_type=$gs
 
       if [ $rs == 0 ]; then
-	  do_rotation=0
+	  castro_do_rotation=0
 	  orbital_kick=T
       else
-	  do_rotation=1
-	  rot_source_type=$rs
+	  castro_do_rotation=1
+	  castro_rot_source_type=$rs
 	  orbital_kick=F
       fi
 
@@ -56,17 +56,17 @@ do
 	    # the stopping time equal to the final stopping time.
 	    # Otherwise, add a full orbital period.
 
-	    if [ $(echo "$time > ($final_stop_time - $rotational_period)" | bc -l) -eq 1 ]; then
+	    if [ $(echo "$time > ($final_stop_time - $castro_rotational_period)" | bc -l) -eq 1 ]; then
 		new_time=$final_stop_time
 	    else
-		new_time=$(echo "$time + $rotational_period" | bc -l)
+		new_time=$(echo "$time + $castro_rotational_period" | bc -l)
 	    fi
 
 	    # While we are here, we don't want to do too many orbits for the options
 	    # we do not prefer. We will stop at a single orbit for everytning but our
 	    # preferred options in both the rotating and inertial frames.
 
-	    new_time_flag=$(echo "$new_time >= $rotational_period" | bc -l)
+	    new_time_flag=$(echo "$new_time >= $castro_rotational_period" | bc -l)
 
 	    if [ $new_time_flag -eq 1 ]; then
 		if [[ $gs -ne 4 ]]; then

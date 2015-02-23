@@ -4,8 +4,8 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 max_step=10
 
-plot_files_output=0
-checkpoint_files_output=0
+amr_plot_files_output=0
+amr_checkpoint_files_output=0
 
 # For strong scaling, we fix the problem size and increase the number of processors.
 

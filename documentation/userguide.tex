@@ -381,7 +381,11 @@ or the runtime parameters. For example, suppose we want to run the same problem 
 explore what happens when we change the rotational period of the system. The main helper functions 
 will automatically handle this for you as long as your variable is part of a valid namespace in the inputs files.
 The orbital period is handled by the inputs parameter \texttt{castro.rotational\_period}. Therefore 
-we simply need to update \texttt{rotational\_period}. A sample script follows:
+we simply need to update a variable named \texttt{castro\_rotational\_period}. 
+Note that we use an underscore (\texttt{castro_}) and not a period (\texttt{castro.}) after the namespace.
+This is simply because \texttt{bash} does not permit periods in variable names; but the helper routine will 
+automatically take care of this for you when looking for the appropriate variable in the inputs file.
+A sample script follows:
 
 \begin{lstlisting}
 source $WDMERGER_HOME/job_scripts/run_utils.sh
@@ -392,7 +396,7 @@ walltime=12:00:00
 for period in 25.0 50.0 75.0 100.0
 do
   dir=results/period$period/
-  rotational_period=$period
+  castro_rotational_period=$period
   stop_time=$period
   run $dir $nprocs $walltime
 done

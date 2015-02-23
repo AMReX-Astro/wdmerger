@@ -5,11 +5,11 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 mass_P=0.90
 mass_S=0.81
 
-do_rotation=0
-rotational_period=100.0
+castro_do_rotation=0
+castro_rotational_period=100.0
 
-plot_per=1.0
-check_per=1.0
+amr_plot_per=1.0
+amr_check_per=1.0
 
 # We can work out the stopping time using the formula
 # t_freefall = rotational_period / (4 * sqrt(2))
@@ -29,7 +29,7 @@ stop_time=$(echo "0.90 * $(rotational_period) / 4.0 / e(0.5*l(2))" | bc -l)
 for ncell in 64 128 256
 do
   dir=$results_dir/n$ncell
-  n_cell="$ncell $ncell $ncell"
+  amr_n_cell="$ncell $ncell $ncell"
 
   if [ $MACHINE == "BLUE_WATERS" ]; then
 

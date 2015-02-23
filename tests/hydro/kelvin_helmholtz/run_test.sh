@@ -2,13 +2,13 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 # Problem-specific variables
 
-is_periodic="1 1"
+geometry_is_periodic="1 1"
 
-prob_lo="0.0 0.0"
-prob_hi="1.0 1.0"
+geometry_prob_lo="0.0 0.0"
+geometry_prob_hi="1.0 1.0"
 
-lo_bc="0 0"
-hi_bc="0 0"
+castro_lo_bc="0 0"
+castro_hi_bc="0 0"
 
 # Loop over problem choices
 
@@ -36,22 +36,22 @@ do
 
       problem=$p
       bulk_velocity=$vel
-      n_cell="$ncell $ncell $ncell"
+      amr_n_cell="$ncell $ncell $ncell"
       
       # Determine stopping time based on problem of interest
 
       if [ $p -eq 1 ]; then
 	  stop_time=2.0
-	  plot_per=0.05
+	  amr_plot_per=0.05
       elif [ $p -eq 2 ]; then
 	  stop_time=2.0
-	  plot_per=0.05
+	  amr_plot_per=0.05
       elif [ $p -eq 3 ]; then
 	  stop_time=10.0
-	  plot_per=0.1
+	  amr_plot_per=0.1
       fi
 
-      check_per=$plot_per
+      amr_check_per=$amr_plot_per
 
       # Set number of processors based on amount of work
 

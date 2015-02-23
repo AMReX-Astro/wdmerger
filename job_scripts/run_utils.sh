@@ -360,13 +360,41 @@ function copy_files {
     for var in $input_vars
     do
 
+	# Get the namespace of the variable by 
+	# looking at what is before the first underscore.
+	# If it is not a valid namespace (or one of the few variables
+	# without a namespace), then skip this variable.
+
+	namespace=$(echo $var | cut -d _ -f 1)
+
+	is_inputs_var=0
+
+	if ([ $var == "stop_time" ] || [ $var == "max_step" ])
+	then
+
+	    is_inputs_var=1
+	    inputs_var_name=$var	    
+
+	elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] || 
+	       [ $namespace == "geometry" ] || [ $namespace == "gravity" ] || 
+               [ $namespace == "mg" ] )
+	then
+
+	    # Remove the namespace from the variable, then
+	    # replace it with the correct period.
+	    is_inputs_var=1
+	    inputs_var_end=$(echo ${var#$namespace\_})
+	    inputs_var_name="$namespace.$inputs_var_end"
+
+	fi
+
 	# The -q option to grep means be quiet and only 
 	# return a flag indicating whether $var is in inputs.
 	# The [[:space:]]* tells grep to ignore any whitespace between the 
 	# variable and the equals sign. See:
         # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
 
-	if grep -q "$var[[:space:]]*=" $dir/inputs 
+	if ([ $is_inputs_var -eq 1 ] && (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)) 
 	then
 
 	    # OK, so the parameter name does exist in the inputs file;
@@ -375,14 +403,21 @@ function copy_files {
 	    # ${!var} is the value held by that variable. See:
 	    # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	    # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
-            sed -i "s/$var.*=.*/$var = ${!var}/g" $dir/inputs
+            sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/inputs
 	fi
 
 	# Do the same thing for the probin file.
+	# Since we don't have the namespace to rely on 
+	# to guard against false positives, we only replace
+	# in cases that there's a space both before and 
+	# after the variable, signifying a full word match.
+	# This will require that your probin variables have
+	# at least one space behind them and after them.
+	# The equals sign cannot be adjacent to the name.
 
 	if grep -q "$var[[:space:]]*=" $dir/probin
 	then
-            sed -i "s/$var.*=.*/$var = ${!var}/g" $dir/probin
+            sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/probin
 	fi
 
     done

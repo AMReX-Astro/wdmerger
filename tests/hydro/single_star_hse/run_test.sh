@@ -10,7 +10,7 @@ mass_S="-1.00"
 for ncell in 64 128 256
 do
   dir=$results_dir/n$ncell
-  n_cell="$ncell $ncell $ncell"
+  amr_n_cell="$ncell $ncell $ncell"
 
   if [ $MACHINE == "BLUE_WATERS" ]; then
 
