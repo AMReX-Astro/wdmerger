@@ -57,28 +57,28 @@ do
 
       if [ $MACHINE == "BLUE_WATERS" ]; then
 
-	if [ $ncell -eq 64 ]; then
-	    nprocs=16
-	    walltime=00:30:00
-	elif [ $ncell -eq 128 ]; then
-	    nprocs=128
-	    walltime=01:00:00
-	elif [ $ncell -eq 256 ]; then
-	    nprocs=1024
-	    walltime=04:00:00
-	elif [ $ncell -eq 512 ]; then
-	    nprocs=2048
-	    walltime=12:00:00
-	elif [ $ncell -eq 1024 ]; then
-	    nprocs=128
-	    walltime=02:00:00
-	elif [ $ncell -eq 2048 ]; then
-	   nprocs=1024
-	   walltime=04:00:00
-	elif [ $ncell -eq 4096 ]; then
-	   nprocs=1024
-	   walltime=20:00:00
-	fi
+	  if [ $ncell -eq 64 ]; then
+	      nprocs=16
+	      walltime=1:00:00
+	  elif [ $ncell -eq 128 ]; then
+	      nprocs=128
+	      walltime=2:00:00
+	  elif [ $ncell -eq 256 ]; then
+	      nprocs=1024
+	      walltime=04:00:00
+	  elif [ $ncell -eq 512 ]; then
+	      nprocs=2048
+	      walltime=24:00:00
+	  elif [ $ncell -eq 1024 ]; then
+	      nprocs=128
+	      walltime=02:00:00
+	  elif [ $ncell -eq 2048 ]; then
+	     nprocs=1024
+	     walltime=04:00:00
+	  elif [ $ncell -eq 4096 ]; then
+	     nprocs=1024
+	     walltime=20:00:00
+	  fi
 
       fi
 
