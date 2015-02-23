@@ -23,7 +23,7 @@
   denerr             = 1.d0
 
   max_temperr_lev    = 4
-  temperr            = 1.d8 5.d8 1.0d9
+  temperr            = 2.d8
 /
 
 &extern
