@@ -362,7 +362,7 @@ def get_column(col_name, diag_filename):
 
     line = diag_file.readline()
 
-    while (line == vc_line):
+    while (line.split()[2] == vc_line):
         line = diag_file.readline()
 
     # The very next line will be the column headers
