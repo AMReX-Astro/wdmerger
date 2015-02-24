@@ -306,6 +306,9 @@ contains
     mass_P = mass_P_initial * M_solar
     mass_S = mass_S_initial * M_solar
 
+    roche_rad_P = ZERO
+    roche_rad_S = ZERO
+
     ! Allocate arrays to hold the stellar models
 
     allocate(model_P_state(npts_model,3+nspec))
@@ -324,6 +327,8 @@ contains
                  ", central density", central_density_P, ", and radius", radius_P_initial
     endif
 
+    roche_rad_P = radius_P_initial
+
     if (.not. single_star) then
 
        call init_1d(model_S_r, model_S_state, npts_model, dx, radius_S_initial, mass_S_initial, &
@@ -333,6 +338,8 @@ contains
           print *, "Generated initial model for secondary WD of mass", mass_S_initial, &
                    ", central density", central_density_S, ", and radius", radius_S_initial
        endif
+
+       roche_rad_S = radius_S_initial
 
        ! Get the orbit from Kepler's third law
 
@@ -371,6 +378,10 @@ contains
           vel_P(initial_motion_dir) = - orbital_speed_P
           vel_S(initial_motion_dir) =   orbital_speed_S
        endif
+
+       ! Compute initial Roche radii
+
+       call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
 
     endif
 

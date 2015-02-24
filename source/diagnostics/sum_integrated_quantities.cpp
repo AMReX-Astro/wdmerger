@@ -59,6 +59,8 @@ Castro::sum_integrated_quantities ()
     Real lev_com[3]   = { 0.0 };
     Real com_vel[3]   = { 0.0 };
 
+    Real center[3]    = { 0.0 };
+
 #ifdef merger
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
@@ -105,6 +107,12 @@ Castro::sum_integrated_quantities ()
     // Determine whether we're doing a single star simulation
     BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
 #endif
+
+    // Set problem center
+
+    for (int i = 0; i <= BL_SPACEDIM - 1; i++) {
+      center[i] = 0.5*(Geometry::ProbLo(i) + Geometry::ProbHi(i));
+    }
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -224,6 +232,14 @@ Castro::sum_integrated_quantities ()
 #endif
     }
 
+    // Divide the center of mass by the total amount of mass on the grid.
+
+    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+
+      com[i]       = com[i] / mass + center[i];
+      com_vel[i]   = momentum[i] / mass;
+
+    } 
 
     // Complete calculations for energy and momenta
 
@@ -262,7 +278,7 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(GET_STAR_LOCATIONS,get_star_locations)
       (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);   
 
-    for ( int i = 0; i <= BL_SPACEDIM; i++ ) {
+    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
       com_p[i] += vel_p[i] * dt * sum_interval;
       com_s[i] += vel_s[i] * dt * sum_interval;
     }
@@ -270,9 +286,11 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(SET_STAR_LOCATIONS,set_star_locations)
       (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);   
 
-    for ( int i = 0; i <= BL_SPACEDIM; i++ ) {
+    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
       com_p[i] = 0.0;
       com_s[i] = 0.0;
+      vel_p[i] = 0.0;
+      vel_s[i] = 0.0;
       mass_p   = 0.0;
       mass_s   = 0.0;
     }
@@ -282,37 +300,31 @@ Castro::sum_integrated_quantities ()
 
       getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
 
-      mass_p       += lev_mass_p;
-      mass_s       += lev_mass_s;
+      mass_p += lev_mass_p;
+      mass_s += lev_mass_s;
 
       for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
-	com_p[i]     += lev_com_p[i];
-	com_s[i]     += lev_com_s[i];
-	vel_p[i]     += lev_vel_p[i];
-	vel_s[i]     += lev_vel_s[i];
+	com_p[i] += lev_com_p[i];
+	com_s[i] += lev_com_s[i];
+	vel_p[i] += lev_vel_p[i];
+	vel_s[i] += lev_vel_s[i];
       }
 
     }
 
     // Complete calculations for center of mass quantities
 
-    Real center = 0.0;
+    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
 
-    for ( int i = 0; i <= 2; i++ ) {
-      center = 0.5*(Geometry::ProbLo(i) + Geometry::ProbHi(i));
-
-      // Divide the center of mass by the total amount of mass
-      // on the grid since the Fortran routines only volume-weight them.
-
-      com[i]       = com[i] / mass + center;
+      com[i]       = com[i] / mass + center[i];
       com_vel[i]   = momentum[i] / mass;
 
-      com_p[i] = com_p[i] / mass_p; 	
+      com_p[i] = com_p[i] / mass_p + center[i];
       vel_p[i] = vel_p[i] / mass_p;
 
       if (single_star != 1) {
 
-	 com_s[i] = com_s[i] / mass_s;
+	 com_s[i] = com_s[i] / mass_s + center[i];
 	 vel_s[i] = vel_s[i] / mass_s;
 
 	 // Calculate the distance between the primary and secondary.

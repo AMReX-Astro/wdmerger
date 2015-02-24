@@ -117,7 +117,7 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
 
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo, center
-  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
+  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star, roche_rad_P, roche_rad_S
 
   implicit none
 
@@ -141,23 +141,11 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
   integer          :: i, j, k
   double precision :: x, y, z, r_p, r_s
   double precision :: dV, dm
-  double precision :: q, roche_rad_P, roche_rad_S, wd_dist
   double precision :: vx, vy, vz, rhoInv
 
   ! Volume of a zone
 
   dV = dx(1) * dx(2) * dx(3)
-
-  q = mass_S / mass_P
-
-  wd_dist = ((com_P(1)-com_S(1))**2 + (com_P(2)-com_S(2))**2 + (com_P(3)-com_S(3))**2)**HALF
-
-  ! Get normalized Roche radii, then rescale them to the actual distance between the WDs
-
-  call get_roche_radii(q, roche_rad_S, roche_rad_P)
-
-  roche_rad_P = roche_rad_P * wd_dist
-  roche_rad_S = roche_rad_S * wd_dist
 
   ! Now, add to the COM locations and velocities depending on whether we're closer
   ! to the primary or the secondary.
@@ -174,12 +162,6 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
 
            dm = rho(i,j,k) * dV
            
-           rhoInv = ONE / rho(i,j,k)
-
-           vx = xmom(i,j,k) * rhoInv
-           vy = ymom(i,j,k) * rhoInv
-           vz = zmom(i,j,k) * rhoInv
-
            if (r_P < roche_rad_P .or. single_star) then
 
               m_p = m_p + dm
@@ -188,9 +170,9 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
               com_p_y = com_p_y + dm * y
               com_p_z = com_p_z + dm * z
 
-              vel_p_x = vel_p_x + dm * vx
-              vel_p_y = vel_p_y + dm * vy
-              vel_p_z = vel_p_z + dm * vz
+              vel_p_x = vel_p_x + xmom(i,j,k) * dV
+              vel_p_y = vel_p_y + ymom(i,j,k) * dV
+              vel_p_z = vel_p_z + zmom(i,j,k) * dV
 
            else if (r_S < roche_rad_S) then
 
@@ -200,9 +182,9 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
               com_s_y = com_s_y + dm * y
               com_s_z = com_s_z + dm * z
 
-              vel_s_x = vel_s_x + dm * vx
-              vel_s_y = vel_s_y + dm * vy
-              vel_s_z = vel_s_z + dm * vz
+              vel_s_x = vel_s_x + xmom(i,j,k) * dV
+              vel_s_y = vel_s_y + ymom(i,j,k) * dV
+              vel_s_z = vel_s_z + zmom(i,j,k) * dV
 
            endif
 
@@ -224,7 +206,7 @@ subroutine ca_volumeindensityboundary(rho,r_l1,r_l2,r_l3,r_h1,r_h2,r_h3,lo,hi,dx
                                       volp,vols,rho_cutoff)
 
   use bl_constants_module
-  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
+  use probdata_module, only: mass_P, mass_S, com_P, com_S, roche_rad_P, roche_rad_S, single_star
   use prob_params_module, only: problo
 
   implicit none
@@ -238,23 +220,9 @@ subroutine ca_volumeindensityboundary(rho,r_l1,r_l2,r_l3,r_h1,r_h2,r_h3,lo,hi,dx
   double precision :: dV
   double precision :: r_P, r_S
 
-  double precision :: roche_rad_P, roche_rad_S
-  double precision :: q, wd_dist
-
   dV  = dx(1)*dx(2)*dx(3)
   volp = ZERO
   vols = ZERO
-
-  q = mass_S / mass_P
-
-  wd_dist = ((com_P(1)-com_S(1))**2 + (com_P(2)-com_S(2))**2 + (com_P(3)-com_S(3))**2)**HALF
-
-  ! Get normalized Roche radii, then rescale them to the actual distance between the WDs
-
-  call get_roche_radii(q, roche_rad_S, roche_rad_P)
-
-  roche_rad_P = roche_rad_P * wd_dist
-  roche_rad_S = roche_rad_S * wd_dist
 
   do k = lo(3), hi(3)
      z = problo(3) + (dble(k) + HALF) * dx(3)
@@ -313,13 +281,15 @@ end subroutine get_star_locations
 
 subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
 
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, roche_rad_P, roche_rad_S, single_star
 
   implicit none
 
   double precision, intent (in) :: P_com(3), S_com(3)
   double precision, intent (in) :: P_vel(3), S_vel(3)
   double precision, intent (in) :: P_mass, S_mass
+
+  double precision :: r
 
   com_P = P_com
   com_S = S_com
@@ -330,21 +300,30 @@ subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
   mass_P = P_mass
   mass_S = S_mass
 
+  r = sum((com_P-com_S)**2)**(0.5)
+
+  if (.not. single_star) then
+
+     call get_roche_radii(mass_S/mass_P, roche_rad_S, roche_rad_P, r)
+
+  endif
+
 end subroutine set_star_locations
 
 
 
 ! Given the mass ratio q of two stars (assumed to be q = M_1 / M_2), 
 ! compute the effective Roche radii of the stars, normalized to unity, 
-! using the approximate formula of Eggleton (1983).
+! using the approximate formula of Eggleton (1983). We then 
+! scale them appropriately using the current orbital distance.
 
-subroutine get_roche_radii(mass_ratio, r_1, r_2)
+subroutine get_roche_radii(mass_ratio, r_1, r_2, a)
 
   use bl_constants_module, only: ONE, TWO3RD, THIRD
 
   implicit none
 
-  double precision, intent(in   ) :: mass_ratio
+  double precision, intent(in   ) :: mass_ratio, a
   double precision, intent(inout) :: r_1, r_2
 
   double precision :: q
@@ -355,10 +334,10 @@ subroutine get_roche_radii(mass_ratio, r_1, r_2)
 
   q = mass_ratio
 
-  r_1 = c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
+  r_1 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
 
   q = ONE / q
 
-  r_2 = c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
+  r_2 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
 
 end subroutine get_roche_radii

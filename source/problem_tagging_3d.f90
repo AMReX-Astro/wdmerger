@@ -7,7 +7,7 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
   use bl_constants_module, only: ZERO, HALF
   use meth_params_module, only: URHO, UMX, UMY, UMZ, UEDEN, NVAR
   use prob_params_module, only: center, probhi
-  use probdata_module, only: maxTaggingRadius
+  use probdata_module, only: maxTaggingRadius, com_P, com_S, roche_rad_P, roche_rad_S
  
   implicit none
   
@@ -23,7 +23,7 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
   integer         ,intent(in   ) :: level,set,clear
 
   integer          :: i, j, k
-  double precision :: x,y,z,r
+  double precision :: x,y,z,r,r_P,r_S
 
   ! Clear all tagging that occurs outside the radius set by maxTaggingRadius.
 
@@ -37,6 +37,17 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
            x = problo(1) + dble(i + HALF)*dx(1) - center(1)
 
            r = (x**2 + y**2 + z**2)**HALF
+
+           r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
+           r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
+
+           if (r_P <= roche_rad_P) then
+              tag(i,j,k) = set
+           endif
+           
+           if (r_S <= roche_rad_S) then
+              tag(i,j,k) = set
+           endif
 
            if (r .gt. maxTaggingRadius * maxval(abs(problo-center)) .or. &
                r .gt. maxTaggingRadius * maxval(abs(probhi-center)) ) then
