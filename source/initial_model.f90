@@ -16,15 +16,16 @@ use interpolate_module, only: interpolate
 
 contains
 
-  subroutine init_1d(model_r, model_hse, nx, dx, radius, mass, central_density, temp_core, xn_core, ambient_state)
+  subroutine init_1d(model_r, model_hse, nx, dx, hse_tol, mass_tol, &
+                     radius, mass, central_density, temp_core, xn_core, ambient_state)
 
     implicit none
 
     ! Arguments
 
     integer,          intent(in   ) :: nx
-
     double precision, intent(in   ) :: dx
+    double precision, intent(in   ) :: hse_tol, mass_tol
     double precision, intent(in   ) :: temp_core, xn_core(nspec)
     double precision, intent(inout) :: radius
     double precision, intent(inout) :: model_hse(nx,3+nspec)
@@ -52,17 +53,6 @@ contains
     double precision :: entropy_base
 
     double precision :: g_zone
-
-    ! TOL_HSE is the tolerance used when iterating over a zone to force
-    ! it into HSE by adjusting the current density (and possibly
-    ! temperature).  TOL_HSE should be very small (~ 1.e-10).
-    double precision, parameter :: TOL_HSE = 1.d-10
-
-    ! TOL_WD_MASS is tolerance used for getting the total WD mass equal
-    ! to M_tot (defined below).  It can be reasonably small, since there
-    ! will always be a central density value that can give the desired
-    ! WD mass on the grid we use
-    double precision, parameter :: TOL_WD_MASS = 1.d-6
 
     integer, parameter :: MAX_ITER = 250
 
@@ -211,7 +201,7 @@ contains
                 dens_zone = max(0.9*dens_zone, &
                      min(dens_zone + drho, 1.1*dens_zone))
 
-                if (abs(drho) < TOL_HSE*dens_zone) then
+                if (abs(drho) < hse_tol*dens_zone) then
                    converged_hse = .TRUE.
                    exit
                 endif
@@ -289,7 +279,7 @@ contains
 
        else
           ! Check if we have converged. If we specified the central density, we can just stop here.
-          if ( abs(mass_wd - M_tot)/M_tot < TOL_WD_MASS .or. central_density > ZERO ) then
+          if ( abs(mass_wd - M_tot)/M_tot < mass_tol .or. central_density > ZERO ) then
              mass_converged = .true.
              exit
           endif

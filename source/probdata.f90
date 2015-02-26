@@ -72,6 +72,8 @@ module probdata_module
   ! Resolution of 1D initial model
   double precision :: initial_model_dx
   integer          :: initial_model_npts
+  double precision :: initial_model_mass_tol
+  double precision :: initial_model_hse_tol
 
   ! Tagging criteria
   double precision :: maxTaggingRadius
@@ -156,7 +158,9 @@ contains
          maxTaggingRadius, &
          bulk_velx, bulk_vely, bulk_velz, &
          initial_model_dx, &
-         initial_model_npts
+         initial_model_npts, &
+         initial_model_mass_tol, &
+         initial_model_hse_tol
 
     maxTaggingRadius = 0.75d0
 
@@ -197,6 +201,19 @@ contains
 
     initial_model_dx = 2.5d6
     initial_model_npts = 1024
+
+    ! initial_model_mass_tol is tolerance used for getting the total WD mass 
+    ! equal to the desired mass. It can be reasonably small, since there
+    ! will always be a central density value that can give the desired
+    ! WD mass on the grid we use.
+
+    initial_model_mass_tol = 1.d-4
+
+    ! hse_tol is the tolerance used when iterating over a zone to force
+    ! it into HSE by adjusting the current density (and possibly
+    ! temperature).  hse_tol should be very small (~ 1.e-10).
+
+    initial_model_hse_tol = 1.d-10
 
     ! Read namelist to override the defaults
     untin = 9 
@@ -333,6 +350,7 @@ contains
     ! Generate primary and secondary WD
 
     call init_1d(model_P_r, model_P_state, initial_model_npts, initial_model_dx, &
+                 initial_model_hse_tol, initial_model_mass_tol, &
                  radius_P_initial, mass_P_initial, central_density_P, &
                  stellar_temp, stellar_comp, ambient_state)
 
@@ -346,6 +364,7 @@ contains
     if (.not. single_star) then
 
        call init_1d(model_S_r, model_S_state, initial_model_npts, initial_model_dx, &
+                    initial_model_hse_tol, initial_model_mass_tol, &
                     radius_S_initial, mass_S_initial, central_density_S, &
                     stellar_temp, stellar_comp, ambient_state)
 
