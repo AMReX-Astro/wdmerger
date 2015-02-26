@@ -86,9 +86,9 @@
               dist_S = loc - center_S_initial
 
               if (sum(dist_P**2) < radius_P_initial**2) then
-                 call interpolate_3d_from_1d(model_P_r, model_P_state, npts_model, dist_P, delta, zone_state, nsub)
+                 call interpolate_3d_from_1d(model_P_r, model_P_state, initial_model_npts, dist_P, delta, zone_state, nsub)
               else if (sum(dist_S**2) < radius_S_initial**2) then
-                 call interpolate_3d_from_1d(model_S_r, model_S_state, npts_model, dist_S, delta, zone_state, nsub)
+                 call interpolate_3d_from_1d(model_S_r, model_S_state, initial_model_npts, dist_S, delta, zone_state, nsub)
               else
                  zone_state = ambient_state
               endif

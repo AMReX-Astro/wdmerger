@@ -17,8 +17,6 @@ module probdata_module
   double precision, allocatable :: model_P_r(:), model_P_state(:,:)
   double precision, allocatable :: model_S_r(:), model_S_state(:,:)
 
-  integer :: npts_model
-
   ! Initial binary orbit characteristics
 
   double precision :: mass_P_initial, mass_S_initial
@@ -314,10 +312,7 @@ contains
 
     implicit none
 
-    double precision :: dx
     type (eos_t) :: ambient_state
-
-    double precision :: loc_P(3), loc_S(3)
 
     call get_ambient(ambient_state)
 
@@ -341,11 +336,11 @@ contains
 
     ! Allocate arrays to hold the stellar models
 
-    allocate(model_P_state(npts_model,3+nspec))
-    allocate(model_S_state(npts_model,3+nspec))
+    allocate(model_P_state(initial_model_npts,3+nspec))
+    allocate(model_S_state(initial_model_npts,3+nspec))
 
-    allocate(model_P_r(npts_model))
-    allocate(model_S_r(npts_model))
+    allocate(model_P_r(initial_model_npts))
+    allocate(model_S_r(initial_model_npts))
 
     ! Generate primary and secondary WD
 
