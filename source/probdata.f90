@@ -190,22 +190,22 @@ contains
     bulk_velz = ZERO
 
     ! For the grid spacing for our model, we'll use 
-    ! 25 km. No simulation we do is likely to have a resolution
+    ! 6.25 km. No simulation we do is likely to have a resolution
     ! higher than that inside the stars (it represents
     ! three jumps by a factor of four compared to our 
-    ! normal coarse grid resolution). By using 1024 
+    ! normal coarse grid resolution). By using 2048
     ! grid points, the size of the 1D domain will be 2.56e9 cm,
     ! which is larger than any reasonable mass white dwarf.
 
-    initial_model_dx = 2.5d6
-    initial_model_npts = 1024
+    initial_model_dx = 6.25d5
+    initial_model_npts = 4096
 
     ! initial_model_mass_tol is tolerance used for getting the total WD mass 
     ! equal to the desired mass. It can be reasonably small, since there
     ! will always be a central density value that can give the desired
     ! WD mass on the grid we use.
 
-    initial_model_mass_tol = 1.d-4
+    initial_model_mass_tol = 1.d-6
 
     ! hse_tol is the tolerance used when iterating over a zone to force
     ! it into HSE by adjusting the current density (and possibly
