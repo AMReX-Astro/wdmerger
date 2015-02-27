@@ -85,13 +85,13 @@ do
 
       if [ $MACHINE == "BLUE_WATERS" ]; then
 	  if   [ $ncell == 64  ]; then
-	      nprocs=16
+	      nprocs=32
 	      walltime=00:45:00
 	  elif [ $ncell == 128 ]; then
-	      nprocs=64
+	      nprocs=128
 	      walltime=6:00:00
 	  elif [ $ncell == 256 ]; then
-	      nprocs=512
+	      nprocs=1024
 	      walltime=12:00:00
 	  fi
       fi

@@ -17,7 +17,7 @@ maxell=20
 # Loop over the multipole orders we want to examine
 
 if [ $MACHINE == "BLUE_WATERS" ]; then
-    nprocs=16
+    nprocs=32
     walltime=1:00:00
 fi
 
@@ -30,7 +30,7 @@ do
 done
 
 if [ $MACHINE == "BLUE_WATERS" ]; then
-    nprocs=512
+    nprocs=1024
     walltime=1:00:00
 fi
 

@@ -508,7 +508,7 @@ function create_job_script {
 
       restartString=$(get_restart_string $dir)
 
-      echo "aprun -n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS -j 1 $CASTRO inputs $restartString" >> $dir/$job_script
+      echo "aprun -n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS -j 2 $CASTRO inputs $restartString" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 
@@ -673,7 +673,7 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
 
     allocation="jni"
     exec="qsub"
-    ppn="16"
+    ppn="32"
     node_type="xe"
     run_ext=".OU"
     workdir="/scratch/sciteam/$USER/"

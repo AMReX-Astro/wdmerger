@@ -15,13 +15,13 @@ do
   amr_n_cell="$ncell $ncell $ncell"
 
   if [ $ncell -eq "64" ]; then
-      nprocs="16"
+      nprocs="32"
   elif [ $nprocs -eq "128" ]; then
-      nprocs="128"
+      nprocs="256"
   elif [ $nprocs -eq "256" ]; then
-      nprocs="1024"
+      nprocs="2048"
   elif [ $nprocs -eq "512" ]; then
-      nprocs="8192"
+      nprocs="16384"
   fi
 
   run $dir $nprocs
