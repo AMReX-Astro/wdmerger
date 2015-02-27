@@ -23,13 +23,6 @@
      character :: model*(maxlen)
      integer :: ipp, ierr, ipp1
 
-     ! Temporary storage variables in case we need to switch the primary and secondary.
-
-     integer :: ioproc
-
-     ! For outputting -- determine if we are the IO processor
-     call bl_pd_is_ioproc(ioproc)
-
      ! Build "probin" filename -- the name of file containing fortin namelist.
      if (namlen .gt. maxlen) then
         call bl_error("ERROR: probin file name too long")
@@ -100,14 +93,12 @@
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
      double precision :: xx,yy,zz
-     double precision :: c(0:1,0:2), phi, num1, num2, den1, den2
-     integer          :: ii, jj, kk, ll
 
      type (eos_t) :: eos_state
-
+     
      integer :: i,j,k,n
 
-     !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy, zz, eos_state, ii, jj, kk, ll, num1, num2, den1, den2, phi, c)
+     !$OMP PARALLEL DO PRIVATE(i, j, k, xx, yy, zz, eos_state)
      do k = lo(3), hi(3)   
         zz = xlo(3) + delta(3)*dble(k-lo(3)+HALF) 
 
