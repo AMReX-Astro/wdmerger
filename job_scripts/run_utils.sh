@@ -312,6 +312,81 @@ function archive_all {
 
 
 
+# Obtain the value of a variable in the main inputs file.
+# Optionally we can provide a second argument to look 
+# in another inputs file.
+
+function get_inputs_var {
+
+  if [ ! -z $1 ]; then
+      var_name=$1
+  else
+      return
+  fi
+
+  if [ ! -z $2 ]; then
+      inputs=$2
+  else
+      inputs=$WDMERGER_HOME/source/inputs
+  fi
+
+  inputs_var_name=$(get_inputs_var_name $var_name)
+
+  var=""
+
+  if (grep -q "$inputs_var_name[[:space:]]*=" $inputs)
+  then
+
+      var=$(grep "$inputs_var_name" $inputs | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
+
+  fi
+
+  echo $var
+
+}
+
+
+
+# If a variable corresponds to a valid CASTRO inputs file,
+# return the name of this variable with the proper formatting:
+# replace the underscore after the namespace with a period.
+
+function get_inputs_var_name {
+
+    if [ ! -z $1 ]; then
+	var=$1
+    else
+	return
+    fi
+
+    namespace=$(echo $var | cut -d _ -f 1)
+
+    inputs_var_name=""
+
+    if ([ $var == "stop_time" ] || [ $var == "max_step" ])
+    then
+
+	inputs_var_name=$var	    
+
+    elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] || 
+	   [ $namespace == "geometry" ] || [ $namespace == "gravity" ] || 
+	   [ $namespace == "mg" ] )
+    then
+
+	# Remove the namespace from the variable, then
+	# replace it with the correct period.
+
+	inputs_var_end=$(echo ${var#$namespace\_})
+	inputs_var_name="$namespace.$inputs_var_end"
+
+    fi
+
+    echo $inputs_var_name
+
+}
+
+
+
 # Copies all relevant files needed for a CASTRO run into the target directory,
 # and updates the inputs and probin according to any shell variables we set.
 
@@ -360,33 +435,7 @@ function copy_files {
     for var in $input_vars
     do
 
-	# Get the namespace of the variable by 
-	# looking at what is before the first underscore.
-	# If it is not a valid namespace (or one of the few variables
-	# without a namespace), then skip this variable.
-
-	namespace=$(echo $var | cut -d _ -f 1)
-
-	is_inputs_var=0
-
-	if ([ $var == "stop_time" ] || [ $var == "max_step" ])
-	then
-
-	    is_inputs_var=1
-	    inputs_var_name=$var	    
-
-	elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] || 
-	       [ $namespace == "geometry" ] || [ $namespace == "gravity" ] || 
-               [ $namespace == "mg" ] )
-	then
-
-	    # Remove the namespace from the variable, then
-	    # replace it with the correct period.
-	    is_inputs_var=1
-	    inputs_var_end=$(echo ${var#$namespace\_})
-	    inputs_var_name="$namespace.$inputs_var_end"
-
-	fi
+	inputs_var_name=$(get_inputs_var_name $var)
 
 	# The -q option to grep means be quiet and only 
 	# return a flag indicating whether $var is in inputs.
@@ -394,15 +443,15 @@ function copy_files {
 	# variable and the equals sign. See:
         # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
 
-	if ([ $is_inputs_var -eq 1 ] && (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)) 
+	if ([ ! -z $inputs_var_name ] && (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)) 
 	then
-
 	    # OK, so the parameter name does exist in the inputs file;
 	    # now we just need to get its value in there. We can do this using
 	    # bash indirect references -- if $var is a variable name, then
 	    # ${!var} is the value held by that variable. See:
 	    # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	    # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
+
             sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/inputs
 	fi
 
@@ -453,6 +502,59 @@ function create_job_script {
 
   nodes=$(expr $nprocs / $ppn)
 
+  # Number of threads for OpenMP. This will be equal to 
+  # what makes the most sense for the machine architecture 
+  # by default. For example, the Titan XK7 and Blue Waters XE6
+  # Cray nodes are composed of Interlagos boards which are composed 
+  # of two NUMA nodes (each NUmA node has 8 integer cores and 4 
+  # floating point cores). If the user doesn't set it,
+  # we'll update the default with our experience from running on 
+  # these machines with tiling. When the grids are small enough,
+  # there isn't enough work to justify the OpenMP overhead. So 
+  # we'll use two OpenMP threads for small problems and four
+  # threads for bigger problems.
+
+  if [ -z $OMP_NUM_THREADS ]; then
+
+      OMP_NUM_THREADS=$threads_per_task
+
+      # First, get the maximum grid size. If this has been
+      # set by the including script, we use that; otherwise, 
+      # we read in the value from the main inputs file.
+
+      if [ -z $amr_max_grid_size ]; then
+	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size")
+      fi
+
+      max_level_grid_size=0
+
+      for grid_size in $amr_max_grid_size
+      do
+	  if [ $grid_size -gt $max_level_grid_size ]; then
+	      max_level_grid_size=$grid_size
+	  fi
+      done
+
+      if [ $MACHINE == "BLUE_WATERS" ]; then
+	  if [ $max_level_grid_size -lt "64" ]; then
+	      OMP_NUM_THREADS=2
+	  fi
+      elif [ $MACHINE == "BLUE_WATERS" ]; then
+	  if [ $max_level_grid_size -lt "64" ]; then
+	      OMP_NUM_THREADS=2
+	  fi
+      fi
+
+      # Also, we want to make sure that OMP_NUM_THREADS is equal to one
+      # if we didn't compile with OpenMP.
+
+      do_omp=$(get_make_var USE_OMP)
+      if [ $do_omp == "FALSE" ]; then
+	  OMP_NUM_THREADS=1
+      fi
+
+  fi
+
   # If the number of processors is less than the number of processors per node,
   # there are scaling tests where this is necessary; we'll assume the user understands
   # what they are doing and set it up accordingly.
@@ -502,13 +604,15 @@ function create_job_script {
 
       echo "cd \$PBS_O_WORKDIR" >> $dir/$job_script
 
-      # Number of threads for OpenMP
-
       echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
+
+      # Set the aprun options.
+
+      aprun_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
 
       restartString=$(get_restart_string $dir)
 
-      echo "aprun -n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS -j 2 $CASTRO inputs $restartString" >> $dir/$job_script
+      echo "aprun $aprun_opts $CASTRO inputs $restartString" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 
@@ -659,7 +763,14 @@ MACHINE=$(get_machine)
 job_name="wdmerger"
 job_script="run_script"
 
-OMP_NUM_THREADS="1"
+# Determine the number of OpenMP threads per task to run 
+# with, by default. We'll update this for the various machines
+# given their configurations, and then in the run script 
+# depending on the size of the problem, but the user 
+# can overwrite these defaults by setting OMP_NUM_THREADS
+# in the including script.
+
+threads_per_task="1"
 
 archive_method="none"
 
@@ -674,6 +785,7 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
     allocation="jni"
     exec="qsub"
     ppn="32"
+    threads_per_task="8"
     node_type="xe"
     run_ext=".OU"
     workdir="/scratch/sciteam/$USER/"
@@ -686,7 +798,8 @@ elif [ $MACHINE == "TITAN" ]; then
 
     allocation="ast106"
     exec="qsub"
-    ppn="8"
+    ppn="16"
+    threads_per_task="8"
     run_ext=".OU"
     workdir="/lustre/atlas/scratch/$USER/$allocation/"
     batch_system="PBS"
