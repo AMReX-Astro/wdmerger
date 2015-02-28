@@ -17,8 +17,6 @@ module probdata_module
   double precision, allocatable :: model_P_r(:), model_P_state(:,:)
   double precision, allocatable :: model_S_r(:), model_S_state(:,:)
 
-  integer :: npts_model
-
   ! Initial binary orbit characteristics
 
   double precision :: mass_P_initial, mass_S_initial
@@ -68,6 +66,12 @@ module probdata_module
 
   ! Are we doing a single star simulation?
   logical :: single_star
+
+  ! Resolution of 1D initial model
+  double precision :: initial_model_dx
+  integer          :: initial_model_npts
+  double precision :: initial_model_mass_tol
+  double precision :: initial_model_hse_tol
 
   ! Tagging criteria
   double precision :: maxTaggingRadius
@@ -150,7 +154,11 @@ contains
          stellar_temp, stellar_C12, stellar_O16, &
          star_axis, &
          maxTaggingRadius, &
-         bulk_velx, bulk_vely, bulk_velz
+         bulk_velx, bulk_vely, bulk_velz, &
+         initial_model_dx, &
+         initial_model_npts, &
+         initial_model_mass_tol, &
+         initial_model_hse_tol
 
     maxTaggingRadius = 0.75d0
 
@@ -180,6 +188,30 @@ contains
     bulk_velx = ZERO
     bulk_vely = ZERO
     bulk_velz = ZERO
+
+    ! For the grid spacing for our model, we'll use 
+    ! 6.25 km. No simulation we do is likely to have a resolution
+    ! higher than that inside the stars (it represents
+    ! three jumps by a factor of four compared to our 
+    ! normal coarse grid resolution). By using 2048
+    ! grid points, the size of the 1D domain will be 2.56e9 cm,
+    ! which is larger than any reasonable mass white dwarf.
+
+    initial_model_dx = 6.25d5
+    initial_model_npts = 4096
+
+    ! initial_model_mass_tol is tolerance used for getting the total WD mass 
+    ! equal to the desired mass. It can be reasonably small, since there
+    ! will always be a central density value that can give the desired
+    ! WD mass on the grid we use.
+
+    initial_model_mass_tol = 1.d-6
+
+    ! hse_tol is the tolerance used when iterating over a zone to force
+    ! it into HSE by adjusting the current density (and possibly
+    ! temperature).  hse_tol should be very small (~ 1.e-10).
+
+    initial_model_hse_tol = 1.d-10
 
     ! Read namelist to override the defaults
     untin = 9 
@@ -280,10 +312,7 @@ contains
 
     implicit none
 
-    double precision :: dx
     type (eos_t) :: ambient_state
-
-    double precision :: loc_P(3), loc_S(3)
 
     call get_ambient(ambient_state)
 
@@ -292,10 +321,6 @@ contains
 
     radius_P_initial = ZERO
     radius_S_initial = ZERO
-
-    npts_model = 1024
-
-    dx = 1.0d6
 
     com_P = center
     com_S = center
@@ -311,16 +336,18 @@ contains
 
     ! Allocate arrays to hold the stellar models
 
-    allocate(model_P_state(npts_model,3+nspec))
-    allocate(model_S_state(npts_model,3+nspec))
+    allocate(model_P_state(initial_model_npts,3+nspec))
+    allocate(model_S_state(initial_model_npts,3+nspec))
 
-    allocate(model_P_r(npts_model))
-    allocate(model_S_r(npts_model))
+    allocate(model_P_r(initial_model_npts))
+    allocate(model_S_r(initial_model_npts))
 
     ! Generate primary and secondary WD
 
-    call init_1d(model_P_r, model_P_state, npts_model, dx, radius_P_initial, mass_P_initial, &
-                 central_density_P, stellar_temp, stellar_comp, ambient_state)
+    call init_1d(model_P_r, model_P_state, initial_model_npts, initial_model_dx, &
+                 initial_model_hse_tol, initial_model_mass_tol, &
+                 radius_P_initial, mass_P_initial, central_density_P, &
+                 stellar_temp, stellar_comp, ambient_state)
 
     if (ioproc == 1 .and. init == 1) then
         print *, "Generated initial model for primary WD of mass", mass_P_initial, &
@@ -331,8 +358,10 @@ contains
 
     if (.not. single_star) then
 
-       call init_1d(model_S_r, model_S_state, npts_model, dx, radius_S_initial, mass_S_initial, &
-                    central_density_S, stellar_temp, stellar_comp, ambient_state)
+       call init_1d(model_S_r, model_S_state, initial_model_npts, initial_model_dx, &
+                    initial_model_hse_tol, initial_model_mass_tol, &
+                    radius_S_initial, mass_S_initial, central_density_S, &
+                    stellar_temp, stellar_comp, ambient_state)
 
        if (ioproc == 1 .and. init == 1) then
           print *, "Generated initial model for secondary WD of mass", mass_S_initial, &

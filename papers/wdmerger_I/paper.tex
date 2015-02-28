@@ -1094,21 +1094,29 @@ We desire to specify the mass of the white dwarf, as well as its
 temperature and composition. To start the integration off, we
 therefore need to guess at a central density.  We then do a secant
 iteration over the entire integration procedure to find the central
-density needed to yield the desired total mass.  We note that the grid
-spacing $\Delta x$ is chosen such that it is equal to the zone size on
-the finest level of our problem, which is known in advance since we
-specify the domain size and the maximum number of possible levels of
-refinement.
+density needed to yield the desired total mass.  The grid spacing is
+$\Delta x = 6.25\ \text{km}$. We chose this value because no simulation
+we perform is likely to exceed this grid resolution inside the stars 
+themselves; for our normal domain size (see below), this corresponds to 
+three jumps in refinement by a factor of four. We find that for low 
+resolution runs, this is a better choice than selecting the 1D grid 
+spacing to be equal to the 3D grid spacing.
 
 We map the 1D model onto the 3D Cartesian grid by taking density,
 temperature, and composition as the independent variables,
 interpolating these to the cell centers, and then calling the equation
-of state to initialize the remaining terms.  The interpolation process
-divides each zone into $n_{\text{sub}}$ sub-zones of equal volume for
+of state to initialize the remaining terms. It is possible to interpolate
+instead by using pressure instead of temperature, as pressure is more 
+closely related to hydrostatic balance, but the EOS we use is so 
+insensitive to temperature that this mapping can result in large 
+deviations from the isothermal assumption we started with.  The 
+interpolation process divides each zone into $n_{\text{sub}}$ 
+sub-zones of equal volume for
 the purpose of sampling the 1D model, and the sub-zones are added
 together to obtain the full zone's characteristics. This
-sub-grid-scale interpolation is useful near the edge of the star,
-where the density falls off rapidly with radius.
+sub-grid-scale interpolation is useful especially near the edge of the star,
+where the density falls off rapidly with radius. Typically we take 
+$n_{\text{sub}} = 4$.
 
 For a single star simulation, the star is simply placed at the center
 of the computational domain, which we take to be the origin. For a
@@ -1132,23 +1140,20 @@ the secondary's center of mass is located at $x = (M_P / M)\, a$.
 
 The initial velocity is taken to be zero in if we are in the reference
 frame that rotates with the WDs, and if we are in the inertial frame
-the velocity is set equal to the rigid rotation rate corresponding to
-the specified period $T$.
+the velocity in every zone is set equal to the rigid rotation rate 
+corresponding to the distance of that zone from the rotation axis, given
+the specified period $T$. Thus the inertial frame and rotating frame 
+simulations are starting off with the same initial conditions: two white 
+dwarfs locked in synchronous rotation. This is the simplest assumption to 
+make, but in the future we may explore relaxing this requirement.
 
 We do not attempt to enforce equilibrium with an additional relaxation
 step. This will be an important part of future work in this series, as
 numerous groups working on binary evolution
 \citep{swc:2000,motl:2002,rosswog:2004,dan:2011,pakmor:2012:gadget}
 have commented on the importance of equilibrium initial conditions in
-determining the evolution of the system. In particular, we plan to
-compare the self-consistent field method (which finds an equilibrium
-solution \textit{a priori}) and the method of \cite{rosswog:2004},
-which starts with our method and then attempts to guide the evolution
-toward the equilibrium state using suitably defined damping
-terms. However, these issues are not considered for the present study,
-as we are not yet attempting to study the merger process.
-
-As a consequence of starting in a non-equilibrium setting, there are 
+determining the evolution of the system. As a consequence of starting 
+in a non-equilibrium setting, there are 
 large density and pressure gradients near the white dwarf surfaces
 that result in large amounts of mass flowing into the ambient
 medium. This can result in spurious non-physical consequences such as 
@@ -1193,6 +1198,14 @@ of each star as well as its location and velocity. Once we have the new centers 
 we compute the effective radius of each star at various density cutoffs. This involves 
 computing the volume $V$ of all zones within the Roche radius of the star's center 
 whose density is greater than the cutoff. We then compute $r_{\text{eff}} = (3V/4\pi)^{1/3}.$
+
+The computational domain has a total size of $1.024 \times 10^{10}\ \text{cm}$ in each 
+spatial dimension, and is centered at the origin. Our coarse grid has $256^3$ zones,
+corresponding to a spatial resolution of 400 km. For the present study, we choose a simple 
+refinement strategy: all zones within the Roche radius of each star are tagged for maximal 
+refinement. We also ensure that the outer part of the domain is never tagged for refinement.
+In future work we will add criteria that tag for refinement the gas between the stars, which is
+expected to feature nuclear burning.
 
 The software used to generate the test problems in this paper
 (as well as the manuscript itself),

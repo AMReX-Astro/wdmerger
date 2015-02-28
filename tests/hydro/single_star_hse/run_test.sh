@@ -15,13 +15,13 @@ do
   if [ $MACHINE == "BLUE_WATERS" ]; then
 
     if [ $ncell -eq 32 ]; then
-	nprocs=16
+	nprocs=32
 	walltime=1:00:00
     elif [ $ncell -eq 64 ]; then
-	nprocs=16
+	nprocs=32
 	walltime=12:00:00
     elif [ $ncell -eq 128 ]; then
-	nprocs=64
+	nprocs=128
 	walltime=24:00:00
     fi
 
