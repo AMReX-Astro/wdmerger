@@ -512,7 +512,7 @@ function create_job_script {
 
    elif [ $batch_system == "batch" ]; then
 
-      echo "echo \"mpiexec -n $nprocs $CASTRO inputs > info.out\" | batch" > $dir/$job_script
+      echo "echo \"mpiexec -n $nprocs $CASTRO inputs > $job_name$run_ext\" | batch" > $dir/$job_script
 
    fi
 
@@ -555,19 +555,18 @@ function run {
       walltime=1:00:00
   fi
 
+  do_job=0
+
   if [ ! -d $dir ]; then
 
     echo "Submitting job in directory "$dir"."
 
     mkdir -p $dir
 
-    # Change into the run directory, submit the job, then come back to the main directory.
-
     copy_files $dir
     create_job_script $dir $nprocs $walltime
-    cd $dir
-    $exec $job_script
-    cd - > /dev/null
+
+    do_job=1
 
   else
 
@@ -620,20 +619,28 @@ function run {
 	  echo "Continuing job in directory "$dir"."
 
 	  create_job_script $dir $nprocs $walltime
-	  cd $dir
-	  $exec $job_script
-	  cd - > /dev/null
+
+	  do_job=1
+
+      else
 
 	  # If we make it here, then we've already reached either stop_time
 	  # or max_step, so we should conclude that the run is done.
-
-      else
 
 	  echo "Job has already been completed in directory "$dir"."
 
       fi
     fi
 
+  fi
+
+  # If we are continuing or starting a job, change into the run directory, 
+  # submit the job, then come back to the main directory.
+
+  if [ $do_job -eq 1 ]; then
+    cd $dir
+    $exec $job_script
+    cd - > /dev/null
   fi
 
 }
@@ -668,6 +675,7 @@ if [ $MACHINE == "GENERICLINUX" ]; then
     exec="bash"
     ppn="16"
     batch_system="batch"
+    run_ext=".OU"
 
 elif [ $MACHINE == "BLUE_WATERS" ]; then
 
