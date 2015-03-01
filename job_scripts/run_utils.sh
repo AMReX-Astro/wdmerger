@@ -250,15 +250,9 @@ function archive_all {
   # Archive the plotfiles and checkpoint files.
   # Make sure that they have been completed by checking if
   # the Header file exists, which is the last thing created.
-  # If there are no plotfiles or checkpoints to archive,
-  # then assume we have completed the run and exit.
 
   pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
   chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
-
-  if [[ -z $pltlist ]] && [[ -z $chklist ]]; then
-      return
-  fi
 
   # Move all completed plotfiles and checkpoints to the output
   # directory, and add them to the list of things to archive.
@@ -294,10 +288,19 @@ function archive_all {
 
   # For the diagnostic files, we just want to make a copy and move it to the 
   # output directory; we can't move it, since the same file needs to be there
-  # for the duration of the simulation if we want a continuous record.
+  # for the duration of the simulation if we want a continuous record. But 
+  # we want to avoid archiving the files again if the run has already been
+  # completed, so we check the timestamps and only move the file to the output
+  # directory if the archived version is older than the main version.
 
   for file in $diaglist
   do
+      diag_basename=$(basename $file)
+      if [ -e $dir/output/$diag_basename ]; then
+	  if [ $dir/output/$diag_basename -nt $file ]; then
+	      continue
+	  fi
+      fi
       cp $file $dir/output/
       f=$(basename $file)
       archivelist=$archivelist" "$f
@@ -309,10 +312,23 @@ function archive_all {
 
   for file in $outlist
   do
+      output_basename=$(basename $file)
+      if [ -e $dir/output/$output_basename ]; then
+	  if [ $dir/output/$output_basename -nt $file ]; then
+	      continue
+	  fi
+      fi
       cp $file $dir/output/
       f=$(basename $file)
       archivelist=$archivelist" "$f
   done
+
+  # If there is nothing to archive,
+  # then assume we have completed the run and exit.
+
+  if [[ -z $archivelist ]]; then
+      return
+  fi
 
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
