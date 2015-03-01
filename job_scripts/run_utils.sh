@@ -1,5 +1,9 @@
 # run_utils.sh: helper functions for job submission scripts.
 
+# Bring in scripts for working with inputs and probin files.
+source $WDMERGER_HOME/job_scripts/inputs.sh
+source $WDMERGER_HOME/job_scripts/probin.sh
+
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
 # variable list and prints it out to stdout. It is the last word
@@ -312,81 +316,6 @@ function archive_all {
 
 
 
-# Obtain the value of a variable in the main inputs file.
-# Optionally we can provide a second argument to look 
-# in another inputs file.
-
-function get_inputs_var {
-
-  if [ ! -z $1 ]; then
-      var_name=$1
-  else
-      return
-  fi
-
-  if [ ! -z $2 ]; then
-      inputs=$2
-  else
-      inputs=$WDMERGER_HOME/source/inputs
-  fi
-
-  inputs_var_name=$(get_inputs_var_name $var_name)
-
-  var=""
-
-  if (grep -q "$inputs_var_name[[:space:]]*=" $inputs)
-  then
-
-      var=$(grep "$inputs_var_name" $inputs | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
-
-  fi
-
-  echo $var
-
-}
-
-
-
-# If a variable corresponds to a valid CASTRO inputs file,
-# return the name of this variable with the proper formatting:
-# replace the underscore after the namespace with a period.
-
-function get_inputs_var_name {
-
-    if [ ! -z $1 ]; then
-	var=$1
-    else
-	return
-    fi
-
-    namespace=$(echo $var | cut -d _ -f 1)
-
-    inputs_var_name=""
-
-    if ([ $var == "stop_time" ] || [ $var == "max_step" ])
-    then
-
-	inputs_var_name=$var	    
-
-    elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] || 
-	   [ $namespace == "geometry" ] || [ $namespace == "gravity" ] || 
-	   [ $namespace == "mg" ] )
-    then
-
-	# Remove the namespace from the variable, then
-	# replace it with the correct period.
-
-	inputs_var_end=$(echo ${var#$namespace\_})
-	inputs_var_name="$namespace.$inputs_var_end"
-
-    fi
-
-    echo $inputs_var_name
-
-}
-
-
-
 # Copies all relevant files needed for a CASTRO run into the target directory,
 # and updates the inputs and probin according to any shell variables we set.
 
@@ -432,54 +361,16 @@ function copy_files {
 
     input_vars=$(comm -3 <( echo $shell_list | tr " " "\n" | sort) <( echo $shell_list_new | tr " " "\n" | sort))
 
+    # Loop through all new variables and call both replace_inputs_var and 
+    # replace_probin_var. These will only take action if the variable exists
+    # in the respective files, and there should not be any common variables,
+    # so there is no harm in the redundancy.
+
     for var in $input_vars
     do
 
-	inputs_var_name=$(get_inputs_var_name $var)
-
-	# The -q option to grep means be quiet and only 
-	# return a flag indicating whether $var is in inputs.
-	# The [[:space:]]* tells grep to ignore any whitespace between the 
-	# variable and the equals sign. See:
-        # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
-
-	if ([ ! -z $inputs_var_name ] && (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)) 
-	then
-	    # OK, so the parameter name does exist in the inputs file;
-	    # now we just need to get its value in there. We can do this using
-	    # bash indirect references -- if $var is a variable name, then
-	    # ${!var} is the value held by that variable. See:
-	    # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
-	    # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
-
-            sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/inputs
-	fi
-
-	# There's a couple of variables we have to be careful with: amr.plot_int and amr.check_int.
-	# These cannot be defined simultaneously with amr.plot_per and amr.check_per, and it is 
-	# only these latter ones that exist in the inputs file by default.
-
-	if [ $var == "amr_check_int" ]; then
-	    sed -i "s/amr.check_per.*=.*/amr.check_int = ${!var}/g" $dir/inputs
-	fi
-
-	if [ $var == "amr_plot_int" ]; then
-	    sed -i "s/amr.plot_per.*=.*/amr.plot_int = ${!var}/g" $dir/inputs
-	fi
-
-	# Do the same thing for the probin file.
-	# Since we don't have the namespace to rely on 
-	# to guard against false positives, we only replace
-	# in cases that there's a space both before and 
-	# after the variable, signifying a full word match.
-	# This will require that your probin variables have
-	# at least one space behind them and after them.
-	# The equals sign cannot be adjacent to the name.
-
-	if grep -q "$var[[:space:]]*=" $dir/probin
-	then
-            sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/probin
-	fi
+	replace_inputs_var $var $dir
+	replace_probin_var $var $dir
 
     done
 
@@ -644,7 +535,7 @@ function create_job_script {
 
 
 
-# Main submission script. Checks which Linux variant we're on,
+# Main submission function. Checks which Linux variant we're on,
 # and uses the relevant batch submission script. If you want to
 # use a different machine, you'll need to include a run script
 # for it in the job_scripts directory.
@@ -895,4 +786,3 @@ if [ -d $compile_dir ]; then
     fi
 
 fi
-
