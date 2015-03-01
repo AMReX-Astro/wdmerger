@@ -455,6 +455,18 @@ function copy_files {
             sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/inputs
 	fi
 
+	# There's a couple of variables we have to be careful with: amr.plot_int and amr.check_int.
+	# These cannot be defined simultaneously with amr.plot_per and amr.check_per, and it is 
+	# only these latter ones that exist in the inputs file by default.
+
+	if [ $var == "amr_check_int" ]; then
+	    sed -i "s/amr.check_per.*=.*/amr.check_int = ${!var}/g" $dir/inputs
+	fi
+
+	if [ $var == "amr_plot_int" ]; then
+	    sed -i "s/amr.plot_per.*=.*/amr.plot_int = ${!var}/g" $dir/inputs
+	fi
+
 	# Do the same thing for the probin file.
 	# Since we don't have the namespace to rely on 
 	# to guard against false positives, we only replace
@@ -522,7 +534,7 @@ function create_job_script {
       # set by the including script, we use that; otherwise, 
       # we read in the value from the main inputs file.
 
-      if [ -z $amr_max_grid_size ]; then
+      if [ -z "$amr_max_grid_size" ]; then
 	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size")
       fi
 
@@ -538,10 +550,14 @@ function create_job_script {
       if [ $MACHINE == "BLUE_WATERS" ]; then
 	  if [ $max_level_grid_size -lt "64" ]; then
 	      OMP_NUM_THREADS=2
+	  elif [ $max_level_grid_size -lt "128" ]; then
+	      OMP_NUM_THREADS=4
 	  fi
       elif [ $MACHINE == "BLUE_WATERS" ]; then
 	  if [ $max_level_grid_size -lt "64" ]; then
 	      OMP_NUM_THREADS=2
+	  elif [ $max_level_grid_size -lt "128" ]; then
+	      OMP_NUM_THREADS=4
 	  fi
       fi
 
