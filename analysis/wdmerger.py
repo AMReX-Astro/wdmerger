@@ -169,6 +169,7 @@ def get_last_output(dir):
 
 #
 # Get the timing data for a wdmerger output file.
+# Return the median timestep wall clock length.
 #
 
 def timing(output_filename):
@@ -184,7 +185,7 @@ def timing(output_filename):
     coarseSteps = filter(lambda s: s[0:6] == "Coarse",lines)
     coarseSteps = [float(s.split()[3]) for s in coarseSteps] # Extract out the time only
 
-    avg_timestep = np.average(coarseSteps)
+    med_timestep = np.median(coarseSteps)
 
     # Now subtract out the gravity solve time in each case
 
@@ -211,9 +212,9 @@ def timing(output_filename):
         for i in range(grav_per_timestep):
             coarseSteps[n] -= float(grav_time[n+i])
 
-    avg_timestep_no_grav = np.average(coarseSteps)
+    med_timestep_no_grav = np.median(coarseSteps)
 
-    return [avg_timestep, avg_timestep_no_grav]
+    return [med_timestep, med_timestep_no_grav]
 
 
 
