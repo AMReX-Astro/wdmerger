@@ -15,8 +15,7 @@ function get_inputs_var {
     fi
 
     if [ ! -z $2 ]; then
-	dir=$2
-	inputs=$dir/inputs
+	inputs=$2/inputs
     else
 	inputs=$WDMERGER_HOME/source/inputs
     fi

@@ -39,6 +39,32 @@ function get_machine {
 
 
 
+# Given a directory as the first argument, return the numerically last output file.
+# Assumes that all output files have the same number of digits; this should work 
+# in general except in rare cases.
+
+function get_last_output {
+
+    if [ -z $1 ]; then
+	echo "No directory passed to get_last_output; exiting."
+	return
+    else
+	dir=$1
+    fi
+
+    output=$(find $dir -name "$job_name*" | sort | tail -1)
+
+    # Extract out the search directory from the result.
+
+    output=$(echo ${output#$dir/})
+    output=$(echo ${output#$dir})
+
+    echo $output
+
+}
+
+
+
 # Given a directory as the first argument, return the numerically last checkpoint file.
 
 function get_last_checkpoint {
@@ -598,8 +624,17 @@ function run {
       archive_all $cwd/$dir
 
       # If the directory already exists, check to see if we've reached the desired stopping point.
+      # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
 
       checkpoint=$(get_last_checkpoint $dir)
+      last_output=$(get_last_output $dir)
+
+      # Get the desired stopping time and max step from the inputs file in the directory.
+
+      dir_stop_time=$(get_inputs_var "stop_time" $dir)
+      dir_max_step=$(get_inputs_var "max_step" $dir)
+
+      # Assume we're continuing, by default.
 
       time_flag=1
       step_flag=1
@@ -614,14 +649,20 @@ function run {
 
 	  chk_step=$(awk 'NR==12' $dir/$checkpoint/Header)
 
-	  # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
-	  # The job script already knows to start from the latest checkpoint file.
+	  time_flag=$(echo "$chk_time < $dir_stop_time" | bc -l)
+	  step_flag=$(echo "$chk_step < $dir_max_step" | bc)
 
-	  chk_stop_time=$(grep "stop_time" $dir/inputs | awk '{print $3}')
-	  chk_max_step=$(grep "max_step" $dir/inputs | awk '{print $3}')
+      elif [ -e $dir/$last_output ]; then
 
-	  time_flag=$(echo "$chk_time < $chk_stop_time" | bc -l)
-	  step_flag=$(echo "$chk_step < $chk_max_step" | bc -l)
+	  output_time=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $6}')
+	  output_step=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $3}')
+
+	  # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
+
+	  output_time=$(printf "%f" $output_time)
+
+	  time_flag=$(echo "$output_time < $dir_stop_time" | bc -l)
+	  step_flag=$(echo "$output_step < $dir_max_step" | bc)
 
       fi
 
