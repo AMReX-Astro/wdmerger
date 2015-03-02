@@ -59,6 +59,7 @@ castro.do_grav = 1			      	   # Whether or not to do gravity
 castro.do_react = 0			      	   # Whether or not to do reactions
 castro.do_sponge = 0			      	   # Whether or not to apply the sponge
 castro.add_ext_src = 1			      	   # Whether or not to apply external source terms
+castro.do_relax = 0                                # Whether or not to do a post-initialization relaxation sequence
 castro.do_rotation = 1			      	   # Whether or not to include the rotation source term
 castro.rotational_period = 100.0	      	   # Rotational period of the rotating reference frame
 
