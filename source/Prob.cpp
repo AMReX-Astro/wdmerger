@@ -2,6 +2,12 @@
 #include "Castro_F.H"
 #include "Problem_F.H"
 
+#include "Gravity.H"
+
+#include "ParmParse.H"
+
+int Castro::do_relax = 0;
+
 //
 // This function computes the center-of-mass locations (and velocities of the center of masses)
 // of the primary and secondary white dwarfs.
@@ -170,3 +176,16 @@ void Castro::volInBoundary (Real               time,
 
 }
 
+#ifdef GRAVITY
+#ifdef do_problem_post_init
+
+void Castro::problem_post_init() {
+
+    ParmParse pp("castro");
+
+    pp.query("do_relax", do_relax);
+
+}
+
+#endif
+#endif
