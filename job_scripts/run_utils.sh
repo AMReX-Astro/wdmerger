@@ -1,5 +1,9 @@
 # run_utils.sh: helper functions for job submission scripts.
 
+# Bring in scripts for working with inputs and probin files.
+source $WDMERGER_HOME/job_scripts/inputs.sh
+source $WDMERGER_HOME/job_scripts/probin.sh
+
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
 # variable list and prints it out to stdout. It is the last word
@@ -30,6 +34,32 @@ function get_machine {
   fi
 
   echo $MACHINE
+
+}
+
+
+
+# Given a directory as the first argument, return the numerically last output file.
+# Assumes that all output files have the same number of digits; this should work 
+# in general except in rare cases.
+
+function get_last_output {
+
+    if [ -z $1 ]; then
+	echo "No directory passed to get_last_output; exiting."
+	return
+    else
+	dir=$1
+    fi
+
+    output=$(find $dir -name "$job_name*" | sort | tail -1)
+
+    # Extract out the search directory from the result.
+
+    output=$(echo ${output#$dir/})
+    output=$(echo ${output#$dir})
+
+    echo $output
 
 }
 
@@ -220,15 +250,9 @@ function archive_all {
   # Archive the plotfiles and checkpoint files.
   # Make sure that they have been completed by checking if
   # the Header file exists, which is the last thing created.
-  # If there are no plotfiles or checkpoints to archive,
-  # then assume we have completed the run and exit.
 
   pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
   chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
-
-  if [[ -z $pltlist ]] && [[ -z $chklist ]]; then
-      return
-  fi
 
   # Move all completed plotfiles and checkpoints to the output
   # directory, and add them to the list of things to archive.
@@ -264,10 +288,19 @@ function archive_all {
 
   # For the diagnostic files, we just want to make a copy and move it to the 
   # output directory; we can't move it, since the same file needs to be there
-  # for the duration of the simulation if we want a continuous record.
+  # for the duration of the simulation if we want a continuous record. But 
+  # we want to avoid archiving the files again if the run has already been
+  # completed, so we check the timestamps and only move the file to the output
+  # directory if the archived version is older than the main version.
 
   for file in $diaglist
   do
+      diag_basename=$(basename $file)
+      if [ -e $dir/output/$diag_basename ]; then
+	  if [ $dir/output/$diag_basename -nt $file ]; then
+	      continue
+	  fi
+      fi
       cp $file $dir/output/
       f=$(basename $file)
       archivelist=$archivelist" "$f
@@ -279,10 +312,23 @@ function archive_all {
 
   for file in $outlist
   do
+      output_basename=$(basename $file)
+      if [ -e $dir/output/$output_basename ]; then
+	  if [ $dir/output/$output_basename -nt $file ]; then
+	      continue
+	  fi
+      fi
       cp $file $dir/output/
       f=$(basename $file)
       archivelist=$archivelist" "$f
   done
+
+  # If there is nothing to archive,
+  # then assume we have completed the run and exit.
+
+  if [[ -z $archivelist ]]; then
+      return
+  fi
 
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
@@ -307,81 +353,6 @@ function archive_all {
       archive $dir/output/
 
   fi
-
-}
-
-
-
-# Obtain the value of a variable in the main inputs file.
-# Optionally we can provide a second argument to look 
-# in another inputs file.
-
-function get_inputs_var {
-
-  if [ ! -z $1 ]; then
-      var_name=$1
-  else
-      return
-  fi
-
-  if [ ! -z $2 ]; then
-      inputs=$2
-  else
-      inputs=$WDMERGER_HOME/source/inputs
-  fi
-
-  inputs_var_name=$(get_inputs_var_name $var_name)
-
-  var=""
-
-  if (grep -q "$inputs_var_name[[:space:]]*=" $inputs)
-  then
-
-      var=$(grep "$inputs_var_name" $inputs | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
-
-  fi
-
-  echo $var
-
-}
-
-
-
-# If a variable corresponds to a valid CASTRO inputs file,
-# return the name of this variable with the proper formatting:
-# replace the underscore after the namespace with a period.
-
-function get_inputs_var_name {
-
-    if [ ! -z $1 ]; then
-	var=$1
-    else
-	return
-    fi
-
-    namespace=$(echo $var | cut -d _ -f 1)
-
-    inputs_var_name=""
-
-    if ([ $var == "stop_time" ] || [ $var == "max_step" ])
-    then
-
-	inputs_var_name=$var	    
-
-    elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] || 
-	   [ $namespace == "geometry" ] || [ $namespace == "gravity" ] || 
-	   [ $namespace == "mg" ] )
-    then
-
-	# Remove the namespace from the variable, then
-	# replace it with the correct period.
-
-	inputs_var_end=$(echo ${var#$namespace\_})
-	inputs_var_name="$namespace.$inputs_var_end"
-
-    fi
-
-    echo $inputs_var_name
 
 }
 
@@ -432,42 +403,16 @@ function copy_files {
 
     input_vars=$(comm -3 <( echo $shell_list | tr " " "\n" | sort) <( echo $shell_list_new | tr " " "\n" | sort))
 
+    # Loop through all new variables and call both replace_inputs_var and 
+    # replace_probin_var. These will only take action if the variable exists
+    # in the respective files, and there should not be any common variables,
+    # so there is no harm in the redundancy.
+
     for var in $input_vars
     do
 
-	inputs_var_name=$(get_inputs_var_name $var)
-
-	# The -q option to grep means be quiet and only 
-	# return a flag indicating whether $var is in inputs.
-	# The [[:space:]]* tells grep to ignore any whitespace between the 
-	# variable and the equals sign. See:
-        # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
-
-	if ([ ! -z $inputs_var_name ] && (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)) 
-	then
-	    # OK, so the parameter name does exist in the inputs file;
-	    # now we just need to get its value in there. We can do this using
-	    # bash indirect references -- if $var is a variable name, then
-	    # ${!var} is the value held by that variable. See:
-	    # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
-	    # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
-
-            sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/inputs
-	fi
-
-	# Do the same thing for the probin file.
-	# Since we don't have the namespace to rely on 
-	# to guard against false positives, we only replace
-	# in cases that there's a space both before and 
-	# after the variable, signifying a full word match.
-	# This will require that your probin variables have
-	# at least one space behind them and after them.
-	# The equals sign cannot be adjacent to the name.
-
-	if grep -q "$var[[:space:]]*=" $dir/probin
-	then
-            sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/probin
-	fi
+	replace_inputs_var $var $dir
+	replace_probin_var $var $dir
 
     done
 
@@ -522,7 +467,7 @@ function create_job_script {
       # set by the including script, we use that; otherwise, 
       # we read in the value from the main inputs file.
 
-      if [ -z $amr_max_grid_size ]; then
+      if [ -z "$amr_max_grid_size" ]; then
 	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size")
       fi
 
@@ -538,10 +483,14 @@ function create_job_script {
       if [ $MACHINE == "BLUE_WATERS" ]; then
 	  if [ $max_level_grid_size -lt "64" ]; then
 	      OMP_NUM_THREADS=2
+	  elif [ $max_level_grid_size -lt "128" ]; then
+	      OMP_NUM_THREADS=4
 	  fi
       elif [ $MACHINE == "BLUE_WATERS" ]; then
 	  if [ $max_level_grid_size -lt "64" ]; then
 	      OMP_NUM_THREADS=2
+	  elif [ $max_level_grid_size -lt "128" ]; then
+	      OMP_NUM_THREADS=4
 	  fi
       fi
 
@@ -628,7 +577,7 @@ function create_job_script {
 
 
 
-# Main submission script. Checks which Linux variant we're on,
+# Main submission function. Checks which Linux variant we're on,
 # and uses the relevant batch submission script. If you want to
 # use a different machine, you'll need to include a run script
 # for it in the job_scripts directory.
@@ -691,8 +640,17 @@ function run {
       archive_all $cwd/$dir
 
       # If the directory already exists, check to see if we've reached the desired stopping point.
+      # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
 
       checkpoint=$(get_last_checkpoint $dir)
+      last_output=$(get_last_output $dir)
+
+      # Get the desired stopping time and max step from the inputs file in the directory.
+
+      dir_stop_time=$(get_inputs_var "stop_time" $dir)
+      dir_max_step=$(get_inputs_var "max_step" $dir)
+
+      # Assume we're continuing, by default.
 
       time_flag=1
       step_flag=1
@@ -707,14 +665,20 @@ function run {
 
 	  chk_step=$(awk 'NR==12' $dir/$checkpoint/Header)
 
-	  # Now determine if we are both under max_step and stop_time. If so, re-submit the job.
-	  # The job script already knows to start from the latest checkpoint file.
+	  time_flag=$(echo "$chk_time < $dir_stop_time" | bc -l)
+	  step_flag=$(echo "$chk_step < $dir_max_step" | bc)
 
-	  chk_stop_time=$(grep "stop_time" $dir/inputs | awk '{print $3}')
-	  chk_max_step=$(grep "max_step" $dir/inputs | awk '{print $3}')
+      elif [ -e $dir/$last_output ]; then
 
-	  time_flag=$(echo "$chk_time < $chk_stop_time" | bc -l)
-	  step_flag=$(echo "$chk_step < $chk_max_step" | bc -l)
+	  output_time=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $6}')
+	  output_step=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $3}')
+
+	  # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
+
+	  output_time=$(printf "%f" $output_time)
+
+	  time_flag=$(echo "$output_time < $dir_stop_time" | bc -l)
+	  step_flag=$(echo "$output_step < $dir_max_step" | bc)
 
       fi
 
@@ -879,4 +843,3 @@ if [ -d $compile_dir ]; then
     fi
 
 fi
-
