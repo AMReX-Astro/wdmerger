@@ -323,6 +323,18 @@ function archive_all {
       archivelist=$archivelist" "$f
   done
 
+  # Same strategy for the inputs and probin files.
+
+  if ([ ! -e $dir/output/inputs ] || [ $dir/output/inputs -ot $dir/inputs ]); then
+      cp $dir/inputs $dir/output/
+      archivelist=$archivelist" "inputs
+  fi
+
+  if ([ ! -e $dir/output/probin ] || [ $dir/output/probin -ot $dir/probin ]); then
+      cp $dir/probin $dir/output/
+      archivelist=$archivelist" "probin
+  fi
+
   # If there is nothing to archive,
   # then assume we have completed the run and exit.
 
