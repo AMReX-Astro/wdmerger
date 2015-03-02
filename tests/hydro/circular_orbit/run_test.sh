@@ -48,7 +48,7 @@ do
       if [ -e $dir/$inputs ]; then
 
 	checkpoint=$(get_last_checkpoint $dir)
-        time=$(awk 'NR==3' $checkpoint/Header)
+        time=$(awk 'NR==3' $dir/$checkpoint/Header)
 
         if [ $(echo "$time < $final_stop_time" | bc -l) -eq 1 ]; then
 
