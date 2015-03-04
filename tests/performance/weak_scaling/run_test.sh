@@ -5,6 +5,14 @@ max_step=10
 amr_plot_files_output=0
 amr_checkpoint_files_output=0
 
+castro_show_center_of_mass=0
+castro_print_energy_diagnostics=0
+castro_sum_interval=0
+amr_v=1
+castro_v=0
+gravity_v=0
+mg_v=0
+
 # For weak scaling, we increase the problem size in parallel with the number of processors.
 
 for ncell in 128 256 512 1024 2048
