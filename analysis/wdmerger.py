@@ -207,10 +207,10 @@ def timing(output_filename):
 
     grav_per_timestep = (nlevs - 1) * 2 * ref_ratio + 4
 
-    for n in range(len(coarseSteps)):
-
-        for i in range(grav_per_timestep):
-            coarseSteps[n] -= float(grav_time[n+i])
+    if (len(grav_time) > 0):
+        for n in range(len(coarseSteps)):
+            for i in range(grav_per_timestep):
+                coarseSteps[n] -= float(grav_time[n+i])
 
     med_timestep_no_grav = np.median(coarseSteps)
 
