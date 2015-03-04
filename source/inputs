@@ -102,6 +102,13 @@ gravity.ml_tol = 1.e-10                       	   # Relative tolerance for multi
 gravity.sl_tol = 1.e-10	                 	   # Relative tolerance for multigrid solver (single level)
 
 ############################################################################################
+# Load balancing
+############################################################################################
+
+DistributionMapping.strategy = KNAPSACK            # Choice of load balancing strategy to use
+DistributionMapping.efficiency = 0.9               # Efficiency demanded from the knapsack algorithm
+
+############################################################################################
 # Diagnostics and I/O
 ############################################################################################
 
