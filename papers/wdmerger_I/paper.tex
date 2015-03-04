@@ -1595,16 +1595,135 @@ effect of boundary conditions (size of domain and possibly multipole dependence)
 %==========================================================================
 % Performance
 %==========================================================================
-\section{Performance}\label{sec:Performance}
+\section{Parallel Strategy and Performance}\label{sec:Performance}
 
-strong scaling plot
+CASTRO is designed to be deployed on high-performance computing systems using 
+many thousands of processors simultaneously. It is worth briefly examining 
+our strategy for parallelizing the problem over many computational nodes 
+and our performance in situations similar to production science simulations. 
+This is especially true because some aspects of our approach to parallelism 
+have changed since the first CASTRO paper, and we have obtained improved 
+performance in certain settings.
 
-space filling curve?
+The BoxLib framework that CASTRO is based on splits each AMR level into a number 
+of boxes that collectively span the level. These boxes are distributed to processors 
+through MPI parallelism; each MPI task in general holds multiple boxes and 
+an update includes a loop over all the boxes an MPI task owns. The distribution 
+obeys a load-balancing algorithm that attempts to equalize the amount of work 
+done by each processor. BoxLib contains a number of strategies for distributing 
+work in this way, and by default uses a space-filling curve approach with a 
+Morton ordering. By experiment we have found that the most efficient load-balancing 
+strategy for our problem is actually a simple knapsack algorithm. In this approach, 
+the amount of work owned by a processor is proportional to the number of grid cells 
+associated with that processor, and the algorithm attempts to ensure that all 
+processors have a similar number of total grid cells. We demand an efficiency of 0.9,
+meaning that the average workload per processor should be no smaller than 90\% of the 
+maximum workload found on any processor. However, we find that in practice the 
+performance is largely insensitive to this choice.
 
-OMP vs. MPI?
+The size and shape of grid boxes is an important consideration for efficiency. 
+Boxes that are very small suffer from a host of problems, including the larger 
+amount of communication required between hydrodynamics solves. Additionally, 
+the multigrid solver will be less efficient if the boxes are small because there 
+will be fewer available levels for coarsening and performing V-cycles. Conversely, 
+boxes that are too large mean that there isn't enough work to go around when we 
+have a large number of processors. Good performance is the result of a careful 
+balance between these two effects. On the lower end, we require that all boxes 
+be a multiple of 16 zones in each dimension; multigrid efficiency sharply decreases 
+if this factor is any lower. On the upper end, we select the maximum grid size 
+based on the number of processors we use and the total number of cells in the 
+simulation. This size will therefore in general vary on different AMR levels. 
+Generally we select a value in between 32 and 64 zones per dimension.
 
-breakdown by component?
+We use OpenMP to accelerate the work associated with the boxes owned by each 
+MPI task. Originally CASTRO used OpenMP to accelerate individual loops in the 
+hydrodynamics routines, such as the piecewise-parabolic edge state reconstruction 
+and the conservative flux update. However, there is a significant amount of 
+overhead associated with generating a new OpenMP region at each of the many 
+different loops in a hydrodynamics algorithm. This makes such a strategy 
+sub-optimal for use on many-core processors and GPUs. We have recently switched 
+to a tiling approach, where an OpenMP region is generated at the start of 
+the hydrodynamics routine and the individual threads separately work on 
+different partitions of each box. This results in much less overhead for 
+the threading. In general we obtain more efficient simulations than 
+could be obtained using MPI only, because there are fewer boxes and thus 
+less communication for a given number of processor cores. We are currently 
+developing an approach to evaluating the equation of state and nuclear reactions 
+(and possibly the entire hydrodynamics algorithm) on GPUs, which will allow us
+to take advantage of the significant computational resources embedded in GPUs on 
+certain systems.
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.4]{plots/weak_scaling}
+  \caption{CASTRO weak scaling test, performed on the Blue Waters machine at 
+    NCSA. Each processor had a fixed amount of work, and we increased the 
+    number of simulation zones in concert with the number of processors. The 
+    solid curve represents perfect weak scaling, while the blue circles show 
+    CASTRO's performance at each processor count. The vertical axis measures 
+    the median time per timestep, normalized to this value for the smallest 
+    processor count.\label{fig:weak_scaling}}
+\end{figure}
+
+To examine the parallel performance of CASTRO, we performed both strong scaling 
+and weak scaling tests on the Blue Waters machine at the National Center for 
+Supercomputing Applications. For the weak scaling test, whose results are 
+shown in Figure \ref{fig:weak_scaling}, we ran a uniform grid binary white 
+dwarf simulation for resolutions of $128^3$ zones through $2048^3$ zones. The 
+number of processors was scaled with the number of zones so that each processor 
+had the same amount of work; the smallest test used 8 processors and the largest 
+used 32,768 (note that the number of processor cores on a Blue Waters node is twice 
+the number of floating point units on that node). The test was run for 10 timesteps,
+with each timestep including two Poisson solves and a hydrodynamics update (though 
+for a uniform grid calculation we generally do not need to perform any multigrid 
+iterations for the first Poisson solve in a timestep, since the density distribution 
+has not changed since the end of the last timestep). We disabled plotfile and 
+checkpoint writing, as well as calculation of diagnostic information (the latter 
+can contribute to a significant fraction of the run time at large processor 
+counts if computed every timestep). We computed the median wall time required per 
+time step for each simulation, and then normalized this to the median time per 
+timestep for the smallest simulation. We find excellent weak scaling through 
+4,096 processors. At the largest run, the simulation time required is 
+more than 1.5 times the amount required for the smallest simulation. 
+This is due entirely to the increased cost of the multigrid Poisson solve 
+in each timestep and this cannot be mitigated except by improving 
+communication or computation efficiency in the multigrid solver. We observe 
+that this weak scaling behavior with Poisson gravity is a significant 
+improvement over the results presented in the first CASTRO paper.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.4]{plots/strong_scaling}
+  \caption{CASTRO strong scaling test performed on the Blue Waters machine at
+    NCSA. The vertical axis measures the median time per timestep, and the 
+    horizontal axis measures the number of processors in the simulation. Data 
+    points are normalized to the time per timestep for the smallest number 
+    of processors. The blue circles show the data for a simulation with two AMR
+    levels (one coarse and one fine), while the red circles show the data 
+    for a test with three AMR levels (one coarse and two fine). The fine levels 
+    increase the resolution only in the regions around the stars. For each case 
+    we draw a solid curve representing perfect strong scaling.\label{fig:strong_scaling}}
+\end{figure}
+
+The strong scaling test we perform uses a grid setup similar to what we 
+use for well-resolved binary simulations. With a single refined level, 
+we have approximately $5 \times 10^7$ zones spread over $\sim 1000$ grids.
+On a second refined level, there are $2 \times 10^9$ zones spread over 
+$\sim 16000$ grids. We run a scaling test for both cases, with the 
+highest processor count in each case chosen so that the number of 
+MPI tasks is similar to the number of grids. There are no relative gains 
+to be achieved from further parallelism. The results are found in 
+\ref{fig:strong_scaling}. We find excellent scaling for low numbers 
+of processors, though the long wall time per timestep required for the 
+smallest processor counts makes such a simulation infeasible in practice.
+The best tradeoff between reasonable wall time and parallel efficiency 
+seems to be when there are approximately 2--4 grids per processor. The 
+scaling behavior worsens at the highest processor counts, but this is 
+an expected consequence of processors becoming work-starved. In general 
+we find very good strong scaling behavior in the regime we are presently 
+interested in, simulating the early phases of a simulation at moderate 
+resolution. The strong scaling behavior is acceptable, though not perfect, 
+at very large processor counts when self-gravity is considered.
 
 %==========================================================================
 % Conclusions
