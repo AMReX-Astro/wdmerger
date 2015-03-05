@@ -663,9 +663,15 @@ function run {
       last_output=$(get_last_output $dir)
 
       # Get the desired stopping time and max step from the inputs file in the directory.
+      # Alternatively, we may have set this from the calling script, so prefer that.
 
-      dir_stop_time=$(get_inputs_var "stop_time" $dir)
-      dir_max_step=$(get_inputs_var "max_step" $dir)
+      if [ -z $stop_time ]; then
+	  stop_time=$(get_inputs_var "stop_time" $dir)
+      fi
+
+      if [ -z $max_step ]; then
+	  max_step=$(get_inputs_var "max_step" $dir)
+      fi
 
       # Assume we're continuing, by default.
 
@@ -682,11 +688,10 @@ function run {
 	  # name of the checkpoint file. cut will do the trick;
 	  # just capture everything after the 'k' of 'chk'.
 
-	  #chk_step=$(awk 'NR==12' $dir/$checkpoint/Header)
 	  chk_step=$(echo $checkpoint | cut -d"k" -f2)
 
-	  time_flag=$(echo "$chk_time < $dir_stop_time" | bc -l)
-	  step_flag=$(echo "$chk_step < $dir_max_step" | bc)
+	  time_flag=$(echo "$chk_time < $stop_time" | bc -l)
+	  step_flag=$(echo "$chk_step < $max_step" | bc)
 
       elif [ -e $dir/$last_output ]; then
 
@@ -697,26 +702,10 @@ function run {
 
 	  output_time=$(printf "%f" $output_time)
 
-	  time_flag=$(echo "$output_time < $dir_stop_time" | bc -l)
-	  step_flag=$(echo "$output_step < $dir_max_step" | bc)
+	  time_flag=$(echo "$output_time < $stop_time" | bc -l)
+	  step_flag=$(echo "$output_step < $max_step" | bc)
 
       fi
-
-      # If the user set stop_time or max_step from the calling script,
-      # allow that to overwrite what we found in the directory.
-
-      if [ ! -z $stop_time ]; then
-
-	  time_flag=$(echo "$stop_time > $dir_stop_time" | bc -l)
-
-      fi
-
-      if [ ! -z $max_step ]; then
-
-	  step_fiag=$(echo "$max_step > $dir_max_step" | bc -l)
-
-      fi
-
 
       if [ $time_flag -eq 1 ] && [ $step_flag -eq 1 ]; then
 
