@@ -383,23 +383,31 @@ function copy_files {
 	dir=$1
     fi
 
-     cp $compile_dir/$CASTRO $dir
+    if [ ! -e $dir/$CASTRO ]; then
+        cp $compile_dir/$CASTRO $dir
+    fi
 
-     if [ -e "$compile_dir/helm_table.dat" ]; then
- 	cp $compile_dir/helm_table.dat $dir
-     fi
+    if [ ! -e "$dir/helm_table.dat" ]; then
+	if [ -e "$compile_dir/helm_table.dat" ]; then
+	    cp $compile_dir/helm_table.dat $dir
+	fi
+    fi
 
-     if [ -e "$source_dir/inputs" ]; then
- 	cp $source_dir/inputs $dir
-     else
- 	cp $WDMERGER_HOME/source/inputs $dir
-     fi
+    if [ ! -e "$dir/inputs" ]; then
+        if [ -e "$source_dir/inputs" ]; then
+            cp $source_dir/inputs $dir
+        else
+            cp $WDMERGER_HOME/source/inputs $dir
+	fi
+    fi
 
-     if [ -e "$source_dir/probin" ]; then
- 	cp $source_dir/probin $dir
-     else
- 	cp $WDMERGER_HOME/source/probin $dir
-     fi
+    if [ ! -e "$dir/probin" ]; then
+	if [ -e "$source_dir/probin" ]; then
+	    cp $source_dir/probin $dir
+	else
+	    cp $WDMERGER_HOME/source/probin $dir
+	fi
+    fi
 
     # Now determine all the variables that have been added
     # since we started; then search for them in the inputs
@@ -628,9 +636,6 @@ function run {
 
     mkdir -p $dir
 
-    copy_files $dir
-    create_job_script $dir $nprocs $walltime
-
     do_job=1
 
   else
@@ -673,9 +678,12 @@ function run {
 
 	  chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
 
-	  # Extract the current timestep. It is stored in row 12 of the Header file.
+	  # Extract the current timestep. We can get it from the 
+	  # name of the checkpoint file. cut will do the trick;
+	  # just capture everything after the 'k' of 'chk'.
 
-	  chk_step=$(awk 'NR==12' $dir/$checkpoint/Header)
+	  #chk_step=$(awk 'NR==12' $dir/$checkpoint/Header)
+	  chk_step=$(echo $checkpoint | cut -d"k" -f2)
 
 	  time_flag=$(echo "$chk_time < $dir_stop_time" | bc -l)
 	  step_flag=$(echo "$chk_step < $dir_max_step" | bc)
@@ -694,11 +702,25 @@ function run {
 
       fi
 
+      # If the user set stop_time or max_step from the calling script,
+      # allow that to overwrite what we found in the directory.
+
+      if [ ! -z $stop_time ]; then
+
+	  time_flag=$(echo "$stop_time > $dir_stop_time" | bc -l)
+
+      fi
+
+      if [ ! -z $max_step ]; then
+
+	  step_fiag=$(echo "$max_step > $dir_max_step" | bc -l)
+
+      fi
+
+
       if [ $time_flag -eq 1 ] && [ $step_flag -eq 1 ]; then
 
 	  echo "Continuing job in directory "$dir"."
-
-	  create_job_script $dir $nprocs $walltime
 
 	  do_job=1
 
@@ -718,6 +740,8 @@ function run {
   # submit the job, then come back to the main directory.
 
   if [ $do_job -eq 1 ]; then
+    copy_files $dir
+    create_job_script $dir $nprocs $walltime
     cd $dir
     $exec $job_script
     cd - > /dev/null
