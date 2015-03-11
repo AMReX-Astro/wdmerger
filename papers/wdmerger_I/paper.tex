@@ -1,9 +1,14 @@
 %\documentclass[12pt,preprint]{aastex}
-\documentclass{emulateapj}
+\documentclass[iop]{emulateapj}
 % for \sout
 \usepackage{ulem}
 % makes sure \em{} is italic rather than underlined (corrects ulem from line above)
 \normalem
+
+% these lines seem necessary for pdflatex to get the paper size right
+\pdfpagewidth 8.5in
+\pdfpageheight 11.0in
+
 
 % for the red MarginPars
 \usepackage{color}
