@@ -123,6 +123,69 @@ function get_last_checkpoint {
 
 
 
+# Obtain the median coarse timestep length from a given output file.
+
+function get_median_timestep {
+
+    # First argument is the name of the file.
+
+    if [ -z $1 ]; then
+	# No file was passed to the function, so exit.
+	return
+    else
+	file=$1
+    fi
+
+    # Second argument is the number of most recent timesteps to use.
+    # If it doesn't exist, default to using all timesteps.
+
+    if [ -z $2 ]; then
+	nsteps=-1
+    else
+	nsteps=$2
+    fi
+
+    # Use grep to get all lines containing the coarse timestep time;
+    # then, use awk to extract the actual times. Sort them numerically.
+
+    if [ $nsteps -gt 0 ]; then
+	timesteps=$(grep "Coarse" $file | awk '{ print $6 }' | tail -$nsteps | sort -n)
+    else
+	timesteps=$(grep "Coarse" $file | awk '{ print $6 }' | sort -n)
+    fi
+
+    # Determine the number of values we have.
+
+    Nvals=0
+
+    for num in $timesteps
+    do
+      Nvals=$((Nvals+1))
+    done
+
+    # Now, find the median value. We have N values. If N is odd, we use the middle value;
+    # if N is even, we compute the average of the two middle values.
+
+    idx=1
+
+    median=0.0
+
+    for num in $timesteps
+    do
+	if (( $Nvals % 2 == 0 && ( $idx == $Nvals / 2 || $idx == $Nvals / 2 + 1 ) )); then
+	    median=$(echo "$median + ($num / 2.0)" | bc -l)
+	elif (( $idx == $Nvals / 2 + 1 )); then
+	    median=$(echo "$median + $num" | bc -l)
+	fi
+	idx=$((idx+1))
+    done
+
+    echo $median
+
+}
+
+
+
 # Return a string that is used for restarting from the latest checkpoint.
 # Optionally you can hand this a directory, otherwise it will default 
 # to whatever get_last_checkpoint determines.
