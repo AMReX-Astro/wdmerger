@@ -123,6 +123,7 @@ amr.check_file      = chk        	      	   # Root name of checkpoint file
 amr.check_per       = 1.0     		      	   # Simulation time between checkpoints
 amr.plot_file       = plt     		      	   # Root name of plot file
 amr.plot_per        = 1.0    		      	   # Simulation time between plotfiles
+amr.message_int     = 1                            # How often to check whether the run script asked for a checkpoint dump
 
 amr.v               = 1       		      	   # Control verbosity in Amr.cpp
 castro.v            = 1       		      	   # Control verbosity in Castro.cpp
