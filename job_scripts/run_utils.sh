@@ -4,6 +4,9 @@
 source $WDMERGER_HOME/job_scripts/inputs.sh
 source $WDMERGER_HOME/job_scripts/probin.sh
 
+# Basic mathematical routines.
+source $WDMERGER_HOME/job_scripts/math.sh
+
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
 # variable list and prints it out to stdout. It is the last word
@@ -21,16 +24,33 @@ function get_make_var {
 
 function get_machine {
 
-  UNAMEN=$(uname -n)
+  # Get the name of the machine by using uname;
+  # then store it in a file in the wdmerger root.
+  # This storage helps when we're on the compute nodes,
+  # which often don't have the same system name as the login nodes.
 
-  if   [[ $UNAMEN == *"h2o"*    ]]; then
-    MACHINE=BLUE_WATERS
-  elif [[ $UNAMEN == *"titan"*  ]]; then
-    MACHINE=TITAN
-  elif [[ $UNAMEN == *"hopper"* ]]; then
-    MACHINE=HOPPER
+  if [ ! -e $WDMERGER_HOME/job_scripts/machine ]; then
+
+      UNAMEN=$(uname -n)
+
+      if   [[ $UNAMEN == *"h2o"*    ]]; then
+	MACHINE=BLUE_WATERS
+      elif [[ $UNAMEN == *"titan"*  ]]; then
+	MACHINE=TITAN
+      elif [[ $UNAMEN == *"hopper"* ]]; then
+	MACHINE=HOPPER
+      else
+	MACHINE=GENERICLINUX
+      fi
+
+      # Store the name 
+
+      echo "$MACHINE" > $WDMERGER_HOME/job_scripts/machine
+
   else
-    MACHINE=GENERICLINUX
+
+      MACHINE=$(cat $WDMERGER_HOME/job_scripts/machine)
+
   fi
 
   echo $MACHINE
@@ -146,41 +166,55 @@ function get_median_timestep {
     fi
 
     # Use grep to get all lines containing the coarse timestep time;
-    # then, use awk to extract the actual times. Sort them numerically.
+    # then, use awk to extract the actual times.
 
     if [ $nsteps -gt 0 ]; then
-	timesteps=$(grep "Coarse" $file | awk '{ print $6 }' | tail -$nsteps | sort -n)
+	timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }' | tail -$nsteps)
     else
-	timesteps=$(grep "Coarse" $file | awk '{ print $6 }' | sort -n)
+	timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }')
     fi
 
-    # Determine the number of values we have.
+    # Calculate the median.
+    
+    median_timestep=$(median "$timesteps")
 
-    Nvals=0
+    echo $median_timestep
 
-    for num in $timesteps
-    do
-      Nvals=$((Nvals+1))
-    done
+}
 
-    # Now, find the median value. We have N values. If N is odd, we use the middle value;
-    # if N is even, we compute the average of the two middle values.
 
-    idx=1
 
-    median=0.0
+# Obtain the length of walltime remaining on the current job.
 
-    for num in $timesteps
-    do
-	if (( $Nvals % 2 == 0 && ( $idx == $Nvals / 2 || $idx == $Nvals / 2 + 1 ) )); then
-	    median=$(echo "$median + ($num / 2.0)" | bc -l)
-	elif (( $idx == $Nvals / 2 + 1 )); then
-	    median=$(echo "$median + $num" | bc -l)
-	fi
-	idx=$((idx+1))
-    done
+function get_remaining_walltime {
 
-    echo $median
+    filename=$(find . -maxdepth 1 -name "*$run_ext")
+
+    # If we don't find an active running job, exit.
+
+    if [ -z $filename ]; then
+	return
+    fi
+
+    total_time=0.0
+
+    # Extract the job number from the filename, then
+    # use the relevant batch submission system.
+
+    if [ $batch_system == "PBS" ]; then
+	job_number=${filename#./}
+	job_number=${job_number%%.*}
+
+	# For PBS we can get the remaining time by doing 
+	# showq and then grepping for the line that contains
+	# the relevant job number.
+
+	total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
+	
+	total_time=$(hours_to_seconds $total_time)
+    fi
+
+    echo $total_time
 
 }
 
@@ -503,6 +537,72 @@ function copy_files {
 
 
 
+# During the run, we'll check whether we're about to run out of time.
+# If so, we create a dump_and_stop file. At the end of the next timestep,
+# BoxLib will check whether this file exists and terminate the run.
+# The argument gives us how long we expect the run to last, in seconds.
+
+function check_to_stop {
+
+  # Default to cycling every 60 seconds; we'll 
+  # update with a smarter choice as we go.
+
+  cycle_time=60
+
+  # Safety factor: end the run if we're within
+  # this many timesteps of the total walltime.
+
+  safety=20
+
+  while true; do
+
+    # Get the name of the output file. There should only be one running.
+
+    filename=$(find . -maxdepth 1 -name "*$run_ext")
+
+    if [ -z $filename ]; then
+	continue
+    fi
+
+    # Get the median timestep wall time using the last 10 timesteps.
+
+    timestep=$(get_median_timestep $filename 10)
+
+    if [ -z $timestep ]; then
+	continue
+    fi
+
+    # Get the total time remaining in the job.
+
+    time_remaining=$(get_remaining_walltime)
+
+    if [ -z $time_remaining ]; then
+	continue
+    fi
+
+    # If we're within $safety steps of the end, kill the run.
+    # If not, use the current timestep to determine how long
+    # we want to wait before checking again. It should be
+    # quite a bit less than the safety factor so that we 
+    # guarantee we check before the run terminates.
+
+    to_stop=$(echo "$time_remaining < $safety * $timestep" | bc -l)
+
+    if [ $to_stop -eq 1 ]; then
+	touch dump_and_stop
+	return
+    else
+	cycle_time=$(echo "$timestep * $safety / 2.0" | bc -l)
+    fi
+
+    sleep $cycle_time
+
+  done
+
+}
+
+
+
 # Generate a run script in the given directory.
 
 function create_job_script {
@@ -636,13 +736,33 @@ function create_job_script {
 
       echo "cd \$PBS_O_WORKDIR" >> $dir/$job_script
 
+      # Number of OpenMP threads
+
       echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
+
+      # Tell the script where to look for this file.
+      # This is necessary because by default your login node
+      # environment variables are not transferred to the compute nodes.
+
+      echo "export WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$job_script
+      echo "source \$WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
+
+      # Set up the function that periodically checks whether we should
+      # terminate the run. Only do this for jobs with large enough
+      # processor counts.
+
+      if [ $nodes -ge 8 ]; then
+	  # Run the function in the background
+	  echo "check_to_stop &" >> $dir/$job_script
+      fi
 
       # Set the aprun options.
 
       aprun_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
 
       restartString=$(get_restart_string $dir)
+
+      # Main job execution.
 
       echo "aprun $aprun_opts $CASTRO inputs $restartString" >> $dir/$job_script
 
@@ -712,6 +832,10 @@ function run {
 	echo "Job currently in process in directory "$dir"."
 
     else
+
+      # Remove the dump_and_stop file if it exists.
+
+      rm -f $dir/dump_and_stop
 
       # Archive any files that have not yet been saved to the storage system.
 
