@@ -102,7 +102,6 @@
            enddo
         enddo
      enddo
-
      !$OMP END PARALLEL DO
 
      ! Set the velocities in each direction equal to the bulk
@@ -122,7 +121,7 @@
      ! If we're in the inertial reference frame, 
      ! set counter-clockwise rigid body rotation
 
-     if ( orbital_kick ) then
+     if (orbital_kick .and. (.not. single_star)) then
  
        !$OMP PARALLEL DO PRIVATE(i, j, k, loc)
        do k = lo(3), hi(3)

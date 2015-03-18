@@ -184,6 +184,7 @@ contains
     damping  = .false.
     do_relax = .false.
     star_axis = 1
+    initial_motion_dir = 2
 
     bulk_velx = ZERO
     bulk_vely = ZERO
