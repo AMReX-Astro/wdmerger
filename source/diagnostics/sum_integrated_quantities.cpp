@@ -59,8 +59,6 @@ Castro::sum_integrated_quantities ()
     Real lev_com[3]   = { 0.0 };
     Real com_vel[3]   = { 0.0 };
 
-    Real center[3]    = { 0.0 };
-
 #ifdef merger
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
@@ -108,11 +106,9 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
 #endif
 
-    // Set problem center
+    // Update the problem center using the system bulk velocity
 
-    for (int i = 0; i <= BL_SPACEDIM - 1; i++) {
-      center[i] = 0.5*(Geometry::ProbLo(i) + Geometry::ProbHi(i));
-    }
+    BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(time);
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -236,7 +232,7 @@ Castro::sum_integrated_quantities ()
 
     for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
 
-      com[i]       = com[i] / mass + center[i];
+      com[i]       = com[i] / mass;
       com_vel[i]   = momentum[i] / mass;
 
     } 
@@ -316,15 +312,15 @@ Castro::sum_integrated_quantities ()
 
     for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
 
-      com[i]       = com[i] / mass + center[i];
+      com[i]       = com[i] / mass;
       com_vel[i]   = momentum[i] / mass;
 
-      com_p[i] = com_p[i] / mass_p + center[i];
+      com_p[i] = com_p[i] / mass_p;
       vel_p[i] = vel_p[i] / mass_p;
 
       if (single_star != 1) {
 
-	 com_s[i] = com_s[i] / mass_s + center[i];
+	 com_s[i] = com_s[i] / mass_s;
 	 vel_s[i] = vel_s[i] / mass_s;
 
 	 // Calculate the distance between the primary and secondary.

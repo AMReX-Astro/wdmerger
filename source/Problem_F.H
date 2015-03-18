@@ -33,3 +33,6 @@ BL_FORT_PROC_DECL(GET_STAR_LOCATIONS,get_star_locations)
    (Real com_p[], Real com_s[], 
     Real vel_p[], Real vel_s[], 
     Real* mass_p, Real* mass_s);
+
+BL_FORT_PROC_DECL(UPDATE_CENTER,update_center)
+   (const Real time);

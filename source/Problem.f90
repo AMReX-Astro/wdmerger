@@ -6,6 +6,7 @@ subroutine problem_checkpoint(int_dir_name, len)
 
   use bl_IO_module
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
+  use prob_params_module, only: center
 
   implicit none
 
@@ -24,7 +25,9 @@ subroutine problem_checkpoint(int_dir_name, len)
   open (unit=un, file=trim(dir)//"/COM", status="unknown")
 
 100 format(1x, g30.20, 1x, g30.20)
+200 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
 
+  write (un,200) center(1), center(2), center(3)
   write (un,100) mass_P, mass_S
   write (un,100) com_P(1), com_S(1)
   write (un,100) com_P(2), com_S(2)
@@ -44,6 +47,7 @@ subroutine problem_restart(int_dir_name, len)
 
   use bl_IO_module
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
+  use prob_params_module, only: center
 
   implicit none
 
@@ -62,8 +66,9 @@ subroutine problem_restart(int_dir_name, len)
   open (unit=un, file=trim(dir)//"/COM", status="old")
 
 100 format(1x, g30.20, 1x, g30.20)
+200 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
 
-  ! here we read in, and this sets the values in the com module
+  read (un,200) center(1), center(2), center(3)
   read (un,100) mass_P, mass_S
   read (un,100) com_P(1), com_S(1)
   read (un,100) com_P(2), com_S(2)
@@ -341,3 +346,31 @@ subroutine get_roche_radii(mass_ratio, r_1, r_2, a)
   r_2 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
 
 end subroutine get_roche_radii
+
+
+
+! Update the location of center using the bulk velocity. 
+
+subroutine update_center(time)
+
+  use probdata_module, only: bulk_velx, bulk_vely, bulk_velz, &
+                             center_fracx, center_fracy, center_fracz
+  use prob_params_module, only: center, problo, probhi
+
+  implicit none
+
+  double precision, intent(in) :: time
+
+  ! Determine the original location of the center.
+
+  center(1) = center_fracx * (probhi(1) + problo(1))
+  center(2) = center_fracy * (probhi(2) + problo(2))
+  center(3) = center_fracz * (probhi(3) + problo(3))
+
+  ! Now update using the time passed since the beginning of the simulation.
+
+  center(1) = center(1) + bulk_velx * time
+  center(2) = center(2) + bulk_vely * time
+  center(3) = center(3) + bulk_velz * time
+
+end subroutine update_center
