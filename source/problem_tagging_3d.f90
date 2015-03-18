@@ -4,7 +4,7 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
                             lo,hi,&
                             dx,problo,time,level)
 
-  use bl_constants_module, only: ZERO, HALF
+  use bl_constants_module, only: ZERO, HALF, TWO
   use meth_params_module, only: URHO, UMX, UMY, UMZ, UEDEN, NVAR
   use prob_params_module, only: center, probhi
   use probdata_module, only: maxTaggingRadius, com_P, com_S, roche_rad_P, roche_rad_S
@@ -25,18 +25,16 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
   integer          :: i, j, k
   double precision :: x,y,z,r,r_P,r_S
 
-  ! Clear all tagging that occurs outside the radius set by maxTaggingRadius.
-
   do k = lo(3), hi(3)
-     z = problo(3) + dble(k + HALF)*dx(3) - center(3)
+     z = problo(3) + dble(k + HALF)*dx(3)
 
      do j = lo(2), hi(2)
-        y = problo(2) + dble(j + HALF)*dx(2) - center(2)
+        y = problo(2) + dble(j + HALF)*dx(2)
 
         do i = lo(1), hi(1)
-           x = problo(1) + dble(i + HALF)*dx(1) - center(1)
+           x = problo(1) + dble(i + HALF)*dx(1)
 
-           r = (x**2 + y**2 + z**2)**HALF
+           ! Tag all regions within the Roche radii of each star.
 
            r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
            r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
@@ -49,10 +47,25 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
               tag(i,j,k) = set
            endif
 
+           ! Clear all tagging that occurs outside the radius set by maxTaggingRadius.
+
+           r = ((x-center(1))**2 + (y-center(2))**2 + (z-center(3))**2)**HALF
+
            if (r .gt. maxTaggingRadius * maxval(abs(problo-center)) .or. &
                r .gt. maxTaggingRadius * maxval(abs(probhi-center)) ) then
 
-             tag(i,j,k) = clear
+              tag(i,j,k) = clear
+
+           endif
+
+           ! We must ensure that the outermost zones are untagged due to the Poisson equation boundary conditions.
+           ! This is necessary in addition to the above step because the problem center doesn't always coincide with the geometric center.
+
+           if (x .lt. problo(1) + TWO * dx(1) .or. x .gt. probhi(1) - TWO * dx(1) .or. &
+               y .lt. problo(2) + TWO * dx(2) .or. y .gt. probhi(2) - TWO * dx(2) .or. &
+               z .lt. problo(3) + TWO * dx(3) .or. z .gt. probhi(3) - TWO * dx(3)) then
+
+              tag(i,j,k) = clear
 
            endif
 
