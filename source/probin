@@ -15,6 +15,10 @@
   bulk_vely = 0.0d0
   bulk_velz = 0.0d0
 
+  center_fracx = 0.5d0
+  center_fracy = 0.5d0
+  center_fracz = 0.5d0
+
   maxTaggingRadius = 0.75d0
 /
 

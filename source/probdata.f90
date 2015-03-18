@@ -18,7 +18,6 @@ module probdata_module
   double precision, allocatable :: model_S_r(:), model_S_state(:,:)
 
   ! Initial binary orbit characteristics
-
   double precision :: mass_P_initial, mass_S_initial
   double precision :: central_density_P, central_density_S
   double precision :: radius_P_initial, radius_S_initial
@@ -54,6 +53,9 @@ module probdata_module
 
   integer :: star_axis
   integer :: initial_motion_dir
+
+  ! Location of the physical center of the problem, as a fraction of domain size
+  double precision :: center_fracx, center_fracy, center_fracz
 
   ! Density of ambient medium
   double precision :: ambient_density
@@ -155,6 +157,7 @@ contains
          star_axis, &
          maxTaggingRadius, &
          bulk_velx, bulk_vely, bulk_velz, &
+         center_fracx, center_fracy, center_fracz, &
          initial_model_dx, &
          initial_model_npts, &
          initial_model_mass_tol, &
@@ -189,6 +192,10 @@ contains
     bulk_velx = ZERO
     bulk_vely = ZERO
     bulk_velz = ZERO
+
+    center_fracx = HALF
+    center_fracy = HALF
+    center_fracz = HALF
 
     ! For the grid spacing for our model, we'll use 
     ! 6.25 km. No simulation we do is likely to have a resolution
@@ -308,7 +315,7 @@ contains
     use fundamental_constants_module, only: M_solar
     use meth_params_module, only: do_rotation, rot_period
     use initial_model_module, only: init_1d
-    use prob_params_module, only: center
+    use prob_params_module, only: center, problo, probhi
     use meth_params_module, only: rot_axis
 
     implicit none
@@ -316,6 +323,18 @@ contains
     type (eos_t) :: ambient_state
 
     call get_ambient(ambient_state)
+
+    ! Set up the center variable. We want it to be at 
+    ! problo + center_frac * domain_width in each direction.
+    ! center_frac is 1/2 by default, so the problem
+    ! would be set up exactly in the center of the domain.
+
+    center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
+    center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
+    center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
+
+    ! Set some default values for these quantities;
+    ! we'll update them soon.
 
     center_P_initial = center
     center_S_initial = center
@@ -385,10 +404,7 @@ contains
        center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
        center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
-       com_P = center_P_initial
-       com_S = center_S_initial
-
-       ! Direction of initial motion -- essentially it's the position axis
+       ! Direction of initial motion -- it is the position axis
        ! that is not star axis and that is also not the rotation axis.
 
        if (rot_axis .eq. 3) then
@@ -414,6 +430,30 @@ contains
        call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
 
     endif
+
+    com_P = center_P_initial
+    com_S = center_S_initial
+
+    ! Safety check: make sure the stars are actually inside the computational domain.
+
+    if (center_P_initial(1) - radius_P_initial .lt. problo(1) .or. &
+        center_P_initial(1) + radius_P_initial .gt. probhi(1) .or. &
+        center_P_initial(2) - radius_P_initial .lt. problo(2) .or. &
+        center_P_initial(2) + radius_P_initial .gt. probhi(2) .or. &
+        center_P_initial(3) - radius_P_initial .lt. problo(3) .or. &
+        center_P_initial(3) + radius_P_initial .gt. probhi(3)) then
+       call bl_error("Primary does not fit inside the domain.")
+    endif
+
+    if (center_S_initial(1) - radius_S_initial .lt. problo(1) .or. &
+        center_S_initial(1) + radius_S_initial .gt. probhi(1) .or. &
+        center_S_initial(2) - radius_S_initial .lt. problo(2) .or. &
+        center_S_initial(2) + radius_S_initial .gt. probhi(2) .or. &
+        center_S_initial(3) - radius_S_initial .lt. problo(3) .or. &
+        center_S_initial(3) + radius_S_initial .gt. probhi(3)) then
+       call bl_error("Secondary does not fit inside the domain.")
+    endif
+
 
   end subroutine binary_setup
 
