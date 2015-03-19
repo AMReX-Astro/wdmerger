@@ -35,15 +35,17 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
            x = problo(1) + dble(i + HALF)*dx(1)
 
            ! Tag all regions within the Roche radii of each star.
+           ! We'll add a buffer around each star to double the Roche
+           ! radius to ensure there aren't any sharp gradients.
 
            r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
            r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
 
-           if (r_P <= roche_rad_P) then
+           if (r_P <= TWO * roche_rad_P) then
               tag(i,j,k) = set
            endif
            
-           if (r_S <= roche_rad_S) then
+           if (r_S <= TWO * roche_rad_S) then
               tag(i,j,k) = set
            endif
 
