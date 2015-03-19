@@ -544,6 +544,10 @@ function copy_files {
 
 function check_to_stop {
 
+  # Store the current time, in seconds.
+
+  start_time=$(date +%s.%N)
+
   # Default to cycling every 60 seconds; we'll 
   # update with a smarter choice as we go.
 
@@ -553,6 +557,10 @@ function check_to_stop {
   # this many timesteps of the total walltime.
 
   safety=20
+
+  # Determine how much time the job has, in seconds.
+
+  total_time=$(get_remaining_walltime)
 
   while true; do
 
@@ -572,13 +580,11 @@ function check_to_stop {
 	continue
     fi
 
-    # Get the total time remaining in the job.
+    # Determine the total time remaining in the job, in seconds.
 
-    time_remaining=$(get_remaining_walltime)
-
-    if [ -z $time_remaining ]; then
-	continue
-    fi
+    curr_time=$(date +%s.%N)
+    time_elapsed=$(echo "$curr_time - $start_time" | bc -l)
+    time_remaining=$(echo "$total_time - $time_elapsed" | bc -l)
 
     # If we're within $safety steps of the end, kill the run.
     # If not, use the current timestep to determine how long
