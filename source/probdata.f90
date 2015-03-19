@@ -38,6 +38,14 @@ module probdata_module
   ! consistent with their Keplerian orbit speed.
   logical :: orbital_kick
 
+  ! Whether or not to give the stars an initial velocity
+  ! consistent with the free-fall speed.
+  logical :: collision
+
+  ! For a collision, number of (secondary) WD radii to 
+  ! separate the WDs by.
+  double precision :: collision_separation
+
   ! Damping
   logical          :: damping
   double precision :: damping_alpha
@@ -149,6 +157,8 @@ contains
          central_density_P, central_density_S, &
          nsub, &
          orbital_kick, &
+         collision, &
+         collision_separation, &
          interp_temp, &
          damping, damping_alpha, &
          do_relax, relax_tau, &
@@ -183,6 +193,10 @@ contains
     ambient_density = 1.d-4
 
     orbital_kick = .false.
+
+    collision = .false.
+    collision_separation = 4.0
+
     interp_temp = .false.
     damping  = .false.
     do_relax = .false.
@@ -321,6 +335,7 @@ contains
     implicit none
 
     type (eos_t) :: ambient_state
+    double precision :: v_ff
 
     call get_ambient(ambient_state)
 
@@ -390,40 +405,59 @@ contains
 
        roche_rad_S = radius_S_initial
 
-       ! Get the orbit from Kepler's third law
+       ! For a collision, set the stars up with a free-fall velocity at a specified number
+       ! of secondary radii; for a circular orbit, use Kepler's third law.
 
-       call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
-                             rot_period, a_P_initial, a_S_initial, a, &
-                             orbital_speed_P, orbital_speed_S)
+       if (collision) then
+
+           initial_motion_dir = star_axis
+
+           collision_separation = collision_separation * radius_S_initial
+
+           call freefall_velocity(mass_P + mass_S, collision_separation, v_ff)
+
+           vel_P(star_axis) =  (mass_P / (mass_S + mass_P)) * v_ff
+           vel_S(star_axis) = -(mass_S / (mass_S + mass_P)) * v_ff
+
+           a_P_initial = (mass_P / (mass_S + mass_P)) * collision_separation
+           a_S_initial = (mass_S / (mass_S + mass_P)) * collision_separation
+
+           a = a_P_initial + a_S_initial
+
+       else
+
+           call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
+                                 rot_period, a_P_initial, a_S_initial, a, &
+                                 orbital_speed_P, orbital_speed_S)
+
+           ! Direction of initial motion -- it is the position axis
+           ! that is not star axis and that is also not the rotation axis.
+
+           if (rot_axis .eq. 3) then
+              if (star_axis .eq. 1) initial_motion_dir = 2
+              if (star_axis .eq. 2) initial_motion_dir = 1
+           else if (rot_axis .eq. 2) then
+              if (star_axis .eq. 1) initial_motion_dir = 3
+              if (star_axis .eq. 3) initial_motion_dir = 1
+           else if (rot_axis .eq. 1) then
+              if (star_axis .eq. 2) initial_motion_dir = 3
+              if (star_axis .eq. 3) initial_motion_dir = 2
+           else
+              call bl_error("Error: probdata module: invalid choice for rot_axis.")
+           endif
+
+           if ( (do_rotation .ne. 1) .and. orbital_kick ) then
+              vel_P(initial_motion_dir) = - orbital_speed_P
+              vel_S(initial_motion_dir) =   orbital_speed_S
+           endif
+
+       endif
 
        ! Star center positions -- we'll put them in the midplane on the
        ! axis specified by star_axis, with the center of mass at the center of the domain.
-       ! If we're only doing a single star, which we know because the secondary mass is
-       ! less than zero, then just leave the star in the center.
 
        center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
        center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
-
-       ! Direction of initial motion -- it is the position axis
-       ! that is not star axis and that is also not the rotation axis.
-
-       if (rot_axis .eq. 3) then
-          if (star_axis .eq. 1) initial_motion_dir = 2
-          if (star_axis .eq. 2) initial_motion_dir = 1
-       else if (rot_axis .eq. 2) then
-          if (star_axis .eq. 1) initial_motion_dir = 3
-          if (star_axis .eq. 3) initial_motion_dir = 1
-       else if (rot_axis .eq. 1) then
-          if (star_axis .eq. 2) initial_motion_dir = 3
-          if (star_axis .eq. 3) initial_motion_dir = 2
-       else
-          call bl_error("Error: probdata module: invalid choice for rot_axis.")
-       endif
-
-       if ( (do_rotation .ne. 1) .and. orbital_kick ) then
-          vel_P(initial_motion_dir) = - orbital_speed_P
-          vel_S(initial_motion_dir) =   orbital_speed_S
-       endif
 
        ! Compute initial Roche radii
 
@@ -507,6 +541,27 @@ contains
      endif
 
   end subroutine kepler_third_law
+
+
+
+  ! Given total mass of a binary system and the initial separation of
+  ! two point particles, obtain the velocity at this separation 
+  ! assuming the point masses fell in from infinity. This will
+  ! be the velocity in the frame where the center of mass is stationary.
+
+  subroutine freefall_velocity(mass, distance, vel)
+
+    use bl_constants_module, only: TWO, HALF
+    use fundamental_constants_module, only: Gconst
+
+    implicit none
+
+    double precision, intent(in   ) :: mass, distance
+    double precision, intent(inout) :: vel
+
+    vel = (TWO * Gconst * mass / distance)**HALF
+
+  end subroutine freefall_velocity
 
 
 
