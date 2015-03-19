@@ -363,9 +363,9 @@ subroutine update_center(time)
 
   ! Determine the original location of the center.
 
-  center(1) = center_fracx * (probhi(1) + problo(1))
-  center(2) = center_fracy * (probhi(2) + problo(2))
-  center(3) = center_fracz * (probhi(3) + problo(3))
+  center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
+  center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
+  center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
 
   ! Now update using the time passed since the beginning of the simulation.
 
