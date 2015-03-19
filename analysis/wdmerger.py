@@ -182,8 +182,8 @@ def timing(output_filename):
 
     output = open(output_filename, 'r')
     lines = output.readlines()
-    coarseSteps = filter(lambda s: s[0:6] == "Coarse",lines)
-    coarseSteps = [float(s.split()[3]) for s in coarseSteps] # Extract out the time only
+    coarseSteps = filter(lambda s: "Coarse" in s, lines)
+    coarseSteps = [float(s.split('Coarse TimeStep time:')[1]) for s in coarseSteps] # Extract out the time only
 
     med_timestep = np.median(coarseSteps)
 
