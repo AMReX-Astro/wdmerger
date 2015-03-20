@@ -47,7 +47,7 @@ function median {
 
 
 
-# Convert a time in (-)HH:MM:SS format to a number of seconds.
+# Convert a time in (-)DD:HH:MM:SS format to a number of seconds.
 
 function hours_to_seconds {
 
@@ -68,7 +68,23 @@ function hours_to_seconds {
 	negative_fac="1"
     fi
 
-    seconds=$(echo $hours | awk -F: '{ print $1 * 3600 + $2 * 60 + $3 }')
+    # Determine the math based on whether we have a number of days,
+    # hours, and minutes.
+
+    len=$(echo $hours | awk -F: '{ print NF }')
+
+    if [ $len -eq 4 ]; then
+	seconds=$(echo $hours | awk -F: '{ print $1 * 86400 + $2 * 3600 + $3 * 60 + $4 }')
+    elif [ $len -eq 3 ]; then
+	seconds=$(echo $hours | awk -F: '{ print $1 * 3600 + $2 * 60 + $3 }')
+    elif [ $len -eq 2 ]; then
+	seconds=$(echo $hours | awk -F: '{ print $1 * 60 + $2 }')
+    elif [ $len -eq 1 ]; then
+	seconds=$(echo $hours | awk -F: '{ print $1 }')
+    else
+	return
+    fi
+
     seconds=$(echo "$seconds * $negative_fac" | bc -l)
 
     echo $seconds
