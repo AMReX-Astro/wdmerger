@@ -722,30 +722,25 @@ function create_job_script {
 # and uses the relevant batch submission script. If you want to
 # use a different machine, you'll need to include a run script
 # for it in the job_scripts directory.
-# The first argument is the name of the directory where we want to 
-# submit this job from.
-# The second argument is the number of processors you want to run the job on.
-# The third argument is the walltime you want the job to run for.
-# The last two are optional and default to one node running for one hour.
+# The variable dir must exist in the calling script, and is the 
+# name of the directory where we want to # submit this job from.
+# Optionally, if nprocs is defined in the calling script,
+# that is the number of processors to use; otherwise we default to
+# using all processors available on one node.
+# If walltime isn't defined, we run for one hour.
 
 function run {
 
-  if [ ! -z $1 ]; then
-      dir=$1
-  else
+  if [ ! -z $dir ]; then
       echo "No directory given to run; exiting."
       return
   fi
 
-  if [ ! -z $2 ]; then
-      nprocs=$2
-  else
+  if [ ! -z $nprocs ]; then
       nprocs=$ppn
   fi
 
-  if [ ! -z $3 ]; then
-      walltime=$3
-  else
+  if [ ! -z $walltime ]; then
       walltime=1:00:00
   fi
 
