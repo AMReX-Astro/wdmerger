@@ -857,8 +857,20 @@ function run {
 
     copy_files $dir
     create_job_script $dir $nprocs $walltime
+
     cd $dir
-    $exec $job_script
+
+    # Capture the job number output.
+
+    job_number=`$exec $job_script`
+
+    # Some systems like Blue Waters include the system name
+    # at the end of the number, so remove it.
+
+    job_number=${job_number%%.*}
+
+    echo "The job number is " $job_number "."
+
     cd - > /dev/null
 
   fi
