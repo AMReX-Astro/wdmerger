@@ -285,11 +285,14 @@ function archive {
   f=$(basename $1)
   d=$(dirname $1)
 
-  # Remove the $workdir from the name. We test on both $workdir and $workdir/
-  # so that the trailing slash doesn't matter here.
+  # Remove everything from the directory up to the username. The assumption here is that
+  # everything after that was created by the user, and that's the directory structure we want
+  # to preserve when moving things over to the storage system.
 
-  storage_dir=$(echo ${d#$workdir/})
-  storage_dir=$(echo ${d#$workdir})
+  storage_dir=$d
+
+  storage_dir=${storage_dir#*$USER/}
+  storage_dir=${storage_dir#*$USER}
 
   # Archive based on the method chosen for this machine.
 
@@ -299,10 +302,10 @@ function archive {
 
   elif [ $archive_method == "globus" ]; then
 
-      archive_dir=/projects/sciteam/$allocation/$USER/$storage_dir
+      archive_dir=$allocation/$USER/$storage_dir
 
-      src=$globus_src_endpoint$d/$f
-      dst=$globus_dst_endpoint$archive_dir/$f
+      src=$globus_src_endpoint/$d/$f
+      dst=$globus_dst_endpoint/$archive_dir/$f
 
       if [ -d $d/$f ]; then
           # If we're transferring a directory, Globus needs to explicitly know
@@ -893,11 +896,10 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
     threads_per_task="8"
     node_type="xe"
     run_ext=".OU"
-    workdir="/scratch/sciteam/$USER/"
     batch_system="PBS"
     archive_method="globus"
     globus_src_endpoint="ncsa#BlueWaters"
-    globus_dst_endpoint="ncsa#Nearline"
+    globus_dst_endpoint="ncsa#Nearline/projects/sciteam"
 
 elif [ $MACHINE == "TITAN" ]; then
 
@@ -906,7 +908,6 @@ elif [ $MACHINE == "TITAN" ]; then
     ppn="16"
     threads_per_task="8"
     run_ext=".OU"
-    workdir="/lustre/atlas/scratch/$USER/$allocation/"
     batch_system="PBS"
     archive_method="htar"
 
