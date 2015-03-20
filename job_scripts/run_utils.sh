@@ -188,11 +188,9 @@ function get_median_timestep {
 
 function get_remaining_walltime {
 
-    filename=$(find . -maxdepth 1 -name "*$run_ext")
-
-    # If we don't find an active running job, exit.
-
-    if [ -z $filename ]; then
+    if [ ! -z $1 ]; then
+	filename=$1
+    else
 	return
     fi
 
@@ -558,19 +556,21 @@ function check_to_stop {
 
   safety=20
 
-  # Determine how much time the job has, in seconds.
+  # Get the name of the output file. There should only be one running.
 
-  total_time=$(get_remaining_walltime)
+  while [ -z $filename ]; do
 
-  while true; do
-
-    # Get the name of the output file. There should only be one running.
+    sleep $cycle_time
 
     filename=$(find . -maxdepth 1 -name "*$run_ext")
 
-    if [ -z $filename ]; then
-	continue
-    fi
+  done
+
+  # Determine how much time the job has, in seconds.
+
+  total_time=$(get_remaining_walltime $filename)
+
+  while true; do
 
     # Get the median timestep wall time using the last 10 timesteps.
 
