@@ -60,15 +60,6 @@ while true; do
       exit
   fi
 
-  # First, check if the run has terminated. If so,
-  # we can archive everything and then terminate the run.
-
-  if [ -e $dir/$job_name.o$job_number ]; then
-      archive_all $dir
-      rm -f $dir/dump_and_stop
-      exit
-  fi
-
   # Get the median timestep wall time using the last 10 timesteps.
 
   timestep=$(get_median_timestep $filename 10)

@@ -403,7 +403,7 @@ function archive_all {
 
   # Same thing for the runtime stdout files.
 
-  outlist=$(find $dir -maxdepth 1 -name *$job_name*)
+  outlist=$(find $dir -maxdepth 1 -name "*$job_name*")
 
   for file in $outlist
   do
@@ -663,10 +663,26 @@ function create_job_script {
 	  echo "#PBS -q $queue" >> $dir/$job_script
       fi
 
+      echo "" >> $dir/$job_script
+
       # We assume that the directory we submitted from is eligible to 
       # work in, so cd to that directory.
 
       echo "cd \$PBS_O_WORKDIR" >> $dir/$job_script
+
+      # Tell the script where the root wdmerger directory is, since 
+      # environment variables are generally not loaded onto compute nodes.
+
+      echo "export WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$job_script
+      echo "source $WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
+         
+      # Set up the script that periodically checks whether we should
+      # terminate the run. Only do this for jobs with large enough
+      # processor counts. Run the process in the background.
+
+      if [ $nodes -ge 8 ]; then
+	  echo "bash $WDMERGER_HOME/job_scripts/check_to_stop.sh . &" >> $dir/$job_script
+      fi
 
       # Number of OpenMP threads
 
@@ -680,7 +696,13 @@ function create_job_script {
 
       # Main job execution.
 
+      echo "" >> $dir/$job_script
       echo "aprun $aprun_opts $CASTRO inputs $restartString" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Run the archive script at the end of the simulation.
+
+      echo "archive_all ." >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 
@@ -838,12 +860,6 @@ function run {
     cd $dir
     $exec $job_script
     cd - > /dev/null
-
-    # Set up the function that periodically checks whether we should
-    # terminate the run. Only do this for jobs with large enough
-    # processor counts. Run the process in the background and disown it.
-
-    nohup bash $WDMERGER_HOME/job_scripts/check_to_stop.sh $dir >&/dev/null &
 
   fi
 
