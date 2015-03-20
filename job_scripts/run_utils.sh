@@ -189,7 +189,7 @@ function get_median_timestep {
 function get_remaining_walltime {
 
     if [ ! -z $1 ]; then
-	filename=$1
+	job_number=$1
     else
 	return
     fi
@@ -200,9 +200,6 @@ function get_remaining_walltime {
     # use the relevant batch submission system.
 
     if [ $batch_system == "PBS" ]; then
-	job_number=${filename#./}
-	job_number=${job_number%%.*}
-
 	# For PBS we can get the remaining time by doing 
 	# showq and then grepping for the line that contains
 	# the relevant job number.
@@ -535,80 +532,6 @@ function copy_files {
 
 
 
-# During the run, we'll check whether we're about to run out of time.
-# If so, we create a dump_and_stop file. At the end of the next timestep,
-# BoxLib will check whether this file exists and terminate the run.
-# The argument gives us how long we expect the run to last, in seconds.
-
-function check_to_stop {
-
-  # Store the current time, in seconds.
-
-  start_time=$(date +%s.%N)
-
-  # Default to cycling every 60 seconds; we'll 
-  # update with a smarter choice as we go.
-
-  cycle_time=60
-
-  # Safety factor: end the run if we're within
-  # this many timesteps of the total walltime.
-
-  safety=20
-
-  # Get the name of the output file. There should only be one running.
-
-  while [ -z $filename ]; do
-
-    sleep $cycle_time
-
-    filename=$(find . -maxdepth 1 -name "*$run_ext")
-
-  done
-
-  # Determine how much time the job has, in seconds.
-
-  total_time=$(get_remaining_walltime $filename)
-
-  while true; do
-
-    # Get the median timestep wall time using the last 10 timesteps.
-
-    timestep=$(get_median_timestep $filename 10)
-
-    if [ -z $timestep ]; then
-	continue
-    fi
-
-    # Determine the total time remaining in the job, in seconds.
-
-    curr_time=$(date +%s.%N)
-    time_elapsed=$(echo "$curr_time - $start_time" | bc -l)
-    time_remaining=$(echo "$total_time - $time_elapsed" | bc -l)
-
-    # If we're within $safety steps of the end, kill the run.
-    # If not, use the current timestep to determine how long
-    # we want to wait before checking again. It should be
-    # quite a bit less than the safety factor so that we 
-    # guarantee we check before the run terminates.
-
-    to_stop=$(echo "$time_remaining < $safety * $timestep" | bc -l)
-
-    if [ $to_stop -eq 1 ]; then
-	touch dump_and_stop
-	return
-    else
-	cycle_time=$(echo "$timestep * $safety / 2.0" | bc -l)
-    fi
-
-    sleep $cycle_time
-
-  done
-
-}
-
-
-
 # Generate a run script in the given directory.
 
 function create_job_script {
@@ -745,22 +668,6 @@ function create_job_script {
       # Number of OpenMP threads
 
       echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
-
-      # Tell the script where to look for this file.
-      # This is necessary because by default your login node
-      # environment variables are not transferred to the compute nodes.
-
-      echo "export WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$job_script
-      echo "source \$WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
-
-      # Set up the function that periodically checks whether we should
-      # terminate the run. Only do this for jobs with large enough
-      # processor counts.
-
-      if [ $nodes -ge 8 ]; then
-	  # Run the function in the background
-	  echo "check_to_stop &" >> $dir/$job_script
-      fi
 
       # Set the aprun options.
 
@@ -922,11 +829,19 @@ function run {
   # submit the job, then come back to the main directory.
 
   if [ $do_job -eq 1 ]; then
+
     copy_files $dir
     create_job_script $dir $nprocs $walltime
     cd $dir
     $exec $job_script
     cd - > /dev/null
+
+    # Set up the function that periodically checks whether we should
+    # terminate the run. Only do this for jobs with large enough
+    # processor counts. Run the process in the background and disown it.
+
+    nohup bash $WDMERGER_HOME/job_scripts/check_to_stop.sh $dir >&/dev/null &
+
   fi
 
 }
