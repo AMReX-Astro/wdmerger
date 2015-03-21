@@ -420,14 +420,22 @@ function archive_all {
 
   # Same strategy for the inputs and probin files.
 
-  if ([ ! -e $dir/output/inputs ] || [ $dir/output/inputs -ot $dir/inputs ]); then
-      cp $dir/inputs $dir/output/
-      archivelist=$archivelist" "inputs
+  inputs_list=$(find $dir -maxdepth 1 -name "*inputs*")
+
+  for inputs_file in $inputs_list
+      if ([ ! -e $dir/output/$inputs_file ] || [ $dir/output/$inputs_file -ot $dir/$inputs_file ]); then
+	  cp $dir/$inputs_file $dir/output/
+	  archivelist=$archivelist" "$inputs_file
+      fi
   fi
 
-  if ([ ! -e $dir/output/probin ] || [ $dir/output/probin -ot $dir/probin ]); then
-      cp $dir/probin $dir/output/
-      archivelist=$archivelist" "probin
+  probin_list=$(find $dir -maxdepth 1 -name "*probin*")
+
+  for probin_file in $probin_list
+      if ([ ! -e $dir/output/$probin_file ] || [ $dir/output/$probin_file -ot $dir/$probin_file ]); then
+	  cp $dir/$probin_file $dir/output/
+	  archivelist=$archivelist" "$probin_file
+      fi
   fi
 
   # If there is nothing to archive,
@@ -488,19 +496,19 @@ function copy_files {
 	fi
     fi
 
-    if [ ! -e "$dir/inputs" ]; then
-        if [ -e "$source_dir/inputs" ]; then
-            cp $source_dir/inputs $dir
+    if [ ! -e "$dir/$inputs" ]; then
+        if [ -e "$source_dir/$inputs" ]; then
+            cp $source_dir/$inputs $dir
         else
-            cp $WDMERGER_HOME/source/inputs $dir
+            cp $WDMERGER_HOME/source/$inputs $dir
 	fi
     fi
 
-    if [ ! -e "$dir/probin" ]; then
-	if [ -e "$source_dir/probin" ]; then
-	    cp $source_dir/probin $dir
+    if [ ! -e "$dir/$probin" ]; then
+	if [ -e "$source_dir/$probin" ]; then
+	    cp $source_dir/$probin $dir
 	else
-	    cp $WDMERGER_HOME/source/probin $dir
+	    cp $WDMERGER_HOME/source/$probin $dir
 	fi
     fi
 
@@ -697,7 +705,7 @@ function create_job_script {
       # Main job execution.
 
       echo "" >> $dir/$job_script
-      echo "aprun $aprun_opts $CASTRO inputs $restartString" >> $dir/$job_script
+      echo "aprun $aprun_opts $CASTRO $inputs $restartString" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Run the archive script at the end of the simulation.
@@ -706,7 +714,7 @@ function create_job_script {
 
    elif [ $batch_system == "batch" ]; then
 
-      echo "echo \"mpiexec -n $nprocs $CASTRO inputs > $job_name$run_ext\" | batch" > $dir/$job_script
+      echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > $job_name$run_ext\" | batch" > $dir/$job_script
 
    fi
 
@@ -742,6 +750,14 @@ function run {
 
   if [ ! -z $walltime ]; then
       walltime=1:00:00
+  fi
+
+  if [ -z $inputs ]; then
+      inputs=inputs
+  fi
+
+  if [ -z $probin ]; then
+      probin=probin
   fi
 
   do_job=0
