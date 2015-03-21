@@ -459,14 +459,14 @@ function archive_all {
 
   for file in $diaglist
   do
-      diag_basename=$(basename $file)
-      if [ -e $directory/output/$diag_basename ]; then
-	  if [ $directory/output/$diag_basename -nt $file ]; then
+      f=$(basename $file)
+      if [ -e $directory/output/$f ]; then
+	  if [ $directory/output/$f -nt $file ]; then
 	      continue
 	  fi
       fi
       cp $file $directory/output/
-      f=$(basename $file)
+
       archivelist=$archivelist" "$f
   done
 
@@ -476,14 +476,13 @@ function archive_all {
 
   for file in $outlist
   do
-      output_basename=$(basename $file)
-      if [ -e $directory/output/$output_basename ]; then
-	  if [ $directory/output/$output_basename -nt $file ]; then
+      f=$(basename $file)
+      if [ -e $directory/output/$f ]; then
+	  if [ $directory/output/$f -nt $file ]; then
 	      continue
 	  fi
       fi
       cp $file $directory/output/
-      f=$(basename $file)
       archivelist=$archivelist" "$f
   done
 
@@ -491,21 +490,23 @@ function archive_all {
 
   inputs_list=$(find $directory -maxdepth 1 -name "*inputs*")
 
-  for inputs_file in $inputs_list
+  for file in $inputs_list
   do
-      if ([ ! -e $directory/output/$inputs_file ] || [ $directory/output/$inputs_file -ot $directory/$inputs_file ]); then
-	  cp $directory/$inputs_file $directory/output/
-	  archivelist=$archivelist" "$inputs_file
+      f=$(basename file)
+      if ([ ! -e $directory/output/$f ] || [ $directory/output/$f -ot $directory/$f ]); then	  
+	  cp $file $directory/output/
+	  archivelist=$archivelist" "$f
       fi
   done
 
   probin_list=$(find $directory -maxdepth 1 -name "*probin*")
 
-  for probin_file in $probin_list
+  for file in $probin_list
   do
-      if ([ ! -e $directory/output/$probin_file ] || [ $directory/output/$probin_file -ot $directory/$probin_file ]); then
-	  cp $directory/$probin_file $directory/output/
-	  archivelist=$archivelist" "$probin_file
+      f=$(basename $file)
+      if ([ ! -e $directory/output/$f ] || [ $directory/output/$f -ot $directory/$f ]); then
+	  cp $file $directory/output/
+	  archivelist=$archivelist" "$f
       fi
   done
 
