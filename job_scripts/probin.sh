@@ -16,10 +16,8 @@ function replace_probin_var {
 	return
     fi
 
-    if [ ! -z $2 ]; then
-	dir=$2
-    else
-	echo "No directory found in arguments list for replace_probin_var; exiting."
+    if [ -z $dir ]; then
+	echo "No directory found in replace_probin_var; exiting."
 	return
     fi
 

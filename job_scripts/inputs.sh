@@ -15,13 +15,15 @@ function get_inputs_var {
     fi
 
     if [ ! -z $2 ]; then
-	dir=$2
+	directory=$2
     else
-	dir=$WDMERGER_HOME/source
+	directory=$WDMERGER_HOME/source
     fi
 
-    if [ -z $inputs ]; then
-	inputs=inputs
+    if [[ -z $inputs || $directory == $WDMERGER_HOME/source ]]; then
+	inputs_file=inputs
+    else
+	inputs_file=$inputs
     fi
 
     inputs_var_name=$(fix_inputs_var_name $var_name)
@@ -32,9 +34,9 @@ function get_inputs_var {
     # we need to get everything between the equals sign
     # and the # denoting the comment for that variable.
 
-    if (grep -q "$inputs_var_name[[:space:]]*=" $dir/$inputs); then
+    if (grep -q "$inputs_var_name[[:space:]]*=" $directory/$inputs_file); then
 
-	var=$(grep "$inputs_var_name" $dir/$inputs | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
+	var=$(grep "$inputs_var_name" $directory/$inputs_file | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
 
     fi
 
@@ -104,10 +106,8 @@ function replace_inputs_var {
 	return
     fi
 
-    if [ ! -z $2 ]; then
-	dir=$2
-    else
-	echo "No directory found in arguments list for replace_inputs_var; exiting."
+    if [ -z $dir ]; then
+	echo "No directory found in replace_inputs_var; exiting."
 	return
     fi
 

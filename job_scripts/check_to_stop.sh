@@ -24,11 +24,15 @@ safety=20
 
 # Get the name of the output file. There should only be one running.
 
-while [ -z $filename ]; do
+while true; do
 
   sleep $cycle_time
 
   filename=$(find $dir -maxdepth 1 -name "*$run_ext")
+
+  if [ ! -z $filename ]; then
+      break
+  fi
 
 done
 

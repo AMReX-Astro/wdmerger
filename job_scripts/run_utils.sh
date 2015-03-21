@@ -263,6 +263,75 @@ function is_job_running {
 
 
 
+# Determine if directory dir has reached the desired stopping time or max_step.
+
+function is_dir_done {
+
+  if [ -z $dir ]; then
+      return
+  fi
+
+  # If the directory already exists, check to see if we've reached the desired stopping point.
+  # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
+
+  checkpoint=$(get_last_checkpoint $dir)
+  last_output=$(get_last_output $dir)
+
+  # Get the desired stopping time and max step from the inputs file in the directory.
+  # Alternatively, we may have set this from the calling script, so prefer that.
+
+  if [ -z $stop_time ]; then
+      stop_time=$(get_inputs_var "stop_time" $dir)
+  fi
+
+  if [ -z $max_step ]; then
+      max_step=$(get_inputs_var "max_step" $dir)
+  fi
+
+  # Assume we're done, by default.
+
+  time_flag=1
+  step_flag=1
+
+  if [ -e $dir/$checkpoint/Header ]; then
+
+      # Extract the checkpoint time. It is stored in row 3 of the Header file.
+
+      chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
+
+      # Extract the current timestep. We can get it from the 
+      # name of the checkpoint file. cut will do the trick;
+      # just capture everything after the 'k' of 'chk'.
+
+      chk_step=$(echo $checkpoint | cut -d"k" -f2)
+
+      time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
+      step_flag=$(echo "$chk_step >= $max_step" | bc)
+
+  elif [ -e $dir/$last_output ]; then
+
+      output_time=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $6}')
+      output_step=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $3}')
+
+      # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
+
+      output_time=$(printf "%f" $output_time)
+
+      time_flag=$(echo "$output_time >= $stop_time" | bc -l)
+      step_flag=$(echo "$output_step >= $max_step" | bc)
+
+  fi
+
+  if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
+      echo "1"
+  else
+      echo "0"
+  fi
+
+}
+
+
+
 # Archive the file or directory given in the first argument, 
 # to the same path on the archive machine relative to the machine's $workdir.
 
@@ -330,14 +399,14 @@ function archive {
 function archive_all {
 
   if [ ! -z $1 ]; then
-      dir=$1
+      directory=$1
   else
       echo "No directory passed to function archive_all; exiting."
       return
   fi
 
-  if [ ! -d $dir/output/ ]; then
-      mkdir $dir/output/
+  if [ ! -d $directory/output/ ]; then
+      mkdir $directory/output/
   fi
 
   archivelist=""
@@ -346,8 +415,8 @@ function archive_all {
   # Make sure that they have been completed by checking if
   # the Header file exists, which is the last thing created.
 
-  pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
-  chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
+  pltlist=$(find $directory -maxdepth 1 -type d -name "*plt*" | sort)
+  chklist=$(find $directory -maxdepth 1 -type d -name "*chk*" | sort)
 
   # Move all completed plotfiles and checkpoints to the output
   # directory, and add them to the list of things to archive.
@@ -361,7 +430,7 @@ function archive_all {
 	  if [ -e output/$file ]; then
 	      rm -rf output/$file
 	  fi
-	  mv $file $dir/output/
+	  mv $file $directory/output/
 	  f=$(basename $file)
 	  archivelist=$archivelist" "$f
       fi
@@ -373,13 +442,13 @@ function archive_all {
 	  if [ -e output/$file ]; then
 	      rm -rf output/$file
 	  fi
-	  mv $file $dir/output/
+	  mv $file $directory/output/
 	  f=$(basename $file)
 	  archivelist=$archivelist" "$f
       fi
   done
 
-  diaglist=$(find $dir -maxdepth 1 -name "*diag*.out")
+  diaglist=$(find $directory -maxdepth 1 -name "*diag*.out")
 
   # For the diagnostic files, we just want to make a copy and move it to the 
   # output directory; we can't move it, since the same file needs to be there
@@ -391,52 +460,54 @@ function archive_all {
   for file in $diaglist
   do
       diag_basename=$(basename $file)
-      if [ -e $dir/output/$diag_basename ]; then
-	  if [ $dir/output/$diag_basename -nt $file ]; then
+      if [ -e $directory/output/$diag_basename ]; then
+	  if [ $directory/output/$diag_basename -nt $file ]; then
 	      continue
 	  fi
       fi
-      cp $file $dir/output/
+      cp $file $directory/output/
       f=$(basename $file)
       archivelist=$archivelist" "$f
   done
 
   # Same thing for the runtime stdout files.
 
-  outlist=$(find $dir -maxdepth 1 -name "*$job_name*")
+  outlist=$(find $directory -maxdepth 1 -name "*$job_name*")
 
   for file in $outlist
   do
       output_basename=$(basename $file)
-      if [ -e $dir/output/$output_basename ]; then
-	  if [ $dir/output/$output_basename -nt $file ]; then
+      if [ -e $directory/output/$output_basename ]; then
+	  if [ $directory/output/$output_basename -nt $file ]; then
 	      continue
 	  fi
       fi
-      cp $file $dir/output/
+      cp $file $directory/output/
       f=$(basename $file)
       archivelist=$archivelist" "$f
   done
 
   # Same strategy for the inputs and probin files.
 
-  inputs_list=$(find $dir -maxdepth 1 -name "*inputs*")
+  inputs_list=$(find $directory -maxdepth 1 -name "*inputs*")
 
   for inputs_file in $inputs_list
-      if ([ ! -e $dir/output/$inputs_file ] || [ $dir/output/$inputs_file -ot $dir/$inputs_file ]); then
-	  cp $dir/$inputs_file $dir/output/
+  do
+      if ([ ! -e $directory/output/$inputs_file ] || [ $directory/output/$inputs_file -ot $directory/$inputs_file ]); then
+	  cp $directory/$inputs_file $directory/output/
 	  archivelist=$archivelist" "$inputs_file
       fi
-  fi
+  done
 
-  probin_list=$(find $dir -maxdepth 1 -name "*probin*")
+  probin_list=$(find $directory -maxdepth 1 -name "*probin*")
 
   for probin_file in $probin_list
-      if ([ ! -e $dir/output/$probin_file ] || [ $dir/output/$probin_file -ot $dir/$probin_file ]); then
-	  cp $dir/$probin_file $dir/output/
+  do
+      if ([ ! -e $directory/output/$probin_file ] || [ $directory/output/$probin_file -ot $directory/$probin_file ]); then
+	  cp $directory/$probin_file $directory/output/
 	  archivelist=$archivelist" "$probin_file
       fi
-  fi
+  done
 
   # If there is nothing to archive,
   # then assume we have completed the run and exit.
@@ -454,8 +525,8 @@ function archive_all {
 
       for file in $archivelist
       do
-	  echo $dir/output/$file
-	  archive $dir/output/$file
+	  echo $directory/output/$file
+	  archive $directory/output/$file
       done
 
   elif [ $MACHINE == "BLUE_WATERS" ]; then
@@ -465,7 +536,7 @@ function archive_all {
       # to sync the entire output directory of this location rather than 
       # transferring the files independently.
 
-      archive $dir/output/
+      archive $directory/output/
 
   fi
 
@@ -478,12 +549,8 @@ function archive_all {
 
 function copy_files {
 
-    if [ -z $1 ]
-    then
+    if [ -z $dir ]; then
 	echo "No directory passed to copy_files; exiting."
-    return
-    else
-	dir=$1
     fi
 
     if [ ! -e $dir/$CASTRO ]; then
@@ -498,17 +565,17 @@ function copy_files {
 
     if [ ! -e "$dir/$inputs" ]; then
         if [ -e "$source_dir/$inputs" ]; then
-            cp $source_dir/$inputs $dir
+            cp $source_dir/inputs $dir/$inputs
         else
-            cp $WDMERGER_HOME/source/$inputs $dir
+            cp $WDMERGER_HOME/source/inputs $dir/$inputs
 	fi
     fi
 
     if [ ! -e "$dir/$probin" ]; then
 	if [ -e "$source_dir/$probin" ]; then
-	    cp $source_dir/$probin $dir
+	    cp $source_dir/probin $dir/$inputs
 	else
-	    cp $WDMERGER_HOME/source/$probin $dir
+	    cp $WDMERGER_HOME/source/probin $dir/$probin
 	fi
     fi
 
@@ -534,8 +601,8 @@ function copy_files {
     for var in $input_vars
     do
 
-	replace_inputs_var $var $dir
-	replace_probin_var $var $dir
+	replace_inputs_var $var
+	replace_probin_var $var
 
     done
 
@@ -700,12 +767,12 @@ function create_job_script {
 
       aprun_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
 
-      restartString=$(get_restart_string $dir)
+      echo "restartString=\$(get_restart_string .)" >> $dir/$job_script
 
       # Main job execution.
 
       echo "" >> $dir/$job_script
-      echo "aprun $aprun_opts $CASTRO $inputs $restartString" >> $dir/$job_script
+      echo "aprun $aprun_opts $CASTRO $inputs \$restartString" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Run the archive script at the end of the simulation.
@@ -726,6 +793,69 @@ function create_job_script {
 
 
 
+# Wrapper script for run. The first argument is an integer N that
+# causes us to divide $stop_time into N equal increments.
+
+function chain {
+
+  if [ -z $N_iters ]; then
+      echo "N_iters not set in call to chain; exiting."
+      return
+  fi
+
+  if [ -z $stop_time ]; then
+      echo "stop_time not defined in call to chain; exiting."
+  fi
+
+  if [ -z $dir ]; then
+      echo "No directory given to chain; exiting."
+      return
+  fi
+
+  orig_stop_time=$stop_time
+  orig_job_script=$job_script
+
+  do_chain=1
+
+  # First check to see if we've completed the run yet.
+
+  done_flag=0
+
+  if [ -d $dir ]; then
+      inputs=$(find $dir -maxdepth 1 -name "inputs_*" | sort -n | tail -1)
+  fi
+
+  # If there are no inputs files in the directory, we know we haven't yet started.
+
+  if [ ! -z $inputs ]; then
+      inputs=$(basename $inputs)
+  fi
+
+  if [ -d $dir ]; then
+      done_flag=$(is_dir_done)
+  fi
+
+  if [ $done_flag -ne 1 ]; then
+
+      for N in $(seq $N_iters)
+      do
+	  inputs="inputs_"$N
+	  job_script=$orig_job_script"_"$N
+	  stop_time=$(echo "$orig_stop_time * $N / $N_iters" | bc -l)
+	  run
+	  job_dependency=$job_number
+      done
+
+  fi
+
+  job_script=$orig_job_script
+  stop_time=$orig_stop_time
+  do_chain=""
+
+}
+
+
+
 # Main submission function. Checks which Linux variant we're on,
 # and uses the relevant batch submission script. If you want to
 # use a different machine, you'll need to include a run script
@@ -739,16 +869,16 @@ function create_job_script {
 
 function run {
 
-  if [ ! -z $dir ]; then
+  if [ -z $dir ]; then
       echo "No directory given to run; exiting."
       return
   fi
 
-  if [ ! -z $nprocs ]; then
+  if [ -z $nprocs ]; then
       nprocs=$ppn
   fi
 
-  if [ ! -z $walltime ]; then
+  if [ -z $walltime ]; then
       walltime=1:00:00
   fi
 
@@ -769,6 +899,12 @@ function run {
     mkdir -p $dir
 
     do_job=1
+
+  elif [ ! -z $do_chain ]; then
+
+      echo "Continuing chain in directory "$dir"."
+
+      do_job=1
 
   else
 
@@ -792,58 +928,9 @@ function run {
 
       archive_all $cwd/$dir
 
-      # If the directory already exists, check to see if we've reached the desired stopping point.
-      # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
+      done_flag=$(is_dir_done)
 
-      checkpoint=$(get_last_checkpoint $dir)
-      last_output=$(get_last_output $dir)
-
-      # Get the desired stopping time and max step from the inputs file in the directory.
-      # Alternatively, we may have set this from the calling script, so prefer that.
-
-      if [ -z $stop_time ]; then
-	  stop_time=$(get_inputs_var "stop_time" $dir)
-      fi
-
-      if [ -z $max_step ]; then
-	  max_step=$(get_inputs_var "max_step" $dir)
-      fi
-
-      # Assume we're continuing, by default.
-
-      time_flag=1
-      step_flag=1
-
-      if [ -e $dir/$checkpoint/Header ]; then
-
-	  # Extract the checkpoint time. It is stored in row 3 of the Header file.
-
-	  chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
-
-	  # Extract the current timestep. We can get it from the 
-	  # name of the checkpoint file. cut will do the trick;
-	  # just capture everything after the 'k' of 'chk'.
-
-	  chk_step=$(echo $checkpoint | cut -d"k" -f2)
-
-	  time_flag=$(echo "$chk_time < $stop_time" | bc -l)
-	  step_flag=$(echo "$chk_step < $max_step" | bc)
-
-      elif [ -e $dir/$last_output ]; then
-
-	  output_time=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $6}')
-	  output_step=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $3}')
-
-	  # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
-
-	  output_time=$(printf "%f" $output_time)
-
-	  time_flag=$(echo "$output_time < $stop_time" | bc -l)
-	  step_flag=$(echo "$output_step < $max_step" | bc)
-
-      fi
-
-      if [ $time_flag -eq 1 ] && [ $step_flag -eq 1 ]; then
+      if [ $done_flag -eq 0 ]; then
 
 	  echo "Continuing job in directory "$dir"."
 
@@ -871,16 +958,23 @@ function run {
 
     cd $dir
 
+    exec_command=$exec
+    if [ ! -z $job_dependency ]; then
+	if [ $batch_system == "PBS" ]; then
+	    exec_command="$exec -W depend=afterok:$job_dependency"
+	fi
+    fi
+
     # Capture the job number output.
 
-    job_number=`$exec $job_script`
+    job_number=`$exec_command $job_script`
 
     # Some systems like Blue Waters include the system name
     # at the end of the number, so remove it.
 
     job_number=${job_number%%.*}
 
-    echo "The job number is " $job_number "."
+    echo "The job number is" $job_number"."
 
     cd - > /dev/null
 
