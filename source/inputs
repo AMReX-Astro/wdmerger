@@ -43,7 +43,7 @@ amr.max_level       = 0		                   # Maximum level number allowed
 
 amr.ref_ratio       = 4 4 4 4 4               	   # Refinement ratio
 amr.regrid_int      = 2                       	   # How many coarse timesteps between regridding
-amr.n_error_buf     = 2 2 2 2 2               	   # Number of buffer cells in error est (should be same as regrid_int)
+amr.n_error_buf     = 0 0 0 0 0               	   # Number of buffer cells in error estimation
 
 amr.max_grid_size   = 32 48 64  	      	   # Maximum grid size at each level
 amr.blocking_factor = 16                      	   # Grid sizes must be a multiple of this
@@ -123,6 +123,7 @@ amr.check_file      = chk        	      	   # Root name of checkpoint file
 amr.check_per       = 1.0     		      	   # Simulation time between checkpoints
 amr.plot_file       = plt     		      	   # Root name of plot file
 amr.plot_per        = 1.0    		      	   # Simulation time between plotfiles
+amr.message_int     = 1                            # How often to check whether the run script asked for a checkpoint dump
 
 amr.v               = 1       		      	   # Control verbosity in Amr.cpp
 castro.v            = 1       		      	   # Control verbosity in Castro.cpp

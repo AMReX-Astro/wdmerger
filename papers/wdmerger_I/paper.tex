@@ -1,9 +1,14 @@
 %\documentclass[12pt,preprint]{aastex}
-\documentclass{emulateapj}
+\documentclass[iop]{emulateapj}
 % for \sout
 \usepackage{ulem}
 % makes sure \em{} is italic rather than underlined (corrects ulem from line above)
 \normalem
+
+% these lines seem necessary for pdflatex to get the paper size right
+\pdfpagewidth 8.5in
+\pdfpageheight 11.0in
+
 
 % for the red MarginPars
 \usepackage{color}
@@ -1016,12 +1021,38 @@ with the rotation axis coincident with the $z$ axis at $x = y = 0$.
 $T$ is the rotation period, which is the most natural quantity to specify
 for a rotating stellar system. As described in the appendix, we include this source term
 in the edge state prediction in a way that is analogous to the gravity source.
-We evaluate all quantities at cell centers and use the same predictor-corrector 
-approach that we use for the gravity source terms to the momentum equations.
+We evaluate all quantities at cell centers. We use the same predictor-corrector 
+approach that we use for the gravity source terms to the momentum equations. However, a slight 
+difference is that the Coriolis force for each velocity component is coupled to other velocity 
+components. If the rotation is about the $z$-axis, then the discrete update to 
+$v_x^{n+1}$ depends on the value of $v_y^{n+1}$, and vice versa. If we fix the value of 
+the time-level $n+1$ quantities after coming out of the hydrodynamics update, there 
+would be a slight inconsistency between the $x$ and $y$ components of the velocity. 
+
+We propose a more accurate coupling that directly solves this implicit system of coupled 
+equations. We denote by $(\widetilde{\rho \mathbf{u}})$ the value of the momentum after 
+updating it with the centrifugal force, and the time-level $n$ Coriolis force. The remaining 
+update for the time-level $n+1$ Coriolis force then appears as:
+\begin{equation}
+  (\rho \mathbf{u})^{n+1} = (\widetilde{\rho\mathbf{u}}) + \frac{\Delta t}{2} \left(-2\, {\bm\omega} \times (\rho\mathbf{u})^{n+1}\right)
+\end{equation}
+To proceed further, we assume that the rotation is about the $z$ axis with frequency $\omega$. 
+Then there is no update to the $z$-momentum, and the other equations are:
+\begin{align}
+  (\rho u)^{n+1} &= (\widetilde{\rho u}) + \omega \Delta t (\rho v)^{n+1}) \\
+  (\rho v)^{n+1} &= (\widetilde{\rho v}) - \omega \Delta t (\rho u)^{n+1})
+\end{align}
+We can directly solve this coupled system:
+\begin{align}
+  (\rho u)^{n+1} &= \frac{ (\widetilde{\rho u}) + \omega \Delta t (\widetilde{\rho v})}{1 + \omega^2 \Delta t^2} \\
+  (\rho v)^{n+1} &= \frac{ (\widetilde{\rho v}) - \omega \Delta t (\widetilde{\rho u})}{1 + \omega^2 \Delta t^2}
+\end{align}
+We use this form of the momentum update in CASTRO. This improvement is small
+but increases the accuracy of our rotating white dwarf systems over long time-scales.
 
 The update to the energy equation can be determined by taking the dot product of the velocity
-with the momentum source terms. The Coriolis term vanishes identically, as it must
-because the Coriolis term does no work on the fluid. The update from the centrifugal force becomes
+with the momentum source terms. The Coriolis term vanishes identically, and so
+ the Coriolis term does no work on the fluid. The update from the centrifugal force becomes
 \begin{equation}
   \left.\frac{\partial(\rho E)}{\partial t}\right|_{\text{rot}} = \frac{1}{\Delta V}\int \rho \mathbf{u} \cdot \mathbf{f}_R\, dV,
 \end{equation}
@@ -1202,10 +1233,11 @@ whose density is greater than the cutoff. We then compute $r_{\text{eff}} = (3V/
 The computational domain has a total size of $1.024 \times 10^{10}\ \text{cm}$ in each 
 spatial dimension, and is centered at the origin. Our coarse grid has $256^3$ zones,
 corresponding to a spatial resolution of 400 km. For the present study, we choose a simple 
-refinement strategy: all zones within the Roche radius of each star are tagged for maximal 
-refinement. We also ensure that the outer part of the domain is never tagged for refinement.
-In future work we will add criteria that tag for refinement the gas between the stars, which is
-expected to feature nuclear burning.
+refinement strategy: all zones within twice the Roche radius of each star are tagged for maximal 
+refinement. The extra buffer from doubling the size of this region ensures that the sharp density
+gradients near the edge of the star are within the zone of refinement. We also ensure that the 
+outer part of the domain is never tagged for refinement. In future work we will add criteria 
+that tag for refinement the gas between the stars, which is expected to feature nuclear burning.
 
 The software used to generate the test problems in this paper
 (as well as the manuscript itself),

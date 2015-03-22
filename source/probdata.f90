@@ -18,7 +18,6 @@ module probdata_module
   double precision, allocatable :: model_S_r(:), model_S_state(:,:)
 
   ! Initial binary orbit characteristics
-
   double precision :: mass_P_initial, mass_S_initial
   double precision :: central_density_P, central_density_S
   double precision :: radius_P_initial, radius_S_initial
@@ -39,6 +38,14 @@ module probdata_module
   ! consistent with their Keplerian orbit speed.
   logical :: orbital_kick
 
+  ! Whether or not to give the stars an initial velocity
+  ! consistent with the free-fall speed.
+  logical :: collision
+
+  ! For a collision, number of (secondary) WD radii to 
+  ! separate the WDs by.
+  double precision :: collision_separation
+
   ! Damping
   logical          :: damping
   double precision :: damping_alpha
@@ -50,6 +57,9 @@ module probdata_module
 
   integer :: star_axis
   integer :: initial_motion_dir
+
+  ! Location of the physical center of the problem, as a fraction of domain size
+  double precision :: center_fracx, center_fracy, center_fracz
 
   ! Density of ambient medium
   double precision :: ambient_density
@@ -160,6 +170,8 @@ contains
          central_density_P, central_density_S, &
          nsub, &
          orbital_kick, &
+         collision, &
+         collision_separation, &
          interp_temp, &
          damping, damping_alpha, &
          do_relax, relax_tau, &
@@ -172,6 +184,7 @@ contains
          star_axis, &
          maxTaggingRadius, &
          bulk_velx, bulk_vely, bulk_velz, &
+         center_fracx, center_fracy, center_fracz, &
          initial_model_dx, &
          initial_model_npts, &
          initial_model_mass_tol, &
@@ -197,9 +210,14 @@ contains
     ambient_density = 1.d-4
 
     orbital_kick = .false.
+
+    collision = .false.
+    collision_separation = 4.0
+
     interp_temp = .false.
     damping  = .false.
     star_axis = 1
+    initial_motion_dir = 2
 
     do_relax = .false.
     relax_type = 1
@@ -214,6 +232,10 @@ contains
     bulk_velx = ZERO
     bulk_vely = ZERO
     bulk_velz = ZERO
+
+    center_fracx = HALF
+    center_fracy = HALF
+    center_fracz = HALF
 
     ! For the grid spacing for our model, we'll use 
     ! 6.25 km. No simulation we do is likely to have a resolution
@@ -333,14 +355,27 @@ contains
     use fundamental_constants_module, only: M_solar
     use meth_params_module, only: do_rotation, rot_period
     use initial_model_module, only: init_1d
-    use prob_params_module, only: center
+    use prob_params_module, only: center, problo, probhi
     use meth_params_module, only: rot_axis
 
     implicit none
 
     type (eos_t) :: ambient_state
+    double precision :: v_ff
 
     call get_ambient(ambient_state)
+
+    ! Set up the center variable. We want it to be at 
+    ! problo + center_frac * domain_width in each direction.
+    ! center_frac is 1/2 by default, so the problem
+    ! would be set up exactly in the center of the domain.
+
+    center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
+    center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
+    center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
+
+    ! Set some default values for these quantities;
+    ! we'll update them soon.
 
     center_P_initial = center
     center_S_initial = center
@@ -407,69 +442,110 @@ contains
 
        roche_rad_S = radius_S_initial
 
-       ! Now, if we're not doing a relaxation step, then we want to put the WDs 
-       ! where they ought to be by Kepler's third law. But if we are, then we 
-       ! need a better first guess. The central location for each WD should be
-       ! equal to their inner distance plus their radius.
+       ! For a collision, set the stars up with a free-fall velocity at a specified number
+       ! of secondary radii; for a circular orbit, use Kepler's third law.
 
-       if (do_relax .and. relax_type .eq. 1) then
+       if (collision) then
 
-          a_P_initial = d_A + radius_P_initial
-          a_S_initial = d_B + radius_S_initial
-          a = a_P_initial + a_S_initial
-       
+           initial_motion_dir = star_axis
+
+           collision_separation = collision_separation * radius_S_initial
+
+           call freefall_velocity(mass_P + mass_S, collision_separation, v_ff)
+
+           vel_P(star_axis) =  (mass_P / (mass_S + mass_P)) * v_ff
+           vel_S(star_axis) = -(mass_S / (mass_S + mass_P)) * v_ff
+
+           a_P_initial = (mass_P / (mass_S + mass_P)) * collision_separation
+           a_S_initial = (mass_S / (mass_S + mass_P)) * collision_separation
+
+           a = a_P_initial + a_S_initial
+
        else
 
-          ! Get the orbit from Kepler's third law
+           ! Now, if we're not doing a relaxation step, then we want to put the WDs 
+           ! where they ought to be by Kepler's third law. But if we are, then we 
+           ! need a better first guess. The central location for each WD should be
+           ! equal to their inner distance plus their radius.
 
-          call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
-                                rot_period, a_P_initial, a_S_initial, a, &
-                                orbital_speed_P, orbital_speed_S)
+           if (do_relax .and. relax_type .eq. 1) then
+
+              a_P_initial = d_A + radius_P_initial
+              a_S_initial = d_B + radius_S_initial
+
+              a = a_P_initial + a_S_initial
+
+           else
+
+              call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
+                                    rot_period, a_P_initial, a_S_initial, a, &
+                                    orbital_speed_P, orbital_speed_S)
+
+           endif
+
+           if (ioproc == 1 .and. init == 1) then
+              print *, "Generated binary orbit of distance ", a, &
+                       ", primary distance ", a_P_initial, ", and secondary distance", a_S_initial
+           endif      
+
+           ! Direction of initial motion -- it is the position axis
+           ! that is not star axis and that is also not the rotation axis.
+
+           if (rot_axis .eq. 3) then
+              if (star_axis .eq. 1) initial_motion_dir = 2
+              if (star_axis .eq. 2) initial_motion_dir = 1
+           else if (rot_axis .eq. 2) then
+              if (star_axis .eq. 1) initial_motion_dir = 3
+              if (star_axis .eq. 3) initial_motion_dir = 1
+           else if (rot_axis .eq. 1) then
+              if (star_axis .eq. 2) initial_motion_dir = 3
+              if (star_axis .eq. 3) initial_motion_dir = 2
+           else
+              call bl_error("Error: probdata module: invalid choice for rot_axis.")
+           endif
+
+           if ( (do_rotation .ne. 1) .and. orbital_kick ) then
+              vel_P(initial_motion_dir) = - orbital_speed_P
+              vel_S(initial_motion_dir) =   orbital_speed_S
+           endif
 
        endif
-
-       if (ioproc == 1 .and. init == 1) then
-          print *, "Generated binary orbit of distance ", a, &
-                   ", primary distance ", a_P_initial, ", and secondary distance", a_S_initial
-       endif      
 
        ! Star center positions -- we'll put them in the midplane on the
        ! axis specified by star_axis, with the center of mass at the center of the domain.
-       ! If we're only doing a single star, which we know because the secondary mass is
-       ! less than zero, then just leave the star in the center.
 
        center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
        center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
-
-       com_P = center_P_initial
-       com_S = center_S_initial
-
-       ! Direction of initial motion -- essentially it's the position axis
-       ! that is not star axis and that is also not the rotation axis.
-
-       if (rot_axis .eq. 3) then
-          if (star_axis .eq. 1) initial_motion_dir = 2
-          if (star_axis .eq. 2) initial_motion_dir = 1
-       else if (rot_axis .eq. 2) then
-          if (star_axis .eq. 1) initial_motion_dir = 3
-          if (star_axis .eq. 3) initial_motion_dir = 1
-       else if (rot_axis .eq. 1) then
-          if (star_axis .eq. 2) initial_motion_dir = 3
-          if (star_axis .eq. 3) initial_motion_dir = 2
-       else
-          call bl_error("Error: probdata module: invalid choice for rot_axis.")
-       endif
-
-       if ( (do_rotation .ne. 1) .and. orbital_kick ) then
-          vel_P(initial_motion_dir) = - orbital_speed_P
-          vel_S(initial_motion_dir) =   orbital_speed_S
-       endif
 
        ! Compute initial Roche radii
 
        call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
 
     endif
+
+    com_P = center_P_initial
+    com_S = center_S_initial
+
+    ! Safety check: make sure the stars are actually inside the computational domain.
+
+    if (center_P_initial(1) - radius_P_initial .lt. problo(1) .or. &
+        center_P_initial(1) + radius_P_initial .gt. probhi(1) .or. &
+        center_P_initial(2) - radius_P_initial .lt. problo(2) .or. &
+        center_P_initial(2) + radius_P_initial .gt. probhi(2) .or. &
+        center_P_initial(3) - radius_P_initial .lt. problo(3) .or. &
+        center_P_initial(3) + radius_P_initial .gt. probhi(3)) then
+       call bl_error("Primary does not fit inside the domain.")
+    endif
+
+    if (center_S_initial(1) - radius_S_initial .lt. problo(1) .or. &
+        center_S_initial(1) + radius_S_initial .gt. probhi(1) .or. &
+        center_S_initial(2) - radius_S_initial .lt. problo(2) .or. &
+        center_S_initial(2) + radius_S_initial .gt. probhi(2) .or. &
+        center_S_initial(3) - radius_S_initial .lt. problo(3) .or. &
+        center_S_initial(3) + radius_S_initial .gt. probhi(3)) then
+       call bl_error("Secondary does not fit inside the domain.")
+    endif
+
 
   end subroutine binary_setup
 
@@ -523,6 +599,27 @@ contains
      endif
 
   end subroutine kepler_third_law
+
+
+
+  ! Given total mass of a binary system and the initial separation of
+  ! two point particles, obtain the velocity at this separation 
+  ! assuming the point masses fell in from infinity. This will
+  ! be the velocity in the frame where the center of mass is stationary.
+
+  subroutine freefall_velocity(mass, distance, vel)
+
+    use bl_constants_module, only: TWO, HALF
+    use fundamental_constants_module, only: Gconst
+
+    implicit none
+
+    double precision, intent(in   ) :: mass, distance
+    double precision, intent(inout) :: vel
+
+    vel = (TWO * Gconst * mass / distance)**HALF
+
+  end subroutine freefall_velocity
 
 
 

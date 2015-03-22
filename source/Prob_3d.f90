@@ -102,7 +102,6 @@
            enddo
         enddo
      enddo
-
      !$OMP END PARALLEL DO
 
      ! Set the velocities in each direction equal to the bulk
@@ -119,18 +118,18 @@
         enddo
      enddo
 
-     ! If we're in the inertial reference frame, 
-     ! set counter-clockwise rigid body rotation
+    !$OMP PARALLEL DO PRIVATE(i, j, k, loc, dist_P, dist_S)
+    do k = lo(3), hi(3)
+       loc(3) = xlo(3) + dble(k - lo(3) + HALF)*delta(3) - center(3)
+       do j = lo(2), hi(2)
+          loc(2) = xlo(2) + dble(j - lo(2) + HALF)*delta(2) - center(2)
+          do i = lo(1), hi(1)
+             loc(1) = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
 
-     if ( orbital_kick ) then
- 
-       !$OMP PARALLEL DO PRIVATE(i, j, k, loc)
-       do k = lo(3), hi(3)
-          loc(3) = xlo(3) + dble(k - lo(3) + HALF)*delta(3) - center(3)
-          do j = lo(2), hi(2)
-             loc(2) = xlo(2) + dble(j - lo(2) + HALF)*delta(2) - center(2)
-             do i = lo(1), hi(1)
-                loc(1) = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
+             ! If we're in the inertial reference frame, and we want to provide an
+             ! initial orbital kick, use counter-clockwise rigid body rotation.
+
+             if (orbital_kick .and. (.not. single_star)) then
 
                 ! x velocity is -omega * r * sin(theta) == -omega * y
                 state(i,j,k,UMX+star_axis-1) = state(i,j,k,UMX+star_axis-1) &
@@ -140,12 +139,26 @@
                 state(i,j,k,UMX+initial_motion_dir-1) = state(i,j,k,UMX+initial_motion_dir-1) &
                                                       + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * loc(star_axis)
 
-           enddo
-         enddo
-       enddo
-       !$OMP END PARALLEL DO
+             ! If we want a collision calculation, set the stars in 
+             ! motion with the respective free-fall velocities.
 
-     endif
+             else if (collision) then
+
+                dist_P = loc - center_P_initial
+                dist_S = loc - center_S_initial
+
+                if (sum(dist_P**2) < radius_P_initial**2) then
+                   state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
+                else if (sum(dist_S**2) < radius_S_initial**2) then
+                   state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
+                endif
+
+             endif
+
+        enddo
+      enddo
+    enddo
+    !$OMP END PARALLEL DO
 
      ! Add corresponding kinetic energy from the system motion
 

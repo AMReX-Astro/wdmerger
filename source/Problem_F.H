@@ -77,3 +77,6 @@ BL_FORT_PROC_DECL(CHECK_CONVERGENCE,check_convergence)
     Real* left_mass, Real* right_mass,
     Real* delta_rho, Real* l2_norm,
     int* is_relaxed, int* num_iterations);
+
+BL_FORT_PROC_DECL(UPDATE_CENTER,update_center)
+   (const Real time);

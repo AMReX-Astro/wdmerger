@@ -16,14 +16,16 @@ function replace_probin_var {
 	return
     fi
 
-    if [ ! -z $2 ]; then
-	dir=$2
-    else
-	echo "No directory found in arguments list for replace_probin_var; exiting."
+    if [ -z $dir ]; then
+	echo "No directory found in replace_probin_var; exiting."
 	return
     fi
 
-    if [ ! -e $dir/probin ]; then
+    if [ -z $probin ]; then
+	probin=probin
+    fi
+
+    if [ ! -e $dir/$probin ]; then
 	echo "No probin file exists in directory "$dir"; exiting."
 	return
     fi
@@ -34,8 +36,8 @@ function replace_probin_var {
     # at least one space behind them and after them.
     # The equals sign cannot be adjacent to the name.
 
-    if (grep -q "$var[[:space:]]*=" $dir/probin); then
-	sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/probin
+    if (grep -q "$var[[:space:]]*=" $dir/$probin); then
+	sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/$probin
     fi
 
 }

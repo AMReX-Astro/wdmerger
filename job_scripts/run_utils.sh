@@ -4,6 +4,9 @@
 source $WDMERGER_HOME/job_scripts/inputs.sh
 source $WDMERGER_HOME/job_scripts/probin.sh
 
+# Basic mathematical routines.
+source $WDMERGER_HOME/job_scripts/math.sh
+
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
 # variable list and prints it out to stdout. It is the last word
@@ -21,16 +24,33 @@ function get_make_var {
 
 function get_machine {
 
-  UNAMEN=$(uname -n)
+  # Get the name of the machine by using uname;
+  # then store it in a file in the wdmerger root.
+  # This storage helps when we're on the compute nodes,
+  # which often don't have the same system name as the login nodes.
 
-  if   [[ $UNAMEN == *"h2o"*    ]]; then
-    MACHINE=BLUE_WATERS
-  elif [[ $UNAMEN == *"titan"*  ]]; then
-    MACHINE=TITAN
-  elif [[ $UNAMEN == *"hopper"* ]]; then
-    MACHINE=HOPPER
+  if [ ! -e $WDMERGER_HOME/job_scripts/machine ]; then
+
+      UNAMEN=$(uname -n)
+
+      if   [[ $UNAMEN == *"h2o"*    ]]; then
+	MACHINE=BLUE_WATERS
+      elif [[ $UNAMEN == *"titan"*  ]]; then
+	MACHINE=TITAN
+      elif [[ $UNAMEN == *"hopper"* ]]; then
+	MACHINE=HOPPER
+      else
+	MACHINE=GENERICLINUX
+      fi
+
+      # Store the name 
+
+      echo "$MACHINE" > $WDMERGER_HOME/job_scripts/machine
+
   else
-    MACHINE=GENERICLINUX
+
+      MACHINE=$(cat $WDMERGER_HOME/job_scripts/machine)
+
   fi
 
   echo $MACHINE
@@ -123,6 +143,78 @@ function get_last_checkpoint {
 
 
 
+# Obtain the median coarse timestep length from a given output file.
+
+function get_median_timestep {
+
+    # First argument is the name of the file.
+
+    if [ -z $1 ]; then
+	# No file was passed to the function, so exit.
+	return
+    else
+	file=$1
+    fi
+
+    # Second argument is the number of most recent timesteps to use.
+    # If it doesn't exist, default to using all timesteps.
+
+    if [ -z $2 ]; then
+	nsteps=-1
+    else
+	nsteps=$2
+    fi
+
+    # Use grep to get all lines containing the coarse timestep time;
+    # then, use awk to extract the actual times.
+
+    if [ $nsteps -gt 0 ]; then
+	timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }' | tail -$nsteps)
+    else
+	timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }')
+    fi
+
+    # Calculate the median.
+    
+    median_timestep=$(median "$timesteps")
+
+    echo $median_timestep
+
+}
+
+
+
+# Obtain the length of walltime remaining on the current job.
+
+function get_remaining_walltime {
+
+    if [ ! -z $1 ]; then
+	job_number=$1
+    else
+	return
+    fi
+
+    total_time=0.0
+
+    # Extract the job number from the filename, then
+    # use the relevant batch submission system.
+
+    if [ $batch_system == "PBS" ]; then
+	# For PBS we can get the remaining time by doing 
+	# showq and then grepping for the line that contains
+	# the relevant job number.
+
+	total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
+	
+	total_time=$(hours_to_seconds $total_time)
+    fi
+
+    echo $total_time
+
+}
+
+
+
 # Return a string that is used for restarting from the latest checkpoint.
 # Optionally you can hand this a directory, otherwise it will default 
 # to whatever get_last_checkpoint determines.
@@ -171,6 +263,75 @@ function is_job_running {
 
 
 
+# Determine if directory dir has reached the desired stopping time or max_step.
+
+function is_dir_done {
+
+  if [ -z $dir ]; then
+      return
+  fi
+
+  # If the directory already exists, check to see if we've reached the desired stopping point.
+  # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
+
+  checkpoint=$(get_last_checkpoint $dir)
+  last_output=$(get_last_output $dir)
+
+  # Get the desired stopping time and max step from the inputs file in the directory.
+  # Alternatively, we may have set this from the calling script, so prefer that.
+
+  if [ -z $stop_time ]; then
+      stop_time=$(get_inputs_var "stop_time" $dir)
+  fi
+
+  if [ -z $max_step ]; then
+      max_step=$(get_inputs_var "max_step" $dir)
+  fi
+
+  # Assume we're done, by default.
+
+  time_flag=1
+  step_flag=1
+
+  if [ -e $dir/$checkpoint/Header ]; then
+
+      # Extract the checkpoint time. It is stored in row 3 of the Header file.
+
+      chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
+
+      # Extract the current timestep. We can get it from the 
+      # name of the checkpoint file. cut will do the trick;
+      # just capture everything after the 'k' of 'chk'.
+
+      chk_step=$(echo $checkpoint | cut -d"k" -f2)
+
+      time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
+      step_flag=$(echo "$chk_step >= $max_step" | bc)
+
+  elif [ -e $dir/$last_output ]; then
+
+      output_time=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $6}')
+      output_step=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $3}')
+
+      # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
+
+      output_time=$(printf "%f" $output_time)
+
+      time_flag=$(echo "$output_time >= $stop_time" | bc -l)
+      step_flag=$(echo "$output_step >= $max_step" | bc)
+
+  fi
+
+  if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
+      echo "1"
+  else
+      echo "0"
+  fi
+
+}
+
+
+
 # Archive the file or directory given in the first argument, 
 # to the same path on the archive machine relative to the machine's $workdir.
 
@@ -193,11 +354,14 @@ function archive {
   f=$(basename $1)
   d=$(dirname $1)
 
-  # Remove the $workdir from the name. We test on both $workdir and $workdir/
-  # so that the trailing slash doesn't matter here.
+  # Remove everything from the directory up to the username. The assumption here is that
+  # everything after that was created by the user, and that's the directory structure we want
+  # to preserve when moving things over to the storage system.
 
-  storage_dir=$(echo ${d#$workdir/})
-  storage_dir=$(echo ${d#$workdir})
+  storage_dir=$d
+
+  storage_dir=${storage_dir#*$USER/}
+  storage_dir=${storage_dir#*$USER}
 
   # Archive based on the method chosen for this machine.
 
@@ -207,10 +371,10 @@ function archive {
 
   elif [ $archive_method == "globus" ]; then
 
-      archive_dir=/projects/sciteam/$allocation/$USER/$storage_dir
+      archive_dir=$allocation/$USER/$storage_dir
 
-      src=$globus_src_endpoint$d/$f
-      dst=$globus_dst_endpoint$archive_dir/$f
+      src=$globus_src_endpoint/$d/$f
+      dst=$globus_dst_endpoint/$archive_dir/$f
 
       if [ -d $d/$f ]; then
           # If we're transferring a directory, Globus needs to explicitly know
@@ -235,14 +399,14 @@ function archive {
 function archive_all {
 
   if [ ! -z $1 ]; then
-      dir=$1
+      directory=$1
   else
       echo "No directory passed to function archive_all; exiting."
       return
   fi
 
-  if [ ! -d $dir/output/ ]; then
-      mkdir $dir/output/
+  if [ ! -d $directory/output/ ]; then
+      mkdir $directory/output/
   fi
 
   archivelist=""
@@ -251,8 +415,8 @@ function archive_all {
   # Make sure that they have been completed by checking if
   # the Header file exists, which is the last thing created.
 
-  pltlist=$(find $dir -maxdepth 1 -type d -name "*plt*" | sort)
-  chklist=$(find $dir -maxdepth 1 -type d -name "*chk*" | sort)
+  pltlist=$(find $directory -maxdepth 1 -type d -name "*plt*" | sort)
+  chklist=$(find $directory -maxdepth 1 -type d -name "*chk*" | sort)
 
   # Move all completed plotfiles and checkpoints to the output
   # directory, and add them to the list of things to archive.
@@ -266,7 +430,7 @@ function archive_all {
 	  if [ -e output/$file ]; then
 	      rm -rf output/$file
 	  fi
-	  mv $file $dir/output/
+	  mv $file $directory/output/
 	  f=$(basename $file)
 	  archivelist=$archivelist" "$f
       fi
@@ -278,13 +442,13 @@ function archive_all {
 	  if [ -e output/$file ]; then
 	      rm -rf output/$file
 	  fi
-	  mv $file $dir/output/
+	  mv $file $directory/output/
 	  f=$(basename $file)
 	  archivelist=$archivelist" "$f
       fi
   done
 
-  diaglist=$(find $dir -maxdepth 1 -name "*diag*.out")
+  diaglist=$(find $directory -maxdepth 1 -name "*diag*.out")
 
   # For the diagnostic files, we just want to make a copy and move it to the 
   # output directory; we can't move it, since the same file needs to be there
@@ -295,45 +459,56 @@ function archive_all {
 
   for file in $diaglist
   do
-      diag_basename=$(basename $file)
-      if [ -e $dir/output/$diag_basename ]; then
-	  if [ $dir/output/$diag_basename -nt $file ]; then
+      f=$(basename $file)
+      if [ -e $directory/output/$f ]; then
+	  if [ $directory/output/$f -nt $file ]; then
 	      continue
 	  fi
       fi
-      cp $file $dir/output/
-      f=$(basename $file)
+      cp $file $directory/output/
+
       archivelist=$archivelist" "$f
   done
 
   # Same thing for the runtime stdout files.
 
-  outlist=$(find $dir -maxdepth 1 -name *$job_name*)
+  outlist=$(find $directory -maxdepth 1 -name "*$job_name*")
 
   for file in $outlist
   do
-      output_basename=$(basename $file)
-      if [ -e $dir/output/$output_basename ]; then
-	  if [ $dir/output/$output_basename -nt $file ]; then
+      f=$(basename $file)
+      if [ -e $directory/output/$f ]; then
+	  if [ $directory/output/$f -nt $file ]; then
 	      continue
 	  fi
       fi
-      cp $file $dir/output/
-      f=$(basename $file)
+      cp $file $directory/output/
       archivelist=$archivelist" "$f
   done
 
   # Same strategy for the inputs and probin files.
 
-  if ([ ! -e $dir/output/inputs ] || [ $dir/output/inputs -ot $dir/inputs ]); then
-      cp $dir/inputs $dir/output/
-      archivelist=$archivelist" "inputs
-  fi
+  inputs_list=$(find $directory -maxdepth 1 -name "*inputs*")
 
-  if ([ ! -e $dir/output/probin ] || [ $dir/output/probin -ot $dir/probin ]); then
-      cp $dir/probin $dir/output/
-      archivelist=$archivelist" "probin
-  fi
+  for file in $inputs_list
+  do
+      f=$(basename file)
+      if ([ ! -e $directory/output/$f ] || [ $directory/output/$f -ot $directory/$f ]); then	  
+	  cp $file $directory/output/
+	  archivelist=$archivelist" "$f
+      fi
+  done
+
+  probin_list=$(find $directory -maxdepth 1 -name "*probin*")
+
+  for file in $probin_list
+  do
+      f=$(basename $file)
+      if ([ ! -e $directory/output/$f ] || [ $directory/output/$f -ot $directory/$f ]); then
+	  cp $file $directory/output/
+	  archivelist=$archivelist" "$f
+      fi
+  done
 
   # If there is nothing to archive,
   # then assume we have completed the run and exit.
@@ -351,8 +526,8 @@ function archive_all {
 
       for file in $archivelist
       do
-	  echo $dir/output/$file
-	  archive $dir/output/$file
+	  echo $directory/output/$file
+	  archive $directory/output/$file
       done
 
   elif [ $MACHINE == "BLUE_WATERS" ]; then
@@ -362,7 +537,7 @@ function archive_all {
       # to sync the entire output directory of this location rather than 
       # transferring the files independently.
 
-      archive $dir/output/
+      archive $directory/output/
 
   fi
 
@@ -375,31 +550,35 @@ function archive_all {
 
 function copy_files {
 
-    if [ -z $1 ]
-    then
+    if [ -z $dir ]; then
 	echo "No directory passed to copy_files; exiting."
-    return
-    else
-	dir=$1
     fi
 
-     cp $compile_dir/$CASTRO $dir
+    if [ ! -e $dir/$CASTRO ]; then
+        cp $compile_dir/$CASTRO $dir
+    fi
 
-     if [ -e "$compile_dir/helm_table.dat" ]; then
- 	cp $compile_dir/helm_table.dat $dir
-     fi
+    if [ ! -e "$dir/helm_table.dat" ]; then
+	if [ -e "$compile_dir/helm_table.dat" ]; then
+	    cp $compile_dir/helm_table.dat $dir
+	fi
+    fi
 
-     if [ -e "$source_dir/inputs" ]; then
- 	cp $source_dir/inputs $dir
-     else
- 	cp $WDMERGER_HOME/source/inputs $dir
-     fi
+    if [ ! -e "$dir/$inputs" ]; then
+        if [ -e "$source_dir/$inputs" ]; then
+            cp $source_dir/inputs $dir/$inputs
+        else
+            cp $WDMERGER_HOME/source/inputs $dir/$inputs
+	fi
+    fi
 
-     if [ -e "$source_dir/probin" ]; then
- 	cp $source_dir/probin $dir
-     else
- 	cp $WDMERGER_HOME/source/probin $dir
-     fi
+    if [ ! -e "$dir/$probin" ]; then
+	if [ -e "$source_dir/$probin" ]; then
+	    cp $source_dir/probin $dir/$inputs
+	else
+	    cp $WDMERGER_HOME/source/probin $dir/$probin
+	fi
+    fi
 
     # Now determine all the variables that have been added
     # since we started; then search for them in the inputs
@@ -423,8 +602,8 @@ function copy_files {
     for var in $input_vars
     do
 
-	replace_inputs_var $var $dir
-	replace_probin_var $var $dir
+	replace_inputs_var $var
+	replace_probin_var $var
 
     done
 
@@ -560,10 +739,28 @@ function create_job_script {
 	  echo "#PBS -q $queue" >> $dir/$job_script
       fi
 
+      echo "" >> $dir/$job_script
+
       # We assume that the directory we submitted from is eligible to 
       # work in, so cd to that directory.
 
       echo "cd \$PBS_O_WORKDIR" >> $dir/$job_script
+
+      # Tell the script where the root wdmerger directory is, since 
+      # environment variables are generally not loaded onto compute nodes.
+
+      echo "export WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$job_script
+      echo "source $WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
+         
+      # Set up the script that periodically checks whether we should
+      # terminate the run. Only do this for jobs with large enough
+      # processor counts. Run the process in the background.
+
+      if [ $nodes -ge 8 ]; then
+	  echo "bash $WDMERGER_HOME/job_scripts/check_to_stop.sh . &" >> $dir/$job_script
+      fi
+
+      # Number of OpenMP threads
 
       echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
 
@@ -571,13 +768,21 @@ function create_job_script {
 
       aprun_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
 
-      restartString=$(get_restart_string $dir)
+      echo "restartString=\$(get_restart_string .)" >> $dir/$job_script
 
-      echo "aprun $aprun_opts $CASTRO inputs $restartString" >> $dir/$job_script
+      # Main job execution.
+
+      echo "" >> $dir/$job_script
+      echo "aprun $aprun_opts $CASTRO $inputs \$restartString" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Run the archive script at the end of the simulation.
+
+      echo "archive_all ." >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 
-      echo "echo \"mpiexec -n $nprocs $CASTRO inputs > $job_name$run_ext\" | batch" > $dir/$job_script
+      echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > $job_name$run_ext\" | batch" > $dir/$job_script
 
    fi
 
@@ -589,35 +794,101 @@ function create_job_script {
 
 
 
+# Wrapper script for run. The first argument is an integer N that
+# causes us to divide $stop_time into N equal increments.
+
+function chain {
+
+  if [ -z $N_iters ]; then
+      echo "N_iters not set in call to chain; exiting."
+      return
+  fi
+
+  if [ -z $stop_time ]; then
+      echo "stop_time not defined in call to chain; exiting."
+  fi
+
+  if [ -z $dir ]; then
+      echo "No directory given to chain; exiting."
+      return
+  fi
+
+  orig_stop_time=$stop_time
+  orig_job_script=$job_script
+
+  do_chain=1
+
+  # First check to see if we've completed the run yet.
+
+  done_flag=0
+
+  if [ -d $dir ]; then
+      inputs=$(find $dir -maxdepth 1 -name "inputs_*" | sort -n | tail -1)
+  fi
+
+  # If there are no inputs files in the directory, we know we haven't yet started.
+
+  if [ ! -z $inputs ]; then
+      inputs=$(basename $inputs)
+  fi
+
+  if [ -d $dir ]; then
+      done_flag=$(is_dir_done)
+  fi
+
+  if [ $done_flag -ne 1 ]; then
+
+      for N in $(seq $N_iters)
+      do
+	  inputs="inputs_"$N
+	  job_script=$orig_job_script"_"$N
+	  stop_time=$(echo "$orig_stop_time * $N / $N_iters" | bc -l)
+	  run
+	  job_dependency=$job_number
+      done
+
+  fi
+
+  job_script=$orig_job_script
+  stop_time=$orig_stop_time
+  do_chain=""
+
+}
+
+
+
 # Main submission function. Checks which Linux variant we're on,
 # and uses the relevant batch submission script. If you want to
 # use a different machine, you'll need to include a run script
 # for it in the job_scripts directory.
-# The first argument is the name of the directory where we want to 
-# submit this job from.
-# The second argument is the number of processors you want to run the job on.
-# The third argument is the walltime you want the job to run for.
-# The last two are optional and default to one node running for one hour.
+# The variable dir must exist in the calling script, and is the 
+# name of the directory where we want to # submit this job from.
+# Optionally, if nprocs is defined in the calling script,
+# that is the number of processors to use; otherwise we default to
+# using all processors available on one node.
+# If walltime isn't defined, we run for one hour.
 
 function run {
 
-  if [ ! -z $1 ]; then
-      dir=$1
-  else
+  if [ -z $dir ]; then
       echo "No directory given to run; exiting."
       return
   fi
 
-  if [ ! -z $2 ]; then
-      nprocs=$2
-  else
+  if [ -z $nprocs ]; then
       nprocs=$ppn
   fi
 
-  if [ ! -z $3 ]; then
-      walltime=$3
-  else
+  if [ -z $walltime ]; then
       walltime=1:00:00
+  fi
+
+  if [ -z $inputs ]; then
+      inputs=inputs
+  fi
+
+  if [ -z $probin ]; then
+      probin=probin
   fi
 
   do_job=0
@@ -628,10 +899,13 @@ function run {
 
     mkdir -p $dir
 
-    copy_files $dir
-    create_job_script $dir $nprocs $walltime
-
     do_job=1
+
+  elif [ ! -z $do_chain ]; then
+
+      echo "Continuing chain in directory "$dir"."
+
+      do_job=1
 
   else
 
@@ -645,60 +919,21 @@ function run {
 
     else
 
+      # Remove the dump_and_stop file if it exists.
+
+      rm -f $dir/dump_and_stop
+
       # Archive any files that have not yet been saved to the storage system.
 
       cwd=$(pwd)
 
       archive_all $cwd/$dir
 
-      # If the directory already exists, check to see if we've reached the desired stopping point.
-      # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
+      done_flag=$(is_dir_done)
 
-      checkpoint=$(get_last_checkpoint $dir)
-      last_output=$(get_last_output $dir)
-
-      # Get the desired stopping time and max step from the inputs file in the directory.
-
-      dir_stop_time=$(get_inputs_var "stop_time" $dir)
-      dir_max_step=$(get_inputs_var "max_step" $dir)
-
-      # Assume we're continuing, by default.
-
-      time_flag=1
-      step_flag=1
-
-      if [ -e $dir/$checkpoint/Header ]; then
-
-	  # Extract the checkpoint time. It is stored in row 3 of the Header file.
-
-	  chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
-
-	  # Extract the current timestep. It is stored in row 12 of the Header file.
-
-	  chk_step=$(awk 'NR==12' $dir/$checkpoint/Header)
-
-	  time_flag=$(echo "$chk_time < $dir_stop_time" | bc -l)
-	  step_flag=$(echo "$chk_step < $dir_max_step" | bc)
-
-      elif [ -e $dir/$last_output ]; then
-
-	  output_time=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $6}')
-	  output_step=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $3}')
-
-	  # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
-
-	  output_time=$(printf "%f" $output_time)
-
-	  time_flag=$(echo "$output_time < $dir_stop_time" | bc -l)
-	  step_flag=$(echo "$output_step < $dir_max_step" | bc)
-
-      fi
-
-      if [ $time_flag -eq 1 ] && [ $step_flag -eq 1 ]; then
+      if [ $done_flag -eq 0 ]; then
 
 	  echo "Continuing job in directory "$dir"."
-
-	  create_job_script $dir $nprocs $walltime
 
 	  do_job=1
 
@@ -718,9 +953,32 @@ function run {
   # submit the job, then come back to the main directory.
 
   if [ $do_job -eq 1 ]; then
+
+    copy_files $dir
+    create_job_script $dir $nprocs $walltime
+
     cd $dir
-    $exec $job_script
+
+    exec_command=$exec
+    if [ ! -z $job_dependency ]; then
+	if [ $batch_system == "PBS" ]; then
+	    exec_command="$exec -W depend=afterok:$job_dependency"
+	fi
+    fi
+
+    # Capture the job number output.
+
+    job_number=`$exec_command $job_script`
+
+    # Some systems like Blue Waters include the system name
+    # at the end of the number, so remove it.
+
+    job_number=${job_number%%.*}
+
+    echo "The job number is" $job_number"."
+
     cd - > /dev/null
+
   fi
 
 }
@@ -772,11 +1030,10 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
     threads_per_task="8"
     node_type="xe"
     run_ext=".OU"
-    workdir="/scratch/sciteam/$USER/"
     batch_system="PBS"
     archive_method="globus"
     globus_src_endpoint="ncsa#BlueWaters"
-    globus_dst_endpoint="ncsa#Nearline"
+    globus_dst_endpoint="ncsa#Nearline/projects/sciteam"
 
 elif [ $MACHINE == "TITAN" ]; then
 
@@ -785,7 +1042,6 @@ elif [ $MACHINE == "TITAN" ]; then
     ppn="16"
     threads_per_task="8"
     run_ext=".OU"
-    workdir="/lustre/atlas/scratch/$USER/$allocation/"
     batch_system="PBS"
     archive_method="htar"
 

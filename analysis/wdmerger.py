@@ -182,8 +182,8 @@ def timing(output_filename):
 
     output = open(output_filename, 'r')
     lines = output.readlines()
-    coarseSteps = filter(lambda s: s[0:6] == "Coarse",lines)
-    coarseSteps = [float(s.split()[3]) for s in coarseSteps] # Extract out the time only
+    coarseSteps = filter(lambda s: "Coarse" in s, lines)
+    coarseSteps = [float(s.split('Coarse TimeStep time:')[1]) for s in coarseSteps] # Extract out the time only
 
     med_timestep = np.median(coarseSteps)
 
@@ -207,10 +207,10 @@ def timing(output_filename):
 
     grav_per_timestep = (nlevs - 1) * 2 * ref_ratio + 4
 
-    for n in range(len(coarseSteps)):
-
-        for i in range(grav_per_timestep):
-            coarseSteps[n] -= float(grav_time[n+i])
+    if (len(grav_time) > 0):
+        for n in range(len(coarseSteps)):
+            for i in range(grav_per_timestep):
+                coarseSteps[n] -= float(grav_time[n+i])
 
     med_timestep_no_grav = np.median(coarseSteps)
 

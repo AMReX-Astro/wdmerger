@@ -15,9 +15,15 @@ function get_inputs_var {
     fi
 
     if [ ! -z $2 ]; then
-	inputs=$2/inputs
+	directory=$2
     else
-	inputs=$WDMERGER_HOME/source/inputs
+	directory=$WDMERGER_HOME/source
+    fi
+
+    if [[ -z $inputs || $directory == $WDMERGER_HOME/source ]]; then
+	inputs_file=inputs
+    else
+	inputs_file=$inputs
     fi
 
     inputs_var_name=$(fix_inputs_var_name $var_name)
@@ -28,9 +34,9 @@ function get_inputs_var {
     # we need to get everything between the equals sign
     # and the # denoting the comment for that variable.
 
-    if (grep -q "$inputs_var_name[[:space:]]*=" $inputs); then
+    if (grep -q "$inputs_var_name[[:space:]]*=" $directory/$inputs_file); then
 
-	var=$(grep "$inputs_var_name" $inputs | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
+	var=$(grep "$inputs_var_name" $directory/$inputs_file | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
 
     fi
 
@@ -100,14 +106,16 @@ function replace_inputs_var {
 	return
     fi
 
-    if [ ! -z $2 ]; then
-	dir=$2
-    else
-	echo "No directory found in arguments list for replace_inputs_var; exiting."
+    if [ -z $dir ]; then
+	echo "No directory found in replace_inputs_var; exiting."
 	return
     fi
 
-    if [ ! -e $dir/inputs ]; then
+    if [ -z $inputs ]; then
+	inputs=inputs
+    fi
+
+    if [ ! -e $dir/$inputs ]; then
 	echo "No inputs file exists in directory "$dir"; exiting."
 	return
     fi
@@ -117,12 +125,12 @@ function replace_inputs_var {
     # only these latter ones that exist in the inputs file by default.
 
     if [ $var == "amr_check_int" ]; then
-	sed -i "s/amr.check_per.*=.*/amr.check_int = ${!var}/g" $dir/inputs
+	sed -i "s/amr.check_per.*=.*/amr.check_int = ${!var}/g" $dir/$inputs
 	return
     fi
 
     if [ $var == "amr_plot_int" ]; then
-	sed -i "s/amr.plot_per.*=.*/amr.plot_int = ${!var}/g" $dir/inputs
+	sed -i "s/amr.plot_per.*=.*/amr.plot_int = ${!var}/g" $dir/$inputs
 	return
     fi
 
@@ -139,7 +147,7 @@ function replace_inputs_var {
     # variable and the equals sign. See:
     # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
 
-    if (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)
+    if (grep -q "$inputs_var_name[[:space:]]*=" $dir/$inputs)
     then
 	# OK, so the parameter name does exist in the inputs file;
 	# now we just need to get its value in there. We can do this using
@@ -148,7 +156,7 @@ function replace_inputs_var {
 	# http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	# http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
 
-	sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/inputs
+	sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/$inputs
     else
 	echo "Variable "$var" given to replace_inputs_var was not found in the inputs file; exiting."
 	return

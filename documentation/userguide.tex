@@ -403,8 +403,8 @@ done
 \end{lstlisting}%$
 This will create the subdirectories \texttt{results/period25.0} through \texttt{results/period100.0}
 and in each directory the inputs file will have the corresponding \texttt{castro.rotational\_period}.
-Each job will stop after one rotational period has been completed. When all have been completed, you should 
-type \texttt{bash run.sh} once more; this will move all output files (checkpoints, plot files, diagnostics)
+Each job will stop after one rotational period has been completed. At the end, the script will automatically move all 
+output files (checkpoints, plot files, diagnostics)
 to the \texttt{output/} subdirectory of that problem location, and on supported HPC systems will also copy these 
 files to the long-term storage system (see Section \ref{sec:archiving} for more details). 
 Generally our analysis scripts expect all the output to be in the 
