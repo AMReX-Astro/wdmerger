@@ -181,9 +181,226 @@ void Castro::volInBoundary (Real               time,
 
 void Castro::problem_post_init() {
 
+    if (level > 0)
+        return;
+
     ParmParse pp("castro");
 
     pp.query("do_relax", do_relax);
+
+    if (do_relax) {
+
+      if (gravity->NoComposite() == 1) {
+	std::cerr << "Initial relaxation requires the use of multilevel gravity solves. Set gravity.no_composite = 0." << std::endl;
+	BoxLib::Error();
+      }
+
+      int finest_level = parent->finestLevel();
+
+      MultiFab& S_new = get_new_data(State_Type);
+
+      int j = 0;
+      int relax_max_iterations = 30;
+
+      const Real* dx  = parent->Geom(level).CellSize();
+
+      const Real* problo = parent->Geom(level).ProbLo();
+      const Real* probhi = parent->Geom(level).ProbHi();
+
+      const int*  domlo = geom.Domain().loVect();
+      const int*  domhi = geom.Domain().hiVect();
+
+      BL_FORT_PROC_CALL(SETUP_SCF_RELAXATION,setup_scf_relaxation)(dx, problo, probhi);
+
+      // Get the phi MultiFab.
+
+      MultiFab& phi = *gravity->get_phi_curr(level);
+
+      int ns          = NUM_STATE;
+      Real cur_time   = state[State_Type].curTime();
+
+      // Iterate until the system is relaxed by filling the level data 
+      // and then doing a multilevel gravity solve.
+
+      int is_relaxed = 0;
+
+      while ( j < relax_max_iterations ) {
+
+	 // First step is to find the rotational frequency.
+
+	 Real omegasq = 0.0;
+
+	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
+
+	   const Box& box  = mfi.tilebox();
+	   const int* lo   = box.loVect();
+	   const int* hi   = box.hiVect();
+
+   #ifdef _OPENMP
+   #pragma omp parallel reduction(+:omegasq)
+   #endif    	
+	   BL_FORT_PROC_CALL(GET_OMEGASQ,get_omegasq)
+	     (lo, hi, domlo, domhi,
+	      BL_TO_FORTRAN(S_new[mfi]),
+	      BL_TO_FORTRAN(phi[mfi]),
+	      dx, problo, probhi, &omegasq);
+
+	 }
+
+	 ParallelDescriptor::ReduceRealSum(omegasq);
+
+	 if (omegasq < 0.0 && ParallelDescriptor::IOProcessor()) {
+             std::cerr << "Omega squared is negative in the relaxation step; aborting." << std::endl;
+	     BoxLib::Error();
+         }
+
+	 rotational_period = 2.0 * M_PI / sqrt(omegasq);
+
+	 // Now save the updated rotational frequency.
+
+	 BL_FORT_PROC_CALL(SET_PERIOD, set_period)(&rotational_period);
+
+
+
+	 // Second step is to evaluate the Bernoulli constants.
+
+	 Real bernoulli_1 = 0.0;
+	 Real bernoulli_2 = 0.0;
+
+	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
+
+	   const Box& box  = mfi.tilebox();
+	   const int* lo   = box.loVect();
+	   const int* hi   = box.hiVect();
+
+   #ifdef _OPENMP
+   #pragma omp parallel reduction(+:bernoulli_1,bernoulli_2)
+   #endif    	
+	   BL_FORT_PROC_CALL(GET_BERNOULLI_CONST,get_bernoulli_const)
+	     (lo, hi, domlo, domhi,
+	      BL_TO_FORTRAN(S_new[mfi]),
+	      BL_TO_FORTRAN(phi[mfi]),
+	      dx, problo, probhi, &bernoulli_1, &bernoulli_2);
+
+	 }
+
+	 ParallelDescriptor::ReduceRealSum(bernoulli_1);
+	 ParallelDescriptor::ReduceRealSum(bernoulli_2);
+
+
+
+	 // Third step is to construct the enthalpy field and 
+	 // find the maximum enthalpy for each star.
+
+	 Real h_max_1 = 0.0;
+	 Real h_max_2 = 0.0;
+
+	 // Define the enthalpy MF to have one component and zero ghost cells.
+
+	 MultiFab enthalpy(grids,1,0,Fab_allocate);
+	 enthalpy.setVal(0.0);
+
+	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
+
+	   const Box& box  = mfi.tilebox();
+	   const int* lo   = box.loVect();
+	   const int* hi   = box.hiVect();
+
+   #ifdef _OPENMP
+   #pragma omp parallel reduction(max:h_max_1,h_max_2)
+   #endif    	
+	   BL_FORT_PROC_CALL(CONSTRUCT_ENTHALPY,construct_enthalpy)
+	     (lo, hi, domlo, domhi,
+	      BL_TO_FORTRAN(S_new[mfi]),
+	      BL_TO_FORTRAN(phi[mfi]),
+	      BL_TO_FORTRAN(enthalpy[mfi]),
+	      dx, problo, probhi, 
+	      &bernoulli_1, &bernoulli_2, &h_max_1, &h_max_2);
+
+	 }
+
+	 ParallelDescriptor::ReduceRealMax(h_max_1);
+	 ParallelDescriptor::ReduceRealMax(h_max_2);
+
+	 Real kin_eng = 0.0;
+	 Real pot_eng = 0.0;
+	 Real int_eng = 0.0;
+	 Real l2_norm_resid = 0.0;
+	 Real l2_norm_source = 0.0;
+	 Real left_mass = 0.0;
+	 Real right_mass = 0.0;
+	 Real delta_rho = 0.0;
+
+	 // Finally, update the density using the enthalpy field.
+
+	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
+
+	   const Box& box  = mfi.tilebox();
+	   const int* lo   = box.loVect();
+	   const int* hi   = box.hiVect();
+
+   #ifdef _OPENMP
+   #pragma omp parallel reduction(+:kin_eng,pot_eng,int_eng)      \
+			reduction(+:l2_norm_resid,l2_norm_source) \
+                        reduction(+:left_mass,right_mass)         \
+			reduction(max:delta_rho)
+   #endif    	
+	   BL_FORT_PROC_CALL(UPDATE_DENSITY,update_density)
+	     (lo, hi, domlo, domhi,
+	      BL_TO_FORTRAN(S_new[mfi]),
+	      BL_TO_FORTRAN(phi[mfi]),
+	      BL_TO_FORTRAN(enthalpy[mfi]),
+	      dx, problo, probhi, 
+	      &h_max_1, &h_max_2,
+	      &kin_eng, &pot_eng, &int_eng,
+	      &left_mass, &right_mass,
+	      &delta_rho, &l2_norm_resid, &l2_norm_source);
+
+	 }
+
+	 ParallelDescriptor::ReduceRealSum(kin_eng);
+	 ParallelDescriptor::ReduceRealSum(pot_eng);
+	 ParallelDescriptor::ReduceRealSum(int_eng);
+
+	 ParallelDescriptor::ReduceRealSum(l2_norm_resid);
+	 ParallelDescriptor::ReduceRealSum(l2_norm_source);
+
+	 Real l2_norm = l2_norm_resid / l2_norm_source;
+
+	 ParallelDescriptor::ReduceRealMax(delta_rho);
+
+	 ParallelDescriptor::ReduceRealSum(left_mass);
+	 ParallelDescriptor::ReduceRealSum(right_mass);
+
+
+
+	 // Now check to see if we're converged.
+
+	 BL_FORT_PROC_CALL(CHECK_CONVERGENCE,check_convergence)
+	   (&kin_eng, &pot_eng, &int_eng, 
+	    &left_mass, &right_mass,
+	    &delta_rho, &l2_norm, 
+	    &is_relaxed, &j);
+
+	 //	for (int k = finest_level-1; k >= 0; k--)
+	 //	  getLevel(k).avgDown();
+
+	gravity->multilevel_solve_for_phi(level,finest_level);
+
+	if (is_relaxed == 1) break;
+
+	j++;
+
+      }
+
+      for (int k = 0; k <= parent->finestLevel(); k++)
+      {
+	 BoxArray ba = getLevel(k).boxArray();
+	 MultiFab grav_vec_new(ba,BL_SPACEDIM,0,Fab_allocate);
+	 gravity->get_new_grav_vector(k,grav_vec_new,cur_time);
+      }
+
+    }
 
 }
 
