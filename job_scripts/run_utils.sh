@@ -492,11 +492,14 @@ function archive_all {
 
   for file in $inputs_list
   do
-      f=$(basename file)
-      if ([ ! -e $directory/output/$f ] || [ $directory/output/$f -ot $directory/$f ]); then	  
-	  cp $file $directory/output/
-	  archivelist=$archivelist" "$f
+      f=$(basename $file)
+      if [ -e $directory/output/$f ]; then
+	  if [ $directory/output/$f -nt $directory/$f ]; then	  
+	      continue
+	  fi
       fi
+      cp $file $directory/output/
+      archivelist=$archivelist" "$f
   done
 
   probin_list=$(find $directory -maxdepth 1 -name "*probin*")
@@ -504,10 +507,13 @@ function archive_all {
   for file in $probin_list
   do
       f=$(basename $file)
-      if ([ ! -e $directory/output/$f ] || [ $directory/output/$f -ot $directory/$f ]); then
-	  cp $file $directory/output/
-	  archivelist=$archivelist" "$f
-      fi
+      if [ -e $directory/output/$f ]; then
+	  if [ $directory/output/$f -nt $directory/$f ]; then
+	      continue
+	  fi
+     fi
+     cp $file $directory/output/
+     archivelist=$archivelist" "$f
   done
 
   # If there is nothing to archive,
