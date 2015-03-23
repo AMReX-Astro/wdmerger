@@ -349,6 +349,504 @@ end subroutine get_roche_radii
 
 
 
+subroutine setup_scf_relaxation(dx, problo, probhi)
+
+    use bl_constants_module, only: HALF, ONE, TWO
+    use prob_params_module, only: center
+    use eos_module
+    use probdata_module
+
+    implicit none
+
+    double precision :: dx(3), problo(3), probhi(3)
+
+    double precision :: x, y, z
+    integer          :: n
+    integer          :: ncell(3)
+
+    double precision :: pos_l(3)
+    type (eos_t) :: eos_state
+
+    ! Following Swesty, Wang and Calder (2000), and Motl et al. (2002), 
+    ! we need to fix three points to uniquely determine an equilibrium 
+    ! configuration for two unequal mass stars. We can do this by 
+    ! specifying d_A, the distance from the center of mass to the 
+    ! inner point of the primary; d_B, the distance from the center 
+    ! of mass to the inner point of the secondary; and d_C, the 
+    ! distance from the center of mass to the outer point of the secondary. 
+    ! We give these widths in physical units, so in general these will 
+    ! be locations on the grid that are not coincident with a corner. 
+    ! If a location is at point (x, y, z), then we find the eight 
+    ! zone centers that surround this point, and do a tri-linear
+    ! reconstruction to estimate the relative weight of each of the eight 
+    ! zone centers in determining the value at that point.
+
+    ncell = NINT( (probhi - problo) / dx )
+
+    do n = 1, 3
+       d_vector(:,n) = center
+       if (n .eq. 1) then
+          d_vector(star_axis,n) = d_vector(star_axis,n) - d_A
+       else if (n .eq. 2) then
+          d_vector(star_axis,n) = d_vector(star_axis,n) + d_B
+       else if (n .eq. 3) then
+          d_vector(star_axis,n) = d_vector(star_axis,n) + d_C
+       endif
+    enddo
+
+    ! Locate the zone centers that bracket each point at the 
+    ! lower left corner. Note that the INT function rounds down,
+    ! which is what we want here since we want the lower left.
+
+    do n = 1, 3
+       rloc(:,n) = INT( (d_vector(:,n) + dx(:)/TWO) / dx(:)) + ncell / 2 - 1
+    enddo
+
+    ! Obtain the location of these points relative to the cube surrounding them.
+    ! The lower left corner is at (0,0,0) and the upper right corner is at (1,1,1).
+
+    do n = 1, 3
+       pos_l = (rloc(:,n) - ncell / 2 + HALF) * dx
+       rpos(:,n) = (d_vector(:,n) - pos_l) / dx(:)
+    enddo
+
+    ! Determine the tri-linear coefficients
+
+    do n = 1, 3
+       x = rpos(1,n)
+       y = rpos(2,n)
+       z = rpos(3,n)
+       c(0,0,0,n) = (ONE - x) * (ONE - y) * (ONE - z)
+       c(1,0,0,n) = x         * (ONE - y) * (ONE - z)
+       c(0,1,0,n) = (ONE - x) * y         * (ONE - z)
+       c(1,1,0,n) = x         * y         * (ONE - z)
+       c(0,0,1,n) = (ONE - x) * (ONE - y) * z
+       c(1,0,1,n) = x         * (ONE - y) * z
+       c(0,1,1,n) = (ONE - x) * y         * z
+       c(1,1,1,n) = x         * y         * z
+    enddo
+
+    ! Convert the maximum densities into maximum enthalpies.
+
+    eos_state % T   = stellar_temp
+    eos_state % rho = rho_max_P
+    eos_state % xn  = stellar_comp
+
+    call eos(eos_input_rt, eos_state)
+
+    h_max_P = eos_state % h
+
+    eos_state % T   = stellar_temp
+    eos_state % rho = rho_max_S
+    eos_state % xn  = stellar_comp
+
+    call eos(eos_input_rt, eos_state)
+    
+    h_max_S = eos_state % h
+
+    ! Determine the lowest possible enthalpy that can be 
+    ! obtained by the EOS; this is useful for protecting
+    ! against trying to compute a corresponding temperature
+    ! in zones where the enthalpy is just too low for convergence.
+
+    eos_state % T   = stellar_temp
+    eos_state % rho = ambient_density
+    eos_state % xn  = stellar_comp
+
+    do while (eos_state % rho < 1.d11)
+
+      eos_state % rho = eos_state % rho * 1.1
+
+      call eos(eos_input_rt, eos_state)
+
+      if (eos_state % h < enthalpy_min) enthalpy_min = eos_state % h
+
+    enddo
+
+end subroutine setup_scf_relaxation
+  
+
+
+
+subroutine get_omegasq(lo,hi,domlo,domhi, &
+                       state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
+                       phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
+                       dx,problo,probhi,omegasq)
+
+    use bl_constants_module, only: ONE, TWO
+    use meth_params_module, only: NVAR, URHO
+    use prob_params_module, only: center
+    use probdata_module, only: c, d_vector, rloc
+
+    implicit none
+    
+    integer :: lo(3), hi(3), domlo(3), domhi(3)
+    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
+    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
+    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
+    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    double precision :: omegasq
+
+    integer :: i, j, k
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))    
+
+    do k = rloc(3,2), rloc(3,2)+1
+       do j = rloc(2,2), rloc(2,2)+1
+          do i = rloc(1,2), rloc(1,2)+1
+             if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
+                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                omegasq = omegasq - c(i-rloc(1,2),j-rloc(2,2),k-rloc(3,2),2) &
+                        * TWO * phi(i,j,k) / (sum(d_vector(:,3)**2)-sum(d_vector(:,2)**2))
+             endif
+          enddo
+       enddo
+    enddo
+
+    do k = rloc(3,3), rloc(3,3) + 1
+       do j = rloc(2,3), rloc(2,3) + 1
+          do i = rloc(1,3), rloc(1,3) + 1
+             if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
+                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                omegasq = omegasq + c(i-rloc(1,3),j-rloc(2,3),k-rloc(3,3),3) &
+                        * TWO * phi(i,j,k) / (sum(d_vector(:,3)**2)-sum(d_vector(:,2)**2))
+             endif
+          enddo
+       enddo
+    enddo
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+end subroutine get_omegasq
+
+
+
+subroutine set_period(period)
+
+  use meth_params_module, only: rot_period
+
+  implicit none
+
+  double precision :: period
+
+  rot_period = period
+
+end subroutine set_period
+
+
+
+subroutine get_bernoulli_const(lo,hi,domlo,domhi, &
+                               state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
+                               phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
+                               dx,problo,probhi,bernoulli_1,bernoulli_2)
+
+    use bl_constants_module, only: HALF, ONE, TWO, M_PI
+    use meth_params_module, only: NVAR, URHO, rot_period
+    use prob_params_module, only: center
+    use probdata_module, only: c, d_vector, rloc
+
+    implicit none
+    
+    integer :: lo(3), hi(3), domlo(3), domhi(3)
+    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
+    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
+    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
+    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    double precision :: bernoulli_1, bernoulli_2
+
+    integer :: i, j, k
+    double precision :: omega
+
+    omega = TWO * M_PI / rot_period
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+    do k = rloc(3,1), rloc(3,1)+1
+       do j = rloc(2,1), rloc(2,1)+1
+          do i = rloc(1,1), rloc(1,1)+1
+             if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
+                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                bernoulli_1 = bernoulli_1 + c(i-rloc(1,1),j-rloc(2,1),k-rloc(3,1),1) &
+                            * (phi(i,j,k) - HALF * omega**2 * sum(d_vector(:,1)**2))
+             endif
+          enddo
+       enddo
+    enddo
+
+    do k = rloc(3,2), rloc(3,2) + 1
+       do j = rloc(2,2), rloc(2,2) + 1
+          do i = rloc(1,2), rloc(1,2) + 1
+             if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
+                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                bernoulli_2 = bernoulli_2 + c(i-rloc(1,2),j-rloc(2,2),k-rloc(3,2),2) &
+                            * (phi(i,j,k) - HALF * omega**2 * sum(d_vector(:,2)**2))
+             endif
+          enddo
+       enddo
+    enddo
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+end subroutine get_bernoulli_const
+
+
+
+subroutine construct_enthalpy(lo,hi,domlo,domhi, &
+                              state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
+                              phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
+                              enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
+                              dx,problo,probhi,&
+                              bernoulli_1,bernoulli_2,h_max_1,h_max_2)
+
+    use bl_constants_module, only: ZERO, HALF, ONE, TWO, M_PI
+    use meth_params_module, only: NVAR, URHO, rot_period
+    use prob_params_module, only: center
+    use probdata_module, only: star_axis
+
+    implicit none
+    
+    integer :: lo(3), hi(3), domlo(3), domhi(3)
+    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
+    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
+    integer :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
+    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
+    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
+    double precision :: bernoulli_1, bernoulli_2, h_max_1,h_max_2
+
+    integer :: i, j, k
+    double precision :: r(3)
+    double precision :: omega
+
+    omega = TWO * M_PI / rot_period
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+    do k = lo(3), hi(3)
+       r(3) = problo(3) + (dble(k) + HALF) * dx(3) - center(3)
+       do j = lo(2), hi(2)
+          r(2) = problo(2) + (dble(j) + HALF) * dx(2) - center(2)
+          do i = lo(1), hi(1)
+             r(1) = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
+
+             if (r(star_axis) < ZERO) then
+                enthalpy(i,j,k) = bernoulli_1 - phi(i,j,k) + HALF * omega**2 * sum(r**2)
+                if (enthalpy(i,j,k) > h_max_1) then
+                   h_max_1 = enthalpy(i,j,k)
+                endif
+             else
+                enthalpy(i,j,k) = bernoulli_2 - phi(i,j,k) + HALF * omega**2 * sum(r**2)
+                if (enthalpy(i,j,k) > h_max_2) then
+                   h_max_2 = enthalpy(i,j,k)
+                endif
+             endif
+
+          enddo
+       enddo
+    enddo
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+end subroutine construct_enthalpy
+
+
+
+subroutine update_density(lo,hi,domlo,domhi, &
+                          state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
+                          phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
+                          enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
+                          dx,problo,probhi, &
+                          h_max_1,h_max_2, &
+                          kin_eng, pot_eng, int_eng, &
+                          left_mass, right_mass, &
+                          delta_rho, l2_norm_resid, l2_norm_source)
+
+    use bl_constants_module, only: ZERO, ONE, TWO, M_PI
+    use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS, rot_period
+    use network, only: nspec
+    use prob_params_module, only: center
+    use probdata_module, only: star_axis, get_ambient, h_max_P, h_max_S, enthalpy_min
+    use eos_module
+
+    implicit none
+    
+    integer :: lo(3), hi(3), domlo(3), domhi(3)
+    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
+    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
+    integer :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
+    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
+    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
+    double precision :: h_max_1,h_max_2
+    double precision :: kin_eng, pot_eng, int_eng
+    double precision :: left_mass, right_mass
+    double precision :: delta_rho, l2_norm_resid, l2_norm_source
+
+    integer :: i, j, k
+    double precision :: r(3)
+    double precision :: old_rho, drho
+    double precision :: dV
+    double precision :: omega
+    double precision :: max_dist
+
+    integer :: pt_index(3)
+
+    type (eos_t) :: eos_state, ambient_state
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+    dV = dx(1) * dx(2) * dx(3)
+
+    max_dist = 0.75 * max(maxval(abs(probhi-center)), maxval(abs(problo-center)))
+
+    omega = TWO * M_PI / rot_period
+
+    call get_ambient(ambient_state)
+
+    do k = lo(3), hi(3)
+       r(3) = problo(3) + (dble(k) + HALF) * dx(3) - center(3)
+       do j = lo(2), hi(2)
+          r(2) = problo(2) + (dble(j) + HALF) * dx(2) - center(2)
+          do i = lo(1), hi(1)
+             r(1) = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
+
+             pt_index(1) = i
+             pt_index(2) = j
+             pt_index(3) = k
+
+             old_rho = state(i,j,k,URHO)
+
+             ! Rescale the enthalpy by the maximum value.
+
+             if (r(star_axis) .lt. ZERO) then
+                enthalpy(i,j,k) = h_max_P * (enthalpy(i,j,k) / h_max_1)
+             else
+                enthalpy(i,j,k) = h_max_S * (enthalpy(i,j,k) / h_max_2)
+             endif
+
+             ! We only want to call the EOS for zones with enthalpy > 0,
+             ! but for distances far enough from the center, the rotation
+             ! term can overcome the other terms and make the enthalpy 
+             ! spuriously positive. So we'll only consider zones with 75%
+             ! of the distance from the center.
+
+             if (enthalpy(i,j,k) > enthalpy_min .and. sum(r**2) .lt. max_dist**2) then
+
+                eos_state % T   = state(i,j,k,UTEMP)
+                eos_state % h   = enthalpy(i,j,k)
+                eos_state % xn  = state(i,j,k,UFS:UFS+nspec-1) / state(i,j,k,URHO)
+                eos_state % rho = state(i,j,k,URHO) ! Initial guess for the EOS
+
+!                print *, i, j, k, eos_state % T, eos_state % h
+
+                call eos(eos_input_th, eos_state, pt_index = pt_index)
+
+             else
+
+                eos_state = ambient_state
+
+             endif
+
+             state(i,j,k,URHO) = eos_state % rho
+             state(i,j,k,UEINT) = eos_state % rho * eos_state % e
+             state(i,j,k,UFS:UFS+nspec-1) = eos_state % rho * eos_state % xn
+
+             state(i,j,k,UMX:UMZ) = ZERO
+
+             state(i,j,k,UEDEN) = state(i,j,k,UEINT) + HALF * (state(i,j,k,UMX)**2 + &
+                                  state(i,j,k,UMY)**2 + state(i,j,k,UMZ)**2) / state(i,j,k,URHO)
+
+             ! Convergence tests and diagnostic quantities
+
+             drho = abs( state(i,j,k,URHO) - old_rho ) / old_rho
+             if (drho > delta_rho) delta_rho = drho
+
+             l2_norm_resid = l2_norm_resid + dV * (state(i,j,k,URHO) - old_rho)**2
+             l2_norm_source = l2_norm_source + dV * old_rho**2
+
+             kin_eng = kin_eng + HALF * omega**2 * state(i,j,k,URHO) * (r(1)**2 + r(2)**2) * dV
+
+             pot_eng = pot_eng + HALF * state(i,j,k,URHO) * phi(i,j,k) * dV
+
+             int_eng = int_eng + eos_state % p * dV
+
+             if (r(star_axis) < ZERO) then
+               left_mass = left_mass + state(i,j,k,URHO) * dV
+             else
+               right_mass = right_mass + state(i,j,k,URHO) * dV
+             endif
+
+          enddo
+       enddo
+    enddo
+
+    phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+end subroutine update_density
+  
+
+
+  
+
+
+
+subroutine check_convergence(kin_eng, pot_eng, int_eng, &
+                             left_mass, right_mass, &
+                             delta_rho, l2_norm, &
+                             is_relaxed, num_iterations)
+
+  use probdata_module, only: relax_tol
+  use meth_params_module, only: rot_period
+  use multifab_module
+  use bl_constants_module, only: THREE
+  use fundamental_constants_module, only: M_solar
+  use eos_module
+
+  implicit none
+
+  integer :: is_relaxed
+  integer :: num_iterations
+  integer :: ioproc
+
+  double precision :: kin_eng, pot_eng, int_eng
+  double precision :: left_mass, right_mass
+  double precision :: delta_rho, l2_norm
+
+  double precision :: virial_error
+
+  virial_error = abs(TWO * kin_eng + pot_eng + THREE * int_eng) / abs(pot_eng)
+
+  if (l2_norm .lt. relax_tol) then
+    is_relaxed = 1
+  endif
+
+  call bl_pd_is_ioproc(ioproc)
+  if (ioproc == 1) then
+    print *, ""
+    print *, ""
+    print *, "  Relaxation iterations completed:", num_iterations
+    print *, "  Maximum change in rho:", delta_rho
+    print *, "  L2 Norm of Residual (relative to old state):", l2_norm
+    print *, "  Current value of rot_period:", rot_period
+    print *, "  Kinetic energy:", kin_eng 
+    print *, "  Potential energy:", pot_eng
+    print *, "  Internal energy:", int_eng
+    print *, "  Virial error:", virial_error
+    print *, "  Mass (M_sun) on left side of grid:", left_mass / M_solar
+    print *, "  Mass (M_sun) on right side of grid:", right_mass / M_solar
+    if (is_relaxed .eq. 1) print *, "  Relaxation completed!"
+    print *, ""
+    print *, ""
+  endif
+
+end subroutine check_convergence
+
+
+
 ! Update the location of center using the bulk velocity. 
 
 subroutine update_center(time)

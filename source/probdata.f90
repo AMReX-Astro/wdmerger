@@ -50,10 +50,6 @@ module probdata_module
   logical          :: damping
   double precision :: damping_alpha
 
-  ! Relaxation
-  logical          :: do_relax
-  double precision :: relax_tau
-
   ! Binary properties
   double precision :: a_P_initial, a_S_initial, a
   
@@ -93,6 +89,23 @@ module probdata_module
 
   ! Stores the effective Roche radii
   double precision :: roche_rad_P, roche_rad_S
+
+  ! Relaxation
+  logical          :: do_relax
+  integer          :: relax_type ! 1 = SCF
+  double precision :: relax_tol
+  double precision :: relax_tau
+
+  ! Data for SCF relaxation
+  double precision :: d_A, d_B, d_C
+  double precision :: rho_max_P, rho_max_S
+  double precision :: h_max_P, h_max_S
+  double precision :: enthalpy_min
+
+  double precision :: rpos(3,3)         ! Relative position of points A, B, and C
+  double precision :: d_vector(3,3)     ! Positions of points relative to system center
+  double precision :: c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
+  integer          :: rloc(3,3)         ! Indices of zones nearby to these points
 
 contains
 
@@ -162,6 +175,10 @@ contains
          interp_temp, &
          damping, damping_alpha, &
          do_relax, relax_tau, &
+         relax_type, &
+         relax_tol, &
+         rho_max_P, rho_max_S, &
+         d_A, d_B, d_C, &
          ambient_density, &
          stellar_temp, stellar_C12, stellar_O16, &
          star_axis, &
@@ -199,9 +216,18 @@ contains
 
     interp_temp = .false.
     damping  = .false.
-    do_relax = .false.
     star_axis = 1
     initial_motion_dir = 2
+
+    do_relax = .false.
+    relax_type = 1
+    relax_tol = 1.d-3
+    d_A = 1.0d9
+    d_B = 1.0d9
+    d_C = 1.8d9
+    rho_max_P = 1.0d7
+    rho_max_S = 1.0d7
+    enthalpy_min = 1.0d100
 
     bulk_velx = ZERO
     bulk_vely = ZERO
@@ -363,8 +389,19 @@ contains
     vel_P = ZERO
     vel_S = ZERO
 
-    mass_P = mass_P_initial * M_solar
-    mass_S = mass_S_initial * M_solar
+    ! If we're doing an initial relaxation, then we want to
+    ! specify central density and not total mass.
+
+    if (do_relax) then
+       central_density_P = rho_max_P
+       central_density_S = rho_max_S
+
+       mass_P_initial = -1.d0
+       mass_S_initial = -1.d0
+    else
+       mass_P = mass_P_initial * M_solar
+       mass_S = mass_S_initial * M_solar
+    endif
 
     roche_rad_P = ZERO
     roche_rad_S = ZERO
@@ -426,9 +463,30 @@ contains
 
        else
 
-           call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
-                                 rot_period, a_P_initial, a_S_initial, a, &
-                                 orbital_speed_P, orbital_speed_S)
+           ! Now, if we're not doing a relaxation step, then we want to put the WDs 
+           ! where they ought to be by Kepler's third law. But if we are, then we 
+           ! need a better first guess. The central location for each WD should be
+           ! equal to their inner distance plus their radius.
+
+           if (do_relax .and. relax_type .eq. 1) then
+
+              a_P_initial = d_A + radius_P_initial
+              a_S_initial = d_B + radius_S_initial
+
+              a = a_P_initial + a_S_initial
+
+           else
+
+              call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
+                                    rot_period, a_P_initial, a_S_initial, a, &
+                                    orbital_speed_P, orbital_speed_S)
+
+           endif
+
+           if (ioproc == 1 .and. init == 1) then
+              print *, "Generated binary orbit of distance ", a, &
+                       ", primary distance ", a_P_initial, ", and secondary distance", a_S_initial
+           endif      
 
            ! Direction of initial motion -- it is the position axis
            ! that is not star axis and that is also not the rotation axis.
@@ -590,5 +648,5 @@ contains
     endif
 
   end subroutine ensure_primary_mass_larger
-  
+
 end module probdata_module

@@ -139,9 +139,7 @@ stars have evolved off the main sequence. A thorough review of the
 observational evidence about SNe Ia and further discussion of these
 ideas can be found in \cite{maoz:2014}.
 
-The history of double degenerate theory can broadly be described as a
-series of three major paradigm shifts. The first attempts to model the
-results of the merger process came in the
+The first attempts to model the results of the merger process came in the
 1980s. \cite{nomotoiben:1985} demonstrated that off-center carbon
 ignition would occur in the more massive white dwarf as it accreted
 mass near the Eddington rate from the less massive white dwarf
@@ -159,31 +157,30 @@ formed an accretion disc, which might rain down on the primary more
 slowly. The main finding was that double degenerate systems would not
 obviously lead to Type Ia supernovae.
 
-The first three-dimensional simulations of double degenerate systems
-were performed by \citet{benz:1990}, who used the smoothed particle
-hydrodynamics (SPH) method to simulate the merger process. They found
-that if the lower-mass star (generally called the ``secondary'') was
+Three-dimensional simulations of merging double degenerate systems were 
+first performed by \citet{benz:1990}, who used the smoothed particle
+hydrodynamics (SPH) method to simulate the merger process. This was 
+followed later by a number of authors 
+\citep{rasio_shapiro:1995,segretain:1997,guerrero:2004,yoon:2007,loren-aguilar:2009,raskin:2012}.
+The main finding of these early 3D SPH simulations was that if the 
+lower-mass star (generally called the ``secondary'') was
 close enough to the more massive star (the ``primary'') to begin mass
 transfer on a dynamical time scale, the secondary completely disrupted
 and formed a hot envelope around the primary, with a
 centrifugally-supported accretion disk surrounding the core and
-envelope. They noted that the envelope temperature was hot enough to
-generate carbon fusion but neglected nuclear reactions in their
-simulation. Later simulations of similar setups
-\citep{rasio_shapiro:1995,yoon:2007,loren-aguilar:2009,raskin:2012}
-corroborated this result. This validation of the prediction of
-\cite{tutukov_yungelson:1979} did not instill confidence in the
-community. \cite{mochkovitch_livio:1990} and \cite{livio:2000}
-observed that turbulent viscosity would be sufficiently large for
-angular momentum to be removed from the disk at a rate high enough to
-generate the troublesome accretion timescales. Based on all of this
+envelope. Carbon fusion might commence in the disk, but not at a 
+high enough rate to generate a nuclear detonation. \cite{mochkovitch_livio:1990} 
+and \cite{livio:2000}  also observed that turbulent viscosity in this disk 
+would be sufficiently large for angular momentum to be removed from the 
+disk at a rate high enough to generate the troublesome accretion 
+timescales discussed by \cite{tutukov_yungelson:1979}. Based on this
 evidence, the review of \cite{hillebrandtniemeyer2000} argued that the
 model was only viable if the accretion-induced collapse problem could
 be avoided. Later work by \cite{shen:2012} and \cite{schwab:2012} used
 a more detailed treatment of the viscous transport in the outer
-regions of the remnant and found that while the centrifugally
-supported envelope would be converted into hot envelope material on a
-viscous timescale, their simulations still led to off-center carbon
+regions of the remnant and found that viscous dissipation in the centrifugally
+supported envelope would substantially heat up the envelope on a  
+viscous timescale, but their simulations still led to off-center carbon
 burning. \cite{vankerkwijk:2010} argued that equal-mass mergers would
 lead to the conditions necessary for carbon detonation in the center
 of the merged object, but \cite{shen:2012} questioned this for similar
@@ -194,17 +191,16 @@ carbon-oxygen systems had the potential to detonate. The study of the
 long-term evolution of the remnants is thus still an open subject of
 research.
 
-The most recent shift in perspective on this problem started with two
-series of papers appearing at roughly the same time. One began with
-\cite{pakmor:2010} and \cite{pakmor:2011}. This group used the SPH
-method to study the merger of equal-mass ($0.9\ M_\odot$)
-carbon-oxygen white dwarfs and found that a hotspot was generated near
-the surface of the primary white dwarf. They argued that this region
-had a temperature and density sufficient to trigger a thermonuclear
-detonation. They propagated this detonation throughout the system and
-found that it would observationally appear as a subluminous Type Ia
-supernova. This was the first time a DD simulation successfully
-reproduced at least some characteristics of a SN
+A recent shift in perspective on this problem started around 2010.
+\cite{pakmor:2010} used the SPH method to study the merger of 
+equal-mass ($0.9\ M_\odot$) carbon-oxygen white dwarfs and found 
+that a hotspot was generated near the surface of the primary 
+white dwarf. They argued that this region had a temperature 
+and density sufficient to trigger a thermonuclear
+detonation. They inserted a detonation which propagated throughout 
+the system. They found that the result would observationally 
+appear as a subluminous Type Ia supernova. This was the first time 
+a DD simulation successfully reproduced at least some characteristics of a SN
 Ia. \cite{pakmor:2011} tried a few different mass combinations and
 found empirically that this would hold as long as the secondary was at
 least 80\% as massive as the primary. These events, where the merger
@@ -213,19 +209,16 @@ coalescence -- avoiding the much longer time-scale evolution -- were
 termed ``violent'' mergers.
 
 Around the same time, however, \cite{guillochon:2010} and
-\cite{dan:2011} came to significantly different conclusions. They
-pointed out that the previously mentioned simulations generally all
-shared a significant drawback, which was that their initial conditions
+\cite{dan:2011} pointed out that the previously mentioned simulations 
+generally shared a significant drawback, which was that their initial conditions
 were not carefully constructed. \cite{motl:2002}, \cite{dsouza:2006},
 and \cite{motl:2007} (the first three-dimensional grid-based
 simulations of mass transfer in binary white dwarf systems) pioneered
 the study of looking at the long-term dynamical evolution of binary
 white dwarf systems after constructing exact equilibrium initial
-conditions. In contrast to the other studies, they found that paying
-close attention to the accuracy of the initial conditions of the
-simulation has important effects. In particular, earlier work placed
-the stars too close together and ignored the effects of tidal forces
-on changing the shape of the secondary, leading to the merger
+conditions. Earlier work placed the stars too close together 
+and ignored the effects of tidal forces that change the shape of the 
+secondary, leading to the merger
 happening artificially too quickly. When the initial conditions are
 constructed in exact equilibrium, the system can be stable for tens of
 orbital periods, substantially changing the character of the mass
@@ -242,34 +235,37 @@ detonations would occur as a result of accretion stream instabilities
 during the mass transfer phase prior to the full merger. This could
 trigger a double-detonation explosion and thus perhaps a SN Ia.
 
-The very latest developments give some areas of agreement and some of
-remaining uncertainty. \cite{pakmor:2012} performed a merger scenario
+The latest developments have resulted in some possible areas of convergence.
+\cite{pakmor:2012} performed a merger scenario
 with a $1.1\ M_\odot$ and $0.9\ M_\odot$ setup, with better treatment
-of the initial conditions, and also found that the merger process
-happened over more than ten orbits. Nevertheless, they still found
+of the initial conditions, and indeed found that the merger process
+happened over more than ten orbits. Nevertheless, they still determined
 that a carbon-oxygen detonation would occur, in line with their
 earlier results. \cite{moll:2014} was also able to find a detonation
-in a similarly massive system. \cite{dan:2012} and \cite{dan:2014}
-performed a large sweep of the parameter space for merger pairs and
+in a similarly massive system. Very recently, \cite{kashyap:2015} 
+found that a detonation occurred in a similarly massive system. Notably,
+the detonation occurred self-consistently and did not need to be inserted 
+by hand. \cite{dan:2012} and \cite{dan:2014} performed a large sweep 
+of the parameter space for merger pairs and
 found that pure carbon-oxygen systems would generally not lead to
 detonations and violent mergers except for the most massive
-systems. They did find that for systems containing helium, many of
-them would detonate and potentially lead to SNe Ia, either through the
+systems. They did find that for systems containing helium, many
+would detonate and potentially lead to SNe Ia, either through the
 aforementioned instabilities in the accretion stream, or during the
 contact phase, similar to the violent carbon-oxygen
 mergers. \cite{pakmor:2013} added a thin helium shell on their primary
 white dwarf, and found that this robustly led to a detonation of the
-white dwarf. Thus at least a preliminary agreement may be that systems
-containing helium could robustly lead to events resembling SNe Ia, as
-well as very massive carbon-oxygen binaries.
+white dwarf. For now there is preliminary support for the hypothesis
+that systems with helium shells (or helium WDs), and very massive carbon-oxygen binaries,
+could robustly lead to events resembling SNe Ia.
 
 Given the above, why is another approach using a different simulation
 code warranted? First and foremost, reproducibility of the results
 across simulation codes and algorithms is important for gauging
-confidence in this result. With only a couple of exceptions, most of
-the existing results that study the viability of the DD progenitor as
-an explanation for Type Ia supernovae (that is, including a
-temperature-dependent equation of state and nuclear reactions) have
+confidence in this result. Most of the existing results that study 
+the viability of double degenerate systems as progenitors for
+Type Ia supernovae (that is, including a realistic 
+equation of state and nuclear reactions) have
 used the SPH method. SPH codes have a number of features which do aid
 them in the study of these systems, such as excellent conservation of
 angular momentum. However, the question of whether a prompt detonation
@@ -299,11 +295,11 @@ artificial thermal conductivity can dramatically improve the ability
 of the SPH codes to exhibit this instability. There have since been a
 number of other papers discussing this issue, but to our knowledge
 none of these improvements have yet been incorporated into an SPH
-model of a WD merger. Another reason to be skeptical is that the
-detonation itself was inserted manually in \cite{pakmor:2010} based on
-small-scale detonation simulations. A self-consistent evolution of a
-thermonuclear detonation, if it existed, would significantly build
-confidence in the progenitor model.
+model of a WD merger. Another reason for caution is that other than the
+most recent results of \cite{kashyap:2015}, no simulation has self-consistently
+resulted in a thermonuclear detonation. Reproducibility of the detonation 
+through direct numerical simulation is critical for building 
+confidence in this progenitor model.
 
 This is the first in a series of papers designed to address these
 outstanding theoretical issues for white dwarf mergers. This work will
