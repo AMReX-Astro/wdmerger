@@ -429,7 +429,7 @@ subroutine setup_scf_relaxation(dx, problo, probhi)
     ! Convert the maximum densities into maximum enthalpies.
 
     eos_state % T   = stellar_temp
-    eos_state % rho = rho_max_P
+    eos_state % rho = central_density_P
     eos_state % xn  = stellar_comp
 
     call eos(eos_input_rt, eos_state)
@@ -437,7 +437,7 @@ subroutine setup_scf_relaxation(dx, problo, probhi)
     h_max_P = eos_state % h
 
     eos_state % T   = stellar_temp
-    eos_state % rho = rho_max_S
+    eos_state % rho = central_density_S
     eos_state % xn  = stellar_comp
 
     call eos(eos_input_rt, eos_state)

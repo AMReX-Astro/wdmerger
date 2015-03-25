@@ -98,7 +98,6 @@ module probdata_module
 
   ! Data for SCF relaxation
   double precision :: d_A, d_B, d_C
-  double precision :: rho_max_P, rho_max_S
   double precision :: h_max_P, h_max_S
   double precision :: enthalpy_min
 
@@ -177,7 +176,6 @@ contains
          do_relax, relax_tau, &
          relax_type, &
          relax_tol, &
-         rho_max_P, rho_max_S, &
          d_A, d_B, d_C, &
          ambient_density, &
          stellar_temp, stellar_C12, stellar_O16, &
@@ -225,8 +223,6 @@ contains
     d_A = 1.0d9
     d_B = 1.0d9
     d_C = 1.8d9
-    rho_max_P = 1.0d7
-    rho_max_S = 1.0d7
     enthalpy_min = 1.0d100
 
     bulk_velx = ZERO
@@ -270,7 +266,7 @@ contains
     mass_P_initial = mass_p
     mass_S_initial = mass_s
 
-    if (mass_S_initial < ZERO) single_star = .true.
+    if (mass_S_initial < ZERO .and. central_density_S < ZERO) single_star = .true.
 
     ! Fill in stellar composition using C12 and O16
 
@@ -393,11 +389,15 @@ contains
     ! specify central density and not total mass.
 
     if (do_relax) then
-       central_density_P = rho_max_P
-       central_density_S = rho_max_S
 
-       mass_P_initial = -1.d0
-       mass_S_initial = -1.d0
+       if (central_density_P < ZERO) then
+          call bl_error("Cannot have a negative primary central density if we're doing a relaxation step.")
+       else if (.not. single_star .and. central_density_S < ZERO) then
+          call bl_error("Cannot have a negative secondary central density if we're doing a relaxation step.")
+       endif
+
+       mass_P_initial = -ONE
+       mass_S_initial = -ONE
     else
        mass_P = mass_P_initial * M_solar
        mass_S = mass_S_initial * M_solar
