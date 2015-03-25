@@ -26,13 +26,13 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
   double precision :: x,y,z,r,r_P,r_S
 
   do k = lo(3), hi(3)
-     z = problo(3) + dble(k + HALF)*dx(3)
+     z = problo(3) + (dble(k) + HALF)*dx(3)
 
      do j = lo(2), hi(2)
-        y = problo(2) + dble(j + HALF)*dx(2)
+        y = problo(2) + (dble(j) + HALF)*dx(2)
 
         do i = lo(1), hi(1)
-           x = problo(1) + dble(i + HALF)*dx(1)
+           x = problo(1) + (dble(i) + HALF)*dx(1)
 
            ! Tag all regions within the Roche radii of each star.
            ! We'll add a buffer around each star to double the Roche

@@ -79,4 +79,4 @@ BL_FORT_PROC_DECL(CHECK_CONVERGENCE,check_convergence)
     int* is_relaxed, int* num_iterations);
 
 BL_FORT_PROC_DECL(UPDATE_CENTER,update_center)
-   (const Real time);
+   (const Real* time);

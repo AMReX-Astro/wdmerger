@@ -108,7 +108,7 @@ Castro::sum_integrated_quantities ()
 
     // Update the problem center using the system bulk velocity
 
-    BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(time);
+    BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
