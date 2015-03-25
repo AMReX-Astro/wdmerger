@@ -89,6 +89,7 @@ while true; do
 
   if [ $to_stop -eq 1 ]; then
       touch $dir/dump_and_stop
+      exit
   else
       cycle_time=$(echo "$timestep * $safety / 2.0" | bc -l)
   fi
