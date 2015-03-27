@@ -284,6 +284,12 @@ examining \texttt{source/probin}.
   \item \texttt{interp\_temp}: whether or not to take temperature as given when interpolating from our initial model (logical;
     if false, we will interpolate based on pressure)
   \item \texttt{maxTaggingRadius}: fractional size of the domain outside of which we won't perform any refinement (real)
+  \item \texttt{sponge\_dist}: we can apply a sponge that damps the velocities starting at this fraction multiplied by the 
+    distance from the center to the domain boundary (real)
+  \item \texttt{sponge\_width}: smoothing width of the sponge; the sponge is fully applied at {\tt sponge\_dist} + {\tt sponge\_width},
+    in the same coordinates (real)
+  \item \texttt{sponge\_timescale}: the sponge decreases the velocity by a factor $1 / (1 + (\Delta t / t_s)$, where 
+    $t_s$ is the {\tt sponge\_timescale} in seconds (real)    
 \end{itemize}
 
 The \texttt{tagging} namelist is described in the AMR chapter of the CASTRO user's guide. At present, we 
