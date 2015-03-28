@@ -842,6 +842,9 @@ function chain {
       done_flag=$(is_dir_done)
   fi
 
+  orig_inputs=$inputs
+  orig_probin=$probin
+
   if [ $done_flag -ne 1 ]; then
 
       for N in $(seq $N_iters)
@@ -855,8 +858,11 @@ function chain {
 
   fi
 
+  job_dependency=""
   job_script=$orig_job_script
   stop_time=$orig_stop_time
+  inputs=$orig_inputs
+  probin=$orig_probin
   do_chain=""
 
 }
@@ -966,6 +972,7 @@ function run {
     cd $dir
 
     exec_command=$exec
+
     if [ ! -z $job_dependency ]; then
 	if [ $batch_system == "PBS" ]; then
 	    exec_command="$exec -W depend=afterok:$job_dependency"
