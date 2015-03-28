@@ -6,7 +6,8 @@ contains
 
   subroutine sponge(uout,uout_l1,uout_l2,uout_l3,&
                     uout_h1,uout_h2,uout_h3,lo,hi,time,dt, &
-                    dx,dy,dz,domlo,domhi)
+                    dx,dy,dz,domlo,domhi,&
+                    E_added,xmom_added,ymom_added,zmom_added)
 
     use bl_constants_module, only: M_PI, HALF, ZERO, ONE
     use meth_params_module , only: NVAR, URHO, UMX, UMY, UMZ, UEDEN
@@ -21,9 +22,11 @@ contains
                              uout_l3:uout_h3,NVAR)
     double precision :: time, dt
     double precision :: dx, dy, dz
+    double precision :: E_added, xmom_added, ymom_added, zmom_added
 
     double precision :: xx, yy, zz, radius
-    double precision :: ke_old, ke_new
+    double precision :: ke_old, xmom_old, ymom_old, zmom_old
+    double precision :: ke_new, xmom_new, ymom_new, zmom_new
     double precision :: sponge_radius, sponge_delta, sponge_mult, fac, alpha
     integer :: i,j,k
 
@@ -43,6 +46,9 @@ contains
              ke_old = HALF * ( uout(i,j,k,UMX)**2 + &
                                uout(i,j,k,UMY)**2 + &
                                uout(i,j,k,UMZ)**2 ) / uout(i,j,k,URHO)
+             xmom_old = uout(i,j,k,UMX)
+             ymom_old = uout(i,j,k,UMY)
+             zmom_old = uout(i,j,k,UMZ)
 
              radius = sqrt((xx-center(1))**2 + (yy-center(2))**2 + (zz-center(3))**2)
 
@@ -64,6 +70,14 @@ contains
              ke_new = HALF * (uout(i,j,k,UMX)**2 + &
                               uout(i,j,k,UMY)**2 + &
                               uout(i,j,k,UMZ)**2 ) / uout(i,j,k,URHO)
+             xmom_new = uout(i,j,k,UMX)
+             ymom_new = uout(i,j,k,UMY)
+             zmom_new = uout(i,j,k,UMZ)
+             
+             E_added    = E_added    + (ke_new - ke_old)
+             xmom_added = xmom_added + (xmom_new - xmom_old)
+             ymom_added = ymom_added + (ymom_new - ymom_old)
+             zmom_added = zmom_added + (zmom_new - zmom_old)
 
              uout(i,j,k,UEDEN) = uout(i,j,k,UEDEN) + (ke_new - ke_old)
 
