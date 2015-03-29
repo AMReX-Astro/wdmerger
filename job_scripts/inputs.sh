@@ -125,12 +125,12 @@ function replace_inputs_var {
     # only these latter ones that exist in the inputs file by default.
 
     if [ $var == "amr_check_int" ]; then
-	sed -i "s/amr.check_per.*=.*/amr.check_int = ${!var}/g" $dir/$inputs
+	sed -i "s/amr.check_per.*=.*/amr.check_int = " $dir/$inputs
 	return
     fi
 
     if [ $var == "amr_plot_int" ]; then
-	sed -i "s/amr.plot_per.*=.*/amr.plot_int = ${!var}/g" $dir/$inputs
+	sed -i "s/amr.plot_per.*=.*/amr.plot_int = " $dir/$inputs
 	return
     fi
 
@@ -156,7 +156,24 @@ function replace_inputs_var {
 	# http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	# http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
 
-	sed -i "s/$inputs_var_name.*=.*/$inputs_var_name = ${!var}/g" $dir/$inputs
+	old_string=$(grep "$inputs_var_name" $dir/$inputs)
+	new_string="$inputs_var_name = ${!var}"
+
+	# We want to save the comment associated with this variable.
+
+	string_before_comment=$(echo "$old_string" | awk -F# '{ print $1 }')
+	string_after_comment=$(echo "$old_string" | awk -F# '{ print $2 }')
+
+	# Count up the number of characters before the comment string.
+
+	chars_before_comment=${#string_before_comment}
+	new_length=${#new_string}
+
+	# Now, add a number of spaces so that the old and new have the same length.
+	num_spaces_to_add=$(($chars_before_comment - $new_length))
+	new_string=$(printf "$new_string%"$num_spaces_to_add"s#$string_after_comment")
+
+	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/$inputs
     else
 	echo "Variable "$var" given to replace_inputs_var was not found in the inputs file; exiting."
 	return
