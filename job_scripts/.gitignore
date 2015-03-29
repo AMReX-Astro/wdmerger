@@ -1,2 +1,5 @@
 # Stores the internal name of the machine
 machine
+
+# Stores the latest output on active jobs we've submitted
+jobs.txt

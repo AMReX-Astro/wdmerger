@@ -59,6 +59,41 @@ function get_machine {
 
 
 
+# Use the batch submission system to obtain the set of currently submitted jobs.
+# It fills the variable job_list
+
+function get_submitted_jobs {
+
+  if [ $batch_system == "PBS" ]; then
+
+    # Store the result of showq
+    job_file=$WDMERGER_HOME/job_scripts/jobs.txt
+    showq -u $USER > $job_file.temp
+
+    # Remove the lines that don't store jobs.
+    # A useful heuristic is that lines containing our username
+    # are going to have jobs printed on that line.
+
+    grep $USER $job_file.temp > $job_file
+    rm -f $job_file.temp
+
+    # Store as arrays the status of all jobs.
+    num_jobs=$(cat $job_file | wc -l)
+
+    for i in $(seq 0 $(($num_jobs-1)))
+    do
+      line=$(awk "NR == $i+1" $job_file)
+      job_arr[$i]=$(echo $line | awk '{ print $1 }')
+      state_arr[$i]=$(echo $line | awk '{ print $3 }')
+      walltime_arr[$i]=$(echo $line | awk '{ print $5 }')
+    done
+
+  fi
+
+}
+
+
+
 # Given a directory as the first argument, return the numerically last output file.
 # Assumes that all output files have the same number of digits; this should work 
 # in general except in rare cases.
@@ -1095,6 +1130,17 @@ fi
 
 compile_dir="compile"
 source_dir="source"
+
+# Some variables we need for storing job information.
+
+num_jobs=
+job_arr=()
+state_arr=()
+walltime_arr=()
+
+# Fill these arrays.
+
+get_submitted_jobs
 
 # Upon initialization, store some variables and create results directory.
 # We only want to initialize these variables if we're currently in a root problem directory.
