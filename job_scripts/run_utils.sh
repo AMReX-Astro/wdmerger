@@ -904,7 +904,20 @@ function chain {
       done_flag=$(is_dir_done)
   fi
 
+  # It is possible that we are continuing or extending a run.
+  # Check the current time from the last check point, and 
+  # only submit the jobs that are remaining to do.
+
+  checkpoint=$(get_last_checkpoint $dir)
+
+  if [ ! -z $checkpoint ]; then
+      chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
+  else
+      chk_time=0.0
+  fi
+
   job_running_status=$(is_job_running $dir)
+
 
   if [ $done_flag -ne 1 ] && [ $job_running_status -ne 1 ]; then
 
@@ -913,8 +926,11 @@ function chain {
 	  inputs="inputs_"$N
 	  job_script=$orig_job_script"_"$N
 	  stop_time=$(echo "$orig_stop_time * $N / $N_iters" | bc -l)
-	  run
-	  job_dependency=$job_number
+	  run_test=$(echo "$stop_time > $chk_time" | bc -l)
+	  if [ $run_test -eq 1 ]; then
+	      run
+	      job_dependency=$job_number
+          fi
       done
 
   else
@@ -980,7 +996,7 @@ function run {
 
   elif [ ! -z $do_chain ]; then
 
-      echo "Continuing chain in directory "$dir"."
+      echo "Continuing chain in directory $dir to time $stop_time."
 
       do_job=1
 
@@ -992,7 +1008,7 @@ function run {
 
     if [ $job_running_status -eq 1 ]; then
 
-	echo "Job currently in process or queued in directory "$dir"."
+	echo "Job currently in process or queued in directory $dir."
 
     else
 
@@ -1010,7 +1026,7 @@ function run {
 
       if [ $done_flag -eq 0 ]; then
 
-	  echo "Continuing job in directory "$dir"."
+	  echo "Continuing job in directory $dir."
 
 	  do_job=1
 
@@ -1019,7 +1035,7 @@ function run {
 	  # If we make it here, then we've already reached either stop_time
 	  # or max_step, so we should conclude that the run is done.
 
-	  echo "Job has already been completed in directory "$dir"."
+	  echo "Job has already been completed in directory $dir."
 
       fi
     fi
@@ -1053,13 +1069,9 @@ function run {
 
     job_number=${job_number%%.*}
 
-    echo "The job number is" $job_number"."
+    echo "The job number is $job_number."
 
-    if [ ! -e $dir/jobs_submitted.txt ]; then
-	touch $dir/jobs_submitted.txt
-    fi
-
-    echo $job_number >> $dir/jobs_submitted.txt
+    echo "$job_number" >> jobs_submitted.txt
 
     cd - > /dev/null
 
