@@ -288,11 +288,34 @@ function is_job_running {
 	dir=$1
     fi
 
+    job_status=0
+
+    # Check if a file with the appropriate run extension exists in that directory.
+    # If not, check if there is an active job yet to be completed or started 
+    # in the directory using the results of showq.
+
     if [ -e $dir/*$run_ext ]; then
-	echo "1"
-    else
-	echo "0"
+
+	job_status=1
+
+    elif [ -e $dir/jobs_submitted.txt ] && [ ! -z $num_jobs ]; then
+
+        num_jobs_in_dir=$(cat $dir/jobs_submitted.txt | wc -l)
+	jobs_in_directory=$(cat $dir/jobs_submitted.txt)
+
+	for job1 in ${job_arr[@]}
+	do
+	    for job2 in $jobs_in_directory
+	    do
+		if [ $job1 == $job2 ]; then
+		    job_status=1
+		fi
+            done
+        done
+
     fi
+
+    echo $job_status
 
 }
 
@@ -328,6 +351,8 @@ function is_dir_done {
   time_flag=1
   step_flag=1
 
+  done_status=0
+
   if [ -e $dir/$checkpoint/Header ]; then
 
       # Extract the checkpoint time. It is stored in row 3 of the Header file.
@@ -358,10 +383,10 @@ function is_dir_done {
   fi
 
   if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
-      echo "1"
-  else
-      echo "0"
+      done_status=1
   fi
+
+  echo $done_status
 
 }
 
@@ -856,6 +881,8 @@ function chain {
 
   orig_stop_time=$stop_time
   orig_job_script=$job_script
+  orig_inputs=$inputs
+  orig_probin=$probin
 
   do_chain=1
 
@@ -877,12 +904,11 @@ function chain {
       done_flag=$(is_dir_done)
   fi
 
-  orig_inputs=$inputs
-  orig_probin=$probin
+  job_running_status=$(is_job_running $dir)
 
-  if [ $done_flag -ne 1 ]; then
+  if [ $done_flag -ne 1 ] && [ $job_running_status -ne 1 ]; then
 
-      for N in $(seq $N_iters)
+      for N in $(seq 1 $N_iters)
       do
 	  inputs="inputs_"$N
 	  job_script=$orig_job_script"_"$N
@@ -890,6 +916,10 @@ function chain {
 	  run
 	  job_dependency=$job_number
       done
+
+  else
+
+      echo "Chain currently in process or done in directory "$dir$"."
 
   fi
 
@@ -962,7 +992,7 @@ function run {
 
     if [ $job_running_status -eq 1 ]; then
 
-	echo "Job currently in process in directory "$dir"."
+	echo "Job currently in process or queued in directory "$dir"."
 
     else
 
@@ -1024,6 +1054,12 @@ function run {
     job_number=${job_number%%.*}
 
     echo "The job number is" $job_number"."
+
+    if [ ! -e $dir/jobs_submitted.txt ]; then
+	touch $dir/jobs_submitted.txt
+    fi
+
+    echo $job_number >> $dir/jobs_submitted.txt
 
     cd - > /dev/null
 
