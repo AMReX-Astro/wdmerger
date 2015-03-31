@@ -164,14 +164,18 @@ function replace_inputs_var {
 	string_before_comment=$(echo "$old_string" | awk -F# '{ print $1 }')
 	string_after_comment=$(echo "$old_string" | awk -F# '{ print $2 }')
 
-	# Count up the number of characters before the comment string.
+	if [ ! -z "$string_after_comment" ]; then
 
-	chars_before_comment=${#string_before_comment}
-	new_length=${#new_string}
+          # Count up the number of characters before the comment string.
 
-	# Now, add a number of spaces so that the old and new have the same length.
-	num_spaces_to_add=$(($chars_before_comment - $new_length))
-	new_string=$(printf "$new_string%"$num_spaces_to_add"s#$string_after_comment")
+	  chars_before_comment=${#string_before_comment}
+	  new_length=${#new_string}
+
+	  # Now, add a number of spaces so that the old and new have the same length.
+	  num_spaces_to_add=$(($chars_before_comment - $new_length))
+	  new_string=$(printf "$new_string%"$num_spaces_to_add"s#$string_after_comment")
+	  
+	fi
 
 	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/$inputs
     else
