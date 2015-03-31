@@ -31,6 +31,30 @@ def get_castro_dir():
 
 
 
+# Return the last inputs file in a directory.
+
+def get_inputs_filename(dir):
+
+    # If there's a file named 'inputs', then this was a standard run.
+
+    if (os.path.isfile(dir + '/inputs')):
+
+        return 'inputs'
+
+    # If there are files named inputs_*, corresponding to a chain, return the last one.
+
+    elif (os.path.isfile(dir + '/inputs_1')):
+        
+        inputs_list = filter(lambda s: s[0:6] == "inputs", os.listdir(dir))
+
+        # Now sort them numerically
+        
+        inputs_list.sort(key=lambda s: int(s[7:]))
+
+        return inputs_list[-1]
+        
+
+
 #
 # Given a plotfile directory, return the CASTRO and BoxLib git commit hashes.
 #
