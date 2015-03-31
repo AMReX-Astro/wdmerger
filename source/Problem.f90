@@ -148,6 +148,11 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
   double precision :: dV, dm
   double precision :: vx, vy, vz, rhoInv
 
+  ! If the stars have merged, then the Roche radius of the secondary will be zero (or effectively close).
+  ! In such a situation, we want to terminate this calculation gracefully. The simplest fix is simply by just returning zero for 
+  ! everything;
+  ! there is 
+
   ! Volume of a zone
 
   dV = dx(1) * dx(2) * dx(3)
@@ -287,6 +292,8 @@ end subroutine get_star_locations
 subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
 
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, roche_rad_P, roche_rad_S, single_star
+  use prob_params_module, only: center
+  use bl_constants_module, only: TENTH, ZERO
 
   implicit none
 
@@ -297,19 +304,32 @@ subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
   double precision :: r
 
   com_P = P_com
-  com_S = S_com
-
   vel_P = P_vel
-  vel_S = S_vel
-
   mass_P = P_mass
-  mass_S = S_mass
 
-  r = sum((com_P-com_S)**2)**(0.5)
+  r = ZERO
 
   if (.not. single_star) then
 
+     com_S = S_com
+     vel_S = S_vel
+     mass_S = S_mass
+
+     r = sum((com_P-com_S)**2)**(0.5)
+
      call get_roche_radii(mass_S/mass_P, roche_rad_S, roche_rad_P, r)
+
+     ! Beyond a certain point, it doesn't make sense to track the stars separately
+     ! anymore. We'll set the secondary to a fixed constant and keep it there
+     ! if its Roche radius becomes smaller than 10% of the primary's.
+
+     if (roche_rad_S .lt. TENTH * roche_rad_P) then
+        com_S = center
+        vel_S = ZERO
+        mass_S = ZERO
+        roche_rad_S = ZERO
+        single_star = .true.
+     endif
 
   endif
 

@@ -40,12 +40,13 @@ Castro::sum_integrated_quantities ()
     Real angular_momentum[3]     = { 0.0 };
     Real moment_of_inertia[3][3] = { 0.0 };
     Real m_r_squared[3]          = { 0.0 };
-#ifdef ROTATION
+
     Real omega[3]       = { 0.0 };
     Real rot_kin_eng    = 0.0;
     Real rot_mom[3]     = { 0.0 };
     Real rot_ang_mom[3] = { 0.0 };
 
+#ifdef ROTATION
     omega[rot_axis-1] = 2.0 * M_PI / rotational_period;
 #else
     int rot_axis = 3;
@@ -250,18 +251,13 @@ Castro::sum_integrated_quantities ()
         angular_momentum[i] = L_grid[i];
     }
 
-#ifdef ROTATION
-
     total_E_grid = total_energy;
-
     rotational_energy = rot_kin_eng;
     total_energy += rotational_energy;
     for (int i = 0; i <= 2; i++) {
         momentum[i] += rot_mom[i];
         angular_momentum[i] += rot_ang_mom[i];
     }
-
-#endif
 
 #ifdef merger
 
@@ -315,13 +311,17 @@ Castro::sum_integrated_quantities ()
       com[i]       = com[i] / mass;
       com_vel[i]   = momentum[i] / mass;
 
-      com_p[i] = com_p[i] / mass_p;
-      vel_p[i] = vel_p[i] / mass_p;
+      if ( mass_p > 0.0 ) {
+	com_p[i] = com_p[i] / mass_p;
+        vel_p[i] = vel_p[i] / mass_p;
+      }
 
       if (single_star != 1) {
 
-	 com_s[i] = com_s[i] / mass_s;
-	 vel_s[i] = vel_s[i] / mass_s;
+	 if ( mass_s > 0.0 ) {
+	   com_s[i] = com_s[i] / mass_s;
+	   vel_s[i] = vel_s[i] / mass_s;
+	 }
 
 	 // Calculate the distance between the primary and secondary.
 
@@ -392,65 +392,37 @@ Castro::sum_integrated_quantities ()
           grid_log << std::setw(datawidth) << "     TIME              ";
 	  grid_log << std::setw(datawidth) << "     DT                ";
           grid_log << std::setw(datawidth) << " TOTAL ENERGY          ";
-#ifdef ROTATION
 	  grid_log << std::setw(datawidth) << " TOTAL E GRID          ";
-#endif
 	  grid_log << std::setw(datawidth) << " GAS ENERGY            ";
           grid_log << std::setw(datawidth) << " KIN. ENERGY           ";
-#ifdef ROTATION
-	  if (do_rotation) {
 	  grid_log << std::setw(datawidth) << " ROT. ENERGY           ";
-	  }
-#endif
-#ifdef GRAVITY	  
           grid_log << std::setw(datawidth) << " GRAV. ENERGY          ";
-#endif
           grid_log << std::setw(datawidth) << " INT. ENERGY           ";
           grid_log << std::setw(datawidth) << " XMOM                  ";
-#if (BL_SPACEDIM >= 2)
           grid_log << std::setw(datawidth) << " YMOM                  ";
-#endif
-#if (BL_SPACEDIM == 3)
           grid_log << std::setw(datawidth) << " ZMOM                  ";
-#endif
-#ifdef ROTATION
-	  if (do_rotation) {
 	  grid_log << std::setw(datawidth) << " XMOM GRID             ";
 	  grid_log << std::setw(datawidth) << " YMOM GRID             ";
 	  grid_log << std::setw(datawidth) << " ZMOM GRID             ";
 	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
 	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
 	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
-	  }
-#endif
           grid_log << std::setw(datawidth) << " ANG. MOM. X           ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Y           ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
-#ifdef ROTATION
-	  if (do_rotation) {
           grid_log << std::setw(datawidth) << " ANG. MOM. X GRID      ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Y GRID      ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Z GRID      ";
           grid_log << std::setw(datawidth) << " ANG. MOM. X ROT.      ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Y ROT.      ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Z ROT.      ";
-	  }
-#endif
           grid_log << std::setw(datawidth) << " MASS                  ";
           grid_log << std::setw(datawidth) << " X COM                 ";
-#if (BL_SPACEDIM >= 2)
           grid_log << std::setw(datawidth) << " Y COM                 ";
-#endif
-#if (BL_SPACEDIM == 3)
           grid_log << std::setw(datawidth) << " Z COM                 ";
-#endif
           grid_log << std::setw(datawidth) << " X COM VEL             ";
-#if (BL_SPACEDIM >= 2)
           grid_log << std::setw(datawidth) << " Y COM VEL             ";
-#endif
-#if (BL_SPACEDIM == 3)
           grid_log << std::setw(datawidth) << " Z COM VEL             ";
-#endif
 
           grid_log << std::endl;
         }
@@ -466,65 +438,37 @@ Castro::sum_integrated_quantities ()
 	grid_log << std::scientific;
 
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << total_energy;
-#ifdef ROTATION
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << total_E_grid;
-#endif
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << gas_energy;
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << kinetic_energy;
-#ifdef ROTATION
-	if (do_rotation) {
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rotational_energy;	  
-	}
-#endif
-#ifdef GRAVITY	  
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << gravitational_energy;
-#endif
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << internal_energy;
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
-#if (BL_SPACEDIM >= 2)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
-#endif
-#if (BL_SPACEDIM == 3)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
-#endif
-#ifdef ROTATION
-	if (do_rotation) {
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[0];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[1];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[2];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[0];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[1];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[2];
-	}
-#endif	  
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[0];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1]; 
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[2];
-#ifdef ROTATION
-	if (do_rotation) {
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[0];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[1]; 
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[2];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[0];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[1]; 
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[2];
-	}
-#endif	  
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
-#if (BL_SPACEDIM >= 2)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
-#endif
-#if (BL_SPACEDIM == 3)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[2];
-#endif
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
-#if (BL_SPACEDIM >= 2)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
-#endif
-#if (BL_SPACEDIM == 3)
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
-#endif
 
 	grid_log << std::endl;
       }
@@ -550,10 +494,9 @@ Castro::sum_integrated_quantities ()
           star_log << std::setw(datawidth) << "     TIME              ";
 	  star_log << std::setw(datawidth) << "     DT                ";
 
-	  if (single_star != 1) {
           star_log << std::setw(datawidth) << " WD DISTANCE           ";
 	  star_log << std::setw(datawidth) << "   WD ANGLE            ";
-	  }
+
           star_log << std::setw(datawidth) << " PRIMARY X COM         ";
           star_log << std::setw(datawidth) << " PRIMARY Y COM         ";
           star_log << std::setw(datawidth) << " PRIMARY Z COM         ";
@@ -564,19 +507,18 @@ Castro::sum_integrated_quantities ()
 	  for (int i = 0; i <= 6; ++i)
 	    star_log << "  PRIMARY 1E" << i << " RADIUS    ";
 
-	  if (single_star != 1) {
-	    star_log << std::setw(datawidth) << " SECONDARY X COM       ";
-	    star_log << std::setw(datawidth) << " SECONDARY Y COM       ";
-	    star_log << std::setw(datawidth) << " SECONDARY Z COM       ";
-	    star_log << std::setw(datawidth) << " SECONDARY X VEL       ";
-	    star_log << std::setw(datawidth) << " SECONDARY Y VEL       ";
-	    star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
-	    star_log << std::setw(datawidth) << " SECONDARY MASS        ";
-  	    for (int i = 0; i <= 6; ++i)
-	      star_log << "  SECONDARY 1E" << i << " RADIUS  ";
-          }
+	  star_log << std::setw(datawidth) << " SECONDARY X COM       ";
+	  star_log << std::setw(datawidth) << " SECONDARY Y COM       ";
+	  star_log << std::setw(datawidth) << " SECONDARY Z COM       ";
+	  star_log << std::setw(datawidth) << " SECONDARY X VEL       ";
+	  star_log << std::setw(datawidth) << " SECONDARY Y VEL       ";
+	  star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
+	  star_log << std::setw(datawidth) << " SECONDARY MASS        ";
+	  for (int i = 0; i <= 6; ++i)
+	    star_log << "  SECONDARY 1E" << i << " RADIUS  ";
 
           star_log << std::endl;
+
 	}
 
 	star_log << std::fixed;
@@ -585,15 +527,11 @@ Castro::sum_integrated_quantities ()
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
 
-	if (single_star != 1) {
 	star_log << std::scientific;
-
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << separation;
 
 	star_log << std::fixed;
-
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << angle;
-	}
 	
 	star_log << std::scientific;
 
@@ -607,7 +545,6 @@ Castro::sum_integrated_quantities ()
         for (int i = 0; i <= 6; ++i)
             star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rad_p[i];
 
-	if (single_star != 1) {
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[0];
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[1];
 	star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[2];
@@ -618,7 +555,6 @@ Castro::sum_integrated_quantities ()
 
         for (int i = 0; i <= 6; ++i)
 	    star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rad_s[i];
-	}
 
 	star_log << std::endl;
         
