@@ -135,17 +135,17 @@ def get_git_commits_from_diagfile(diagfile):
 
     line = diagfile.readline().split()
 
-    if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
+    if (line[1] == "Castro" and line[2] == "git" and line[3] == "hash:"):
         castro_hash = line[4]
 
     line = diagfile.readline().split()
 
-    if (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
+    if (line[1] == "BoxLib" and line[2] == "git" and line[3] == "hash:"):
         boxlib_hash = line[4]
 
     line = diagfile.readline().split()
 
-    if (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
+    if (line[1] == "wdmerger" and line[2] == "git" and line[3] == "hash:"):
         wdmerger_hash = line[4]
 
     diagfile.close()
