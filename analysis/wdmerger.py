@@ -52,7 +52,48 @@ def get_inputs_filename(dir):
         inputs_list.sort(key=lambda s: int(s[7:]))
 
         return inputs_list[-1]
-        
+ 
+       
+
+# Get a CASTRO variable value from an inputs file.
+
+def get_inputs_var(inputs, var):
+
+    # Read in all the inputs file lines and search for the one
+    # that starts with the desired variable name.
+
+    inputs_file = open(inputs, 'r')
+    lines = inputs_file.readlines()
+
+    lines = filter(lambda s: s.split() != [], lines)
+    line = filter(lambda s: s.split()[0] == var, lines)
+
+    # The variable is the last item in a line before the comment.
+    # This should work correctly even if there is no comment.
+
+    var = (line[0].split('=')[1]).split('#')[0]
+    var = var.strip()
+
+    # Now, convert it into a list if it has multiple entries.
+
+    if (var.split() != []):
+        var = var.split()
+
+    # Convert this to a floating point array, if possible.
+    # If this fails, we'll just leave it as a string.
+
+    try:
+        var = np.array(var,dtype='float')    
+
+        # Now convert this to an integer array, if possible.
+
+        if (var[0].is_integer()):
+            var = np.array(var,dtype='int')
+    except:
+        pass
+
+    return var
+
 
 
 #
