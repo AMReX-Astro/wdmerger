@@ -193,7 +193,7 @@ research.
 
 A recent shift in perspective on this problem started around 2010.
 \cite{pakmor:2010} used the SPH method to study the merger of 
-equal-mass ($0.9\ M_\odot$) carbon-oxygen white dwarfs and found 
+equal-mass ($0.9\ \msolar$) carbon-oxygen white dwarfs and found 
 that a hotspot was generated near the surface of the primary 
 white dwarf. They argued that this region had a temperature 
 and density sufficient to trigger a thermonuclear
@@ -237,7 +237,7 @@ trigger a double-detonation explosion and thus perhaps a SN Ia.
 
 The latest developments have resulted in some possible areas of convergence.
 \cite{pakmor:2012} performed a merger scenario
-with a $1.1\ M_\odot$ and $0.9\ M_\odot$ setup, with better treatment
+with a $1.1\ \msolar$ and $0.9\ \msolar$ setup, with better treatment
 of the initial conditions, and indeed found that the merger process
 happened over more than ten orbits. Nevertheless, they still determined
 that a carbon-oxygen detonation would occur, in line with their
@@ -1320,6 +1320,19 @@ expect that the star will oscillate slightly about an equilibrium
 point, but that the amplitude of this oscillation should decrease with
 increasing resolution.
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/single_star_static_1e3_radius}
+  \caption{Time evolution of the effective radius of a $0.9 \msolar$ 
+    white dwarf, seeded onto the grid using a one-dimensional hydrostatic
+    model and evolved without further relaxation. The lines represent 
+    different number of zones per spatial dimension; when this number is 
+    greater than 256, it represents an effective resolution obtained 
+    using AMR levels that cover the star. The radius is determined 
+    using the volume of the grid that has a density greater than $10^3\ \text{g cm}^{-3}.$
+    \label{fig:single_star_static_radius}}
+\end{figure}
+
 This problem was studied in the first CASTRO paper, but is worth
 revisiting here. A single star explosion simulation may only last a
 couple of seconds, and the CASTRO paper studied the behavior of the
@@ -1335,6 +1348,34 @@ is thus to populate a single star onto our three-dimensional
 coordinate grid and evolve it for a period of time long enough to
 assess whether the star is truly stable, and to probe how the size of
 deviation from equilibrium is affected by grid resolution.
+
+We loaded a single star of mass $0.9\ \msolar$ onto the grid at the origin, 
+and evolved it for 200 seconds. Our diagnostic of choice is the effective 
+radius of the star, determined by the volume of the grid that has a density 
+greater than $10^3\ \text{g cm}^{-3}$ (see Section \ref{sec:initial_models} 
+for details on this measure). This choice of density is intended to 
+mark a reasonable outer edge to the star that is not immediately susceptible 
+to the numerical errors prevalent near the physical edge of the star. Figure 
+\ref{fig:single_star_static_radius} shows our results at various resolutions. 
+As expected, the star quickly approaches an equilibrium size that is different 
+(and in this case larger) than the one-dimensional model. However, the magnitude 
+of this change becomes smaller with resolution. The star is only approximately 
+in equilibrium Only when the coarse grid of $256^3$ zones has a level of 
+refinement that jumps by a factor of four. However, even then there is a slight 
+uptick in the size toward the event, implying that the numerical stability 
+is not guaranteed for arbitrarily long timescales. This result suggests that when 
+doing the equilibrium initial models that will former the basis of later calculations,
+we should carefully monitor the evolution of the stars before applying any 
+artificial damping to cause the merger, to ensure that the merger is due to 
+this applied force and not the intrinsic numerical instability of the stars.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/single_star_static_ke}
+  \caption{Time evolution of the kinetic energy of a $0.9 \msolar$ 
+    white dwarf. The lines have the same meaning as in Figure \ref{fig:single_star_static_radius}.
+    \label{fig:single_star_static_ke}}
+\end{figure}
 
 \subsection{Gravitational Free Fall}\label{sec:Gravitational Free Fall}
 
@@ -1498,11 +1539,13 @@ density $\rho_1 = 1.0$ traveling leftward at velocity $v_1 =
 -0.5$. The density gradient is in the $y$ direction, so this creates a
 velocity shear along the interface between the fluids. The density and
 velocity distribution on the computational domain are given by:
+
 \begin{align}
   \rho &= \rho_1 + R(y)\left[\rho_2 - \rho_1\right] \\
   v_x  &= v_1 + R(y)\left[v_2 - v_1\right] \\
   v_y  &= v_{\text{bulk}} + v^\prime
 \end{align}
+
 Here $R(y)$ is a ramp function that describes the transition between
 the two fluids, while $v_{\text{bulk}}$ is the bulk motion of the
 fluid in the $y$ direction and $v^\prime$ is the velocity perturbation
@@ -1576,14 +1619,14 @@ were not explicitly interested in the question of Galilean invariance,
 we visit that issue here to see what can be learned. The initial 
 conditions for this problem are:
 \begin{align}
-  \rho &= \begin{cases} \rho_1 - \rho_m e^{\frac{y-0.25}{\Delta y}} & 0.25 > y \geq 0 \\ 
-                        \rho_2 + \rho_m e^{\frac{0.25-y}{\Delta y}} & 0.5 > y \geq 0.25 \\
-                        \rho_2 + \rho_m e^{\frac{y-0.75}{\Delta y}} & 0.75 > y \geq 0.5 \\
-                        \rho_1 - \rho_m e^{\frac{0.75-y}{\Delta y}} & 1 > y \geq 0.75 \end{cases} \label{eq:kh_p3_rho}\\
-  v_x &= \begin{cases} v_1 - v_m e^{\frac{y-0.25}{\Delta y}} & 0.25 > y \geq 0 \\
-                       v_2 + v_m e^{\frac{0.25-y}{\Delta y}} & 0.5 > y \geq 0.25 \\
-                       v_2 + v_m e^{\frac{y-0.75}{\Delta y}} & 0.75 > y \geq 0.5 \\
-                       v_1 - v_m e^{\frac{0.75-y}{\Delta y}} & 1 > y \geq 0.75 \end{cases} \label{eq:kh_p3_vx} \\
+  \rho &= \begin{dcases} \rho_1 - \rho_m e^{(y-0.25)/\Delta y} & 0.25 > y \geq 0 \\ 
+                         \rho_2 + \rho_m e^{(0.25-y)/\Delta y} & 0.5 > y \geq 0.25 \\
+                         \rho_2 + \rho_m e^{(y-0.75)/\Delta y} & 0.75 > y \geq 0.5 \\
+                         \rho_1 - \rho_m e^{(0.75-y)/\Delta y} & 1 > y \geq 0.75 \end{dcases} \label{eq:kh_p3_rho}\\
+  v_x &= \begin{dcases} v_1 - v_m e^{(y-0.25)/\Delta y} & 0.25 > y \geq 0 \\
+                        v_2 + v_m e^{(0.25-y)/\Delta y} & 0.5 > y \geq 0.25 \\
+                        v_2 + v_m e^{(y-0.75)/\Delta y} & 0.75 > y \geq 0.5 \\
+                        v_1 - v_m e^{(0.75-y)/\Delta y} & 1 > y \geq 0.75 \end{dcases} \label{eq:kh_p3_vx} \\
   v_y &= w_0\, \text{sin}\left(4\pi x\right). \label{eq:kh_p3_vy}
 \end{align}
 Here $\Delta y = 0.025$, $w_0 = 0.01$, $v_m = (v_1 - v_2) / 2$, $\rho_m = (\rho_1 - \rho_2) / 2$, 
@@ -1632,7 +1675,46 @@ that we need to ramp up the resolution in these regions using AMR. If this becom
 too expensive, we would need to be skeptical of any conclusions that could be drawn 
 about the effect of the mixing on the nuclear burning.
 
-\subsubsection{Moving Star}\label{sed:moving_star}
+\subsubsection{Moving Star}\label{sec:moving_star}
+
+To see this effect in action for a stellar simulation, we repeated the test of Section 
+\ref{sec:HSE} with a bulk velocity on the grid. We chose a velocity of $2.56 \times 10^{8}\ \text{cm s}^{-1}$.
+For context, this is comparable to the orbital velocities of the stars in Section \ref{sec:kepler}.
+This test was inspired by \citet{tasker:2008}, who considered a moving galaxy cluster 
+and who obtained a long timescale evolution by using periodic boundary conditions, 
+so that the cluster would cross the domain multiple times throughout the evolution.
+We believe that periodic boundary conditions are unrealistic for our type of simulation,
+so we prefer to do one continuous simulation where the star does not cross the boundaries.
+Since our normal grid was not large enough to allow the motion to continue for very long, we expanded 
+the domain size by a factor of four, and then included an extra refined level around the star to 
+keep the effective resolution the same. We started the star off in the lower left corner of the domain, and 
+pointed its velocity towards the upper right corner. This allowed us to evolve the star for the 
+same length of time as for the original test. We note that getting the gravity boundary conditions right 
+required us to move the origin of the problem at the bulk velocity, so that the multipole moments 
+were computed with respect to the stellar center.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/single_star_compare_1e3_radius}
+  \caption{A variation on Figure \ref{fig:single_star_static_radius} where
+    we now compare the ``static'' case to ``motion'' simulations where the 
+    star moves across the grid at a fixed linear speed. The lines represent 
+    the effective number of zones per dimension inside the stellar material;
+    due to the expanded size of the grid in the ``motion'' case, the 
+    physical resolution is the same in each column in the legend.
+    \label{fig:single_star_compare_radius}}
+\end{figure}
+
+In Figure \ref{fig:single_star_compare_radius}, we take the results of Section 
+\ref{sec:HSE} (the ``static'' case), and plot on top of it the results of this 
+new simulation (the ``motion'' case). We see immediately that this bulk velocity
+causes the star to be much worse at maintaining hydrostatic equilibrium. Not only 
+is the absolute size of the star significantly larger (nearly a factor of two 
+at the lowest feasible resolution we consider), but also there is a clear upward 
+trend in the size that has not terminated at any resolution by the end of the simulation.
+This again emphasizes the results mentioned earlier, that we must be careful not 
+to trust any simulation with significant mass transfer if we are not confident that the 
+mass transfer is seeded in a controllable manner and free from numerical noise.
 
 \subsection{Keplerian Orbit}\label{sec:kepler}
 
