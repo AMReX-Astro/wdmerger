@@ -935,7 +935,15 @@ function chain {
 
   else
 
-      echo "Chain currently in process or done in directory "$dir$"."
+      if [ $done_flag -eq 1 ]; then
+
+	  echo "Chain completed in directory "$dir$"."
+
+      elif [ $job_running_status -eq 1 ]; then
+
+	  echo "Chain currently queued or in process in directory "$dir"."
+
+      fi
 
   fi
 
