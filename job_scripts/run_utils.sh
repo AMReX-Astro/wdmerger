@@ -880,7 +880,6 @@ function chain {
   fi
 
   orig_stop_time=$stop_time
-  orig_job_script=$job_script
   orig_inputs=$inputs
   orig_probin=$probin
 
@@ -924,7 +923,6 @@ function chain {
       for N in $(seq 1 $N_iters)
       do
 	  inputs="inputs_"$N
-	  job_script=$orig_job_script"_"$N
 	  stop_time=$(echo "$orig_stop_time * $N / $N_iters" | bc -l)
 	  run_test=$(echo "$stop_time > $chk_time" | bc -l)
 	  if [ $run_test -eq 1 ]; then
@@ -948,7 +946,6 @@ function chain {
   fi
 
   job_dependency=""
-  job_script=$orig_job_script
   stop_time=$orig_stop_time
   inputs=$orig_inputs
   probin=$orig_probin
