@@ -892,16 +892,16 @@ function chain {
 
   if [ -d $dir ]; then
       inputs=$(find $dir -maxdepth 1 -name "inputs_*" | sort -n | tail -1)
-  fi
 
-  # If there are no inputs files in the directory, we know we haven't yet started.
+      # If there are no inputs files in the directory, we know we haven't yet started.
 
-  if [ ! -z $inputs ]; then
-      inputs=$(basename $inputs)
-  fi
+      if [ ! -z $inputs ]; then
+          inputs=$(basename $inputs)
+      fi
 
-  if [ -d $dir ]; then
       done_flag=$(is_dir_done)
+  else
+      mkdir -p $dir
   fi
 
   # It is possible that we are continuing or extending a run.
