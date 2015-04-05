@@ -1035,9 +1035,9 @@ update for the time-level $n+1$ Coriolis force then appears as:
 To proceed further, we assume that the rotation is about the $z$ axis with frequency $\omega$. 
 Then there is no update to the $z$-momentum, and the other equations are:
 \begin{align}
-  (\rho u)^{n+1} &= (\widetilde{\rho u}) + \omega \Delta t (\rho v)^{n+1}) \\
-  (\rho v)^{n+1} &= (\widetilde{\rho v}) - \omega \Delta t (\rho u)^{n+1})
-\end{align}
+  (\rho u)^{n+1} &= (\widetilde{\rho u}) + \omega \Delta t (\rho v)^{n+1} \\
+  (\rho v)^{n+1} &= (\widetilde{\rho v}) - \omega \Delta t (\rho u)^{n+1}
+\end{align} 
 We can directly solve this coupled system:
 \begin{align}
   (\rho u)^{n+1} &= \frac{ (\widetilde{\rho u}) + \omega \Delta t (\widetilde{\rho v})}{1 + \omega^2 \Delta t^2} \\
