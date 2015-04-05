@@ -120,20 +120,6 @@ function replace_inputs_var {
 	return
     fi
 
-    # There's a couple of variables we have to be careful with: amr.plot_int and amr.check_int.
-    # These cannot be defined simultaneously with amr.plot_per and amr.check_per, and it is 
-    # only these latter ones that exist in the inputs file by default.
-
-    if [ $var == "amr_check_int" ]; then
-	sed -i "s/amr.check_per.*=.*/amr.check_int = " $dir/$inputs
-	return
-    fi
-
-    if [ $var == "amr_plot_int" ]; then
-	sed -i "s/amr.plot_per.*=.*/amr.plot_int = " $dir/$inputs
-	return
-    fi
-
     inputs_var_name=$(fix_inputs_var_name $var)
 
     if [ -z $inputs_var_name ]; then
