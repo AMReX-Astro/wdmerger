@@ -846,6 +846,20 @@ function create_job_script {
 
       echo "archive_all ." >> $dir/$job_script
 
+      # Check to make sure we are done, and if not, re-submit the job.
+
+      if [ -z $do_chain ]; then
+
+	echo "" >> $dir/$job_script
+	echo "dir=." >> $dir/$job_script
+	echo "done_flag=\$(is_dir_done)" >> $dir/$job_script
+	echo "if [ \$done_flag -ne 1 ]; then" >> $dir/$job_script
+	echo "  $exec $job_script" >> $dir/$job_script
+	echo "fi" >> $dir/$job_script
+	echo "" >> $dir/$job_script
+
+     fi
+
    elif [ $batch_system == "batch" ]; then
 
       echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > $job_name$run_ext\" | batch" > $dir/$job_script
