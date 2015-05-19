@@ -586,24 +586,28 @@ function archive_all {
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
 
-  if   [ $MACHINE == "TITAN"       ]; then
+  if [ do_storage -eq 1 ]; then
 
-      # For Titan, just loop over every file we're archiving and htar it.
+    if   [ $MACHINE == "TITAN"       ]; then
 
-      for file in $archivelist
-      do
-	  echo $directory/output/$file
-	  archive $directory/output/$file
-      done
+	# For Titan, just loop over every file we're archiving and htar it.
 
-  elif [ $MACHINE == "BLUE_WATERS" ]; then
+	for file in $archivelist
+	do
+	    echo $directory/output/$file
+	    archive $directory/output/$file
+	done
 
-      # For Blue Waters, we're using Globus Online, which has a cap on the number 
-      # of simultaneous transfers a user can have. Therefore our strategy is
-      # to sync the entire output directory of this location rather than 
-      # transferring the files independently.
+    elif [ $MACHINE == "BLUE_WATERS" ]; then
 
-      archive $directory/output/
+	# For Blue Waters, we're using Globus Online, which has a cap on the number 
+	# of simultaneous transfers a user can have. Therefore our strategy is
+	# to sync the entire output directory of this location rather than 
+	# transferring the files independently.
+
+	archive $directory/output/
+
+    fi
 
   fi
 
@@ -1129,6 +1133,8 @@ job_script="run_script"
 threads_per_task="1"
 
 archive_method="none"
+
+do_storage=1
 
 if [ $MACHINE == "GENERICLINUX" ]; then
 
