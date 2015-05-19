@@ -586,7 +586,7 @@ function archive_all {
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
 
-  if [ do_storage -eq 1 ]; then
+  if [ $do_storage -eq 1 ]; then
 
     if   [ $MACHINE == "TITAN"       ]; then
 
