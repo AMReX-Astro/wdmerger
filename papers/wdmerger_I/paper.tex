@@ -1053,22 +1053,29 @@ with the momentum source terms. The Coriolis term vanishes identically, and so
   \left.\frac{\partial(\rho E)}{\partial t}\right|_{\text{rot}} = \frac{1}{\Delta V}\int \rho \mathbf{u} \cdot \mathbf{f}_R\, dV,
 \end{equation}
 with $\mathbf{f}_R \equiv  -{\bm\omega} \times \left({\bm\omega} \times \mathbf{r}\right)$. 
-This expression is identical to the gravity source under the interchange of $\mathbf{g}$ with $\mathbf{f}_R$.
+This expression is identical in form to the gravity source under the interchange of $\mathbf{g}$ with $\mathbf{f}_R$.
 As observed by \cite{marcello:2012}, we can similarly write down a rotational potential,
 \begin{equation}
   \Phi_R = -\frac{1}{2} \left| {\bm\omega} \times \mathbf{r} \right|^2.
 \end{equation}
-Therefore we can retrace the steps of Section \ref{sec:gravity_hydro_coupling} to obtain
-an update to $(\rho E)$ that conserves the total energy in the presence of rotation,
+So in the presence of rotation the total energy takes the form:
 \begin{equation}
   (\rho E_{\text{tot}}) = (\rho E) + \frac{1}{2} \rho \Phi + \rho \Phi_R.
 \end{equation}
-In one dimension, this would be
+Since the rotation field $\Phi_R$ is static in time and does not change in response 
+to moving fluid, we do not need the formalism of Section \ref{sec:gravity_hydro_coupling}. 
+Instead, the time rate of change in the energy can be written as the flux of the quantity 
+$\rho \Phi_R$. In one dimension, this would be
 \begin{align}
-  \left.\Delta(\rho E_i)\right|_{\text{rot}} &= \frac{1}{2} \Delta m_{i-1/2} (\Phi_{R_{i}} - \Phi_{R_{i-1}}) \notag \\
-  &+ \frac{1}{2} \Delta m_{i+1/2} (\Phi_{R_{i+1}} - \Phi_{R_{i}}).
+  \left.\Delta(\rho E_i)\right|_{\text{rot}} &= \frac{1}{2} \Delta m_{i-1/2} (\Phi_{R_{i}} + \Phi_{R_{i-1}}) \notag \\
+  &+ \frac{1}{2} \Delta m_{i+1/2} (\Phi_{R_{i+1}} + \Phi_{R_{i}}).
 \end{align}
 As with gravity, in three dimensions we include the mass fluxes through all six cell faces.
+Note that whereas the gravity force explicitly changes the gas energy $E_g$, the rotation force 
+is manifestly conservative with respect to $E_g$ (except at domain boundaries), and only 
+redistributes existing quantities of $E_g$ between zones. This asymmetry between the gravity 
+and rotation forces may not be aesthetically pleasing but is necessary to avoid the problems 
+mentioned earlier that come from explicitly evolving the equation for $E_\text{tot}$.
 
 We apply the rotation forces after the gravitation forces, but 
 there is some freedom in the order in which to apply the gravitational and rotational terms.
