@@ -586,24 +586,28 @@ function archive_all {
   # Now we'll do the archiving for all files in $archivelist.
   # Determine the archiving method based on machine.
 
-  if   [ $MACHINE == "TITAN"       ]; then
+  if [ $do_storage -eq 1 ]; then
 
-      # For Titan, just loop over every file we're archiving and htar it.
+    if   [ $MACHINE == "TITAN"       ]; then
 
-      for file in $archivelist
-      do
-	  echo $directory/output/$file
-	  archive $directory/output/$file
-      done
+	# For Titan, just loop over every file we're archiving and htar it.
 
-  elif [ $MACHINE == "BLUE_WATERS" ]; then
+	for file in $archivelist
+	do
+	    echo $directory/output/$file
+	    archive $directory/output/$file
+	done
 
-      # For Blue Waters, we're using Globus Online, which has a cap on the number 
-      # of simultaneous transfers a user can have. Therefore our strategy is
-      # to sync the entire output directory of this location rather than 
-      # transferring the files independently.
+    elif [ $MACHINE == "BLUE_WATERS" ]; then
 
-      archive $directory/output/
+	# For Blue Waters, we're using Globus Online, which has a cap on the number 
+	# of simultaneous transfers a user can have. Therefore our strategy is
+	# to sync the entire output directory of this location rather than 
+	# transferring the files independently.
+
+	archive $directory/output/
+
+    fi
 
   fi
 
@@ -845,6 +849,20 @@ function create_job_script {
       # Run the archive script at the end of the simulation.
 
       echo "archive_all ." >> $dir/$job_script
+
+      # Check to make sure we are done, and if not, re-submit the job.
+
+      if [ -z $do_chain ]; then
+
+	echo "" >> $dir/$job_script
+	echo "dir=." >> $dir/$job_script
+	echo "done_flag=\$(is_dir_done)" >> $dir/$job_script
+	echo "if [ \$done_flag -ne 1 ]; then" >> $dir/$job_script
+	echo "  $exec $job_script" >> $dir/$job_script
+	echo "fi" >> $dir/$job_script
+	echo "" >> $dir/$job_script
+
+     fi
 
    elif [ $batch_system == "batch" ]; then
 
@@ -1115,6 +1133,8 @@ job_script="run_script"
 threads_per_task="1"
 
 archive_method="none"
+
+do_storage=1
 
 if [ $MACHINE == "GENERICLINUX" ]; then
 
