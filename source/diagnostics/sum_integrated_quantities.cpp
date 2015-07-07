@@ -360,6 +360,10 @@ Castro::sum_integrated_quantities ()
 
 #endif
 
+    // Compute gravitational wave signal.
+
+    gwstrain(time);
+
 
 
     // Write data out to the log.

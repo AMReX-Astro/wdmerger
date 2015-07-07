@@ -121,7 +121,7 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
                  m_p, m_s)
 
   use bl_constants_module, only: HALF, ZERO, ONE
-  use prob_params_module, only: problo, center
+  use prob_params_module, only: problo
   use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star, roche_rad_P, roche_rad_S
 
   implicit none
@@ -146,7 +146,6 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
   integer          :: i, j, k
   double precision :: x, y, z, r_p, r_s
   double precision :: dV, dm
-  double precision :: vx, vy, vz, rhoInv
 
   ! If the stars have merged, then the Roche radius of the secondary will be zero (or effectively close).
   ! In such a situation, we want to terminate this calculation gracefully. The simplest fix is simply by just returning zero for 
@@ -290,7 +289,6 @@ end subroutine get_star_locations
 ! Set the locations of the stellar centers of mass
 
 subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
-
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, roche_rad_P, roche_rad_S, single_star
   use prob_params_module, only: center
   use bl_constants_module, only: TENTH, ZERO
@@ -334,6 +332,106 @@ subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
   endif
 
 end subroutine set_star_locations
+
+
+
+! Calculate the second time derivative of the quadrupole moment tensor,
+! according to the formula in Equation 6.5 of Blanchet, Damour and Schafer 1990.
+! It involves integrating the mass distribution and then taking the symmetric 
+! trace-free part of the tensor. We can do the latter operation here since the 
+! integral is a linear operator and each part of the domain contributes independently.
+
+subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
+                                        xmom, x_l1, x_l2, x_l3, x_h1, x_h2, x_h3, &
+                                        ymom, y_l1, y_l2, y_l3, y_h1, y_h2, y_h3, &
+                                        zmom, z_l1, z_l2, z_l3, z_h1, z_h2, z_h3, &
+                                        gx,  gx_l1, gx_l2, gx_l3, gx_h1, gx_h2, gx_h3, &
+                                        gy,  gy_l1, gy_l2, gy_l3, gy_h1, gy_h2, gy_h3, &
+                                        gz,  gz_l1, gz_l2, gz_l3, gz_h1, gz_h2, gz_h3, &
+                                        lo, hi, dx, time, &
+                                        Qtt)
+
+  use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
+  use prob_params_module, only: center, problo
+
+  implicit none
+
+  integer         , intent(in   ) :: r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
+  integer         , intent(in   ) :: x_l1, x_l2, x_l3, x_h1, x_h2, x_h3
+  integer         , intent(in   ) :: y_l1, y_l2, y_l3, y_h1, y_h2, y_h3
+  integer         , intent(in   ) :: z_l1, z_l2, z_l3, z_h1, z_h2, z_h3
+  integer         , intent(in   ) :: gx_l1, gx_l2, gx_l3, gx_h1, gx_h2, gx_h3
+  integer         , intent(in   ) :: gy_l1, gy_l2, gy_l3, gy_h1, gy_h2, gy_h3
+  integer         , intent(in   ) :: gz_l1, gz_l2, gz_l3, gz_h1, gz_h2, gz_h3
+
+  double precision, intent(in   ) :: rho(r_l1:r_h1,r_l2:r_h2,r_l3:r_h3)
+  double precision, intent(in   ) :: xmom(x_l1:x_h1,x_l2:x_h2,x_l3:x_h3)
+  double precision, intent(in   ) :: ymom(y_l1:y_h1,y_l2:y_h2,y_l3:y_h3)
+  double precision, intent(in   ) :: zmom(z_l1:z_h1,z_l2:z_h2,z_l3:z_h3)
+  double precision, intent(in   ) :: gx(gx_l1:gx_h1,gx_l2:gx_h2,gx_l3:gx_h3)
+  double precision, intent(in   ) :: gy(gy_l1:gy_h1,gy_l2:gy_h2,gy_l3:gy_h3)
+  double precision, intent(in   ) :: gz(gz_l1:gz_h1,gz_l2:gz_h2,gz_l3:gz_h3)
+  integer         , intent(in   ) :: lo(3), hi(3)
+  double precision, intent(in   ) :: dx(3), time
+  double precision, intent(inout) :: Qtt(3,3)
+
+  integer          :: i, j, k, l, m
+  double precision :: dV
+  double precision :: r(3), vel(3), grav(3), rhoInv
+  double precision :: dQtt(3,3)
+
+  dV = dx(1) * dx(2) * dx(3)
+  dQtt(:,:) = ZERO
+
+  do k = lo(3), hi(3)
+     r(3) = problo(3) + (k + HALF) * dx(3) - center(3)
+     do j = lo(2), hi(2)
+        r(2) = problo(2) + (j + HALF) * dx(2) - center(2)
+        do i = lo(1), hi(1)
+           r(1) = problo(1) + (i + HALF) * dx(1) - center(1)
+
+           ! Only do this calculation if we're in a region that hasn't been
+           ! zeroed out by the finest mask; this will save us from trying to calculate 
+           ! a velocity from the momentum, and also the fine mask doesn't cover the 
+           ! gravitational acceleration so we should just skip those regions altogether.
+
+           if (rho(i,j,k) > ZERO) then
+              rhoInv = ONE / rho(i,j,k)
+
+              vel(1) = xmom(i,j,k) * rhoInv
+              vel(2) = ymom(i,j,k) * rhoInv
+              vel(3) = zmom(i,j,k) * rhoInv
+
+              grav(1) = gx(i,j,k)
+              grav(2) = gy(i,j,k)
+              grav(3) = gz(i,j,k)
+
+              do m = 1, 3
+                 do l = 1, 3
+                    dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * dV * (vel(l) * vel(m) + r(l) * grav(m))
+                 enddo
+              enddo
+
+           endif
+
+        enddo
+     enddo
+  enddo
+
+  ! Now take the symmetric trace-free part of the quadrupole moment.
+  ! The operator is defined in Equation 6.7 of Blanchet et al. (1990):
+  ! STF(A^{ij}) = 1/2 A^{ij} + 1/2 A^{ji} - 1/3 delta^{ij} sum_{k} A^{kk}.
+
+  do l = 1, 3
+     do m = 1, 3
+
+        Qtt(l,m) = Qtt(l,m) + HALF * dQtt(l,m) + HALF * dQtt(m,l)
+        Qtt(l,l) = Qtt(l,l) - THIRD * dQtt(m,m)
+
+     enddo
+  enddo
+
+end subroutine quadrupole_tensor_double_dot
 
 
 
@@ -484,7 +582,27 @@ subroutine setup_scf_relaxation(dx, problo, probhi)
     enddo
 
 end subroutine setup_scf_relaxation
+
+
+
+subroutine get_coeff_info(loc_A,loc_B,loc_C,c_A,c_B,c_C)
+
+  use probdata_module, only: rloc, c
+
+  implicit none
+
+  double precision, intent(inout) :: loc_A(3), loc_B(3), loc_C(3)
+  double precision, intent(inout) :: c_A(2,2,2), c_B(2,2,2), c_C(2,2,2)
   
+  loc_A(:) = rloc(:,1)
+  loc_B(:) = rloc(:,2)
+  loc_C(:) = rloc(:,3)
+
+  c_A(:,:,:) = c(:,:,:,1)
+  c_B(:,:,:) = c(:,:,:,2)
+  c_C(:,:,:) = c(:,:,:,3)
+
+end subroutine get_coeff_info
 
 
 

@@ -18,6 +18,10 @@ void volInBoundary (Real               time,
 		    Real&              vol_s,
                     Real               rho_cutoff);
 
+// Calculate gravitational wave signal.
+
+void gwstrain (Real time);
+
 // Problem post-initialization routine.
 
 void problem_post_init();

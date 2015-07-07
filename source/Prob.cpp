@@ -176,6 +176,127 @@ void Castro::volInBoundary (Real               time,
 
 }
 
+
+
+//
+// Calculate the gravitational wave signal.
+//
+
+void
+Castro::gwstrain (Real time) {
+
+    BL_PROFILE("Castro::gwstrain()");
+    
+    const Real* dx       = geom.CellSize();
+
+    MultiFab*   mfrho    = derive("density",time,0);
+    MultiFab*   mfxmom   = derive("xmom",time,0);
+    MultiFab*   mfymom   = derive("ymom",time,0);
+    MultiFab*   mfzmom   = derive("zmom",time,0);
+
+    BL_ASSERT(mfrho  != 0);
+    BL_ASSERT(mfxmom != 0);
+    BL_ASSERT(mfymom != 0);
+    BL_ASSERT(mfzmom != 0);
+
+    PArray<MultiFab>& grav = gravity->get_grad_phi_curr(level);
+
+    if (level < parent->finestLevel())
+    {
+	const MultiFab* mask = getLevel(level+1).build_fine_mask();
+
+	MultiFab::Multiply(*mfrho,  *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfxmom, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfymom, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
+    }
+
+    // Qtt stores the second time derivative of the quadrupole moment.
+    // We calculate it directly rather than computing the quadrupole moment
+    // and differentiaing it in time, because the latter method is less accurate
+    // and requires the state at other timesteps. See, e.g., Equation 5 of 
+    // Loren-Aguilar et al. 2005.
+
+    // It is a 3x3 rank-2 tensor, but BoxLib expects our boxes to be the same 
+    // dimensionality as the problem, so we add a redundant third index.
+
+    Box bx( IntVect(0, 0, 0), IntVect(2, 2, 0) );
+
+    FArrayBox Qtt(bx);
+
+    // Qtt_STF stores the symmetric trace-free part of the tensor,
+    // which is what we will actually use in the final strain calculation.
+
+    FArrayBox Qtt_STF(bx);
+
+    Qtt.setVal(0.0);
+    Qtt_STF.setVal(0.0);
+
+#ifdef _OPENMP
+    int nthreads = omp_get_max_threads();
+    PArray<FArrayBox> priv_Qtt(nthreads);
+    for (int i=0; i<nthreads; i++) {
+	priv_Qtt.set(i, new FArrayBox(bx));
+    }
+#pragma omp parallel
+#endif
+    {
+#ifdef _OPENMP
+	int tid = omp_get_thread_num();
+	priv_Qtt[tid].setVal(0.0);
+#endif
+	for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi) {
+        
+	    const Box& box  = mfi.tilebox();
+	    const int* lo   = box.loVect();
+	    const int* hi   = box.hiVect();
+
+	    BL_FORT_PROC_CALL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
+	        (BL_TO_FORTRAN((*mfrho)[mfi]),
+		 BL_TO_FORTRAN((*mfxmom)[mfi]),
+		 BL_TO_FORTRAN((*mfymom)[mfi]),
+		 BL_TO_FORTRAN((*mfzmom)[mfi]),
+		 BL_TO_FORTRAN(grav[0][mfi]),
+		 BL_TO_FORTRAN(grav[1][mfi]),
+		 BL_TO_FORTRAN(grav[2][mfi]),
+		 lo,hi,dx,&time,
+#ifdef _OPENMP
+		 priv_Qtt[tid].dataPtr());
+#else
+	         Qtt.dataPtr());
+#endif
+        }
+    }
+
+    delete mfrho;
+    delete mfxmom;
+    delete mfymom;
+    delete mfzmom;
+
+    // Do an OpenMP reduction on the tensor.
+
+#ifdef _OPENMP
+	int n = bx.numPts();
+	Real* p = Qtt.dataPtr();
+#pragma omp barrier
+#pragma omp for nowait
+	for (int i=0; i<n; ++i)
+	{
+	    for (int it=0; it<nthreads; it++) {
+		const Real* pq = priv_Qtt[it].dataPtr();
+		p[i] += pq[i];
+	    }
+	}
+#endif
+
+    // Now, do a global reduce over all processes.
+
+    ParallelDescriptor::ReduceRealSum(Qtt.dataPtr(),bx.numPts());
+
+}
+
+
+
 #ifdef GRAVITY
 #ifdef do_problem_post_init
 
@@ -210,7 +331,30 @@ void Castro::problem_post_init() {
       const int*  domlo = geom.Domain().loVect();
       const int*  domhi = geom.Domain().hiVect();
 
+      MultiFab gcoeff(grids,1,0,Fab_allocate);
+      gcoeff.setVal(0.0);
+
+      Box box_A( IntVect(), IntVect(2, 2, 2) );
+      Box box_B( IntVect(), IntVect(2, 2, 2) );
+      Box box_C( IntVect(), IntVect(2, 2, 2) );
+
+      FArrayBox cA(box_A);
+      FArrayBox cB(box_B);
+      FArrayBox cC(box_C);
+
+      cA.setVal(0.0);
+      cB.setVal(0.0);
+      cC.setVal(0.0);
+
+      int loc_A[3] = {0};
+      int loc_B[3] = {0};
+      int loc_C[3] = {0};
+
       BL_FORT_PROC_CALL(SETUP_SCF_RELAXATION,setup_scf_relaxation)(dx, problo, probhi);
+
+      BL_FORT_PROC_CALL(GET_COEFF_INFO,get_coeff_info)(loc_A, loc_B, loc_C, cA.dataPtr(), cB.dataPtr(), cC.dataPtr());
+
+      std::cout << loc_A[0] << loc_A[1] << loc_A[2] << "\n";
 
       // Get the phi MultiFab.
 
