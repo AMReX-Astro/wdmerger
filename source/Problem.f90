@@ -437,19 +437,21 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h, Qtt, dist)
+subroutine gw_strain_tensor(h, Qtt)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
+  use probdata_module, only: gw_dist
+  use meth_params_module, only: rot_axis
 
   implicit none
 
   double precision, intent(in)    :: Qtt(3,3)
-  double precision, intent(in)    :: dist(3) ! Mpc
   double precision, intent(inout) :: h(3,3)
 
   integer :: i, j, k, l, m
   double precision :: proj(3,3,3,3), delta(3,3), n(3), r
+  double precision :: dist(3)
 
   ! Standard Kronecker delta.
 
@@ -461,6 +463,9 @@ subroutine gw_strain_tensor(h, Qtt, dist)
 
   ! Unit vector for the wave; it is simply the distance 
   ! vector to the observer normalized by the total distance.
+
+  dist(:) = ZERO
+  dist(rot_axis) = gw_dist
 
   r = sqrt(sum(dist**2))
 

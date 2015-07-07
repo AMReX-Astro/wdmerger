@@ -293,20 +293,8 @@ Castro::gwstrain (Real time) {
     FArrayBox h(bx);
     h.setVal(0.0);
 
-    // Distance to the system, in Mpc. This is a 3D vector expressed 
-    // in the same coordinate system as the binary system.
-
-#ifndef ROTATION
-    int rot_axis = 3;
-#endif
-
-    Real dist = 10.0;
-    Real dist_vector[3] = { 0.0 };
-
-    dist_vector[rot_axis-1] = dist; 
-
     BL_FORT_PROC_CALL(GW_STRAIN_TENSOR,gw_strain_tensor)
-        (h.dataPtr(), Qtt.dataPtr(), dist_vector);
+        (h.dataPtr(), Qtt.dataPtr());
 
 }
 
