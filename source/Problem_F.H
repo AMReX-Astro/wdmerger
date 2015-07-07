@@ -35,16 +35,19 @@ BL_FORT_PROC_DECL(GET_STAR_LOCATIONS,get_star_locations)
     Real* mass_p, Real* mass_s);
 
 BL_FORT_PROC_DECL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
-    (BL_FORT_FAB_ARG(rho), 
-     BL_FORT_FAB_ARG(xmom), 
-     BL_FORT_FAB_ARG(ymom), 
-     BL_FORT_FAB_ARG(zmom),
-     BL_FORT_FAB_ARG(gx),
-     BL_FORT_FAB_ARG(gy),
-     BL_FORT_FAB_ARG(gz),
-     const int lo[], const int hi[],
-     const Real dx[], const Real* time,
-     Real* Qtt);
+   (BL_FORT_FAB_ARG(rho), 
+    BL_FORT_FAB_ARG(xmom), 
+    BL_FORT_FAB_ARG(ymom), 
+    BL_FORT_FAB_ARG(zmom),
+    BL_FORT_FAB_ARG(gx),
+    BL_FORT_FAB_ARG(gy),
+    BL_FORT_FAB_ARG(gz),
+    const int lo[], const int hi[],
+    const Real dx[], const Real* time,
+    Real* Qtt);
+
+BL_FORT_PROC_DECL(GW_STRAIN_TENSOR,gw_strain_tensor)
+   (Real* h, Real* Qtt, const Real dist[]);
 
 BL_FORT_PROC_DECL(SETUP_SCF_RELAXATION,setup_scf_relaxation)
    (const Real dx[], const Real problo[], const Real probhi[]);

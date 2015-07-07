@@ -435,6 +435,72 @@ end subroutine quadrupole_tensor_double_dot
 
 
 
+! Given the above quadrupole tensor, calculate the strain tensor.
+
+subroutine gw_strain_tensor(h, Qtt, dist)
+
+  use bl_constants_module, only: ZERO, HALF, ONE, TWO
+  use fundamental_constants_module, only: Gconst, c_light, parsec
+
+  implicit none
+
+  double precision, intent(in)    :: Qtt(3,3)
+  double precision, intent(in)    :: dist(3) ! Mpc
+  double precision, intent(inout) :: h(3,3)
+
+  integer :: i, j, k, l, m
+  double precision :: proj(3,3,3,3), delta(3,3), n(3), r
+
+  ! Standard Kronecker delta.
+
+  delta(:,:) = ZERO
+
+  do i = 1, 3
+     delta(i,i) = ONE
+  enddo
+
+  ! Unit vector for the wave; it is simply the distance 
+  ! vector to the observer normalized by the total distance.
+
+  r = sqrt(sum(dist**2))
+
+  n(:) = dist(:) / r
+
+  ! Projection operator onto the unit vector n.
+
+  do l = 1, 3
+     do k = 1, 3
+        do j = 1, 3
+           do i = 1, 3
+              proj(i,j,k,l) = (delta(i,k) - n(i) * n(k)) * (delta(j,l) - n(j) * n(l)) &
+                            - HALF * (delta(i,j) - n(i) * n(j)) * (delta(k,l) - n(k) * n(l))
+           enddo
+        enddo
+     enddo
+  enddo
+
+  ! Now we can calculate the strain tensor.
+
+  do l = 1, 3
+     do k = 1, 3
+        do j = 1, 3
+           do i = 1, 3
+              h(i,j) = h(i,j) + proj(i,j,k,l) * Qtt(k,l)
+           enddo
+        enddo
+     enddo
+  enddo
+
+  ! Finally multiply by the coefficients.
+
+  r = r * parsec * 1d6 ! Convert from Mpc to cm.
+
+  h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
+
+end subroutine gw_strain_tensor
+
+
+
 ! Given the mass ratio q of two stars (assumed to be q = M_1 / M_2), 
 ! compute the effective Roche radii of the stars, normalized to unity, 
 ! using the approximate formula of Eggleton (1983). We then 

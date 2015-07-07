@@ -224,13 +224,7 @@ Castro::gwstrain (Real time) {
 
     FArrayBox Qtt(bx);
 
-    // Qtt_STF stores the symmetric trace-free part of the tensor,
-    // which is what we will actually use in the final strain calculation.
-
-    FArrayBox Qtt_STF(bx);
-
     Qtt.setVal(0.0);
-    Qtt_STF.setVal(0.0);
 
 #ifdef _OPENMP
     int nthreads = omp_get_max_threads();
@@ -292,6 +286,20 @@ Castro::gwstrain (Real time) {
     // Now, do a global reduce over all processes.
 
     ParallelDescriptor::ReduceRealSum(Qtt.dataPtr(),bx.numPts());
+
+    // Now that we have the second time derivative of the quadrupole 
+    // tensor, we can calculate the transverse-trace gauge strain tensor.
+
+    FArrayBox h(bx);
+    h.setVal(0.0);
+
+    // Distance to the system, in Mpc. This is a 3D vector expressed 
+    // in the same coordinate system as the binary system.
+
+    Real dist[3] = {0.0, 0.0, 10.0}; 
+
+    BL_FORT_PROC_CALL(GW_STRAIN_TENSOR,gw_strain_tensor)
+        (h.dataPtr(), Qtt.dataPtr(), dist);
 
 }
 
