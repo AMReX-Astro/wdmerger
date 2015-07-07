@@ -91,6 +91,9 @@ Castro::sum_integrated_quantities ()
     Real rad_s[7] = { 0.0 };
 
     int single_star;
+
+    Real h_plus = 0.0;
+    Real h_cross = 0.0;
 #endif
 
     std::string name1; 
@@ -362,7 +365,7 @@ Castro::sum_integrated_quantities ()
 
     // Compute gravitational wave signal.
 
-    gwstrain(time);
+    gwstrain(time, h_plus, h_cross);
 
 
 
@@ -427,6 +430,8 @@ Castro::sum_integrated_quantities ()
           grid_log << std::setw(datawidth) << " X COM VEL             ";
           grid_log << std::setw(datawidth) << " Y COM VEL             ";
           grid_log << std::setw(datawidth) << " Z COM VEL             ";
+	  grid_log << std::setw(datawidth) << " h_+                   ";
+	  grid_log << std::setw(datawidth) << " h_x                   ";
 
           grid_log << std::endl;
         }
@@ -473,6 +478,8 @@ Castro::sum_integrated_quantities ()
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
 	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus;
+	grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross;
 
 	grid_log << std::endl;
       }

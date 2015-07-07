@@ -437,17 +437,17 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h, Qtt)
+subroutine gw_strain_tensor(h, h_plus, h_cross, Qtt)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
-  use probdata_module, only: gw_dist
+  use probdata_module, only: gw_dist, star_axis, initial_motion_dir
   use meth_params_module, only: rot_axis
 
   implicit none
 
   double precision, intent(in)    :: Qtt(3,3)
-  double precision, intent(inout) :: h(3,3)
+  double precision, intent(inout) :: h(3,3), h_plus, h_cross
 
   integer :: i, j, k, l, m
   double precision :: proj(3,3,3,3), delta(3,3), n(3), r
@@ -501,6 +501,14 @@ subroutine gw_strain_tensor(h, Qtt)
   r = r * parsec * 1d6 ! Convert from Mpc to cm.
 
   h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
+
+  ! In this coordinate choice, h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}
+  ! if we are looking along the z-axis. In general coordinate 1 is the axis along 
+  ! which the stars were initially located, and coordinate 2 is the axis of
+  ! their initial motion.
+
+  h_plus = h(star_axis,star_axis)
+  h_cross = h(star_axis,initial_motion_dir)
 
 end subroutine gw_strain_tensor
 

@@ -183,7 +183,7 @@ void Castro::volInBoundary (Real               time,
 //
 
 void
-Castro::gwstrain (Real time) {
+Castro::gwstrain (Real time, Real& h_plus, Real& h_cross) {
 
     BL_PROFILE("Castro::gwstrain()");
     
@@ -294,7 +294,7 @@ Castro::gwstrain (Real time) {
     h.setVal(0.0);
 
     BL_FORT_PROC_CALL(GW_STRAIN_TENSOR,gw_strain_tensor)
-        (h.dataPtr(), Qtt.dataPtr());
+        (h.dataPtr(), &h_plus, &h_cross, Qtt.dataPtr());
 
 }
 
