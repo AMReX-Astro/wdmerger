@@ -47,7 +47,11 @@ BL_FORT_PROC_DECL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
     Real* Qtt);
 
 BL_FORT_PROC_DECL(GW_STRAIN_TENSOR,gw_strain_tensor)
-   (Real* h, Real* h_plus, Real* h_cross, Real* Qtt);
+   (Real* h, 
+    Real* h_plus_rot, Real* h_cross_rot, 
+    Real* h_plus_star, Real* h_cross_star,
+    Real* h_plus_motion, Real* h_cross_motion,
+    Real* Qtt);
 
 BL_FORT_PROC_DECL(SETUP_SCF_RELAXATION,setup_scf_relaxation)
    (const Real dx[], const Real problo[], const Real probhi[]);

@@ -112,7 +112,7 @@ module probdata_module
   double precision :: sponge_timescale ! Typical timescale to use in determining sponging strength
 
   ! Distance (in Mpc) used for calculation of the gravitational wave amplitude
-  ! (assumed to be observed from along the rotation axis).
+  ! (this wil be calculated along all three coordinate axes).
   double precision :: gw_dist
 
 contains

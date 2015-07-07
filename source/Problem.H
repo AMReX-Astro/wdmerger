@@ -20,7 +20,9 @@ void volInBoundary (Real               time,
 
 // Calculate gravitational wave signal.
 
-void gwstrain (Real time, Real& h_plus, Real& h_cross);
+void gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
+	       Real& h_plus_star, Real& h_cross_star,
+	       Real& h_plus_motion, Real& h_cross_motion);
 
 // Problem post-initialization routine.
 

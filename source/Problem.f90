@@ -437,7 +437,7 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h, h_plus, h_cross, Qtt)
+subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion, Qtt)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
@@ -447,9 +447,10 @@ subroutine gw_strain_tensor(h, h_plus, h_cross, Qtt)
   implicit none
 
   double precision, intent(in)    :: Qtt(3,3)
-  double precision, intent(inout) :: h(3,3), h_plus, h_cross
+  double precision, intent(inout) :: h(3,3)
+  double precision, intent(inout) :: h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion
 
-  integer :: i, j, k, l, m
+  integer :: i, j, k, l, m, dir
   double precision :: proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
 
@@ -461,54 +462,72 @@ subroutine gw_strain_tensor(h, h_plus, h_cross, Qtt)
      delta(i,i) = ONE
   enddo
 
-  ! Unit vector for the wave; it is simply the distance 
+  ! Unit vector for the wave  is simply the distance 
   ! vector to the observer normalized by the total distance.
+  ! We are going to repeat this process by looking along 
+  ! all three coordinate axes.
 
-  dist(:) = ZERO
-  dist(rot_axis) = gw_dist
+  do dir = 1, 3
 
-  r = sqrt(sum(dist**2))
+     dist(:) = ZERO
+     dist(dir) = gw_dist
 
-  n(:) = dist(:) / r
+     r = sqrt(sum(dist**2))
 
-  ! Projection operator onto the unit vector n.
+     n(:) = dist(:) / r
 
-  do l = 1, 3
-     do k = 1, 3
-        do j = 1, 3
-           do i = 1, 3
-              proj(i,j,k,l) = (delta(i,k) - n(i) * n(k)) * (delta(j,l) - n(j) * n(l)) &
-                            - HALF * (delta(i,j) - n(i) * n(j)) * (delta(k,l) - n(k) * n(l))
+     ! Projection operator onto the unit vector n.
+
+     do l = 1, 3
+        do k = 1, 3
+           do j = 1, 3
+              do i = 1, 3
+                 proj(i,j,k,l) = (delta(i,k) - n(i) * n(k)) * (delta(j,l) - n(j) * n(l)) &
+                               - HALF * (delta(i,j) - n(i) * n(j)) * (delta(k,l) - n(k) * n(l))
+              enddo
            enddo
         enddo
      enddo
-  enddo
 
-  ! Now we can calculate the strain tensor.
+     ! Now we can calculate the strain tensor.
 
-  do l = 1, 3
-     do k = 1, 3
-        do j = 1, 3
-           do i = 1, 3
-              h(i,j) = h(i,j) + proj(i,j,k,l) * Qtt(k,l)
+     do l = 1, 3
+        do k = 1, 3
+           do j = 1, 3
+              do i = 1, 3
+                 h(i,j) = h(i,j) + proj(i,j,k,l) * Qtt(k,l)
+              enddo
            enddo
         enddo
      enddo
+
+     ! Finally multiply by the coefficients.
+
+     r = r * parsec * 1d6 ! Convert from Mpc to cm.
+
+     h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
+
+     ! If rot_axis == 3, then h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}.
+     ! Analogous statements hold along the other axes.
+
+     if (dir .eq. rot_axis) then
+
+        h_plus_rot = h(star_axis,star_axis)
+        h_cross_rot = h(star_axis,initial_motion_dir)
+
+     else if (dir .eq. star_axis) then
+
+        h_plus_star = h(initial_motion_dir,initial_motion_dir)
+        h_cross_star = h(initial_motion_dir,rot_axis)
+
+     else if (dir .eq. initial_motion_dir) then
+
+        h_plus_motion = h(rot_axis,rot_axis)
+        h_cross_motion = h(rot_axis,star_axis)
+
+     endif
+
   enddo
-
-  ! Finally multiply by the coefficients.
-
-  r = r * parsec * 1d6 ! Convert from Mpc to cm.
-
-  h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
-
-  ! In this coordinate choice, h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}
-  ! if we are looking along the z-axis. In general coordinate 1 is the axis along 
-  ! which the stars were initially located, and coordinate 2 is the axis of
-  ! their initial motion.
-
-  h_plus = h(star_axis,star_axis)
-  h_cross = h(star_axis,initial_motion_dir)
 
 end subroutine gw_strain_tensor
 
