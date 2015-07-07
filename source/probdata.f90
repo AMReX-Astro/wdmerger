@@ -111,7 +111,7 @@ module probdata_module
   double precision :: sponge_width     ! Interval over which we should smooth out the sponging (in units of the domain size)
   double precision :: sponge_timescale ! Typical timescale to use in determining sponging strength
 
-  ! Distance (in Mpc) used for calculation of the gravitational wave amplitude
+  ! Distance (in kpc) used for calculation of the gravitational wave amplitude
   ! (this wil be calculated along all three coordinate axes).
   double precision :: gw_dist
 
@@ -272,7 +272,7 @@ contains
     sponge_width     = 0.1
     sponge_timescale = 0.01
 
-    gw_dist = 10.0 ! Mpc
+    gw_dist = 10.0 ! kpc
 
     ! Read namelist to override the defaults
     untin = 9 

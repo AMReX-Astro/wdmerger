@@ -503,7 +503,7 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
 
      ! Finally multiply by the coefficients.
 
-     r = r * parsec * 1d6 ! Convert from Mpc to cm.
+     r = r * parsec * 1d3 ! Convert from kpc to cm.
 
      h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
 
