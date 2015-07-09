@@ -1181,6 +1181,71 @@ we compute the effective radius of each star at various density cutoffs. This in
 computing the volume $V$ of all zones within the Roche radius of the star's center 
 whose density is greater than the cutoff. We then compute $r_{\text{eff}} = (3V/4\pi)^{1/3}.$
 
+A final diagnostic quantity we consider is the gravitational wave emission by the 
+binary system. White dwarfs are not strongly affected by general relativistic effects;
+the orbital motions are much slower than the speed of light, and the relativity parameter 
+$GM / c^2 R$, which measures the ratio of the Schwarzschild radius of a mass $M$ to the actual 
+radius $R$ of the object, is much less than unity for a white dwarf. It is justified to 
+neglect any relativistic effects in computing the dynamical evolution of the system. However,
+the system emits gravitational waves during its evolution; this energy loss is what drives 
+the initial inspiral over very long timescales, and occurs at a greater rate during 
+the coalescence phase, though then being inconsequential on a dynamical timescale. The 
+frequency of the gravitational waves will be similar in size to the frequency of the 
+orbital motion, which is in the range 10-100 mHz for our problem. This is well outside 
+the range of currently existing gravitational wave detectors but is very well suited 
+for proposed space-based detectors such as eLISA.
+
+We follow the prescription of \citet{blanchet:1990}. At distances far from the 
+gravitational wave source, we can consider the leading term in the gravitational 
+wave signal:
+\begin{equation}
+  h^{TT}_{ij}(t,\mathbf{x}) = \frac{2G}{c^4 r}P_{ijkl}(\mathbf{n}) \ddot{Q}_{kl}(t - r/c).
+\end{equation}
+$h$ is the perturbation to the spacetime metric and is commonly called the \textit{strain}; 
+for laser interferometers, it measures the relative change in the distance between mirrors. 
+The ``TT'' superscript indicates that we work in the commonly used tranverse-traceless gauge.
+This strain is measured at time $t$ and position $\mathbf{x}$ relative to the binary system.
+$r\equiv |\mathbf{x}|$ is the distance from the observer to the binary system. The unit vector 
+$\mathbf{n} \equiv \mathbf{x} / r$ then measures the direction of the outgoing wave with 
+respect to the observer, and $P_{ikjl}(\mathbf{n})$ is an operator in the transverse-traceless 
+gauge that projects a tensor onto the direction orthogonal to $\mathbf{n}$. $Q_{kl}$ is the 
+quadrupole moment tensor:
+\begin{equation}
+  Q_{kl} = \int dV \rho \left(x^k x^l - \frac{1}{3}\delta^{kl} \mathbf{x}^2\right).
+\end{equation}
+The argument $(t - r/c)$ indicates that to get the strain at time $t$ we evaluate the second derivative of the 
+quadrupole moment at the retarded time $t - r/c$. In practice we ignore this in calculating this strain,
+instead using the current simulation time, and so this merely yields a time delay of order $r/c$ between 
+when the waves are emitted and when we observe them. 
+
+Therefore the primary component of the calculation is the evaluation of the second time derivative of $Q_{kl}$.
+Explicitly constructing a discretized form of this derivative, using the current state and the state at 
+previous times, is undesirable because of the inherent imprecision (its accuracy depends on the size of the timestep),
+in addition to the logistical challenges that may be implied by saving and using previous simulation states. 
+\citet{blanchet:1990} provide a prescription for this time derivative purely in terms of the state at a given time:
+\begin{equation}
+  \ddot{Q}_{kl} = \text{STF}\left\{2\int dV \rho (v^k v^l + x^k g^l)\right\}.
+\end{equation}
+The symmetric trace-free (STF) operator is defined as:
+\begin{equation}
+  \text{STF}\left\{A^{ij}\right\} = \frac{1}{2}A^{ij} + \frac{1}{2}A^{ji} - \frac{1}{3} \delta^{ij} \sum_{k}A^{kk}.
+\end{equation}
+
+The strategy is then as follows. At the end of the coarse timestep, we first calculate $\ddot{Q}_{kl}$
+using an integral over the domain (using refined grids as usual by masking out the contributions from 
+coarse grids underlying more accurate fine grids). This quantity is independent of the observer. Then, 
+we pick an observing location $\mathbf{x}$ relative to the domain, evaluate the projection operator, 
+and then perform the relevant tensor contraction to determine the strain tensor. We can 
+repeat this process for any number of observing locations at minimal cost, since the quadruple tensor 
+only needs to be calculated once. Now, gravitational waves only excite modes orthogonal to their 
+direction of travel. These are the ``plus'' and ``cross'' modes, $h_+$ and $h_\times$, named after 
+the types of spatial distortions they exhibit. We calculate the signal at a distance $r$ along 
+the $x$, $y$ and $z$ axes. For the latter, as an example, $h_{+} = h_{11} = -h_{22}$ and 
+$h_{\times} = h_{12} = h_{21}$. All other entries vanish. By default we take $r = 10$ kpc; 
+as shown by \citet{loren-aguilar:2005}, this is a typical distance scale over which an 
+experiment such as LISA could detect a coalescing binary white dwarf system. 
+However, the strain at any other distance is easily calculated and goes as the inverse of the distance.
+
 The computational domain has a total size of $1.024 \times 10^{10}\ \text{cm}$ in each 
 spatial dimension, and is centered at the origin. Our coarse grid has $256^3$ zones,
 corresponding to a spatial resolution of 400 km. For the present study, we choose a simple 
@@ -1890,7 +1955,11 @@ these are possible under the framework we have established.
 The authors thank Noel Scudder and Platon Karpov for their help with 
 this project, especially related to visualization of the results. 
 We also thank Adam Jacobs for his advice on and assistance with 
-running on supercomputing resources.
+running on supercomputing resources. Special thanks are given 
+to the organizers of the 2015 Caltech Gravitational Wave 
+Astrophysics School, and their supporters: the NSF 
+under CAREER award PHY-1151197, the Sherman Fairchild 
+Foundation, the LIGO Laboratory at Caltech, and Caltech. 
 
 This research was supported by NSF award AST-1211563. An
 award of computer time was provided by the Innovative and Novel
