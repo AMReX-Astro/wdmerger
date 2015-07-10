@@ -331,7 +331,7 @@ contains
     eos_state % T   = small_temp
     eos_state % xn  = stellar_comp
  
-    call eos(eos_input_rt, eos_state, .false.)
+    call eos(eos_input_rt, eos_state)
 
     small_pres = eos_state % p
     small_ener = eos_state % e
@@ -354,7 +354,7 @@ contains
     ambient_state % T   = stellar_temp
     ambient_state % xn  = stellar_comp
 
-    call eos(eos_input_rt, ambient_state, .false.)
+    call eos(eos_input_rt, ambient_state)
 
   end subroutine get_ambient
 

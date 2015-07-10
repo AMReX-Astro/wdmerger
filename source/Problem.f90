@@ -929,8 +929,6 @@ subroutine update_density(lo,hi,domlo,domhi, &
     double precision :: omega
     double precision :: max_dist
 
-    integer :: pt_index(3)
-
     type (eos_t) :: eos_state, ambient_state
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
@@ -949,10 +947,6 @@ subroutine update_density(lo,hi,domlo,domhi, &
           r(2) = problo(2) + (dble(j) + HALF) * dx(2) - center(2)
           do i = lo(1), hi(1)
              r(1) = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
-
-             pt_index(1) = i
-             pt_index(2) = j
-             pt_index(3) = k
 
              old_rho = state(i,j,k,URHO)
 
@@ -977,9 +971,9 @@ subroutine update_density(lo,hi,domlo,domhi, &
                 eos_state % xn  = state(i,j,k,UFS:UFS+nspec-1) / state(i,j,k,URHO)
                 eos_state % rho = state(i,j,k,URHO) ! Initial guess for the EOS
 
-!                print *, i, j, k, eos_state % T, eos_state % h
+                ! eos_state % loc = (/ i, j, k /)
 
-                call eos(eos_input_th, eos_state, pt_index = pt_index)
+                call eos(eos_input_th, eos_state)
 
              else
 

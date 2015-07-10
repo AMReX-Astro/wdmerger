@@ -59,8 +59,6 @@
      double precision :: loc(3)
      double precision :: dist_P(3), dist_S(3)
 
-     integer :: pt_index(3)
-
      type (eos_t) :: zone_state, ambient_state
 
      integer :: i,j,k,ii,jj,kk,n
@@ -72,14 +70,14 @@
      call get_ambient(ambient_state)
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
-     !$OMP PRIVATE(dist_P, dist_S, zone_state, pt_index)
-     do k = lo(3), hi(3)   
+     !$OMP PRIVATE(dist_P, dist_S, zone_state)
+     do k = lo(3), hi(3)
         loc(3) = xlo(3) + delta(3)*dble(k+HALF-lo(3)) 
 
-        do j = lo(2), hi(2)     
+        do j = lo(2), hi(2)
            loc(2) = xlo(2) + delta(2)*dble(j+HALF-lo(2))
 
-           do i = lo(1), hi(1)   
+           do i = lo(1), hi(1)
               loc(1) = xlo(1) + delta(1)*dble(i+HALF-lo(1))
 
               dist_P = loc - center_P_initial
