@@ -353,7 +353,9 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
-
+  use meth_params_module, only: do_rotation, rot_period
+  use rot_sources_module, only: get_omega, cross_product
+  
   implicit none
 
   integer         , intent(in   ) :: r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
@@ -379,10 +381,17 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
   double precision :: dV
   double precision :: r(3), vel(3), grav(3), rhoInv
   double precision :: dQtt(3,3)
+  double precision :: omega(3)
 
   dV = dx(1) * dx(2) * dx(3)
   dQtt(:,:) = ZERO
 
+  if (do_rotation .eq. 1) then
+     omega = get_omega()
+  else
+     omega = ZERO
+  endif
+  
   do k = lo(3), hi(3)
      r(3) = problo(3) + (k + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
@@ -401,6 +410,10 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
               vel(1) = xmom(i,j,k) * rhoInv
               vel(2) = ymom(i,j,k) * rhoInv
               vel(3) = zmom(i,j,k) * rhoInv
+
+              ! Account for rotation, if there is any.
+              
+              vel = vel + cross_product(omega, r)
 
               grav(1) = gx(i,j,k)
               grav(2) = gy(i,j,k)
@@ -437,23 +450,28 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion, Qtt)
+subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion, Qtt, time)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
   use probdata_module, only: gw_dist, star_axis, initial_motion_dir
-  use meth_params_module, only: rot_axis
+  use meth_params_module, only: rot_axis, do_rotation
+  use rot_sources_module, only: get_omega
 
   implicit none
 
-  double precision, intent(in)    :: Qtt(3,3)
+  double precision, intent(in   ) :: Qtt(3,3)
   double precision, intent(inout) :: h(3,3)
   double precision, intent(inout) :: h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion
-
+  double precision, intent(in   ) :: time
+  
   integer :: i, j, k, l, m, dir
   double precision :: proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
-
+  double precision :: omega(3) = ZERO
+  double precision :: theta = ZERO, rot_matrix(3,3) = ZERO
+  integer :: ax1, ax2, ax3
+  
   ! Standard Kronecker delta.
 
   delta(:,:) = ZERO
@@ -462,7 +480,7 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
      delta(i,i) = ONE
   enddo
 
-  ! Unit vector for the wave  is simply the distance 
+  ! Unit vector for the wave is simply the distance 
   ! vector to the observer normalized by the total distance.
   ! We are going to repeat this process by looking along 
   ! all three coordinate axes.
@@ -507,6 +525,37 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
 
      h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
 
+     ! If we are in a rotating reference frame, then we want
+     ! to rotate this by an amount corresponding to the time
+     ! that has passed since the beginning of the simulation.
+     ! This way it will correspond to an inertial observer
+     ! at large distances. There is some clipping due to material
+     ! that leaves or enters the domain boundaries, but this should
+     ! average out over time, and will be negligible in magnitude.
+
+     ax1 = 1 + MOD(rot_axis    , 3)
+     ax2 = 1 + MOD(rot_axis + 1, 3)
+     ax3 = rot_axis
+        
+     if (do_rotation .eq. 1) then
+        omega = get_omega()
+     endif
+
+     theta = omega(rot_axis) * time
+
+     ! This will reduce to the identity matrix
+     ! if we are not rotating.
+     
+     rot_matrix(ax1,ax1) =  cos(theta)
+     rot_matrix(ax2,ax2) =  cos(theta)
+     rot_matrix(ax3,ax3) =  ONE
+     rot_matrix(ax1,ax2) = -sin(theta)
+     rot_matrix(ax2,ax1) =  sin(theta)
+
+     ! Now apply the rotation matrix.
+
+     h = matmul(rot_matrix, h)
+     
      ! If rot_axis == 3, then h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}.
      ! Analogous statements hold along the other axes.
 

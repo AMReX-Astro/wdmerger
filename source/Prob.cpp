@@ -298,7 +298,7 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
     BL_FORT_PROC_CALL(GW_STRAIN_TENSOR,gw_strain_tensor)
         (h.dataPtr(), &h_plus_rot, &h_cross_rot,
 	 &h_plus_star, &h_cross_star,
-	 &h_plus_motion, &h_plus_motion, Qtt.dataPtr());
+	 &h_plus_motion, &h_plus_motion, Qtt.dataPtr(), &time);
 
 }
 
