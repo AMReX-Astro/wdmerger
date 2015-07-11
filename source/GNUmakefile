@@ -15,7 +15,7 @@ USE_OMP ?= TRUE
 DIM ?= 3
 
 USE_GRAV ?= TRUE
-USE_REACT ?= FALSE
+USE_REACT ?= TRUE
 USE_MODELPARSER ?= TRUE
 USE_ROTATION ?= TRUE
 
@@ -37,11 +37,10 @@ else
 endif
 
 # This sets the EOS directory in $(CASTRO_DIR)/EOS
-EOS_dir     ?= helmeos
+EOS_dir ?= helmholtz
 
 # This sets the network directory in $(NETWORK_HOME)
-Network_dir ?= general_null
-GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/triple_alpha_plus_o.net 
+Network_dir ?= aprox13
 
 # Determine where our source files are coming from
 # based on the relevant file in the source directory.
