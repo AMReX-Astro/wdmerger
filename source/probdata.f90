@@ -446,11 +446,16 @@ contains
                  stellar_temp, stellar_comp, ambient_state)
 
     if (ioproc == 1 .and. init == 1) then
-        print *, ""
-        write (*,1001), mass_P_initial, central_density_P, radius_P_initial
-        1001 format ("Generated initial model for primary WD of mass ", f4.2, &
-                     " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
-        print *, ""
+       
+       ! Set the color to bold green for printing to terminal in this section. See:
+       ! http://stackoverflow.com/questions/6402700/coloured-terminal-output-from-fortran
+       
+       print *, ''//achar(27)//'[1;32m'
+       
+       write (*,1001), mass_P_initial, central_density_P, radius_P_initial
+       1001 format ("Generated initial model for primary WD of mass ", f4.2, &
+                    " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
+       print *, ""
     endif
 
     roche_rad_P = radius_P_initial
@@ -519,7 +524,6 @@ contains
               1003 format ("Generated binary orbit of distance ", ES8.2, " cm = ", ES8.2, " AU.")
               1004 format ("The primary orbits the center of mass at distance ", ES8.2, " cm = ", ES8.2, " AU.")
               1005 format ("The secondary orbits the center of mass at distance ", ES8.2, " cm = ", ES8.2, " AU.")
-              print *, ""
            endif      
 
            ! Direction of initial motion -- it is the position axis
@@ -555,7 +559,12 @@ contains
 
        call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
 
+       
     endif
+
+    ! Reset the terminal color to its previous state.
+    
+    print *, ''//achar(27)//'[0m'
 
     com_P = center_P_initial
     com_S = center_S_initial
