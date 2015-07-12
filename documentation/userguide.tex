@@ -152,14 +152,16 @@
 
 \chapter{Getting Started}
 
-Welcome to the user's guide for the wdmerger software package. This software is designed to
+Welcome to the user's guide for the \texttt{wdmerger} software package. This software is designed to
 simulate binary white dwarf systems, and is intended to provide useful information on the 
 viability of mergers of white dwarfs as a progenitor for Type Ia supernovae. It is a set of 
-source files designed to use the CASTRO code \citep{castro}.
+source files designed for use with the \texttt{CASTRO} code \citep{castro}.
 
 This software requires a few other software packages to be installed before it can be used.
-The science software includes \href{https://ccse.lbl.gov/BoxLib/}{BoxLib} and 
-\href{https://ccse.lbl.gov/Downloads/downloadCASTRO.html}{CASTRO}. This software is written 
+The science software includes \href{http://boxlib-codes.github.io/}{BoxLib} and 
+\href{http://boxlib-codes.github.io/Castro/}{CASTRO}. You should also 
+download the \href{https://github.com/BoxLib-Codes/Microphysics}{Microphysics} repository, 
+which stores the equation of state and nuclear network we will use. This software is written 
 in C++ and Fortran, and compilers for each are needed. The gcc compilers are sufficient.
 In addition, it relies on several utilities that are 
 commonly distributed on Linux systems: \texttt{bash}, \texttt{GNU bc}, \texttt{GNU make}, 
@@ -167,15 +169,16 @@ commonly distributed on Linux systems: \texttt{bash}, \texttt{GNU bc}, \texttt{G
 \href{https://www.python.org/}{python}, with the \href{http://matplotlib.org/}{matplotlib} 
 library and the \href{http://yt-project.org/}{yt} code being used for visualization. 
 If python and yt are not installed on your system, you will still be able to compile and 
-run this code, but you will need some other mechanism for analyzing the BoxLib output data.
+run this code, but you will need some other mechanism for analyzing the \texttt{BoxLib} output data.
 We have some routines for this purpose available in Fortran and may be able to provide them
 upon request.
 
 This software assumes that you have set several environment variables:
 \begin{itemize}
-  \item \texttt{BOXLIB\_HOME}, the location of the BoxLib code's top-level directory
-  \item \texttt{CASTRO\_DIR}, the location of the CASTRO code's top-level directory
+  \item \texttt{BOXLIB\_HOME}, the location of the \texttt{BoxLib} code's top-level directory
+  \item \texttt{CASTRO\_DIR}, the location of the \texttt{CASTRO} code's top-level directory
   \item \texttt{WDMERGER\_HOME}, the location of this software's top-level directory
+  \item \texttt{MICROPHYSICS\_DIR}, the location of the \texttt{Microphysics} code's top-level directory
 \end{itemize}
 
 In addition, you should include in your \texttt{PYTHONPATH} the location of the 
@@ -201,15 +204,15 @@ and a \texttt{README.md} file describing how to get started.
 The \texttt{documentation} directory contains this user's guide and is intended to provide information
 on how to use and run this software.
 
-The \texttt{source} directory contains all of the Fortran routines needed to build a CASTRO 
-executable file. It is not normally built directly, but you can type \texttt{make} in that directory
-to build a vanilla executable with the default settings.
+The \texttt{source} directory contains all of the Fortran routines needed to build a \texttt{CASTRO} 
+executable file. You can type \texttt{make} in this directory to build a vanilla executable 
+with the default settings, though usually we will build the software from a different location.
 
 The \texttt{analysis} directory contains the Python analysis scripts used for analyzing output
-data (both in BoxLib and plaintext format). 
+data (both in \texttt{BoxLib} and plain-text format). 
 
 The \texttt{tests} directory includes problem setups that are used for testing 
-the hydrodynamics code CASTRO and exercises a wide range of its capabilities.
+the hydrodynamics code \texttt{CASTRO} and exercises a wide range of its capabilities.
 
 The \texttt{job\_scripts} directory contains utilities that are used for running
 problem setups on various machine architectures.
@@ -224,7 +227,7 @@ that are being submitted as a result of this project.
 This chapter describes the setup of the white dwarf merger problem. It includes descriptions of 
 the physics involved, the code options and runtime parameters, the diagnostic output 
 and other I/O information, and the analysis routines. A full description of the physics 
-and the associated numerical algorithms is included in the CASTRO code paper \cite{castro}.
+and the associated numerical algorithms is included in the \texttt{CASTRO} code paper \cite{castro}.
 
 \section{Physical Description}
 
@@ -235,7 +238,7 @@ for arbitrary degeneracy and relativity levels by the Helmholtz equation of stat
 It includes ideal gas contributions from the ions, a simple blackbody recipe for the contribution from 
 the radiation field, and optionally Coulomb corrections. 
 
-CASTRO includes full self-gravity with the Poisson equation, as well as the ability to perform a
+\texttt{CASTRO} includes full self-gravity with the Poisson equation, as well as the ability to perform a
 simulation in a rotating reference frame with fixed rotation period. By default the $z$ axis will 
 be the rotation axis, with the stars initially aligned along the $x$ axis. We select the 
 orbital period of the system, and the masses of the \textit{primary} (more massive) and 
@@ -249,17 +252,20 @@ start all zones in the domain with a velocity corresponding to the equivalent ro
 reference frame velocity. This means that the stars will be synchronously rotating (though we
 may relax this assumption in future work).
 
-At present nuclear reactions are not enabled, but they will be soon.
+For the nuclear network we use the \texttt{aprox13} network provided by Frank Timmes, which 
+we have ported for use in the \texttt{Microphysics} repository. It is an alpha-chain network 
+with isotopes ranging from ${}^4$He to ${}^{56}$Ni.
 
 \section{Runtime Parameters}
 
-There are a few CASTRO input parameters that you will typically want to control when running problems. 
-Among the most major is whether we are doing rotation (\texttt{castro.do\_rotation}) and if so, 
-what the rotational period is (\texttt{castro.rotational\_period}). You'll also want to change the 
-\texttt{stop\_time}, which is when the simulation will terminate. You should also avoid flooding 
-yourself with plotfiles and checkpoints by setting \texttt{amr.plot\_files\_output} and 
+There are a few \texttt{CASTRO} input parameters that you will typically want to control when running problems. 
+Among the most important is whether we are doing rotation (\texttt{castro.do\_rotation}) and if so, 
+what the rotational period is (\texttt{castro.rotational\_period}). (Note that the rotational period 
+is used to set the orbital properties even if we're not rotating, so you should always set this appropriately.)
+You'll also want to change the \texttt{stop\_time}, which is when the simulation will terminate. 
+You should also avoid flooding yourself with plotfiles and checkpoints by setting \texttt{amr.plot\_files\_output} and 
 \texttt{amr.checkpoint\_files\_output}, respectively; these are the simulation time differences
-between successive plotfiles and checkpoints. Note that CASTRO does not adjust the timestep 
+between successive plotfiles and checkpoints. Note that \texttt{CASTRO} does not adjust the timestep 
 to meet this criterion, so it will generate these at the first timestep that passes this interval.
 
 The \texttt{wdmerger} parameters of interest are all controlled through the \texttt{probin} file. 
@@ -267,15 +273,21 @@ These control the layout of the stars on the grid, the tagging options for refin
 A \texttt{probin} file is composed of three Fortran namelists; a namelist is enclosed in 
 \texttt{\&namelist ... /}. The \texttt{fortin} namelist controls the main system parameters. 
 In the following list we describe the parameters; you can see their current defaults by 
-examining \texttt{source/probin}.
+examining \texttt{source/probin}. (Some parameters in there are currently beta quality and 
+not recommended for use, and for a couple others there will be no practical reason to change. 
+Stick to the ones in this list for now.)
 \begin{itemize}
   \item \texttt{mass\_P}: mass of the primary white dwarf, in solar masses (real)
   \item \texttt{mass\_S}: mass of the secondary white dwarf, in solar masses (real; if less than zero, 
     then no secondary star will be generated, and the primary star will be loaded onto the grid at the 
     center of the domain)
+  \item \texttt{central\_density\_P}: alternatively, we can specify the central density of the primary white dwarf instead of the mass (real)
+  \item \texttt{central\_density\_S}: alternatively, we can specify the central density of the secondary white dwarf instead of the mass (real)
   \item \texttt{nsub}: number of sub-intervals to divide a zone into when interpolating from the initial model (integer)
   \item \texttt{orbital\_kick}: whether or not to kick the stars with an orbital velocity corresponding to their 
     Keplerian rotation rate (logical; this only makes sense in the inertial reference frame with \texttt{castro.do\_rotation = 0})
+  \item \texttt{collision}: whether to set the stars moving towards each other at free-fall speed for a collision (logical)
+  \item \texttt{collision\_separation}: if we're doing a collision, number of WD radii to set the stars apart from each other initially (real)
   \item \texttt{damping}: whether or not to exert a constant damping force on the orbit (logical)
   \item \texttt{damping\_alpha}: strength of damping force (real)
   \item \texttt{bulk\_velx}: uniform velocity to give to all gas in the domain in the $x$-direction (real)
@@ -283,16 +295,22 @@ examining \texttt{source/probin}.
   \item \texttt{bulk\_velz}: uniform velocity to give to all gas in the domain in the $z$-direction (real)
   \item \texttt{interp\_temp}: whether or not to take temperature as given when interpolating from our initial model (logical;
     if false, we will interpolate based on pressure)
+  \item \texttt{ambient\_density}: density of the rarefied ambient medium outside the stars (real)
+  \item \texttt{stellar\_temp}: initial temperature of the stars (and also ambient medium) (real)
+  \item \texttt{stellar\_C12, stellar\_O16}: mass fractions of ${}^{12}$C and ${}^{16}$O in the stars (real)
+  \item \texttt{star\_axis}: what coordinate axis the stars will be lined up along initially (integer; $x$ = 1, $y$ = 2, $z$ = 3)
   \item \texttt{maxTaggingRadius}: fractional size of the domain outside of which we won't perform any refinement (real)
   \item \texttt{sponge\_dist}: we can apply a sponge that damps the velocities starting at this fraction multiplied by the 
     distance from the center to the domain boundary (real)
   \item \texttt{sponge\_width}: smoothing width of the sponge; the sponge is fully applied at {\tt sponge\_dist} + {\tt sponge\_width},
     in the same coordinates (real)
   \item \texttt{sponge\_timescale}: the sponge decreases the velocity by a factor $1 / (1 + (\Delta t / t_s)$, where 
-    $t_s$ is the {\tt sponge\_timescale} in seconds (real)    
+    $t_s$ is the {\tt sponge\_timescale} in seconds (real)
+  \item \texttt{gw\_dist}: for the gravitational wave signals we calculate, this is the distance in kiloparsecs from the observer to the binary system (real)
+  \item \texttt{fill\_ambient\_bc}: whether we should set ghost cells on the domain boundary to have the ambient state properties (logical)
 \end{itemize}
 
-The \texttt{tagging} namelist is described in the AMR chapter of the CASTRO user's guide. At present, we 
+The \texttt{tagging} namelist is described in the AMR chapter of the \texttt{CASTRO} user's guide. At present, we 
 only tag based on absolute values of the density and temperature.
 
 The \texttt{extern} namelist contains parameters that are used by the microphysics modules. In particular, 
@@ -320,7 +338,7 @@ with the default settings, then your makefile needs only to have the line:
 \end{lstlisting}%$
 This includes the main makefile from the \texttt{source/} directory in \texttt{wdmerger}. 
 The main makefile sets all of our build options (compiler, number of space dimensions, 
-equation of state, etc.) and then includes the CASTRO makefile, which then runs as normal.
+equation of state, etc.) and then includes the \texttt{CASTRO} makefile, which then runs as normal.
 If you want to adjust the build options, then simply add a line before this include. As an 
 example, if you want to build using a gamma-law equation of state, set:
 \begin{lstlisting}
@@ -369,9 +387,9 @@ That is all you need to submit a job. Return to the terminal, and type \texttt{b
 and your job will execute. The helper function \texttt{run} does several things. First, 
 it creates the directory named \texttt{\$dir}. Then, it copies into \texttt{\$dir} the \texttt{inputs}
 and \texttt{probin} files from the root \texttt{wdmerger} source directory; these are the runtime
-files CASTRO needs to determine what your problem setup will be. They contain the default 
+files \texttt{CASTRO} needs to determine what your problem setup will be. They contain the default 
 parameters for merger runs. It also copies any auxiliary files one might need, like the 
-table for the equation of state, as well as the actual CASTRO executable you just built in the 
+table for the equation of state, as well as the actual \texttt{CASTRO} executable you just built in the 
 \texttt{compile/} directory. Finally, it builds a script that you'll use for actually submitting 
 the job to the batch submission system on the machine you're on, and then submits that job. 
 Thus for a typical setup, your run directory will contain the following files when you submit:
@@ -439,7 +457,7 @@ by default, so we include this in every build.
 \chapter{Test Problems}
 
 The \texttt{tests} directory contains a number of example problems that we use
-to assess the reliability of CASTRO in performing hydrodynamics simulations 
+to assess the reliability of \texttt{CASTRO} in performing hydrodynamics simulations 
 with self-gravity. This section includes a list of the existing problems 
 as well as the instructions for building and running a problem.
 
@@ -602,7 +620,7 @@ This project was started as the Ph.D. dissertation project for Max Katz at Stony
 Michael Zingale is Max's primary thesis advisor. Correspondence and requests for information 
 about this software should be directed to them; their e-mail addresses are maximilian.katz@stonybrook.edu
 and michael.zingale@stonybrook.edu, respectively. Alan Calder and Doug Swesty at Stony Brook are 
-also co-investigators on this project. The CASTRO code was developed primarily at the 
+also co-investigators on this project. The \texttt{CASTRO} code was developed primarily at the 
 Lawrence Berkeley National Laboratory. Staff there that have contributed directly and 
 indirectly to this project include Ann Almgren, John Bell, Weiqun Zhang, Andy Nonaka, and Vince Beckner.
 
