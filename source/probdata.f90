@@ -372,7 +372,7 @@ contains
   subroutine binary_setup
 
     use bl_constants_module, only: ZERO, ONE
-    use fundamental_constants_module, only: M_solar
+    use fundamental_constants_module, only: M_solar, AU
     use meth_params_module, only: do_rotation, rot_period
     use initial_model_module, only: init_1d
     use prob_params_module, only: center, problo, probhi
@@ -446,8 +446,11 @@ contains
                  stellar_temp, stellar_comp, ambient_state)
 
     if (ioproc == 1 .and. init == 1) then
-        print *, "Generated initial model for primary WD of mass", mass_P_initial, &
-                 ", central density", central_density_P, ", and radius", radius_P_initial
+        print *, ""
+        write (*,1001), mass_P_initial, central_density_P, radius_P_initial
+        1001 format ("Generated initial model for primary WD of mass ", f4.2, &
+                     " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
+        print *, ""
     endif
 
     roche_rad_P = radius_P_initial
@@ -460,8 +463,10 @@ contains
                     stellar_temp, stellar_comp, ambient_state)
 
        if (ioproc == 1 .and. init == 1) then
-          print *, "Generated initial model for secondary WD of mass", mass_S_initial, &
-                   ", central density", central_density_S, ", and radius", radius_S_initial
+          write (*,1002) mass_S_initial, central_density_S, radius_S_initial
+          1002 format ("Generated initial model for secondary WD of mass ", f4.2, &
+                       " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
+          print *, ""
        endif
 
        roche_rad_S = radius_S_initial
@@ -508,8 +513,13 @@ contains
            endif
 
            if (ioproc == 1 .and. init == 1) then
-              print *, "Generated binary orbit of distance ", a, &
-                       ", primary distance ", a_P_initial, ", and secondary distance", a_S_initial
+              write (*,1003) a, a / AU
+              write (*,1004) a_P_initial, a_P_initial / AU
+              write (*,1005) a_S_initial, a_S_initial / AU
+              1003 format ("Generated binary orbit of distance ", ES8.2, " cm = ", ES8.2, " AU.")
+              1004 format ("The primary orbits the center of mass at distance ", ES8.2, " cm = ", ES8.2, " AU.")
+              1005 format ("The secondary orbits the center of mass at distance ", ES8.2, " cm = ", ES8.2, " AU.")
+              print *, ""
            endif      
 
            ! Direction of initial motion -- it is the position axis
