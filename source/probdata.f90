@@ -73,6 +73,10 @@ module probdata_module
   ! Are we doing a single star simulation?
   logical :: single_star
 
+  ! Should we override the domain boundary conditions with
+  ! ambient material?
+  logical :: fill_ambient_bc
+  
   ! Resolution of 1D initial model
   double precision :: initial_model_dx
   integer          :: initial_model_npts
@@ -197,7 +201,8 @@ contains
          initial_model_mass_tol, &
          initial_model_hse_tol, &
          sponge_dist, sponge_width, sponge_timescale, &
-         gw_dist
+         gw_dist, &
+         fill_ambient_bc
 
     maxTaggingRadius = 0.75d0
 
@@ -274,6 +279,8 @@ contains
 
     gw_dist = 10.0 ! kpc
 
+    fill_ambient_bc = .false.
+    
     ! Read namelist to override the defaults
     untin = 9 
     open(untin,file=probin,form='formatted',status='old')

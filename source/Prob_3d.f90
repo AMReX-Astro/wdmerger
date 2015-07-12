@@ -209,255 +209,259 @@
                    domlo,domhi,delta,xlo,bc(1,1,n))
      enddo
 
-     ! override the generic routine at the physical boundaries by
+     ! Override the generic routine at the physical boundaries by
      ! setting the material to the ambient state
 
-     ! -x
-     if (adv_l1 < domlo(1) .and. bc(1,1,1) .ne. 0) then
-        do k = adv_l3, adv_h3
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, domlo(1)-1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+     if (fill_ambient_bc) then
 
-                 adv(i,j,k,URHO) = ambient_state % rho
-                 adv(i,j,k,UTEMP) = ambient_state % T
-                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)
+        ! -x
+        if (adv_l1 < domlo(1) .and. bc(1,1,1) .ne. 0) then
+           do k = adv_l3, adv_h3
+              do j = adv_l2, adv_h2
+                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
+                 do i = adv_l1, domlo(1)-1
+                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 if ( orbital_kick ) then
+                    adv(i,j,k,URHO) = ambient_state % rho
+                    adv(i,j,k,UTEMP) = ambient_state % T
+                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)
 
-                   vx = (-2.0d0 * M_PI / rot_period) * yy
-                   vy = ( 2.0d0 * M_PI / rot_period) * xx
-                   vz = ZERO
+                    if ( orbital_kick ) then
 
-                 else
+                      vx = (-2.0d0 * M_PI / rot_period) * yy
+                      vy = ( 2.0d0 * M_PI / rot_period) * xx
+                      vz = ZERO
 
-                   vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                   vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                   vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
- 
-                 endif
+                    else
 
-                 adv(i,j,k,UMX) = ambient_state % rho*vx
-                 adv(i,j,k,UMY) = ambient_state % rho*vy
-                 adv(i,j,k,UMZ) = ambient_state % rho*vz
+                      vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
+                      vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
+                      vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
 
-                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/ambient_state % rho
+                    endif
 
+                    adv(i,j,k,UMX) = ambient_state % rho*vx
+                    adv(i,j,k,UMY) = ambient_state % rho*vy
+                    adv(i,j,k,UMZ) = ambient_state % rho*vz
+
+                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
+                         HALF*(adv(i,j,k,UMX)**2 + &
+                               adv(i,j,k,UMY)**2 + &
+                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+
+                 enddo
               enddo
            enddo
-        enddo
-     endif
+        endif
 
-     ! +x
-     if (adv_h1 > domhi(1) .and. bc(1,2,1) .ne. 0) then
-        do k = adv_l3, adv_h3
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = domhi(1)+1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+        ! +x
+        if (adv_h1 > domhi(1) .and. bc(1,2,1) .ne. 0) then
+           do k = adv_l3, adv_h3
+              do j = adv_l2, adv_h2
+                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
+                 do i = domhi(1)+1, adv_h1
+                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = ambient_state % rho
-                 adv(i,j,k,UTEMP) = ambient_state % T
-                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
+                    adv(i,j,k,URHO) = ambient_state % rho
+                    adv(i,j,k,UTEMP) = ambient_state % T
+                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( orbital_kick ) then
+                    if ( orbital_kick ) then
 
-                   vx = (-2.0d0 * M_PI / rot_period) * yy
-                   vy = ( 2.0d0 * M_PI / rot_period) * xx
-                   vz = ZERO
+                      vx = (-2.0d0 * M_PI / rot_period) * yy
+                      vy = ( 2.0d0 * M_PI / rot_period) * xx
+                      vz = ZERO
 
-                 else
+                    else
 
-                   vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
-                   vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
-                   vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
- 
-                 endif
+                      vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
+                      vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
+                      vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
 
-                 adv(i,j,k,UMX) = ambient_state % rho*vx
-                 adv(i,j,k,UMY) = ambient_state % rho*vy
-                 adv(i,j,k,UMZ) = ambient_state % rho*vz
+                    endif
 
-                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/ambient_state % rho
+                    adv(i,j,k,UMX) = ambient_state % rho*vx
+                    adv(i,j,k,UMY) = ambient_state % rho*vy
+                    adv(i,j,k,UMZ) = ambient_state % rho*vz
 
+                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
+                         HALF*(adv(i,j,k,UMX)**2 + &
+                               adv(i,j,k,UMY)**2 + &
+                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+
+                 enddo
               enddo
            enddo
-        enddo
-     endif
+        endif
 
-     ! -y
-     if (adv_l2 < domlo(2) .and. bc(2,1,1) .ne. 0) then
-        do k = adv_l3, adv_h3
-           do j = adv_l2, domlo(2)-1
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+        ! -y
+        if (adv_l2 < domlo(2) .and. bc(2,1,1) .ne. 0) then
+           do k = adv_l3, adv_h3
+              do j = adv_l2, domlo(2)-1
+                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
+                 do i = adv_l1, adv_h1
+                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = ambient_state % rho
-                 adv(i,j,k,UTEMP) = ambient_state % T
-                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
+                    adv(i,j,k,URHO) = ambient_state % rho
+                    adv(i,j,k,UTEMP) = ambient_state % T
+                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( orbital_kick ) then
+                    if ( orbital_kick ) then
 
-                   vx = (-2.0d0 * M_PI / rot_period) * yy
-                   vy = ( 2.0d0 * M_PI / rot_period) * xx
-                   vz = ZERO
+                      vx = (-2.0d0 * M_PI / rot_period) * yy
+                      vy = ( 2.0d0 * M_PI / rot_period) * xx
+                      vz = ZERO
 
-                 else
+                    else
 
-                   vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
-                   vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
-                   vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
- 
-                 endif
+                      vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
+                      vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
+                      vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
 
-                 adv(i,j,k,UMX) = ambient_state % rho*vx
-                 adv(i,j,k,UMY) = ambient_state % rho*vy
-                 adv(i,j,k,UMZ) = ambient_state % rho*vz
+                    endif
 
-                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/ambient_state % rho
+                    adv(i,j,k,UMX) = ambient_state % rho*vx
+                    adv(i,j,k,UMY) = ambient_state % rho*vy
+                    adv(i,j,k,UMZ) = ambient_state % rho*vz
 
+                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
+                         HALF*(adv(i,j,k,UMX)**2 + &
+                               adv(i,j,k,UMY)**2 + &
+                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+
+                 enddo
               enddo
            enddo
-        enddo
-     endif
+        endif
 
-     ! +y
-     if (adv_h2 > domhi(2) .and. bc(2,2,1) .ne. 0) then
-        do k = adv_l3, adv_h3
-           do j = domhi(2)+1, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+        ! +y
+        if (adv_h2 > domhi(2) .and. bc(2,2,1) .ne. 0) then
+           do k = adv_l3, adv_h3
+              do j = domhi(2)+1, adv_h2
+                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
+                 do i = adv_l1, adv_h1
+                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = ambient_state % rho
-                 adv(i,j,k,UTEMP) = ambient_state % T
-                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
+                    adv(i,j,k,URHO) = ambient_state % rho
+                    adv(i,j,k,UTEMP) = ambient_state % T
+                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( orbital_kick ) then
+                    if ( orbital_kick ) then
 
-                   vx = (-2.0d0 * M_PI / rot_period) * yy
-                   vy = ( 2.0d0 * M_PI / rot_period) * xx
-                   vz = ZERO
+                      vx = (-2.0d0 * M_PI / rot_period) * yy
+                      vy = ( 2.0d0 * M_PI / rot_period) * xx
+                      vz = ZERO
 
-                 else
+                    else
 
-                   vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
-                   vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
-                   vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
- 
-                 endif
+                      vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
+                      vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
+                      vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
 
-                 adv(i,j,k,UMX) = ambient_state % rho*vx
-                 adv(i,j,k,UMY) = ambient_state % rho*vy
-                 adv(i,j,k,UMZ) = ambient_state % rho*vz
+                    endif
 
-                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/ambient_state % rho
+                    adv(i,j,k,UMX) = ambient_state % rho*vx
+                    adv(i,j,k,UMY) = ambient_state % rho*vy
+                    adv(i,j,k,UMZ) = ambient_state % rho*vz
 
+                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
+                         HALF*(adv(i,j,k,UMX)**2 + &
+                               adv(i,j,k,UMY)**2 + &
+                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+
+                 enddo
               enddo
            enddo
-        enddo
-     endif
+        endif
 
-     ! -z
-     if (adv_l3 < domlo(3) .and. bc(3,1,1) .ne. 0) then
-        do k = adv_l3, domlo(3)-1
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+        ! -z
+        if (adv_l3 < domlo(3) .and. bc(3,1,1) .ne. 0) then
+           do k = adv_l3, domlo(3)-1
+              do j = adv_l2, adv_h2
+                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
+                 do i = adv_l1, adv_h1
+                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = ambient_state % rho
-                 adv(i,j,k,UTEMP) = ambient_state % T
-                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
+                    adv(i,j,k,URHO) = ambient_state % rho
+                    adv(i,j,k,UTEMP) = ambient_state % T
+                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( orbital_kick ) then
+                    if ( orbital_kick ) then
 
-                   vx = (-2.0d0 * M_PI / rot_period) * yy
-                   vy = ( 2.0d0 * M_PI / rot_period) * xx
-                   vz = ZERO
+                      vx = (-2.0d0 * M_PI / rot_period) * yy
+                      vy = ( 2.0d0 * M_PI / rot_period) * xx
+                      vz = ZERO
 
-                 else
+                    else
 
-                   vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
-                   vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
-                   vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
- 
-                 endif
+                      vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
+                      vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
+                      vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
 
-                 adv(i,j,k,UMX) = ambient_state % rho*vx
-                 adv(i,j,k,UMY) = ambient_state % rho*vy
-                 adv(i,j,k,UMZ) = ambient_state % rho*vz
+                    endif
 
-                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/ambient_state % rho
+                    adv(i,j,k,UMX) = ambient_state % rho*vx
+                    adv(i,j,k,UMY) = ambient_state % rho*vy
+                    adv(i,j,k,UMZ) = ambient_state % rho*vz
 
+                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
+                         HALF*(adv(i,j,k,UMX)**2 + &
+                               adv(i,j,k,UMY)**2 + &
+                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+
+                 enddo
               enddo
            enddo
-        enddo
-     endif
+        endif
 
-     ! +z
-     if (adv_h3 > domhi(3) .and. bc(3,2,1) .ne. 0) then
-        do k = domhi(3)+1, adv_h3
-           do j = adv_l2, adv_h2
-              yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-              do i = adv_l1, adv_h1
-                 xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+        ! +z
+        if (adv_h3 > domhi(3) .and. bc(3,2,1) .ne. 0) then
+           do k = domhi(3)+1, adv_h3
+              do j = adv_l2, adv_h2
+                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
+                 do i = adv_l1, adv_h1
+                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
 
-                 adv(i,j,k,URHO) = ambient_state % rho
-                 adv(i,j,k,UTEMP) = ambient_state % T
-                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
+                    adv(i,j,k,URHO) = ambient_state % rho
+                    adv(i,j,k,UTEMP) = ambient_state % T
+                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                 if ( orbital_kick ) then
+                    if ( orbital_kick ) then
 
-                   vx = (-2.0d0 * M_PI / rot_period) * yy
-                   vy = ( 2.0d0 * M_PI / rot_period) * xx
-                   vz = ZERO
+                      vx = (-2.0d0 * M_PI / rot_period) * yy
+                      vy = ( 2.0d0 * M_PI / rot_period) * xx
+                      vz = ZERO
 
-                 else
+                    else
 
-                   vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
-                   vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
-                   vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
- 
-                 endif
+                      vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
+                      vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
+                      vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
 
-                 adv(i,j,k,UMX) = ambient_state % rho*vx
-                 adv(i,j,k,UMY) = ambient_state % rho*vy
-                 adv(i,j,k,UMZ) = ambient_state % rho*vz
+                    endif
 
-                 adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                 adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                      HALF*(adv(i,j,k,UMX)**2 + &
-                            adv(i,j,k,UMY)**2 + &
-                            adv(i,j,k,UMZ)**2)/ambient_state % rho
+                    adv(i,j,k,UMX) = ambient_state % rho*vx
+                    adv(i,j,k,UMY) = ambient_state % rho*vy
+                    adv(i,j,k,UMZ) = ambient_state % rho*vz
 
+                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
+                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
+                         HALF*(adv(i,j,k,UMX)**2 + &
+                               adv(i,j,k,UMY)**2 + &
+                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+
+                 enddo
               enddo
            enddo
-        enddo
-     endif
+        endif
 
+     endif
+        
    end subroutine ca_hypfill
 
    ! ::: -----------------------------------------------------------
