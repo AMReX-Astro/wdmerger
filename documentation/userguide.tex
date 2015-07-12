@@ -4,6 +4,7 @@
 
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{bm}
 
 \usepackage{epsfig}
 
@@ -70,6 +71,8 @@
 \setlength{\cftbeforechapskip}{2ex}
 \setlength{\cftbeforesecskip}{0.25ex}
 
+
+
 % don't put a header on blank pages, see
 % http://www.latex-community.org/forum/viewtopic.php?f=4&p=51559
 % change ``plain'' to ``empty'' to eliminate the page number
@@ -116,6 +119,67 @@
 
 %------------------------------------------------------------------------------
 \begin{document}
+
+% For interpreting the journal names in the bibilography; this is copied and 
+% amended from emulateapj.cls.
+
+\newcommand\aj{AJ}%        % Astronomical Journal 
+\newcommand\araa{ARA\&A}%  % Annual Review of Astron and Astrophys 
+\newcommand\apj{ApJ}%    % Astrophysical Journal 
+\newcommand\apjl{ApJ}%     % Astrophysical Journal, Letters 
+\newcommand\apjs{ApJS}%    % Astrophysical Journal, Supplement 
+\newcommand\ao{Appl.~Opt.}%   % Applied Optics 
+\newcommand\apss{Ap\&SS}%  % Astrophysics and Space Science 
+\newcommand\aap{A\&A}%     % Astronomy and Astrophysics 
+\newcommand\aapr{A\&A~Rev.}%  % Astronomy and Astrophysics Reviews 
+\newcommand\aaps{A\&AS}%    % Astronomy and Astrophysics, Supplement 
+\newcommand\azh{AZh}%       % Astronomicheskii Zhurnal 
+\newcommand\baas{BAAS}%     % Bulletin of the AAS 
+\newcommand\icarus{Icarus}% % Icarus
+\newcommand\jrasc{JRASC}%   % Journal of the RAS of Canada 
+\newcommand\memras{MmRAS}%  % Memoirs of the RAS 
+\newcommand\mnras{MNRAS}%   % Monthly Notices of the RAS 
+\newcommand\pra{Phys.~Rev.~A}% % Physical Review A: General Physics 
+\newcommand\prb{Phys.~Rev.~B}% % Physical Review B: Solid State 
+\newcommand\prc{Phys.~Rev.~C}% % Physical Review C 
+\newcommand\prd{Phys.~Rev.~D}% % Physical Review D 
+\newcommand\pre{Phys.~Rev.~E}% % Physical Review E 
+\newcommand\prl{Phys.~Rev.~Lett.}% % Physical Review Letters 
+\newcommand\pasp{PASP}%     % Publications of the ASP 
+\newcommand\pasj{PASJ}%     % Publications of the ASJ 
+\newcommand\qjras{QJRAS}%   % Quarterly Journal of the RAS 
+\newcommand\skytel{S\&T}%   % Sky and Telescope 
+\newcommand\solphys{Sol.~Phys.}% % Solar Physics 
+\newcommand\sovast{Soviet~Ast.}% % Soviet Astronomy 
+\newcommand\ssr{Space~Sci.~Rev.}% % Space Science Reviews 
+\newcommand\zap{ZAp}%       % Zeitschrift fuer Astrophysik 
+\newcommand\nat{Nature}%  % Nature 
+\newcommand\iaucirc{IAU~Circ.}% % IAU Cirulars 
+\newcommand\aplett{Astrophys.~Lett.}%  % Astrophysics Letters 
+\newcommand\apspr{Astrophys.~Space~Phys.~Res.}% % Astrophysics Space Physics Research 
+\newcommand\bain{Bull.~Astron.~Inst.~Netherlands}% % Bulletin Astronomical Institute of the Netherlands 
+\newcommand\fcp{Fund.~Cosmic~Phys.}%   % Fundamental Cosmic Physics 
+\newcommand\gca{Geochim.~Cosmochim.~Acta}% % Geochimica Cosmochimica Acta 
+\newcommand\grl{Geophys.~Res.~Lett.}%  % Geophysics Research Letters 
+\newcommand\jcp{J.~Chem.~Phys.}%     % Journal of Chemical Physics 
+\newcommand\jgr{J.~Geophys.~Res.}%     % Journal of Geophysics Research 
+\newcommand\jqsrt{J.~Quant.~Spec.~Radiat.~Transf.}%   % Journal of Quantitiative Spectroscopy and Radiative Trasfer 
+\newcommand\memsai{Mem.~Soc.~Astron.~Italiana}% % Mem. Societa Astronomica Italiana 
+\newcommand\nphysa{Nucl.~Phys.~A}%     % Nuclear Physics A 
+\newcommand\physrep{Phys.~Rep.}%       % Physics Reports 
+\newcommand\physscr{Phys.~Scr}%        % Physica Scripta 
+\newcommand\planss{Planet.~Space~Sci.}%  % Planetary Space Science 
+\newcommand\procspie{Proc.~SPIE}%      % Proceedings of the SPIE 
+
+\newcommand\actaa{Acta Astron.}%  % Acta Astronomica
+\newcommand\caa{Chinese Astron. Astrophys.}%  % Chinese Astronomy and Astrophysics
+\newcommand\cjaa{Chinese J. Astron. Astrophys.}%  % Chinese Journal of Astronomy and Astrophysics
+\newcommand\jcap{J. Cosmology Astropart. Phys.}%  % Journal of Cosmology and Astroparticle Physics
+\newcommand\na{New A}%  % New Astronomy
+\newcommand\nar{New A Rev.}%  % New Astronomy Review
+\newcommand\pasa{PASA}%  % Publications of the Astron. Soc. of Australia
+\newcommand\rmxaa{Rev. Mexicana Astron. Astrofis.}%  % Revista Mexicana de Astronomia y Astrofisica
+
 
 \frontmatter
 
@@ -318,6 +382,126 @@ the equation of state usually relies on parameters passed in this way. For the H
 parameters are \texttt{eos\_input\_is\_constant}, which determines whether or not we update the internal 
 energy on an EOS call, and \texttt{use\_eos\_coulomb}, which determines whether we include Coulomb 
 interactions in the EOS evaluation.
+
+
+
+\section{Diagnostic Output}
+
+\texttt{wdmerger} provides two kinds of diagnostic output at runtime. One set keeps track of quantities affecting 
+the entire grid (such as the total amount of mass and energy on the grid); the other tabulates properties 
+of the individual stars. The former is, by default, printed to \texttt{grid\_diag.out} and the latter to 
+\texttt{star\_diag.out}. This output can be used to keep track of how the run is going, but more often is 
+saved for the purposes of plotting later on (since it may be too expensive to write out enough plotfiles to 
+generate these types of curves at the end of the run).
+
+The routines that generate both of these are found in \\\texttt{source/diagnostics/sum\_integrated\_quantities.cpp}. 
+This is a replacement of the \texttt{CASTRO} function that does something similar. We use the same 
+conventions; for example, if summing over the whole grid and we encounter a region that is covered by 
+a fine grid, we zero out the contribution from the coarse grid and only count the fine grid quantities 
+in that location.
+
+\subsection{Grid Quantities}
+
+The following are the quantities that involve operations over the entire grid, as well as the continuous 
+integral representation of them. Discretization is typically done by setting $\int dV \rightarrow \Delta V$ and 
+assuming cell-centered values for the integrands.
+\begin{itemize}
+  \item \texttt{TOTAL ENERGY}: Total amount of energy stored in the system.
+  \begin{equation}
+    \int dV\, \left(-\frac{1}{2}\rho \phi + \rho E + \rho \Phi_{\text{rot}}\right)
+  \end{equation}
+
+  \item \texttt{TOTAL E GRID}: Total amount of energy represented on the computational grid; differs from
+    \texttt{total\_energy} only when rotation is enabled.
+  \begin{equation}
+    \int dV\, \left(\frac{1}{2}\rho \phi + \rho E\right)
+  \end{equation}
+
+  \item \texttt{GAS ENERGY}: Kinetic plus internal energy.
+  \begin{equation}
+    \int dV\, \rho E
+  \end{equation}
+
+  \item \texttt{KIN. ENERGY}: Kinetic energy (calculated using velocities; in general will differ from $\rho(E - e)$).
+  \begin{equation}
+    \int dV\, \frac{1}{2} \rho \mathbf{v}^2
+  \end{equation}
+
+  \item \texttt{ROT. ENERGY}: Energy associated with rotating reference frame.
+  \begin{equation}
+    \int dV\, \rho\, {\bm \omega} \cdot (\mathbf{r} \times \mathbf{p}) + \int dV\, \frac{1}{2} {\bm \omega}^T \cdot \mathbf{I} \cdot {\bm \omega}
+  \end{equation}
+
+  \item \texttt{GRAV. ENERGY}: Gravitational potential energy ($\phi < 0$).
+  \begin{equation}
+    \int dV\, \frac{1}{2}\rho\phi
+  \end{equation}
+
+  \item \texttt{INT. ENERGY}: Internal/thermal energy of the gas.
+  \begin{equation}
+    \int dV\, \rho e
+  \end{equation}
+
+  \item \texttt{XMOM, YMOM, ZMOM}: Total momentum.
+  \begin{equation}
+    \int dV\, \rho (\mathbf{u} + {\bm \omega} \times \mathbf{r})
+  \end{equation}
+
+  \item \texttt{XMOM GRID, YMOM GRID, ZMOM GRID}: Momentum on grid only; no rotation.
+  \begin{equation}
+    \int dV\, \rho \mathbf{u}
+  \end{equation}
+
+  \item \texttt{XMOM ROT., YMOM ROT., ZMOM ROT.}: Momentum due only to rotation.
+  \begin{equation}
+    \int dV\, \rho {\bm \omega} \times \mathbf{r}
+  \end{equation}
+
+  \item \texttt{ANG. MOM. X, ANG. MOM. Y, ANG. MOM. Z}: Total angular momentum.
+  \begin{equation}
+    \int dV\, \rho(\mathbf{r} \times \mathbf{u} + \int dV\, \mathbf{I} \cdot {\bm \omega}
+  \end{equation}
+
+  \item \texttt{ANG. MOM. X GRID, ANG. MOM. Y GRID, ANG. MOM. Z GRID}: Angular momentum on grid only; no rotation.
+  \begin{equation}
+    \int dV\, \rho\mathbf{r} \times \mathbf{u}
+  \end{equation}
+
+  \item \texttt{ANG. MOM. X ROT., ANG. MOM. Y ROT., ANG. MOM. Z ROT.}: Angular momentum due only to rotation.
+  \begin{equation}
+    \int dV\, \mathbf{I} \cdot {\bm \omega}
+  \end{equation}
+
+  \item \texttt{MASS}: Mass.
+  \begin{equation}
+    \int dV\, \rho
+  \end{equation}
+
+  \item \texttt{X COM, Y COM, Z COM}: Center of mass.
+  \begin{equation}
+    \int dV\, \rho \mathbf{x}
+  \end{equation}
+
+  \item \texttt{X COM VEL, Y COM VEL, Z COM VEL}: Velocity of center of mass.
+  \begin{equation}
+    \int dV\, \rho \mathbf{v}
+  \end{equation}
+
+  \item \texttt{h\_+, h\_x (rotation axis, star axis, motion axis)}: Gravitational wave strain in ``plus'' and ``cross'' polarization modes, observed along the rotation axis, the axis the stars were originally aligned along, and the axis the stars originally moved on. (By default, there are $z$, $x$, and $y$ respectively). See \texttt{wdmerger} paper I for details on how these are calculated.
+
+
+
+  \subsection{Star Quantities}
+
+  Now we consider the quantities describing the stars. First we must describe our strategy for determining what parts of the domain correspond to the primary and what parts correspond to the secondary. At the beginning of the simulation, we establish the binary so that each star's center of mass lies on the \texttt{star\_axis} and is zero in the other directions. At each subsequent timestep, we make a guess at the location of the new center of mass: $\mathbf{x}_{\text{COM}} \to \mathbf{x}_{\text{COM}} + \mathbf{v}_{\text{COM}} + \Delta t$. Here $\mathbf{v}_{\text{COM}}$ is the velocity of the center of mass at the last timestep (which at the beginning of the simulation is simply the Keplerian orbital speed). Then we refine this estimate by doing an integral on the domain. We define $\mathbf{x}^\prime_P$ and $\mathbf{x}^\prime_S$ as the tentative locations, and then do a center-of-mass calculation on all zones within the Roche radius $r_L$ of that star, which encompasses the effective gravitational domain of that star. We use the commonly employed definition of the Roche radius of \citet{eggleton:1983},
+  \begin{equation}
+    \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.
+  \end{equation}
+  Here $a$ is the orbital separation (i.e. $\left|\mathbf{x}^\prime_P - \mathbf{x}^\prime_S\right|$ ), and if $q = M_S / M_P$ is the mass ratio then this yields the Roche radius of the secondary. $q$ is inverted to get the Roche radius of the primary. Once we do this calculation, we have a new $\mathbf{x}_P$ and $\mathbf{x}_S$, as well as $\mathbf{v}_P$ and $\mathbf{v}_S$ and $M_P$ and $M_S$. We also then define the distance between the stars as $|\mathbf{x}_P - \mathbf{x}_S|$. We also calculate the angle that the line joining them makes with respect to the original axis; this is a measure of how much they have rotated. With the center of masses located, we can add any diagnostics of interest we want related to the stars. At present we only have one. The \texttt{PRIMARY 1E$n$ RADIUS} and \texttt{SECONDARY 1E$n$ RADIUS} are the radii from the center of the stars at which the average density is $10^n\ \text{g}\ \text{cm}^{-3}$.
+
+\end{itemize}
+
+
 
 \chapter{How to Build a Problem}
 
