@@ -635,16 +635,16 @@ function copy_files {
     fi
 
     if [ ! -e "$dir/$inputs" ]; then
-        if [ -e "$source_dir/$inputs" ]; then
-            cp $source_dir/inputs $dir/$inputs
+        if [ -e "$compile_dir/$inputs" ]; then
+            cp $compile_dir/inputs $dir/$inputs
         else
             cp $WDMERGER_HOME/source/inputs $dir/$inputs
 	fi
     fi
 
     if [ ! -e "$dir/$probin" ]; then
-	if [ -e "$source_dir/$probin" ]; then
-	    cp $source_dir/probin $dir/$probin
+	if [ -e "$compile_dir/$probin" ]; then
+	    cp $compile_dir/probin $dir/$probin
 	else
 	    cp $WDMERGER_HOME/source/probin $dir/$probin
 	fi
@@ -1202,7 +1202,6 @@ fi
 # Directory to compile the executable in
 
 compile_dir="compile"
-source_dir="source"
 
 # Some variables we need for storing job information.
 
@@ -1240,14 +1239,6 @@ if [ -d $compile_dir ]; then
 
     if [ ! -d $plots_dir ]; then
 	mkdir $plots_dir
-    fi
-
-    # Source code directory
-
-    source_dir="source"
-    
-    if [ ! -d $source_dir ]; then
-	mkdir $source_dir
     fi
 
 fi

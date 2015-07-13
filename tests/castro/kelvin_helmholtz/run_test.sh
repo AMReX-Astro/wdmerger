@@ -2,8 +2,8 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 TEST_DIR=$CASTRO_DIR/Exec/KH
 
-cp $TEST_DIR/inputs.2d source/inputs
-cp $TEST_DIR/probin source/probin
+cp $TEST_DIR/inputs.2d $compile_dir/inputs
+cp $TEST_DIR/probin $compile_dir/probin
 
 # Loop over problem choices
 
