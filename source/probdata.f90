@@ -563,8 +563,10 @@ contains
     endif
 
     ! Reset the terminal color to its previous state.
-    
-    print *, ''//achar(27)//'[0m'
+
+    if (ioproc == 1 .and. init == 1) then
+       print *, ''//achar(27)//'[0m'
+    endif
 
     com_P = center_P_initial
     com_S = center_S_initial
