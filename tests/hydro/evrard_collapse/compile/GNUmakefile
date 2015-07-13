@@ -1,7 +1,7 @@
-# Problem-specific makefile variables
+# Pull in CASTRO makefile for the Evrard collapse,
+# but use the wdmerger diagnostics routines.
 
-EOS_dir=gamma_law_general
+Blocs := $(WDMERGER_HOME)/source/diagnostics/
+Bpack := $(WDMERGER_HOME)/source/diagnostics/Make.package
 
-# Pull in main makefile
-
-include $(WDMERGER_HOME)/source/GNUmakefile
+include $(CASTRO_DIR)/Exec/evrard_collapse/GNUmakefile

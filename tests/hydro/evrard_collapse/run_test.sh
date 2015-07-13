@@ -1,37 +1,29 @@
+TEST_DIR=$CASTRO_DIR/Exec/evrard_collapse
+
+cp $TEST_DIR/inputs source/
+cp $TEST_DIR/probin source/
+
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Problem-specific variables
-
-stop_time=15.0
-
-geometry_prob_lo=" -2.56e9 -2.56e9 -2.56e9"
-geometry_prob_hi="  2.56e9  2.56e9  2.56e9"
-
-castro_do_rotation=0
-
-# Loop over the resolutions in question
+# Loop over the gravity source options
 
 for gs in 1 2 3 4
 do
-  for ncell in 64 128
-  do
-    dir=$results_dir/gs$gs/n$ncell
+  dir=$results_dir/gs$gs
 
-    castro_grav_source_type=$gs
-    amr_n_cell="$ncell $ncell $ncell"
+  castro_grav_source_type=$gs
 
-    if [ $MACHINE == "BLUE_WATERS" ]; then
+  if [ $MACHINE == "BLUE_WATERS" ]; then
 
-      if [ $ncell -eq 64 ]; then
-	  nprocs=32
-	  walltime=1:00:00
-      elif [ $ncell -eq 128 ]; then
-	  nprocs=128
-	  walltime=2:00:00
-      fi
-
+    if [ $ncell -eq 64 ]; then
+      nprocs=32
+      walltime=1:00:00
+    elif [ $ncell -eq 128 ]; then
+      nprocs=128
+      walltime=2:00:00
     fi
 
-    run $dir $nprocs $walltime
-  done
+  fi
+
+  run $dir $nprocs $walltime
 done
