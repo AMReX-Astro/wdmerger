@@ -1,10 +1,7 @@
-# Problem-specific makefile variables
+# Pull in CASTRO makefile for the KH problem,
+# but use the wdmerger diagnostics routines.
 
-EOS_dir=gamma_law_general
-DIM=2
-USE_GRAV=FALSE
-USE_ROTATION=FALSE
-
-# Pull in main makefile
+Blocs := $(WDMERGER_HOME)/source/diagnostics/
+Bpack := $(WDMERGER_HOME)/source/diagnostics/Make.package
 
 include $(WDMERGER_HOME)/source/GNUmakefile

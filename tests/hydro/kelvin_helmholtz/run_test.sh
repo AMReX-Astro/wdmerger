@@ -1,14 +1,9 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Problem-specific variables
+TEST_DIR=$CASTRO_DIR/Exec/KH
 
-geometry_is_periodic="1 1"
-
-geometry_prob_lo="0.0 0.0"
-geometry_prob_hi="1.0 1.0"
-
-castro_lo_bc="0 0"
-castro_hi_bc="0 0"
+cp $TEST_DIR/inputs.2d source/inputs
+cp $TEST_DIR/probin source/probin
 
 # Loop over problem choices
 
