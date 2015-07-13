@@ -1,22 +1,13 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Problem inputs choices
+TEST_DIR=$CASTRO_DIR/Exec/uniform_cube_sphere
 
-geometry_prob_lo="-1.6 -1.6 -1.6"
-geometry_prob_hi=" 1.6  1.6  1.6"
-
-castro_do_hydro=0
-castro_do_rotation=0
-
-castro_small_dens="1.e-10"
-
-max_step=0
-
-gravity_direct_sum_bcs=1
+cp $TEST_DIR/inputs source/
+cp $TEST_DIR/probin source/
 
 # Loop over problem choices
 
-for p in 1 2 3
+for problem in 1 2 3
 do
 
   # Loop over resolutions
@@ -25,7 +16,6 @@ do
   do
 
     dir=$results_dir/p$problem/n$ncell
-    problem=$p
     amr_n_cell="$ncell $ncell $ncell"
 
     if [ $MACHINE == "BLUE_WATERS" ]; then
