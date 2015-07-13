@@ -1242,4 +1242,12 @@ if [ -d $compile_dir ]; then
 	mkdir $plots_dir
     fi
 
+    # Source code directory
+
+    source_dir="source"
+    
+    if [ ! -d $source_dir ]; then
+	mkdir $source_dir
+    fi
+
 fi
