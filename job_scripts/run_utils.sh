@@ -644,7 +644,7 @@ function copy_files {
 
     if [ ! -e "$dir/$probin" ]; then
 	if [ -e "$source_dir/$probin" ]; then
-	    cp $source_dir/probin $dir/$inputs
+	    cp $source_dir/probin $dir/$probin
 	else
 	    cp $WDMERGER_HOME/source/probin $dir/$probin
 	fi
