@@ -4,6 +4,7 @@
 
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{bm}
 
 \usepackage{epsfig}
 
@@ -70,6 +71,8 @@
 \setlength{\cftbeforechapskip}{2ex}
 \setlength{\cftbeforesecskip}{0.25ex}
 
+
+
 % don't put a header on blank pages, see
 % http://www.latex-community.org/forum/viewtopic.php?f=4&p=51559
 % change ``plain'' to ``empty'' to eliminate the page number
@@ -117,6 +120,67 @@
 %------------------------------------------------------------------------------
 \begin{document}
 
+% For interpreting the journal names in the bibilography; this is copied and 
+% amended from emulateapj.cls.
+
+\newcommand\aj{AJ}%        % Astronomical Journal 
+\newcommand\araa{ARA\&A}%  % Annual Review of Astron and Astrophys 
+\newcommand\apj{ApJ}%    % Astrophysical Journal 
+\newcommand\apjl{ApJ}%     % Astrophysical Journal, Letters 
+\newcommand\apjs{ApJS}%    % Astrophysical Journal, Supplement 
+\newcommand\ao{Appl.~Opt.}%   % Applied Optics 
+\newcommand\apss{Ap\&SS}%  % Astrophysics and Space Science 
+\newcommand\aap{A\&A}%     % Astronomy and Astrophysics 
+\newcommand\aapr{A\&A~Rev.}%  % Astronomy and Astrophysics Reviews 
+\newcommand\aaps{A\&AS}%    % Astronomy and Astrophysics, Supplement 
+\newcommand\azh{AZh}%       % Astronomicheskii Zhurnal 
+\newcommand\baas{BAAS}%     % Bulletin of the AAS 
+\newcommand\icarus{Icarus}% % Icarus
+\newcommand\jrasc{JRASC}%   % Journal of the RAS of Canada 
+\newcommand\memras{MmRAS}%  % Memoirs of the RAS 
+\newcommand\mnras{MNRAS}%   % Monthly Notices of the RAS 
+\newcommand\pra{Phys.~Rev.~A}% % Physical Review A: General Physics 
+\newcommand\prb{Phys.~Rev.~B}% % Physical Review B: Solid State 
+\newcommand\prc{Phys.~Rev.~C}% % Physical Review C 
+\newcommand\prd{Phys.~Rev.~D}% % Physical Review D 
+\newcommand\pre{Phys.~Rev.~E}% % Physical Review E 
+\newcommand\prl{Phys.~Rev.~Lett.}% % Physical Review Letters 
+\newcommand\pasp{PASP}%     % Publications of the ASP 
+\newcommand\pasj{PASJ}%     % Publications of the ASJ 
+\newcommand\qjras{QJRAS}%   % Quarterly Journal of the RAS 
+\newcommand\skytel{S\&T}%   % Sky and Telescope 
+\newcommand\solphys{Sol.~Phys.}% % Solar Physics 
+\newcommand\sovast{Soviet~Ast.}% % Soviet Astronomy 
+\newcommand\ssr{Space~Sci.~Rev.}% % Space Science Reviews 
+\newcommand\zap{ZAp}%       % Zeitschrift fuer Astrophysik 
+\newcommand\nat{Nature}%  % Nature 
+\newcommand\iaucirc{IAU~Circ.}% % IAU Cirulars 
+\newcommand\aplett{Astrophys.~Lett.}%  % Astrophysics Letters 
+\newcommand\apspr{Astrophys.~Space~Phys.~Res.}% % Astrophysics Space Physics Research 
+\newcommand\bain{Bull.~Astron.~Inst.~Netherlands}% % Bulletin Astronomical Institute of the Netherlands 
+\newcommand\fcp{Fund.~Cosmic~Phys.}%   % Fundamental Cosmic Physics 
+\newcommand\gca{Geochim.~Cosmochim.~Acta}% % Geochimica Cosmochimica Acta 
+\newcommand\grl{Geophys.~Res.~Lett.}%  % Geophysics Research Letters 
+\newcommand\jcp{J.~Chem.~Phys.}%     % Journal of Chemical Physics 
+\newcommand\jgr{J.~Geophys.~Res.}%     % Journal of Geophysics Research 
+\newcommand\jqsrt{J.~Quant.~Spec.~Radiat.~Transf.}%   % Journal of Quantitiative Spectroscopy and Radiative Trasfer 
+\newcommand\memsai{Mem.~Soc.~Astron.~Italiana}% % Mem. Societa Astronomica Italiana 
+\newcommand\nphysa{Nucl.~Phys.~A}%     % Nuclear Physics A 
+\newcommand\physrep{Phys.~Rep.}%       % Physics Reports 
+\newcommand\physscr{Phys.~Scr}%        % Physica Scripta 
+\newcommand\planss{Planet.~Space~Sci.}%  % Planetary Space Science 
+\newcommand\procspie{Proc.~SPIE}%      % Proceedings of the SPIE 
+
+\newcommand\actaa{Acta Astron.}%  % Acta Astronomica
+\newcommand\caa{Chinese Astron. Astrophys.}%  % Chinese Astronomy and Astrophysics
+\newcommand\cjaa{Chinese J. Astron. Astrophys.}%  % Chinese Journal of Astronomy and Astrophysics
+\newcommand\jcap{J. Cosmology Astropart. Phys.}%  % Journal of Cosmology and Astroparticle Physics
+\newcommand\na{New A}%  % New Astronomy
+\newcommand\nar{New A Rev.}%  % New Astronomy Review
+\newcommand\pasa{PASA}%  % Publications of the Astron. Soc. of Australia
+\newcommand\rmxaa{Rev. Mexicana Astron. Astrofis.}%  % Revista Mexicana de Astronomia y Astrofisica
+
+
 \frontmatter
 
 \begin{titlepage}
@@ -152,14 +216,16 @@
 
 \chapter{Getting Started}
 
-Welcome to the user's guide for the wdmerger software package. This software is designed to
+Welcome to the user's guide for the \texttt{wdmerger} software package. This software is designed to
 simulate binary white dwarf systems, and is intended to provide useful information on the 
 viability of mergers of white dwarfs as a progenitor for Type Ia supernovae. It is a set of 
-source files designed to use the CASTRO code \citep{castro}.
+source files designed for use with the \texttt{CASTRO} code \citep{castro}.
 
 This software requires a few other software packages to be installed before it can be used.
-The science software includes \href{https://ccse.lbl.gov/BoxLib/}{BoxLib} and 
-\href{https://ccse.lbl.gov/Downloads/downloadCASTRO.html}{CASTRO}. This software is written 
+The science software includes \href{http://boxlib-codes.github.io/}{BoxLib} and 
+\href{http://boxlib-codes.github.io/Castro/}{CASTRO}. You should also 
+download the \href{https://github.com/BoxLib-Codes/Microphysics}{Microphysics} repository, 
+which stores the equation of state and nuclear network we will use. This software is written 
 in C++ and Fortran, and compilers for each are needed. The gcc compilers are sufficient.
 In addition, it relies on several utilities that are 
 commonly distributed on Linux systems: \texttt{bash}, \texttt{GNU bc}, \texttt{GNU make}, 
@@ -167,15 +233,16 @@ commonly distributed on Linux systems: \texttt{bash}, \texttt{GNU bc}, \texttt{G
 \href{https://www.python.org/}{python}, with the \href{http://matplotlib.org/}{matplotlib} 
 library and the \href{http://yt-project.org/}{yt} code being used for visualization. 
 If python and yt are not installed on your system, you will still be able to compile and 
-run this code, but you will need some other mechanism for analyzing the BoxLib output data.
+run this code, but you will need some other mechanism for analyzing the \texttt{BoxLib} output data.
 We have some routines for this purpose available in Fortran and may be able to provide them
 upon request.
 
 This software assumes that you have set several environment variables:
 \begin{itemize}
-  \item \texttt{BOXLIB\_HOME}, the location of the BoxLib code's top-level directory
-  \item \texttt{CASTRO\_DIR}, the location of the CASTRO code's top-level directory
+  \item \texttt{BOXLIB\_HOME}, the location of the \texttt{BoxLib} code's top-level directory
+  \item \texttt{CASTRO\_DIR}, the location of the \texttt{CASTRO} code's top-level directory
   \item \texttt{WDMERGER\_HOME}, the location of this software's top-level directory
+  \item \texttt{MICROPHYSICS\_DIR}, the location of the \texttt{Microphysics} code's top-level directory
 \end{itemize}
 
 In addition, you should include in your \texttt{PYTHONPATH} the location of the 
@@ -201,15 +268,15 @@ and a \texttt{README.md} file describing how to get started.
 The \texttt{documentation} directory contains this user's guide and is intended to provide information
 on how to use and run this software.
 
-The \texttt{source} directory contains all of the Fortran routines needed to build a CASTRO 
-executable file. It is not normally built directly, but you can type \texttt{make} in that directory
-to build a vanilla executable with the default settings.
+The \texttt{source} directory contains all of the Fortran routines needed to build a \texttt{CASTRO} 
+executable file. You can type \texttt{make} in this directory to build a vanilla executable 
+with the default settings, though usually we will build the software from a different location.
 
 The \texttt{analysis} directory contains the Python analysis scripts used for analyzing output
-data (both in BoxLib and plaintext format). 
+data (both in \texttt{BoxLib} and plain-text format). 
 
 The \texttt{tests} directory includes problem setups that are used for testing 
-the hydrodynamics code CASTRO and exercises a wide range of its capabilities.
+the hydrodynamics code \texttt{CASTRO} and exercises a wide range of its capabilities.
 
 The \texttt{job\_scripts} directory contains utilities that are used for running
 problem setups on various machine architectures.
@@ -224,7 +291,7 @@ that are being submitted as a result of this project.
 This chapter describes the setup of the white dwarf merger problem. It includes descriptions of 
 the physics involved, the code options and runtime parameters, the diagnostic output 
 and other I/O information, and the analysis routines. A full description of the physics 
-and the associated numerical algorithms is included in the CASTRO code paper \cite{castro}.
+and the associated numerical algorithms is included in the \texttt{CASTRO} code paper \cite{castro}.
 
 \section{Physical Description}
 
@@ -235,7 +302,7 @@ for arbitrary degeneracy and relativity levels by the Helmholtz equation of stat
 It includes ideal gas contributions from the ions, a simple blackbody recipe for the contribution from 
 the radiation field, and optionally Coulomb corrections. 
 
-CASTRO includes full self-gravity with the Poisson equation, as well as the ability to perform a
+\texttt{CASTRO} includes full self-gravity with the Poisson equation, as well as the ability to perform a
 simulation in a rotating reference frame with fixed rotation period. By default the $z$ axis will 
 be the rotation axis, with the stars initially aligned along the $x$ axis. We select the 
 orbital period of the system, and the masses of the \textit{primary} (more massive) and 
@@ -249,17 +316,20 @@ start all zones in the domain with a velocity corresponding to the equivalent ro
 reference frame velocity. This means that the stars will be synchronously rotating (though we
 may relax this assumption in future work).
 
-At present nuclear reactions are not enabled, but they will be soon.
+For the nuclear network we use the \texttt{aprox13} network provided by Frank Timmes, which 
+we have ported for use in the \texttt{Microphysics} repository. It is an alpha-chain network 
+with isotopes ranging from ${}^4$He to ${}^{56}$Ni.
 
 \section{Runtime Parameters}
 
-There are a few CASTRO input parameters that you will typically want to control when running problems. 
-Among the most major is whether we are doing rotation (\texttt{castro.do\_rotation}) and if so, 
-what the rotational period is (\texttt{castro.rotational\_period}). You'll also want to change the 
-\texttt{stop\_time}, which is when the simulation will terminate. You should also avoid flooding 
-yourself with plotfiles and checkpoints by setting \texttt{amr.plot\_files\_output} and 
+There are a few \texttt{CASTRO} input parameters that you will typically want to control when running problems. 
+Among the most important is whether we are doing rotation (\texttt{castro.do\_rotation}) and if so, 
+what the rotational period is (\texttt{castro.rotational\_period}). (Note that the rotational period 
+is used to set the orbital properties even if we're not rotating, so you should always set this appropriately.)
+You'll also want to change the \texttt{stop\_time}, which is when the simulation will terminate. 
+You should also avoid flooding yourself with plotfiles and checkpoints by setting \texttt{amr.plot\_files\_output} and 
 \texttt{amr.checkpoint\_files\_output}, respectively; these are the simulation time differences
-between successive plotfiles and checkpoints. Note that CASTRO does not adjust the timestep 
+between successive plotfiles and checkpoints. Note that \texttt{CASTRO} does not adjust the timestep 
 to meet this criterion, so it will generate these at the first timestep that passes this interval.
 
 The \texttt{wdmerger} parameters of interest are all controlled through the \texttt{probin} file. 
@@ -267,15 +337,21 @@ These control the layout of the stars on the grid, the tagging options for refin
 A \texttt{probin} file is composed of three Fortran namelists; a namelist is enclosed in 
 \texttt{\&namelist ... /}. The \texttt{fortin} namelist controls the main system parameters. 
 In the following list we describe the parameters; you can see their current defaults by 
-examining \texttt{source/probin}.
+examining \texttt{source/probin}. (Some parameters in there are currently beta quality and 
+not recommended for use, and for a couple others there will be no practical reason to change. 
+Stick to the ones in this list for now.)
 \begin{itemize}
   \item \texttt{mass\_P}: mass of the primary white dwarf, in solar masses (real)
   \item \texttt{mass\_S}: mass of the secondary white dwarf, in solar masses (real; if less than zero, 
     then no secondary star will be generated, and the primary star will be loaded onto the grid at the 
     center of the domain)
+  \item \texttt{central\_density\_P}: alternatively, we can specify the central density of the primary white dwarf instead of the mass (real)
+  \item \texttt{central\_density\_S}: alternatively, we can specify the central density of the secondary white dwarf instead of the mass (real)
   \item \texttt{nsub}: number of sub-intervals to divide a zone into when interpolating from the initial model (integer)
   \item \texttt{orbital\_kick}: whether or not to kick the stars with an orbital velocity corresponding to their 
     Keplerian rotation rate (logical; this only makes sense in the inertial reference frame with \texttt{castro.do\_rotation = 0})
+  \item \texttt{collision}: whether to set the stars moving towards each other at free-fall speed for a collision (logical)
+  \item \texttt{collision\_separation}: if we're doing a collision, number of WD radii to set the stars apart from each other initially (real)
   \item \texttt{damping}: whether or not to exert a constant damping force on the orbit (logical)
   \item \texttt{damping\_alpha}: strength of damping force (real)
   \item \texttt{bulk\_velx}: uniform velocity to give to all gas in the domain in the $x$-direction (real)
@@ -283,16 +359,22 @@ examining \texttt{source/probin}.
   \item \texttt{bulk\_velz}: uniform velocity to give to all gas in the domain in the $z$-direction (real)
   \item \texttt{interp\_temp}: whether or not to take temperature as given when interpolating from our initial model (logical;
     if false, we will interpolate based on pressure)
+  \item \texttt{ambient\_density}: density of the rarefied ambient medium outside the stars (real)
+  \item \texttt{stellar\_temp}: initial temperature of the stars (and also ambient medium) (real)
+  \item \texttt{stellar\_C12, stellar\_O16}: mass fractions of ${}^{12}$C and ${}^{16}$O in the stars (real)
+  \item \texttt{star\_axis}: what coordinate axis the stars will be lined up along initially (integer; $x$ = 1, $y$ = 2, $z$ = 3)
   \item \texttt{maxTaggingRadius}: fractional size of the domain outside of which we won't perform any refinement (real)
   \item \texttt{sponge\_dist}: we can apply a sponge that damps the velocities starting at this fraction multiplied by the 
     distance from the center to the domain boundary (real)
   \item \texttt{sponge\_width}: smoothing width of the sponge; the sponge is fully applied at {\tt sponge\_dist} + {\tt sponge\_width},
     in the same coordinates (real)
   \item \texttt{sponge\_timescale}: the sponge decreases the velocity by a factor $1 / (1 + (\Delta t / t_s)$, where 
-    $t_s$ is the {\tt sponge\_timescale} in seconds (real)    
+    $t_s$ is the {\tt sponge\_timescale} in seconds (real)
+  \item \texttt{gw\_dist}: for the gravitational wave signals we calculate, this is the distance in kiloparsecs from the observer to the binary system (real)
+  \item \texttt{fill\_ambient\_bc}: whether we should set ghost cells on the domain boundary to have the ambient state properties (logical)
 \end{itemize}
 
-The \texttt{tagging} namelist is described in the AMR chapter of the CASTRO user's guide. At present, we 
+The \texttt{tagging} namelist is described in the AMR chapter of the \texttt{CASTRO} user's guide. At present, we 
 only tag based on absolute values of the density and temperature.
 
 The \texttt{extern} namelist contains parameters that are used by the microphysics modules. In particular, 
@@ -300,6 +382,126 @@ the equation of state usually relies on parameters passed in this way. For the H
 parameters are \texttt{eos\_input\_is\_constant}, which determines whether or not we update the internal 
 energy on an EOS call, and \texttt{use\_eos\_coulomb}, which determines whether we include Coulomb 
 interactions in the EOS evaluation.
+
+
+
+\section{Diagnostic Output}
+
+\texttt{wdmerger} provides two kinds of diagnostic output at runtime. One set keeps track of quantities affecting 
+the entire grid (such as the total amount of mass and energy on the grid); the other tabulates properties 
+of the individual stars. The former is, by default, printed to \texttt{grid\_diag.out} and the latter to 
+\texttt{star\_diag.out}. This output can be used to keep track of how the run is going, but more often is 
+saved for the purposes of plotting later on (since it may be too expensive to write out enough plotfiles to 
+generate these types of curves at the end of the run).
+
+The routines that generate both of these are found in \\\texttt{source/diagnostics/sum\_integrated\_quantities.cpp}. 
+This is a replacement of the \texttt{CASTRO} function that does something similar. We use the same 
+conventions; for example, if summing over the whole grid and we encounter a region that is covered by 
+a fine grid, we zero out the contribution from the coarse grid and only count the fine grid quantities 
+in that location.
+
+\subsection{Grid Quantities}
+
+The following are the quantities that involve operations over the entire grid, as well as the continuous 
+integral representation of them. Discretization is typically done by setting $\int dV \rightarrow \Delta V$ and 
+assuming cell-centered values for the integrands.
+\begin{itemize}
+  \item \texttt{TOTAL ENERGY}: Total amount of energy stored in the system.
+  \begin{equation}
+    \int dV\, \left(-\frac{1}{2}\rho \phi + \rho E + \rho \Phi_{\text{rot}}\right)
+  \end{equation}
+
+  \item \texttt{TOTAL E GRID}: Total amount of energy represented on the computational grid; differs from
+    \texttt{total\_energy} only when rotation is enabled.
+  \begin{equation}
+    \int dV\, \left(\frac{1}{2}\rho \phi + \rho E\right)
+  \end{equation}
+
+  \item \texttt{GAS ENERGY}: Kinetic plus internal energy.
+  \begin{equation}
+    \int dV\, \rho E
+  \end{equation}
+
+  \item \texttt{KIN. ENERGY}: Kinetic energy (calculated using velocities; in general will differ from $\rho(E - e)$).
+  \begin{equation}
+    \int dV\, \frac{1}{2} \rho \mathbf{v}^2
+  \end{equation}
+
+  \item \texttt{ROT. ENERGY}: Energy associated with rotating reference frame.
+  \begin{equation}
+    \int dV\, \rho\, {\bm \omega} \cdot (\mathbf{r} \times \mathbf{p}) + \int dV\, \frac{1}{2} {\bm \omega}^T \cdot \mathbf{I} \cdot {\bm \omega}
+  \end{equation}
+
+  \item \texttt{GRAV. ENERGY}: Gravitational potential energy ($\phi < 0$).
+  \begin{equation}
+    \int dV\, \frac{1}{2}\rho\phi
+  \end{equation}
+
+  \item \texttt{INT. ENERGY}: Internal/thermal energy of the gas.
+  \begin{equation}
+    \int dV\, \rho e
+  \end{equation}
+
+  \item \texttt{XMOM, YMOM, ZMOM}: Total momentum.
+  \begin{equation}
+    \int dV\, \rho (\mathbf{u} + {\bm \omega} \times \mathbf{r})
+  \end{equation}
+
+  \item \texttt{XMOM GRID, YMOM GRID, ZMOM GRID}: Momentum on grid only; no rotation.
+  \begin{equation}
+    \int dV\, \rho \mathbf{u}
+  \end{equation}
+
+  \item \texttt{XMOM ROT., YMOM ROT., ZMOM ROT.}: Momentum due only to rotation.
+  \begin{equation}
+    \int dV\, \rho {\bm \omega} \times \mathbf{r}
+  \end{equation}
+
+  \item \texttt{ANG. MOM. X, ANG. MOM. Y, ANG. MOM. Z}: Total angular momentum.
+  \begin{equation}
+    \int dV\, \rho(\mathbf{r} \times \mathbf{u} + \int dV\, \mathbf{I} \cdot {\bm \omega}
+  \end{equation}
+
+  \item \texttt{ANG. MOM. X GRID, ANG. MOM. Y GRID, ANG. MOM. Z GRID}: Angular momentum on grid only; no rotation.
+  \begin{equation}
+    \int dV\, \rho\mathbf{r} \times \mathbf{u}
+  \end{equation}
+
+  \item \texttt{ANG. MOM. X ROT., ANG. MOM. Y ROT., ANG. MOM. Z ROT.}: Angular momentum due only to rotation.
+  \begin{equation}
+    \int dV\, \mathbf{I} \cdot {\bm \omega}
+  \end{equation}
+
+  \item \texttt{MASS}: Mass.
+  \begin{equation}
+    \int dV\, \rho
+  \end{equation}
+
+  \item \texttt{X COM, Y COM, Z COM}: Center of mass.
+  \begin{equation}
+    \int dV\, \rho \mathbf{x}
+  \end{equation}
+
+  \item \texttt{X COM VEL, Y COM VEL, Z COM VEL}: Velocity of center of mass.
+  \begin{equation}
+    \int dV\, \rho \mathbf{v}
+  \end{equation}
+
+  \item \texttt{h\_+, h\_x (rotation axis, star axis, motion axis)}: Gravitational wave strain in ``plus'' and ``cross'' polarization modes, observed along the rotation axis, the axis the stars were originally aligned along, and the axis the stars originally moved on. (By default, there are $z$, $x$, and $y$ respectively). See \texttt{wdmerger} paper I for details on how these are calculated.
+
+
+
+  \subsection{Star Quantities}
+
+  Now we consider the quantities describing the stars. First we must describe our strategy for determining what parts of the domain correspond to the primary and what parts correspond to the secondary. At the beginning of the simulation, we establish the binary so that each star's center of mass lies on the \texttt{star\_axis} and is zero in the other directions. At each subsequent timestep, we make a guess at the location of the new center of mass: $\mathbf{x}_{\text{COM}} \to \mathbf{x}_{\text{COM}} + \mathbf{v}_{\text{COM}} + \Delta t$. Here $\mathbf{v}_{\text{COM}}$ is the velocity of the center of mass at the last timestep (which at the beginning of the simulation is simply the Keplerian orbital speed). Then we refine this estimate by doing an integral on the domain. We define $\mathbf{x}^\prime_P$ and $\mathbf{x}^\prime_S$ as the tentative locations, and then do a center-of-mass calculation on all zones within the Roche radius $r_L$ of that star, which encompasses the effective gravitational domain of that star. We use the commonly employed definition of the Roche radius of \citet{eggleton:1983},
+  \begin{equation}
+    \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.
+  \end{equation}
+  Here $a$ is the orbital separation (i.e. $\left|\mathbf{x}^\prime_P - \mathbf{x}^\prime_S\right|$ ), and if $q = M_S / M_P$ is the mass ratio then this yields the Roche radius of the secondary. $q$ is inverted to get the Roche radius of the primary. Once we do this calculation, we have a new $\mathbf{x}_P$ and $\mathbf{x}_S$, as well as $\mathbf{v}_P$ and $\mathbf{v}_S$ and $M_P$ and $M_S$. We also then define the distance between the stars as $|\mathbf{x}_P - \mathbf{x}_S|$. We also calculate the angle that the line joining them makes with respect to the original axis; this is a measure of how much they have rotated. With the center of masses located, we can add any diagnostics of interest we want related to the stars. At present we only have one. The \texttt{PRIMARY 1E$n$ RADIUS} and \texttt{SECONDARY 1E$n$ RADIUS} are the radii from the center of the stars at which the average density is $10^n\ \text{g}\ \text{cm}^{-3}$.
+
+\end{itemize}
+
+
 
 \chapter{How to Build a Problem}
 
@@ -320,7 +522,7 @@ with the default settings, then your makefile needs only to have the line:
 \end{lstlisting}%$
 This includes the main makefile from the \texttt{source/} directory in \texttt{wdmerger}. 
 The main makefile sets all of our build options (compiler, number of space dimensions, 
-equation of state, etc.) and then includes the CASTRO makefile, which then runs as normal.
+equation of state, etc.) and then includes the \texttt{CASTRO} makefile, which then runs as normal.
 If you want to adjust the build options, then simply add a line before this include. As an 
 example, if you want to build using a gamma-law equation of state, set:
 \begin{lstlisting}
@@ -369,9 +571,9 @@ That is all you need to submit a job. Return to the terminal, and type \texttt{b
 and your job will execute. The helper function \texttt{run} does several things. First, 
 it creates the directory named \texttt{\$dir}. Then, it copies into \texttt{\$dir} the \texttt{inputs}
 and \texttt{probin} files from the root \texttt{wdmerger} source directory; these are the runtime
-files CASTRO needs to determine what your problem setup will be. They contain the default 
+files \texttt{CASTRO} needs to determine what your problem setup will be. They contain the default 
 parameters for merger runs. It also copies any auxiliary files one might need, like the 
-table for the equation of state, as well as the actual CASTRO executable you just built in the 
+table for the equation of state, as well as the actual \texttt{CASTRO} executable you just built in the 
 \texttt{compile/} directory. Finally, it builds a script that you'll use for actually submitting 
 the job to the batch submission system on the machine you're on, and then submits that job. 
 Thus for a typical setup, your run directory will contain the following files when you submit:
@@ -439,7 +641,7 @@ by default, so we include this in every build.
 \chapter{Test Problems}
 
 The \texttt{tests} directory contains a number of example problems that we use
-to assess the reliability of CASTRO in performing hydrodynamics simulations 
+to assess the reliability of \texttt{CASTRO} in performing hydrodynamics simulations 
 with self-gravity. This section includes a list of the existing problems 
 as well as the instructions for building and running a problem.
 
@@ -602,7 +804,7 @@ This project was started as the Ph.D. dissertation project for Max Katz at Stony
 Michael Zingale is Max's primary thesis advisor. Correspondence and requests for information 
 about this software should be directed to them; their e-mail addresses are maximilian.katz@stonybrook.edu
 and michael.zingale@stonybrook.edu, respectively. Alan Calder and Doug Swesty at Stony Brook are 
-also co-investigators on this project. The CASTRO code was developed primarily at the 
+also co-investigators on this project. The \texttt{CASTRO} code was developed primarily at the 
 Lawrence Berkeley National Laboratory. Staff there that have contributed directly and 
 indirectly to this project include Ann Almgren, John Bell, Weiqun Zhang, Andy Nonaka, and Vince Beckner.
 
