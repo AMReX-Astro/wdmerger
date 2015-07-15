@@ -507,9 +507,9 @@ assuming cell-centered values for the integrands.
 
 This chapter describes the necessary steps you need to take to build your own problem setup,
 and describes the underlying code that facilitates the job submission. If you are interested in
-doing white dwarf mergers and want to use the default settings, read Section \ref{sec:standard_problems}.
+doing white dwarf mergers and want to use the default source code, read Section \ref{sec:standard_problems}.
 If you are interested in setting up a different problem but using this software's job submission 
-system, you can do so; read Section \ref{sec:non-standard_problems} for more information.
+system, you can do so; Section \ref{sec:non-standard_problems} gives some advice on that.
 
 \section{Standard Problems}
 \label{sec:standard_problems}
@@ -622,21 +622,13 @@ again will automatically restart your job from the most recent checkpoint.
 \section{Non-Standard Problems}
 \label{sec:non-standard_problems}
 
-If you want to build your own problem setup, you can do that too. The makefile and job submission 
+If you want to build your own problem setup, you can do that too. The job submission 
 requirements are the same as in Section \ref{sec:standard_problems}, but you will need to provide 
-your own source files. They should all go in a \texttt{source/} subdirectory in your problem location.
-At minimum, you'll need a \texttt{Prob\_3d.f90} file (or the equivalent for lower dimensions) and a 
-probin file. The probin file can be empty, it just needs to be there because otherwise the helper 
-routines will make a copy of the default probin file. To get a sense of how this is done, look at 
-some of the existing test problems, in particular the \texttt{kelvin\_helmholtz} test. To tell the 
-code that you want to compile this source code instead of the default code, make a file called 
-\texttt{full\_source} and place it in the \texttt{source/} directory (you can just use \texttt{touch}
-to create an empty file). Then follow the rest of the instructions as normal, starting with the 
-compile step.
-
-The only source code that will be built from the default location is \texttt{sum\_integrated\_quantities.cpp},
-which controls the diagnostic output. Our version is a bit more extensive than what comes in CASTRO
-by default, so we include this in every build.
+your own source files and makefile. They can go in the \texttt{compile/} subdirectory in your problem location.
+At minimum, you'll need a \texttt{Prob\_3d.f90} file (or the equivalent for lower dimensions) and
+corresponding inputs and probin files. The problems in \texttt{tests/castro} are similar to this;
+they are ultimately building using the source code in the CASTRO test suite, but using a
+\texttt{run\_test.sh} that is very similar to the one used for merger problems.
 
 \chapter{Test Problems}
 
@@ -646,43 +638,50 @@ with self-gravity. This section includes a list of the existing problems
 as well as the instructions for building and running a problem.
 
 \begin{itemize}
-  \item The \texttt{gravity} subdirectory includes problems that test the Poisson 
-self-gravity module in CASTRO.
+  \item The \texttt{binary} subdirectory includes problems that test the binary star setup.
   \begin{itemize}
     \item The \texttt{boundary\_condition\_comparison} test checks the validity of our 
-multipole approximation for the boundary conditions on the Poisson equation. It runs
-the gravity solve for several different choices of the number of expansion coefficients
-and compares the resulting gravitational potential to the exact result.
-    \item The \texttt{uniform\_cube\_sphere} test is designed to check the convergence
-properties of the Poisson solver. It loads either a sphere or cube of uniform density
-onto the computational domain and then calculates the potential at several different
-spatial resolutions to check if the potential converges.
-  \end{itemize}
-  \item The \texttt{hydro} subdirectory tests includes tests that use the hydrodynamics 
-module, including many with self-gravity.
-  \begin{itemize}
+      multipole approximation for the boundary conditions on the Poisson equation. It runs
+      the gravity solve for several different choices of the number of expansion coefficients
+      and compares the resulting gravitational potential to the exact result.
     \item The \texttt{circular\_orbit} test loads two white dwarfs on a grid and then orbits
-them for a large number of periods, to test conservation of linear momentum,
-angular momentum and energy convergence.
-    \item The \texttt{evrard\_collapse} test runs the test problem described originally by 
-\cite{evrard:1988} and whose results for a grid-based code can be seen in \cite{arepo}. A spherical
-distribution of gas obeying a gamma-law equation of state is loaded onto a grid with negligible 
-pressure. The gas collapses, rebounds with a shock, and then settles into hydrodynamic equilibrium.
-It is a good test of the energy conservation properties of the code.
+      them for a large number of periods, to test conservation of linear momentum,
+      angular momentum and energy convergence.
     \item The \texttt{freefall} test loads two white dwarfs onto a grid and allows them to fall towards
-each other under their mutual gravitational influence. We check to see whether the timescale for them
-colliding matches the analytical expectation for two point masses.
-    \item The \texttt{kelvin\_helmoltz} test runs several varieties of a 2D shearing fluid that exhibits the 
-Kelvin-Helmholtz instability. The relevant papers are \cite{robertson:2010}, \cite{arepo}, and \cite{mcnally:2012}.
-    \item The \texttt{single\_star\_hse} test loads a single white dwarf on a grid and checks how well 
-hydrostatic equilibrium is maintained.
+      each other under their mutual gravitational influence. We check to see whether the timescale for them
+      colliding matches the analytical expectation for two point masses.
   \end{itemize}
+  
+  \item The \texttt{single} subdirectory is for tests that only use a single star.
+  \begin{itemize}
+    \item The \texttt{single\_star\_hse} test loads a single white dwarf on a grid and checks how well 
+      hydrostatic equilibrium is maintained.
+  \end{itemize}
+
+  \item The \texttt{castro} subdirectory is for running tests in the CASTRO test suite that are relevant
+  to issues that the merger problem will face.
+  \begin{itemize}
+    \item The \texttt{uniform\_cube\_sphere} test is designed to check the convergence
+        properties of the Poisson solver. It loads either a sphere or cube of uniform density
+        onto the computational domain and then calculates the potential at several different
+        spatial resolutions to check if the potential converges
+    \item The \texttt{evrard\_collapse} test runs the test problem described originally by 
+      \cite{evrard:1988} and whose results for a grid-based code can be seen in \cite{arepo}. A spherical
+      distribution of gas obeying a gamma-law equation of state is loaded onto a grid with negligible 
+      pressure. The gas collapses, rebounds with a shock, and then settles into hydrodynamic equilibrium.
+      It is a good test of the energy conservation properties of the code.
+    \item The \texttt{kelvin\_helmoltz} test runs several varieties of a 2D shearing fluid that exhibits the 
+      Kelvin-Helmholtz instability. The relevant papers are \cite{robertson:2010}, \cite{arepo}, and \cite{mcnally:2012}.
+  \end{itemize}
+
   \item The \texttt{performance} subdirectory examines the scaling and performance properties of CASTRO.
   \begin{itemize}
     \item The \texttt{strong\_scaling} test runs the same problem with a varying number of processors and 
-checks the scaling properties.
+      checks the scaling properties.
     \item The \texttt{weak\_scaling} test scales the size of the problem with the number of processors and
-checks the scaling properties.
+      checks the scaling properties.
+    \item The \texttt{threading} test is useful for determining the optimal number of OpenMP threads for your machine.
+    \item The \texttt{load\_balancing} test finds which load balancing strategy makes the most sense for our problem.
   \end{itemize}
 \end{itemize}
 

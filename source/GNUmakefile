@@ -9,7 +9,7 @@ PROFILE ?= FALSE
 
 DEBUG ?= FALSE
 
-USE_MPI ?= TRUE
+#USE_MPI ?= TRUE
 USE_OMP ?= TRUE
 
 DIM ?= 3
@@ -54,16 +54,8 @@ diag_pack = $(WDMERGER_HOME)/source/diagnostics/Make.package
 root_locs = $(WDMERGER_HOME)/source/
 root_pack = $(WDMERGER_HOME)/source/Make.package
 
-prob_locs = ../source/
-prob_pack = ../source/Make.package
-
-ifneq ($(wildcard ../source/full_source),)
-	Blocs := $(prob_locs) $(diag_locs)
-	Bpack := $(prob_pack) $(diag_pack)
-else
-	Blocs := $(root_locs) $(diag_locs)
-	Bpack := $(root_pack) $(diag_pack)
-endif
+Blocs := $(root_locs) $(diag_locs)
+Bpack := $(root_pack) $(diag_pack)
 
 BUILD_GIT_NAME := wdmerger
 BUILD_GIT_DIR  := $(WDMERGER_HOME)

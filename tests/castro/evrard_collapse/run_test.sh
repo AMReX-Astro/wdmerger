@@ -2,8 +2,8 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 TEST_DIR=$CASTRO_DIR/Exec/evrard_collapse
 
-cp $TEST_DIR/inputs source/
-cp $TEST_DIR/probin source/
+cp $TEST_DIR/inputs $compile_dir/
+cp $TEST_DIR/probin $compile_dir/
 
 # Loop over the gravity source options
 
