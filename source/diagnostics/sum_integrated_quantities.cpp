@@ -417,8 +417,8 @@ Castro::sum_integrated_quantities ()
 	  grid_log << std::setw(datawidth) << " YMOM GRID             ";
 	  grid_log << std::setw(datawidth) << " ZMOM GRID             ";
 	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
-	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
-	  grid_log << std::setw(datawidth) << " XMOM ROT.             ";
+	  grid_log << std::setw(datawidth) << " YMOM ROT.             ";
+	  grid_log << std::setw(datawidth) << " ZMOM ROT.             ";
           grid_log << std::setw(datawidth) << " ANG. MOM. X           ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Y           ";
           grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
