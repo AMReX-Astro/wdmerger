@@ -452,7 +452,7 @@ contains
        
        print *, ''//achar(27)//'[1;32m'
        
-       write (*,1001), mass_P_initial, central_density_P, radius_P_initial
+       write (*,1001) mass_P_initial, central_density_P, radius_P_initial
        1001 format ("Generated initial model for primary WD of mass ", f4.2, &
                     " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
        print *, ""
