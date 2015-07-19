@@ -683,6 +683,25 @@ solve for the time derivative of the potential, $\dot{\Phi}$, this is not needed
 we will already have the potential at time-levels $n$ and $n+1$, and to second order in time, 
 $\dot{\Phi}^{n+1/2} = (\Phi^{n+1} - \Phi^{n}) / \Delta t.$)
 
+A final issue worth noting relates to complications posed by mesh refinement. Like 
+many AMR codes, CASTRO implements a refluxing algorithm at the end of a timestep. 
+At any locations on a particular grid level that are adjacent to, but not covered by,
+zones from a finer grid, there will be a disagreement about the fluxes crossing 
+this coarse-fine interface. If left uncorrected, this results in a violation of 
+the conservation condition. Therefore the value of the coarse flux on this interface 
+is replaced by the sum of the fine fluxes at that interface, at the end of the 
+coarse timestep. In general, this change in mass distribution on the grid 
+results in a change in the gravitational potential, meaning that an additional 
+corrective source term ought to be added. \cite{miniati:2007} and \cite{castro} 
+describe an algorithm for doing so. We consider the size of this effect to be 
+negligible and therefore we avoid the expense of solving for the potential change caused by 
+this mass change. Our grid boundaries are always located outside of the dense 
+stellar interiors that generate almost all of the gravitational potential. 
+Consequently the refluxing operation only changes the solution in regions of 
+ambient density, and even there only to the extent that there is disagreement 
+between the coarse and fine fluxes -- this clearly has a 
+vanishingly small effect on the gravitational potential.
+
 \subsubsection{Boundary Conditions}\label{sec:gravity_boundary_conditions}
 
 Analytic solutions to the Poisson equation customarily assume that the
