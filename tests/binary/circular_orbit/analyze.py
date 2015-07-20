@@ -17,13 +17,13 @@ for rot in ['0', '1']:
 
         diag_filename = "results/" + ratio + "/rot" + rot + "/output/grid_diag.out"
 
-        eps_filename = "plots/" + ratio + "_energy_rot_" + rot + ".eps"
+        eps_filename = "plots/" + ratio + "_energy_rot" + rot + ".eps"
 
         if (not os.path.isfile(eps_filename)):
 
             grid_diag.plot_energy_error(diag_filename, eps_filename)
 
-        eps_filename = "plots/" + ratio + "_angular_momentum_rot_" + rot + ".eps"
+        eps_filename = "plots/" + ratio + "_angular_momentum_rot" + rot + ".eps"
 
         if (not os.path.isfile(eps_filename)):
 
@@ -31,7 +31,7 @@ for rot in ['0', '1']:
 
         diag_filename = "results/" + ratio + "/rot" + rot + "/output/star_diag.out"
 
-        eps_filename = "plots/" + ratio + "_location_rot_" + rot + ".eps"
+        eps_filename = "plots/" + ratio + "_location_rot" + rot + ".eps"
 
         if (not os.path.isfile(eps_filename)):
                 
