@@ -2,6 +2,7 @@ import yt
 import numpy as np
 from matplotlib import pyplot as plt
 import wdmerger
+import wdmerger_star_diag_analysis.py as star_diag
 import os
 
 # Problem parameters
@@ -43,11 +44,11 @@ for vel in vel_arr:
 
             diag_filename = "results/" + str(vel) + "/n" + str(nc) + "/output/star_diag.out"
 
-            timeCol = wdmerger.get_column('TIME', diag_filename)
+            timeCol = star_diag.get_column('TIME', diag_filename)
 
             # Obtain the spherical radii denoting different density cutoffs
 
-            radCol = wdmerger.get_column('PRIMARY 1E' + str(c) + ' RADIUS', diag_filename)
+            radCol = star_diag.get_column('PRIMARY 1E' + str(c) + ' RADIUS', diag_filename)
 
             # Divide radii by initial radii, then calculate difference with respect to
             # the initial radius.
@@ -105,11 +106,11 @@ else:
 
         diag_filename = "results/" + str(vel) + "/n" + str(nc) + "/output/grid_diag.out"
 
-        timeCol = wdmerger.get_column('TIME', diag_filename)
+        timeCol = star_diag.get_column('TIME', diag_filename)
 
         # Obtain the spherical radii denoting different density cutoffs
 
-        keCol = wdmerger.get_column('KIN. ENERGY', diag_filename)
+        keCol = star_diag.get_column('KIN. ENERGY', diag_filename)
 
         plt.plot(timeCol, keCol, linestyle=linestyles[idx], linewidth=4.0, marker = markers[idx], markevery=500, markersize=8.0, label=r'n = ' + str(nc))
 
@@ -158,11 +159,11 @@ for c in range(nCols):
 
             diag_filename = "results/" + str(vel) + "/n" + str(nc) + "/output/star_diag.out"
 
-            timeCol = wdmerger.get_column('TIME', diag_filename)
+            timeCol = star_diag.get_column('TIME', diag_filename)
 
             # Obtain the spherical radii denoting different density cutoffs
 
-            radCol = wdmerger.get_column('PRIMARY 1E' + str(c) + ' RADIUS', diag_filename)
+            radCol = star_diag.get_column('PRIMARY 1E' + str(c) + ' RADIUS', diag_filename)
 
             # Divide radii by initial radii, then calculate difference with respect to
             # the initial radius.

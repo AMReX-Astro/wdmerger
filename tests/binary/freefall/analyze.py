@@ -2,6 +2,7 @@ import yt
 import numpy as np
 from matplotlib import pyplot as plt
 import wdmerger
+import wdmerger_star_diag_analysis.py as star_diag
 
 # Set the name of the diagnostic output file
 
@@ -11,8 +12,8 @@ diag_filename = "results/n" + str(ncell) + "/output/star_diag.out"
 
 # Get the desired columns for the time and distance
 
-time = wdmerger.get_column('TIME',        diag_filename)
-dist = wdmerger.get_column('WD DISTANCE', diag_filename)
+time = star_diag.get_column('TIME',        diag_filename)
+dist = star_diag.get_column('WD DISTANCE', diag_filename)
 
 # Let's divide the time array by free-fall timescale
 
