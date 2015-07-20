@@ -29,10 +29,13 @@ pdf:	paper.pdf
 	$(EPStoPDF) $<
 
 clean:
-	$(RM) $(pdf_source) paper.dvi 
-	$(RM) paper.blg paper.log
-	$(RM) paper.aux paper.ps paper.bbl
-	$(RM) paper.pdf
+	$(RM) $(pdf_source) *.dvi 
+	$(RM) *.blg *.log
+	$(RM) *.aux *.ps *.bbl
+	$(RM) *.pdf
 	$(RM) *~
+	$(RM) plots/*.aux
+	$(RM) plots/*.pdf
+	$(RM) plots/*~
 
 .PHONY: clean
