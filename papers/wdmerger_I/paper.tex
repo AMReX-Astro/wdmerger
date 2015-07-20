@@ -1,13 +1,8 @@
 \documentclass[iop]{../emulateapj}
-% for \sout
-\usepackage{ulem}
-% makes sure \em{} is italic rather than underlined (corrects ulem from line above)
-\normalem
 
 % these lines seem necessary for pdflatex to get the paper size right
 \pdfpagewidth 8.5in
 \pdfpageheight 11.0in
-
 
 % for the red MarginPars
 \usepackage{color}
@@ -24,23 +19,14 @@
 % allows comment sections
 \usepackage{verbatim}
 
-\newcommand{\rhocutoff}{\rho_\mathrm{cutoff}}
-\newcommand{\rhoanelastic}{\rho_\mathrm{anelastic}}
-
-\newcommand{\gcc}{\mathrm{g~cm^{-3} }}
-\newcommand{\Tcutoff}{T_\mathrm{cutoff}}
-
 % MarginPars
 \setlength{\marginparwidth}{0.75in}
 \newcommand{\MarginPar}[1]{\marginpar{\vskip-\baselineskip\raggedright\tiny\sffamily\hrule\smallskip{\color{red}#1}\par\smallskip\hrule}}
-
 
 \newcommand{\evm}{{(-)}}
 \newcommand{\evz}{{(\circ)}}
 \newcommand{\evp}{{(+)}}
 \newcommand{\enu}{{(\nu)}}
-
-
 
 \newcommand{\msolar}{\mathrm{M}_\odot}
 
@@ -1737,15 +1723,119 @@ mass transfer is seeded in a controllable manner and free from numerical noise.
 
 \subsection{Keplerian Orbit}\label{sec:kepler}
 
-should show:
+We now consider the phase of the binary system where the stars are orbiting each other 
+at distances great enough that the initial orbits should be approximately Keplerian. 
+There are a number of effects worth looking into here. For simplicity, we choose two 
+cases to demonstrate the simulation behavior: an equal mass case of two $0.9\msolar$ 
+white dwarfs, and an unequal mass case of $0.9\msolar$ and $0.6\msolar$ white dwarfs.
+In each case, the initial orbital period is 100 seconds.
 
-effect of resolution
+For some of the algorithms described earlier in this work, a single orbit of these 
+systems is enough to examine their effects. In Section \ref{sec:gravity_boundary_conditions},
+we discussed the replacement of a monopole boundary condition solver for the gravitational 
+potential with a more general multipole solver for the boundaries. To test the relevance 
+of this effect, we considered a single orbit of the unequal mass system and measured 
+the distance between the two white dwarfs at the beginning of the simulation and after 
+the full orbital period. This distance should not change significantly over that timescale.
+We performed this test for maximum multipole moments ranging from 0 (the monopole term) to 16.
+The results are shown in Figure \ref{fig:gravity_bcs}. Terms in the boundary potential 
+that vary faster than $r^{-5}$ are effectively negligible in determining the outcome of the orbit, 
+justifying our typical choice of maintaining terms up to $r^{-7}$.
 
-inertial vs. rotating frame
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/gravity_bcs}
+  \caption{Absolute magnitude of the relative change in the distance of two unequal mass white dwarfs after one orbital period. 
+           The stars were evolved in an inertial reference frame. The horizontal axis is the number of terms or multipole moments 
+           captured in the series expansion for the potential at the domain boundary.\label{fig:gravity_bcs}}
+\end{figure}
 
-effect of ppm\_reference and gravity update type
+Another that we consider is the energy conservation of the system. Recalling Section \ref{sec:gravity_hydro_coupling}, 
+there are several different methods of applying the gravitational source term to the hydrodynamics equations. In CASTRO we presently 
+have four options, controlled by the parameter {\tt castro.grav\_source\_type}, which we will shortern to {\tt gs} for the present 
+discussion. ${\tt gs} = 1$ is the standard cell-centered source term for gravity. ${\tt gs} = 2$ is a slight variation on this scheme 
+that determines the value of the energy source term after the momentum source term has been applied; the former approach uses 
+the uncorrected momenta in calculating $\rho \mathbf{u} g$, which we have found to be more accurate. ${\tt gs} = 3$ is entirely 
+different: after calculating the new momenta, we reset the total energy to be equal to the internal energy plus the 
+kinetic energy. This has the virtue of ensuring that there is no conflict due to discretization between the momentum and 
+energy equations, and also correctly ensuring that the gravitational force does not directly change the internal energy -- 
+and thus the temperature -- of the fluid. However, it explicitly sacrifices total energy conservation. ${\tt gs} = 4$ is 
+the new conservative method of evaluating the energy source terms at cell faces. The results for the change in energy 
+after a single orbit are seen in the first column of Table \ref{table:sources}. The first two versions give reasonable and 
+similar levels of energy conservation. The third has total energy changes on the order of 100\%, but this itself 
+does not have a severe effect on the dynamics because in this scheme the total energy variable is effectively a placeholder 
+value of the kinetic energy plus internal energy, rather than being evolved directly. The last scheme is nearly two orders 
+of magnitude better in energy conservation, justifying the effort in varying the scheme.
 
-effect of boundary conditions (size of domain and possibly multipole dependence)
+In Table \ref{table:sources} we show also the effects on energy conservation of using the inertial reference frame. 
+We use ${\tt rs}$ for the CASTRO parameter {\tt castro.rot\_source\_type}, and we have the same four options for updating
+the energy source term as for gravity. The ${\tt rs} = 0$ column means that rotation is turned off and we are 
+in the inertial frame. We see that the choice of rotational coupling is much less important than the choice of gravity coupling. 
+Interestingly, the ``conservative'' ${\tt rs} = 4$ is slightly worse in energy conservation than the non-conservative, 
+cell-centered ${\tt rs} = 2$ algorithm. This may be because the rotational force grows with distance, and so losses at the 
+domain boundaries may be enhanced by explicitly evaluating the flux at cell edges.
+
+\input{plots/sources.table}
+
+We are most interested in the stability of these systems over long timescales. To this end, we consider the same systems as above, 
+but evolve them for 25 orbital periods. In Figure \ref{fig:circular_orbit_comparison} we illustrate the evolution of these systems 
+by plotting the center of mass locations of the white dwarfs on the orbital ($xy$) plane. For the equal mass case in the inertial 
+reference frame, the curves essentially fall on top of each other, indicating that the stars are indeed orbiting at the initial 
+distance without substantial deviation. In the unequal mass case, the stars now orbit at different distances but do not much 
+deviate from their initial distance. We do observe a secular decline in the center of mass of these stars, indicating that 
+eventually the stellar orbits will degrade due to numerical error even without intervention. The co-rotating frame is different.
+For clarity of visualization, we rotate these results back into the inertial frame before displaying their orbits.
+The stellar orbit in the equal mass case does not show the same secular decline, and the system appears to be stable. However, 
+the cost is that the oscillations about this equilibrium are slightly larger than in the inertial frame. The unequal mass case displays 
+this effect starkly: while the average distance is not declining, there are huge oscillations about this average. In addition, 
+the stars move substantially within the rotating frame itself, yielding the chaotic-looking orbits in the figure. The oscillations 
+grow with time and will eventually cause the stars to merge; however, the stars would eventually merge even in the inertial frame 
+case, and at a faster rate than the equal mass case. This suggests that this mass ratio is too large to ignore tidal effects, and 
+that the tidal effects play out much differently in the rotating frame.
+
+\begin{figure*}
+  \centering
+  \includegraphics[scale=0.7]{plots/circular_orbit_comparison}
+  \caption{Positions of the white dwarfs in the orbital plane for four cases evolved over 25 orbital periods. 
+           The $x$ and $y$ axes are normalized to the size of the domain, so that $x = -0.5$ is the left edge 
+           and $x = 0.5$ is the right edge. The dashed blue curve is the position of the primary white dwarf, 
+           and the solid red curve is the position of the secondary. In plot (a) we have the equal mass system 
+           evolved in the inertial reference frame, and in plot (c) we have the same system evolved in a rotating frame, 
+           where the positions have been transformed back to the inertial frame for comparison. 
+           Plots (b) and (d) are analogous but for the unequal mass system.\label{fig:circular_orbit_comparison}}
+\end{figure*}
+
+Turning to the conservation properties of the system, we examine as fairly typical cases the equal mass system 
+in the inertial frame for energy conservation (Figure \ref{fig:energy_conservation_equal}), and the unequal mass 
+system in the rotating frame for angular momentum conservation (Figure \ref {fig:angular_momentum_conservation_unequal}). 
+Angular momentum is conserved to within a few percent over the 25 orbits, while energy conservation is about 
+an order of magnitude better. We note that while this is already a fairly good level of energy conservation, it is not 
+nearly as good as the results of \citet{marcello:2012}. This is because we reset the internal energy to a level 
+corresponding to our temperature floor when it goes negative, while \citeauthor{marcello:2012} do not reset and 
+instead ignore the internal energy if it is negative. The resets impose an artificial floor on our ability to 
+conserve energy, but they only happen in low-density regions and do not much affect the large-scale dynamics. 
+Meanwhile, angular momentum conservation is not quite as good. This is linked to the decline (or increase) in 
+the size of the orbit. This implies that we ought to be careful in concluding that at these moderate resolutions 
+we can safely evolve systems for many dozens of orbits; this needs to be verified to ensure that an observed 
+inspiral and merger is physically (not numerically) motivated.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/equal_energy_rot_0.eps}
+  \caption{Absolute magnitude of the relative change in energy of two equal mass white dwarfs through 25 orbital periods,
+           evolved in an inertial reference frame. The decline and recovery is a change in sign of the energy difference.
+           \label{fig:energy_conservation_equal}}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/unequal_angular_momentum_rot_1.eps}
+  \caption{Absolute magnitude of the relative change in angular momentum of two equal mass white dwarfs after 25 orbital periods, 
+           evolved in a co-rotating reference frame. We consider only the component of the angular moment along the rotational 
+           axis. The decline and recovery is a change in sign of the angular momentum difference.
+           \label{fig:angular_momentum_conservation_unequal}}
+\end{figure}
+
 
 
 %==========================================================================
@@ -1925,13 +2015,16 @@ minimize bulk motions on static grids. A comparison of orbit
 simulations in both rotating and inertial reference frames 
 demonstrates that in practice this is not so simple, and that 
 a rotating reference frame has its own numerical issues for 
-the type of simulation we desire to perform here. Perhaps contrary 
-to expectations, the stars appear to be more stable in an inertial 
-frame where they are constantly in motion on the grid. It 
+the type of simulation we desire to perform here. Based on 
+the tests performed here, in some cases the stars may be 
+\textit{more} stable in an inertial frame despite 
+constantly being in motion on the grid. It 
 is not easy to predict the correct behavior of such systems, 
-so the best recourse for assessing confidence in a model from a 
-verification standpoint is still to see whether the observed 
-behavior converges with resolution.
+though one recourse for assessing confidence in a model from a 
+verification standpoint is to see whether the observed 
+behavior converges with resolution. However, it is not clear 
+whether at practical resolutions the results in the 
+rotating and inertial frames will converge to each other.
 
 Future work on this project will focus on how to build 
 reliable equilibrium initial models of the stars and 
