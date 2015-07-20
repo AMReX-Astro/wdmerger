@@ -341,7 +341,7 @@ solving the equations of hydrodynamics. In this work, we report mainly
 on the changes we have made to the code since its original release,
 for the purpose of approaching this problem.
 
-\subsection{Hydrodynamics}
+\subsection{Hydrodynamics}\label{sec:Hydrodynamics}
 
 The Euler equations for hydrodynamics (in the absence of source terms) in conservative form are:
 \begin{align}
@@ -682,6 +682,25 @@ in the discretization of the gravitational potential can lead to very large chan
 solve for the time derivative of the potential, $\dot{\Phi}$, this is not needed as in practice 
 we will already have the potential at time-levels $n$ and $n+1$, and to second order in time, 
 $\dot{\Phi}^{n+1/2} = (\Phi^{n+1} - \Phi^{n}) / \Delta t.$)
+
+A final issue worth noting relates to complications posed by mesh refinement. Like 
+many AMR codes, CASTRO implements a refluxing algorithm at the end of a timestep. 
+At any locations on a particular grid level that are adjacent to, but not covered by,
+zones from a finer grid, there will be a disagreement about the fluxes crossing 
+this coarse-fine interface. If left uncorrected, this results in a violation of 
+the conservation condition. Therefore the value of the coarse flux on this interface 
+is replaced by the sum of the fine fluxes at that interface, at the end of the 
+coarse timestep. In general, this change in mass distribution on the grid 
+results in a change in the gravitational potential, meaning that an additional 
+corrective source term ought to be added. \cite{miniati:2007} and \cite{castro} 
+describe an algorithm for doing so. We consider the size of this effect to be 
+negligible and therefore we avoid the expense of solving for the potential change caused by 
+this mass change. Our grid boundaries are always located outside of the dense 
+stellar interiors that generate almost all of the gravitational potential. 
+Consequently the refluxing operation only changes the solution in regions of 
+ambient density, and even there only to the extent that there is disagreement 
+between the coarse and fine fluxes -- this clearly has a 
+vanishingly small effect on the gravitational potential.
 
 \subsubsection{Boundary Conditions}\label{sec:gravity_boundary_conditions}
 
@@ -1997,27 +2016,11 @@ using the stellar equation of state was given in
 \citet{zingalekatz:2015}.  Here we discuss the changes that affect
 multispecies flow and source terms.
 
-Summary of changes:
-\begin{itemize}
-\item New gravity update type: fixes some energy conservation
-
-\item changing I's to use limit of the parabola instead of the
-  cell-center: not sure if this does much
-
-\item Colella \& Glaz Riemann solver: does a much better job with
-  temperature in strong shocks
-
-\item Tracing of gravity: seems to help with the material at the edge
-  of the star
-
-\item implicit update of the rotation terms?  (I coded this up once, but
-  it is not currently in the code)
-\end{itemize}
-
 \subsection{Reference States}
 
 For all the runs, the PPM reconstruction is done using the original limiters for
-the parabolic profiles \citep{ppm}.  The prediction of the interface
+the parabolic profiles \citep{ppm}; see Section \ref{sec:Hydrodynamics} for a brief 
+discussion about the limiters.  The prediction of the interface
 states appears as:
 \begin{equation}
 \label{eq:ppmstatel}
@@ -2038,7 +2041,7 @@ Finally, $\mathcal{I}_+^{(\nu)}(q)$ is the
 average under the parabolic profile of quantity $q$ of all the
 information that can reach the right interface of the zone $i$ as
 carried by the wave $\nu$.  The reader is referred to
-\citet{ppmunsplit} for further defaults.
+\citet{ppmunsplit} for further details.
 
 Since the original CASTRO paper, the reference state implementation
 has been switched to:
@@ -2059,10 +2062,10 @@ in the original CASTRO paper has also been updated as discussed
 in \citet{zingalekatz:2015}.
 
 We comment on the choice of reference state for passively-advected
-quantities (like $X_k$ or the transverse velocity).
-First, consider one of the variables present in one-dimensional flow
-(density, velocity in the normal direction, and pressure).  Here we
-our reference state is as in Eq.~\ref{eq:refchoice} and we have.
+quantities (like $X_k$ or the transverse velocity), which is not typically 
+discussed. First, consider one of the variables present in one-dimensional flow
+(density, velocity in the normal direction, and pressure), and let our 
+reference state be as in Eq.~\ref{eq:refchoice}.
 Ignoring flattening, if there are no waves moving toward our
 interface, then Eq.~\ref{eq:ppmstatel} reduces to:
 \begin{equation}
@@ -2071,15 +2074,14 @@ q_{i+1/2,L}^{n+1/2} = \tilde{q}_L = q_i
 If instead only the fastest wave is moving toward the interface, then
 only the term corresponding to the fastest wave in the sum will be
 added in Eq.~\ref{eq:ppmstatel}, but our choice of reference state makes
-that term 0 by design, and our interface state is:
+that term zero by design, and our interface state is:
 \begin{equation}
 q_{i+1/2,L}^{n+1/2} = \tilde{q}_L = \mathcal{I}_+^{+}(q_i)
 \end{equation}
 This is the desired behavior for each of these cases. 
 
-The details of the reference state for passively advected quantities 
-(which includes the transverse velocities in the 1-d tracing) is not
-typically discussed.  If we use the same idea of the reference state as
+However, now consider the same approach applied to passively advected quantities.
+If we use the same idea of the reference state as
 in Eq.~\ref{eq:refchoice}, and consider a quantity $\xi$ which should only
 jump across the contact, then our interface state becomes:
 \begin{equation}
@@ -2093,7 +2095,7 @@ Again, ignoring flattening, if $u \ge 0$, then we have
 \xi_{i+1/2,L}^{n+1/2} = \tilde{\xi}_L -
   \left (\tilde{\xi}_L  - \mathcal{I}^\evz_+(\xi_i) \right ) = \mathcal{I}^\evz_+(\xi_i)
 \end{equation}
-(where we used the fact that the eigenvectors are normalized to 1 and
+(where we used the fact that the eigenvectors are normalized to unity and
 don't mix in any other states when dealing with passive terms).  This
 is the expected behavior---we see a state that is traced only by the
 contact wave.  However, if $u < 0$ but $u + c \ge 0$, then we instead get:
@@ -2124,17 +2126,18 @@ We note a few additional differences between the original PPM
 implementation of \citet{ppm} and CASTRO.  In the original PPM
 implementation, the gravitational acceleration was reconstructed as a parabola, and
 this was traced under to find the forcing that affects the interface
-for each wave.  CASTRO followed \citet{ppmunsplit} which instead adds
-$(\Delta t/2)g$ to the interface states at the end of the
+for each wave.  CASTRO originally followed \citet{ppmunsplit} which instead adds
+$(\Delta t/2)g$ to the interface states for velocity at the end of the
 reconstruction.  In the current implementation, we do the original
 parabolic reconstruction and characteristic tracing of the gravitation
-source.  Our system with the source appears as:
+source. This can be controlled in CASTRO with the parameter 
+{\tt castro.ppm\_trace\_grav}. Our system with the source appears as:
 \begin{equation}
 q_t + A(q) q_x = G
 \end{equation}
 where $G = (0, g, 0)^T$---i.e. the gravitational source only affects
 $u$, not $\rho$ or $p$.  Note that in the PPM paper, they put $G$ on 
-the lefthand side of the primitive variable equation, so our signs are
+the left-hand side of the primitive variable equation, so our signs are
 opposite.  Our projections are now:
 \begin{equation}
 \sum_{\nu; \lambda^\enu \ge 0}l^\enu \cdot (\tilde{q} - \mathcal{I}^\enu_+(q) - \tfrac{\Delta t}{2} G) r^\enu
@@ -2156,22 +2159,18 @@ u_{i+1/2,L}^{n+1/2} =
       \left (\tilde{u}_+ - \mathcal{I}_+^\evp(u) - \frac{\Delta t}{2} \mathcal{I}^\evp_+(g) \right ) +
        \frac{\tilde{p}_+ - \mathcal{I}_+^\evp(p)}{C} \right ]
 \end{eqnarray}
-These differ from the expression in the PPM paper, where $\Delta t G$,
-not $\Delta t/2 G$ is used in the projection, however we believe that
-the factor of $1/2$ is correct.  To see this, notice that if both
+(The expression in the PPM paper contains $\Delta t G$, not $(\Delta t/2) G$,
+but we believe that the factor of $1/2$ is correct.  To see this, notice that if both
 waves are moving toward the interface, then the source term that is
 added to the interface state is $(\Delta t/4) (\mathcal{I}_+^\evm(g) +
 \mathcal{I}_+^\evp(g))$ for the left state, which reduces to $(\Delta
 t/2) g$ for constant g---this matches the result from Taylor
-expanding to the interface at the half-time (as in \citealt{ppmunsplit}).
+expanding to the interface at the half-time (as in \citealt{ppmunsplit}).)
 
 There is one additional effect of this change---now the gravitational
 source is seen by all Riemann solves (including the transverse solves)
 whereas previously it was only added to the final unsplit interface
 states.  Both methods are second-order accurate.
-
-The tracing of gravity can be controlled in the public version of CASTRO
-with the parameter {\tt castro.ppm\_trace\_grav}.
 
 Similarly, we also trace under the centrifugal and Coriolis forces to capture
 the effects of rotation on the edge states. For the primitive variables, the rotation
@@ -2180,16 +2179,6 @@ Just like the gravity source, the rotation source terms only update the velociti
 the rotation source terms can be included in a manner identical to that of the gravity source
 terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. This is controlled in CASTRO
 with the parameter {\tt castro.ppm\_trace\_rot}.
-
-\begin{figure}
-  \centering
-  \includegraphics[scale=1.0]{plots/reference}
-  \caption{ \label{Fig:sod} Solution to Sod's problem with the original
-    reference state and the new reference state, as compared to the
-    exact solution.  We note that the new reference state shows a
-    slightly sharper shock and contact, but also has a dip at the tail
-    of the rarefaction.}
-\end{figure}
 
 \clearpage
 
