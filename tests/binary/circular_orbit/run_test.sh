@@ -1,102 +1,182 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Problem-specific variables
+# Functions we'll need
 
-mass_P=0.90
-mass_S=0.90
+function set_run_opts {
+
+  if [ $MACHINE == "BLUE_WATERS" ]; then
+      if   [ $ncell == 128 ]; then
+	  nprocs=128
+	  walltime=12:00:00
+      elif [ $ncell == 256 ]; then
+	  nprocs=1024
+	  walltime=24:00:00
+      elif [ $ncell == 512 ]; then
+	  nprocs=1024
+	  walltime=24:00:00
+      elif [ $ncell == 1024 ]; then
+	  nprocs=2048
+	  walltime=24:00:00
+      elif [ $ncell == 2048 ]; then
+	  nprocs=4096
+	  walltime=24:00:00
+      fi
+  fi
+
+  if [ ! -z $ncell ]; then
+
+    if [ $ncell -eq 256 ]; then
+	amr_n_cell="256 256 256"
+	amr_max_level="0"
+	amr_max_grid_size="32"
+    elif [ $ncell -eq 512 ]; then
+	amr_n_cell="256 256 256"
+	amr_max_level="1"
+	amr_ref_ratio="2"
+	amr_max_grid_size="32 32"
+    elif [ $ncell -eq 1024 ]; then
+	amr_n_cell="256 256 256"
+	amr_max_level="1"
+	amr_ref_ratio="4"
+	amr_max_grid_size="32 48"
+    elif [ $ncell -eq 2048 ]; then
+	amr_n_cell="256 256 256"
+	amr_max_level="2"
+	amr_ref_ratio="4 2"
+	amr_max_grid_size="32 32 64"
+    fi
+
+  fi
+
+  if [ ! -z $castro_do_rotation ]; then
+
+    if [ $castro_do_rotation -eq 0 ]; then
+	orbital_kick=T
+    else
+	orbital_kick=F
+    fi
+
+  fi
+
+}
+
+
+# Some global variables we'll need
 
 castro_rotational_period=100.0
+
+amr_check_per=20.0
+amr_plot_per=20.0
+
+# Main test of equal and unequal mass binaries for multiple orders.
+
+ncell=256
+num_periods=25
+stop_time=$(echo "$num_periods * $castro_rotational_period" | bc -l)
+
+castro_grav_source_type=4
+castro_rot_source_type=4
+
+N_iters=$num_periods
+
+for ratio in equal unequal
+do
+
+  if [ $ratio == "equal" ]; then
+      mass_P=0.90
+      mass_S=0.90
+  elif [ $ratio == "unequal" ]; then
+      mass_P=0.90
+      mass_S=0.60
+  fi
+
+  for castro_do_rotation in 0 1
+  do
+
+    dir=$results_dir/$ratio/rot$castro_do_rotation
+
+    set_run_opts
+    chain
+
+  done
+done
+
+# Fixed parameters for the remainder of the tests
+
+mass_S=0.90
+mass_P=0.60
+ncell=256
+
 stop_time=$castro_rotational_period
 
-num_periods=50
+# Now do a single orbit test of the various gravity and rotation source terms.
 
-final_stop_time=$(echo "$(num_periods) * $(castro_rotational_period)" | bc -l)
-
-# Loop over the resolutions in question
-
-for gs in 1 2 3 4
+for castro_grav_source_type in 1 2 3 4
 do
-  for rs in 0 1 2 3 4
+  for castro_rot_source_type in 0 1 2 3 4
   do
-    for ncell in 128 256
-    do
-      dir=$results_dir/gs$gs/rs$rs/n$ncell
 
-      # First do the relevant updates in the inputs file.
-      
-      amr_n_cell="$ncell $ncell $ncell"
-      castro_grav_source_type=$gs
+    dir=$results_dir/sources/gs$castro_grav_source_type/rs$castro_rot_source_type
 
-      if [ $rs == 0 ]; then
-	  castro_do_rotation=0
-	  orbital_kick=T
-      else
-	  castro_do_rotation=1
-	  castro_rot_source_type=$rs
-	  orbital_kick=F
-      fi
+    if [ $castro_rot_source_type == 0 ]; then
+        castro_do_rotation=0
+    else
+        castro_do_rotation=1
+    fi
 
-      # For this test we want to perform many orbits in succession. It is not feasible
-      # to try to do all of them in one run. Therefore our strategy will be to do
-      # one orbital period at a time. Each time we run, we check if we have yet reached
-      # the desired final stopping time, which is the rotational period multiplied by the
-      # number of desired orbits. If not, we update the stopping time in the inputs
-      # to be increased by one rotational period, and then re-submit the job.
-      # Also, make sure we completed the last orbit successfully.
-      # This step is only necessary if we have already started the job initially.
+    set_run_opts
+    run
 
-      if [ -e $dir/$inputs ]; then
+  done
+done
 
-	checkpoint=$(get_last_checkpoint $dir)
-        time=$(awk 'NR==3' $dir/$checkpoint/Header)
+castro_grav_source_type=4
+castro_rot_source_type=4
 
-        if [ $(echo "$time < $final_stop_time" | bc -l) -eq 1 ]; then
+# A test of the gravity boundary conditions
 
-	    # Now we have two cases. If we're less than one orbital period away, set 
-	    # the stopping time equal to the final stopping time.
-	    # Otherwise, add a full orbital period.
+for castro_do_rotation in 0 1
+do
+  for gravity_max_multipole_order in 0 2 4 6 8 10 12 14 16
+  do
 
-	    if [ $(echo "$time > ($final_stop_time - $castro_rotational_period)" | bc -l) -eq 1 ]; then
-		new_time=$final_stop_time
-	    else
-		new_time=$(echo "$time + $castro_rotational_period" | bc -l)
-	    fi
+    dir=$results_dir/gravity_bcs/rot$castro_do_rotation/order$gravity_max_multipole_order
 
-	    # While we are here, we don't want to do too many orbits for the options
-	    # we do not prefer. We will stop at a single orbit for everytning but our
-	    # preferred options in both the rotating and inertial frames.
+    set_run_opts
+    run
+  
+  done
+done
 
-	    new_time_flag=$(echo "$new_time >= $castro_rotational_period" | bc -l)
+# Do a spatial resolution test in both reference frames
 
-	    if [ $new_time_flag -eq 1 ]; then
-		if [[ $gs -ne 4 ]]; then
-		    continue
-		fi
-		if [[ $rs -ne 0 ]] && [[ $rs -ne 4 ]]; then
-		    continue
-		fi
-	    fi
+for castro_do_rotation in 0 1
+do
+  for ncell in 256 512 1024
+  do
 
-	    stop_time=$new_time
+    dir=$results_dir/spatial_convergence/rot$castro_do_rotation/n$ncell
 
-        fi
+    set_run_opts
+    run
 
-      fi
+  done
+done
 
-      if [ $MACHINE == "BLUE_WATERS" ]; then
-	  if   [ $ncell == 64  ]; then
-	      nprocs=32
-	      walltime=00:45:00
-	  elif [ $ncell == 128 ]; then
-	      nprocs=128
-	      walltime=6:00:00
-	  elif [ $ncell == 256 ]; then
-	      nprocs=1024
-	      walltime=12:00:00
-	  fi
-      fi
+# Do a time resolution test
 
-      run $dir $nprocs $walltime
-    done
+ncell=256
+castro_init_shrink=1.0
+
+for castro_do_rotation in 0 1
+do
+  for castro_fixed_dt in 0.01 0.005 0.0025 0.00125
+  do
+
+    dir=$results_dir/time_convergence/rot$castro_do_rotation/dt$castro_fixed_dt
+
+    set_run_opts
+    run
+
   done
 done
