@@ -36,12 +36,11 @@ else
 	FCOMP ?= gfortran
 endif
 
-# This sets the EOS directory in $(CASTRO_DIR)/EOS
-EOS_dir ?= helmeos
+# This sets the EOS directory in $(MICROPHYSICS_DIR)/eos
+EOS_dir ?= helmholtz
 
-# This sets the network directory in $(NETWORK_HOME)
-Network_dir ?= general_null
-GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/triple_alpha_plus_o.net 
+# This sets the network directory in $(MICROPHYSICS_DIR)/networks
+Network_dir ?= aprox13
 
 # Determine where our source files are coming from
 # based on the relevant file in the source directory.
