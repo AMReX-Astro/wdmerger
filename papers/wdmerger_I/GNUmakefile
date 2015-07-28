@@ -30,9 +30,9 @@ pdf:	paper.pdf
 
 clean:
 	$(RM) $(pdf_source) *.dvi 
-	$(RM) *.blg *.log
+	$(RM) *.blg *.log *.brf
 	$(RM) *.aux *.ps *.bbl
-	$(RM) *.pdf
+	$(RM) *.pdf *.out
 	$(RM) *~
 	$(RM) plots/*.aux
 	$(RM) plots/*.pdf

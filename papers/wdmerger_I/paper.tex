@@ -19,6 +19,16 @@
 % allows comment sections
 \usepackage{verbatim}
 
+% allows in-document links; see http://www.astrobetter.com/blog/2014/09/29/latex-hyperref-and-emulateapj/
+\usepackage[backref,breaklinks,colorlinks,citecolor=blue]{hyperref} 
+\usepackage[all]{hypcap} %Links go to figures;breaks on deluxetables       
+\renewcommand*{\backref}[1]{[#1]}
+
+% Override choices in \autoref
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
+\def\subsubsectionautorefname{Section}
+
 % MarginPars
 \setlength{\marginparwidth}{0.75in}
 \newcommand{\MarginPar}[1]{\marginpar{\vskip-\baselineskip\raggedright\tiny\sffamily\hrule\smallskip{\color{red}#1}\par\smallskip\hrule}}
@@ -294,15 +304,16 @@ system, the robustness with which a hotspot is found from which a
 detonation could occur, and the importance of the initial white dwarf
 models, which should be more sophisticated than simple carbon-oxygen
 mixtures and in principle should use results from modern stellar
-evolution calculations. Section \ref{sec:Numerical Methodology}
+evolution calculations. \autoref{sec:Numerical Methodology}
+%\hyperref[sec:Numerical Methodology]{Section \ref*{sec:Numerical Methodology}}
 describes our code and why it can provide useful results compared to
-other methodologies used for this problem. Section
-\ref{sec:initial_models} describes the method we use for setting up a
-binary white dwarf simulation. Section \ref{sec:Tests} discusses a few
+other methodologies used for this problem. 
+\autoref{sec:initial_models} describes the method we use for setting up a
+binary white dwarf simulation. \autoref{sec:Tests} discusses a few
 test problems that we use to demonstrate that our code accurately
-solves the equations of fluid dynamics. Section \ref{sec:Performance}
+solves the equations of fluid dynamics. \autoref{sec:Performance}
 demonstrates that the software scales well for supercomputer
-applications. Finally, Section \ref{sec:Conclusions and Discussion}
+applications. Finally, \autoref{sec:Conclusions and Discussion}
 recaps what we have shown and highlights some of the future work we
 plan to do.
 
@@ -318,8 +329,8 @@ nuclear reactions and thermodynamics. CASTRO is based on the BoxLib
 adaptive-mesh refinement (AMR) framework \citep{rendleman:2000}, which
 represents fluid data on a mesh where regions of interest have higher
 spatial resolution. CASTRO is highly parallel and is designed for
-large-scale use on modern supercomputers; see Section
-\ref{sec:Performance} for information on how CASTRO performs for our
+large-scale use on modern supercomputers; see 
+\autoref{sec:Performance} for information on how CASTRO performs for our
 problem. The next few subsections describe our approach to each of the
 physics components used in this work. We direct the reader to the
 original code paper for a full description of CASTRO's approach to
@@ -551,7 +562,7 @@ The momentum equations are then written explicitly in conservative form.
 The flux at any zone boundary is added to one cell and
 subtracted from another, so that the total momentum in the domain interior stays constant to
 within numerical roundoff error. This result can be derived by analytically recasting 
-Equation \ref{eq:momentum_discretization}. In the continuum limit, the two momentum
+\autoref{eq:momentum_discretization}. In the continuum limit, the two momentum
 formulations are identical. Thus the latter has been advocated by, for example, 
 \cite{jiang:2013} for the ATHENA code. However, in a finite discretization 
 the divergence of the gravitational acceleration is no longer guaranteed to equal
@@ -618,7 +629,7 @@ by averaging the time-level $n$ and $n+1$ potentials; we already have the latter
 re-computes the potential at the new time after the hydrodynamics step, and we can apply this energy 
 at the end of the timestep).
 
-As observed by \cite{arepo}, when examining Equation \ref{eq:mass_transfer} one can see the relationship 
+As observed by \cite{arepo}, when examining \autoref{eq:mass_transfer} one can see the relationship 
 between this method and the more common (non-conservative) approach of evaluating the change in 
 gas energy using the work done $(\mathbf{v} \cdot \rho \mathbf{g})$ by the gravitational force at the 
 cell center. Analytically this form expresses the same core idea via the work-energy theorem, and its 
@@ -630,7 +641,7 @@ This standard approach is therefore unacceptable in the case of a problem like w
 the fix to this energy leaking -- evaluating the energy transfer at the six zone faces instead of 
 the single zone center -- has a very minor cost in terms of code complexity and computational time.
 
-It is worth pointing out that while Equation \ref{eq:grav_energy_conservation_update} was correctly obtained 
+It is worth pointing out that while \autoref{eq:grav_energy_conservation_update} was correctly obtained 
 by \cite{arepo} (and indeed that is the inspiration for this approach), there is a subtle error in that derivation. 
 Their argument was that if we integrate the work done over the volume of the zone, this volume integral can be 
 converted into a surface integral by use of the divergence theorem (see their Equation 93). Then we can simply 
@@ -643,7 +654,7 @@ by the same distribution that it exerts a force on for a simulation with self-gr
 intentionally to ensure conservation of total energy for these particular types of potentials. We can apply 
 the approach of considering energy transfer between the gas energy and the potential energy to any potential field, 
 whether or not it is static, changing in time, or generated by the fluid distribution itself. 
-Indeed, we will do so for the rotational potential in Section \ref{sec:rotation}, where the 
+Indeed, we will do so for the rotational potential in \autoref{sec:rotation}, where the 
 factor of $1/2$ does not appear. However, it is important also to note that this is not related to a 
 global flow of energy or the global nature of the gravitational potential, as claimed by \cite{marcello:2012}. 
 This double-counting factor would apply even if there were only two point masses on the grid, since 
@@ -664,7 +675,7 @@ unphysical energies or temperatures. We observe also that the specific implement
 has terms in their gravitational flux that are not proportional to $\rho$, and so it can lead to the 
 same troubles that plague the tensor-based formalism for the momentum equation, where small errors 
 in the discretization of the gravitational potential can lead to very large changes in the energy of the gas.
-(We note in passing too that although \citeauthor{jiang:2013} claim their approach requires a Poisson 
+(We note in passing too that although \cite{jiang:2013} claim their approach requires a Poisson 
 solve for the time derivative of the potential, $\dot{\Phi}$, this is not needed as in practice 
 we will already have the potential at time-levels $n$ and $n+1$, and to second order in time, 
 $\dot{\Phi}^{n+1/2} = (\Phi^{n+1} - \Phi^{n}) / \Delta t.$)
@@ -727,7 +738,7 @@ self-gravity. However, for a problem like that of a binary star system
 with significant departures from spherical symmetry, this assumption
 fails to produce accurate boundary values. This results in a
 significant drift of the center of the mass of the system over time,
-which will be discussed in Section \ref{sec:kepler}.
+which will be discussed in \autoref{sec:kepler}.
 
 The most natural extension of the monopole prescription is to include
 higher-order multipole moments. If the entire mass distribution is
@@ -741,36 +752,28 @@ coordinate system is taken to be the center of the computational
 domain, and $r$ is the distance to the origin. The multipole moments
 can be calculated by expanding the Green's function for the Poisson
 equation as a series of spherical harmonics.
-\begin{comment}
-, which yields
-\begin{equation}
-  q_{lm} = \int Y^*_{lm}(\theta^\prime, \phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3x^\prime. \label{multipole_moments_original}
-\end{equation}
-\end{comment}
-After some algebraic simplification of Equation
-\ref{spherical_harmonic_expansion} using the addition theorem for
-spherical harmonics,
-\begin{comment}
-\begin{align}
-  &\frac{4\pi}{2l+1} \sum_{m=-l}^{l} Y^*_{lm}(\theta^\prime,\phi^\prime)\, Y_{lm}(\theta, \phi) = P_l(\text{cos}\, \theta) P_l(\text{cos}\, \theta^\prime) \notag \\
-  &\ \ + 2 \sum_{m=1}^{l} \frac{(l-m)!}{(l+m)!} P_{l}^{m}(\text{cos}\, \theta)\, P_{l}^{m}(\text{cos}\, \theta^\prime)\, \left[\text{cos}(m\phi)\, \text{cos}(m\phi^\prime) + \text{sin}(m\phi)\, \text{sin}(m\phi^\prime)\right].
-\end{align}
-\end{comment}
+%% \begin{equation}
+%%   q_{lm} = \int Y^*_{lm}(\theta^\prime, \phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3x^\prime. \label{multipole_moments_original}
+%% \end{equation}
+After some algebraic simplification of \autoref{spherical_harmonic_expansion} 
+using the addition theorem for spherical harmonics,
+%% \begin{align}
+%%   &\frac{4\pi}{2l+1} \sum_{m=-l}^{l} Y^*_{lm}(\theta^\prime,\phi^\prime)\, Y_{lm}(\theta, \phi) = P_l(\text{cos}\, \theta) P_l(\text{cos}\, \theta^\prime) \notag \\
+%%   &\ \ + 2 \sum_{m=1}^{l} \frac{(l-m)!}{(l+m)!} P_{l}^{m}(\text{cos}\, \theta)\, P_{l}^{m}(\text{cos}\, \theta^\prime)\, \left[\text{cos}(m\phi)\, \text{cos}(m\phi^\prime) + \text{sin}(m\phi)\, \text{sin}(m\phi^\prime)\right].
+%% \end{align}
 the potential outside of the mass distribution can be written as:
 \begin{align}
   \Phi(\mathbf{x}) &= -\sum_{l=0}^{\infty} \left\{Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} \right. \notag \\
     &+ \left. \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right\}.\label{multipole_potential}
 \end{align}
 $P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials. $Q_l^{(0)}$ and $Q_{lm}^{(C,S)}$ are variants of the multipole moments that involve integrals of $P_l$ and $P_l^m$, respectively, over the computational domain.
-\begin{comment}
-\begin{align}
-  Q_l^{(0)}   &= \int P_l(\text{cos}\, \theta^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
-  Q_{lm}^{(C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
-  Q_{lm}^{(S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime.
-\end{align}
-\end{comment}
+%% \begin{align}
+%%   Q_l^{(0)}   &= \int P_l(\text{cos}\, \theta^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
+%%   Q_{lm}^{(C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
+%%   Q_{lm}^{(S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime.
+%% \end{align}
 This approach becomes computationally feasible when we cut off the
-outer summation in Equation \ref{multipole_potential} at some finite
+outer summation in \autoref{multipole_potential} at some finite
 value of $l_{\text{max}}$. If it is of sufficiently high order, we
 will accurately capture the distribution of mass on the grid. In
 practice we first evaluate the discretized analog of the modified
@@ -785,11 +788,11 @@ between computational expense and accuracy of the result.
 
 As a demonstration of the method's accuracy, we consider the case of two 
 white dwarfs of mass ratio 2/3, loaded onto the grid by the method described 
-in Section \ref{sec:initial_models}. We terminated the simulation just after
+in \autoref{sec:initial_models}. We terminated the simulation just after
 initialization, so that we perform only an initial Poisson solve for this 
 density distribution. We did this for values of $l_{\text{max}}$ ranging
 from 0 to 20, and we also did this using the numerically exact solution 
-provided by Equation \ref{eq:direct_sum}.  Defining the $L^2$
+provided by \autoref{eq:direct_sum}.  Defining the $L^2$
 norm of a field $f$ as
 \begin{equation}
   \| f \|_2 = \left(\sum_{i,j,k} dx\, dy\, dz\, f_{ijk}^2\right)^{1/2},
@@ -800,7 +803,7 @@ obtained using the exact boundary conditions:
 \begin{equation}
   \text{Error}_l = \frac{\|\Phi_l - \Phi_{\text{exact}}\|_2}{\|\Phi_{\text{exact}}\|_2}.
 \end{equation}
-The result is shown in Figure \ref{fig:bc_comparison}. At $l_{\text{max}} = 6$,
+The result is shown in \autoref{fig:bc_comparison}. At $l_{\text{max}} = 6$,
 the error is already well below $10^{-4}$ and we adopt this as our default 
 choice for all simulations with Poisson gravity. Our choice is also motivated by the 
 fact that at this value, the time for computing the boundary conditions on the
@@ -866,8 +869,8 @@ we choose a relative error tolerance of $10^{-10}$ to be satisfied in the multig
     perfect second order convergence.\label{fig:gravity_convergence}}
 \end{figure}
 
-The results of this test are plotted in Figure
-\ref{fig:gravity_convergence}. We find that at low resolution 
+The results of this test are plotted in \autoref{fig:gravity_convergence}. 
+We find that at low resolution 
 convergence is actually substantially better than second-order. The 
 explanation for this is that we are attempting to model a spherical 
 object on a rectangular grid. At very low resolution, the object does 
@@ -878,12 +881,12 @@ bonus from increased resolution with the artificial accuracy bonus
 from getting closer to solving the problem we are supposed to be solving. 
 On the other hand, at the highest resolution shown the error slightly increases.
 
-We can solve one of these two sources of error by evaluating Equation
-\ref{eq:sphere-analytical} with a mass $M$ that corresponds to the
+We can solve one of these two sources of error by evaluating 
+\autoref{eq:sphere-analytical} with a mass $M$ that corresponds to the
 amount of mass actually on the grid, defined as the sum of the density
 multiplied by the volume of each cell for all cells whose density is 
 greater than ambient. The resolution study for this case is also
-plotted in Figure \ref{fig:gravity_convergence}. We still obtain
+plotted in \autoref{fig:gravity_convergence}. We still obtain
 convergence slightly better than second-order, indicating that we 
 still have the geometrical problem of the mass distribution changing.
 
@@ -907,13 +910,14 @@ the cube is at the origin, the potential is
   &\left. - \frac{x_i^2}{2}\,\text{tan}^{-1}\left(\frac{y_j z_k}{x_i r_{ijk}}\right) - \frac{y_j^2}{2}\,\text{tan}^{-1}\left(\frac{z_k x_i}{y_j r_{ijk}}\right) \right. \notag \\
   &- \left. \frac{z_k^2}{2}\,\text{tan}^{-1}\left(\frac{x_i y_j}{z_k r_{ijk}}\right)\right]
 \end{align}
-where $x_0 = R + x$, $x_1 = R - x$, $y_0 = R + y$, $y_1 = R-y$, $z_0 =
-R+z$, $z_1 = R-z$, and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. In
+where $x_0 = R + x$, $x_1 = R - x$, $y_0 = R + y$, 
+$y_1 = R - y$, $z_0 = R + z$, $z_1 = R - z$, 
+and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. In
 \texttt{Fortran} and \texttt{C}, the inverse hyperbolic tangent is
 \texttt{atanh} and the inverse tangent is \texttt{atan} (\textit{not}
 \texttt{atan2}). This formula is valid both inside and outside the
 cube. The normalized $L^2$ error for this problem is also shown
-in Figure \ref{fig:gravity_convergence}, and only for this problem 
+in \autoref{fig:gravity_convergence}, and only for this problem 
 do we obtain perfect second-order scaling at all resolutions.
 
 The main lesson here is that in a convergence study, it is important
@@ -952,7 +956,7 @@ to evolve the hydrodynamics equations for angular momentum.)
 The extent to which angular momentum conservation is violated
 will be a function of the resolution. When this is sufficiently high
 and a rotating reference frame is employed, excellent conservation
-properties can result, as demonstrated in Section \ref{sec:kepler}. 
+properties can result, as demonstrated in \autoref{sec:kepler}. 
 In particular, at reasonable resolution for a binary orbit our code 
 conserves angular momentum well enough that this no longer becomes 
 a reason to use a Lagrangian method such as smoothed-particle hydrodynamics.
@@ -1022,7 +1026,7 @@ So in the presence of rotation the total energy takes the form:
   (\rho E_{\text{tot}}) = (\rho E) + \frac{1}{2} \rho \Phi + \rho \Phi^R.
 \end{equation}
 Given that we can write down a potential energy for the rotation field, then we can use the machinery of 
-Section \ref{sec:gravity_hydro_coupling}. We again continue to evolve explicitly an equation for 
+\autoref{sec:gravity_hydro_coupling}. We again continue to evolve explicitly an equation for 
 the gas energy, and allow it to change in response to work done by or on the rotational potential.
 \begin{align}
   \left.\Delta(\rho E)\right|_{\text{rot}} &= - \sum_{f} \Delta \rho_{f} (\Phi^R_{f+1/2} - \Phi^R_{f-1/2})
@@ -1304,7 +1308,7 @@ we store the active \texttt{git} commit hashes of BoxLib, CASTRO and \texttt{wdm
 
 Merger simulations face a number of numerical difficulties that are
 not present in single-degenerate Type Ia and core-collapse supernova
-simulations. In Section \ref{sec:gravity}, we discussed how the lack
+simulations. In \autoref{sec:gravity}, we discussed how the lack
 of spherical symmetry necessitates a careful look at the gravity
 solver. There are also hydrodynamical issues: the merger process will
 result in substantial motion of stellar material across the grid. This
@@ -1329,7 +1333,7 @@ necessary to build a complete and realistic simulation.
 
 \subsection{Maintaining Hydrostatic Equilibrium}\label{sec:HSE}
 
-In Section \ref{sec:initial_models} we describe the process by which
+In \autoref{sec:initial_models} we describe the process by which
 we generate initial stellar models. While the 1D models are in
 hydrostatic equilibrium to within a small error, interpolation onto
 the 3D Cartesian grid will introduce perturbations into the solution
@@ -1377,11 +1381,11 @@ deviation from equilibrium is affected by grid resolution.
 We loaded a single star of mass $0.9\ \msolar$ onto the grid at the origin, 
 and evolved it for 200 seconds. Our diagnostic of choice is the effective 
 radius of the star, determined by the volume of the grid that has a density 
-greater than $10^3\ \text{g cm}^{-3}$ (see Section \ref{sec:initial_models} 
+greater than $10^3\ \text{g cm}^{-3}$ (see \autoref{sec:initial_models} 
 for details on this measure). This choice of density is intended to 
 mark a reasonable outer edge to the star that is not immediately susceptible 
-to the numerical errors prevalent near the physical edge of the star. Figure 
-\ref{fig:single_star_static_radius} shows our results at various resolutions. 
+to the numerical errors prevalent near the physical edge of the star. 
+\autoref{fig:single_star_static_radius} shows our results at various resolutions. 
 As expected, the star quickly approaches an equilibrium size that is different 
 (and in this case larger) than the one-dimensional model. However, the magnitude 
 of this change becomes smaller with resolution. The star is only approximately 
@@ -1398,7 +1402,7 @@ this applied force and not the intrinsic numerical instability of the stars.
   \centering
   \includegraphics[scale=0.45]{plots/single_star_static_ke}
   \caption{Time evolution of the kinetic energy of a $0.9 \msolar$ 
-    white dwarf. The lines have the same meaning as in Figure \ref{fig:single_star_static_radius}.
+    white dwarf. The lines have the same meaning as in \autoref{fig:single_star_static_radius}.
     \label{fig:single_star_static_ke}}
 \end{figure}
 
@@ -1406,7 +1410,7 @@ this applied force and not the intrinsic numerical instability of the stars.
 
 A simple dynamical test to verify the gravitation physics in CASTRO is
 the case of gravitational free fall. We place two stars on the grid 
-in the manner of Section \ref{sec:initial_models}. The distance $a$ between 
+in the manner of \autoref{sec:initial_models}. The distance $a$ between 
 them corresponds to a chosen orbital period $T$, consistent with the total
 system mass $M$, but we disable the rotational source terms so that 
 the stars start at rest in an inertial reference frame. 
@@ -1437,7 +1441,7 @@ For our problem $0 \leq r \leq 1$, so this is always valid. Integrating, we find
 so that the point of contact would occur at $t = 1$. We actually stop the simulation
 at $t = 0.9$, which is when the effects from the extended sizes of the stars
 starts to become important. The results of our simulation for our default $256^3$ zone 
-uniform grid are shown in Figure \ref{Fig:Free Fall}. They show excellent agreement
+uniform grid are shown in \autoref{fig:freefall}. They show excellent agreement
 between the theory and the simulation results, and this agreement holds even for 
 a more moderate $128^3$ zone simulation.
 
@@ -1453,7 +1457,7 @@ a more moderate $128^3$ zone simulation.
     calculated from Newtonian mechanics, and the circles show the
     samples from the time evolution with CASTRO. For visual clarity, we 
     show only a small fraction of the timesteps.}
-  \label{Fig:Free Fall}
+  \label{fig:freefall}
 \end{figure}
 
 \subsection{Galilean Invariance}\label{sec:galileo}
@@ -1503,7 +1507,7 @@ seeded.
   \centering
   \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p2_low_res_collage}}}
   \caption{2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
-    conditions given by Equations \ref{eq:kh_ic_b_ramp} and \ref{eq:kh_ic_b}. 
+    conditions given by \autoref{eq:kh_ic_b_ramp} and \autoref{eq:kh_ic_b}. 
     The rows each represent a different bulk fluid velocity $v$ and 
     the columns each represent a grid resolution $n$ (the number of 
     zones per spatial dimension). The highest velocity simulation, 
@@ -1591,8 +1595,8 @@ the frequency of the perturbation ($n_A = 4$ and $n_B = 2$):
   \centering
   \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p3_low_res_collage}}}
   \caption{2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
-    conditions given by Equations \ref{eq:kh_p3_rho} through \ref{eq:kh_p3_vy}. 
-    The meaning of the rows and columns is the same as in Figure \ref{fig:kh_p2}.
+    conditions given by \autoref{eq:kh_p3_rho} through \autoref{eq:kh_p3_vy}. 
+    The meaning of the rows and columns is the same as in \autoref{fig:kh_p2}.
     \label{fig:kh_p3}}
 \end{figure*}
 
@@ -1619,7 +1623,7 @@ Kelvin-Helmholtz instability completely fails to develop. However,
 the problem does not converge even qualitatively at the highest 
 resolutions we used. Our results are very similar to Figure 3 of 
 R10 so we do not show them here. For IC B, our results can be seen 
-for the normal resolutions and all velocities in Figure \ref{fig:kh_p2}.
+for the normal resolutions and all velocities in \autoref{fig:kh_p2}.
 At low resolutions and very large bulk velocities, the fluid 
 does get significantly disrupted by numerical error. However, this 
 effect quickly converges away with resolution and qualitatively 
@@ -1627,7 +1631,7 @@ at $512^2$ resolution the solution is nearly identical to the stationary
 $v=0$ problem. We agree with R10 that this problem does converge 
 with resolution and is not subject to numerically-seeded secondary 
 instabilities at the stopping time. This is evident even at low resolutions
-by examining the first row of Figure \ref{fig:kh_p2}.
+by examining the first row of \autoref{fig:kh_p2}.
 
 \begin{figure*}[ht]
   \includegraphics[trim = 0in 1.25in 0.25in 1.25in, clip, scale=0.65]{{{plots/kh_p3_high_res_collage}}}
@@ -1659,7 +1663,7 @@ and the other symbols have the same meaning as above (this means the flow direct
 is reversed compared to the original paper, so as to achieve consistency with the 
 other simulations presented here). We run this problem at all the same resolutions 
 and bulk velocities as the previous two problems. The results for the normal resolutions 
-at $t = 2.0$ are displayed in Figure \ref{fig:kh_p3}. We see a similar pattern as for 
+at $t = 2.0$ are displayed in \autoref{fig:kh_p3}. We see a similar pattern as for 
 the test proposed by R10: as we get to higher flow speeds we need to have higher 
 spatial resolution to compensate for the increased numerical diffusion. However, 
 the accuracy is much lower for the highest bulk velocities. This is probably because 
@@ -1686,7 +1690,7 @@ simulations at different resolutions. If these instabilities are seeded because 
 this resolution-dependent noise and are not seeded instead in a controlled manner 
 such that they appear at the same time and location, then we simply cannot draw 
 any conclusions that bear on the question of verification from this test at late times. 
-Figure \ref{fig:kh_p3_high_res} provides a sense of this by examining the crucial 
+\autoref{fig:kh_p3_high_res} provides a sense of this by examining the crucial 
 time at which the transition from the linear to the non-linear regime is occurring. 
 At all of these very high resolutions the secondary instabilities develop, but they 
 occur at different times and have different spatial scales for each resolution.
@@ -1702,9 +1706,9 @@ about the effect of the mixing on the nuclear burning.
 
 \subsubsection{Moving Star}\label{sec:moving_star}
 
-To see this effect in action for a stellar simulation, we repeated the test of Section 
-\ref{sec:HSE} with a bulk velocity on the grid. We chose a velocity of $2.56 \times 10^{8}\ \text{cm s}^{-1}$.
-For context, this is comparable to the orbital velocities of the stars in Section \ref{sec:kepler}.
+To see this effect in action for a stellar simulation, we repeated the test of  
+\autoref{sec:HSE} with a bulk velocity on the grid. We chose a velocity of $2.56 \times 10^{8}\ \text{cm s}^{-1}$.
+For context, this is comparable to the orbital velocities of the stars in \autoref{sec:kepler}.
 This test was inspired by \citet{tasker:2008}, who considered a moving galaxy cluster 
 and who obtained a long timescale evolution by using periodic boundary conditions, 
 so that the cluster would cross the domain multiple times throughout the evolution.
@@ -1721,7 +1725,7 @@ were computed with respect to the stellar center.
 \begin{figure}
   \centering
   \includegraphics[scale=0.45]{plots/single_star_compare_1e3_radius}
-  \caption{A variation on Figure \ref{fig:single_star_static_radius} where
+  \caption{A variation on \autoref{fig:single_star_static_radius} where
     we now compare the ``static'' case to ``motion'' simulations where the 
     star moves across the grid at a fixed linear speed. The lines represent 
     the effective number of zones per dimension inside the stellar material;
@@ -1730,8 +1734,8 @@ were computed with respect to the stellar center.
     \label{fig:single_star_compare_radius}}
 \end{figure}
 
-In Figure \ref{fig:single_star_compare_radius}, we take the results of Section 
-\ref{sec:HSE} (the ``static'' case), and plot on top of it the results of this 
+In \autoref{fig:single_star_compare_radius}, we take the results of 
+\autoref{sec:HSE} (the ``static'' case), and plot on top of it the results of this 
 new simulation (the ``motion'' case). We see immediately that this bulk velocity
 causes the star to be much worse at maintaining hydrostatic equilibrium. Not only 
 is the absolute size of the star significantly larger (nearly a factor of two 
@@ -1751,14 +1755,14 @@ white dwarfs, and an unequal mass case of $0.9\msolar$ and $0.6\msolar$ white dw
 In each case, the initial orbital period is 100 seconds.
 
 For some of the algorithms described earlier in this work, a single orbit of these 
-systems is enough to examine their effects. In Section \ref{sec:gravity_boundary_conditions},
+systems is enough to examine their effects. In \autoref{sec:gravity_boundary_conditions},
 we discussed the replacement of a monopole boundary condition solver for the gravitational 
 potential with a more general multipole solver for the boundaries. To test the relevance 
 of this effect, we considered a single orbit of the unequal mass system and measured 
 the distance between the two white dwarfs at the beginning of the simulation and after 
 the full orbital period. This distance should not change significantly over that timescale.
 We performed this test for maximum multipole moments ranging from 0 (the monopole term) to 16.
-The results are shown in Figure \ref{fig:gravity_bcs}. Terms in the boundary potential 
+The results are shown in \autoref{fig:gravity_bcs}. Terms in the boundary potential 
 that vary faster than $r^{-5}$ are effectively negligible in determining the outcome of the orbit, 
 justifying our typical choice of maintaining terms up to $r^{-7}$.
 
@@ -1770,7 +1774,7 @@ justifying our typical choice of maintaining terms up to $r^{-7}$.
            captured in the series expansion for the potential at the domain boundary.\label{fig:gravity_bcs}}
 \end{figure}
 
-Another that we consider is the energy conservation of the system. Recalling Section \ref{sec:gravity_hydro_coupling}, 
+Another that we consider is the energy conservation of the system. Recalling \autoref{sec:gravity_hydro_coupling}, 
 there are several different methods of applying the gravitational source term to the hydrodynamics equations. In CASTRO we presently 
 have four options, controlled by the parameter {\tt castro.grav\_source\_type}, which we will shortern to {\tt gs} for the present 
 discussion. ${\tt gs} = 1$ is the standard cell-centered source term for gravity. ${\tt gs} = 2$ is a slight variation on this scheme 
@@ -1781,13 +1785,13 @@ kinetic energy. This has the virtue of ensuring that there is no conflict due to
 energy equations, and also correctly ensuring that the gravitational force does not directly change the internal energy -- 
 and thus the temperature -- of the fluid. However, it explicitly sacrifices total energy conservation. ${\tt gs} = 4$ is 
 the new conservative method of evaluating the energy source terms at cell faces. The results for the change in energy 
-after a single orbit are seen in the first column of Table \ref{table:sources}. The first two versions give reasonable and 
+after a single orbit are seen in the first column of \autoref{table:sources}. The first two versions give reasonable and 
 similar levels of energy conservation. The third has total energy changes on the order of 100\%, but this itself 
 does not have a severe effect on the dynamics because in this scheme the total energy variable is effectively a placeholder 
 value of the kinetic energy plus internal energy, rather than being evolved directly. The last scheme is nearly two orders 
 of magnitude better in energy conservation, justifying the effort in varying the scheme.
 
-In Table \ref{table:sources} we show also the effects on energy conservation of using the inertial reference frame. 
+In \autoref{table:sources} we show also the effects on energy conservation of using the inertial reference frame. 
 We use ${\tt rs}$ for the CASTRO parameter {\tt castro.rot\_source\_type}, and we have the same four options for updating
 the energy source term as for gravity. The ${\tt rs} = 0$ column means that rotation is turned off and we are 
 in the inertial frame. We see that the choice of rotational coupling is much less important than the choice of gravity coupling. 
@@ -1795,10 +1799,12 @@ Interestingly, the ``conservative'' ${\tt rs} = 4$ is slightly worse in energy c
 cell-centered ${\tt rs} = 2$ algorithm. This may be because the rotational force grows with distance, and so losses at the 
 domain boundaries may be enhanced by explicitly evaluating the flux at cell edges.
 
+\capstartfalse
 \input{plots/sources.table}
+\capstarttrue
 
 We are most interested in the stability of these systems over long timescales. To this end, we consider the same systems as above, 
-but evolve them for 25 orbital periods. In Figure \ref{fig:circular_orbit_comparison} we illustrate the evolution of these systems 
+but evolve them for 25 orbital periods. In \autoref{fig:circular_orbit_comparison} we illustrate the evolution of these systems 
 by plotting the center of mass locations of the white dwarfs on the orbital ($xy$) plane. For the equal mass case in the inertial 
 reference frame, the curves essentially fall on top of each other, indicating that the stars are indeed orbiting at the initial 
 distance without substantial deviation. In the unequal mass case, the stars now orbit at different distances but do not much 
@@ -1826,8 +1832,8 @@ that the tidal effects play out much differently in the rotating frame.
 \end{figure*}
 
 Turning to the conservation properties of the system, we examine as fairly typical cases the equal mass system 
-in the inertial frame for energy conservation (Figure \ref{fig:energy_conservation_equal}), and the unequal mass 
-system in the rotating frame for angular momentum conservation (Figure \ref {fig:angular_momentum_conservation_unequal}). 
+in the inertial frame for energy conservation (\autoref{fig:energy_conservation_equal}), and the unequal mass 
+system in the rotating frame for angular momentum conservation (\autoref{fig:angular_momentum_conservation_unequal}). 
 Angular momentum is conserved to within a few percent over the 25 orbits, while energy conservation is about 
 an order of magnitude better. We note that while this is already a fairly good level of energy conservation, it is not 
 nearly as good as the results of \citet{marcello:2012}. This is because we reset the internal energy to a level 
@@ -1934,7 +1940,7 @@ certain systems.
 To examine the parallel performance of CASTRO, we performed both strong scaling 
 and weak scaling tests on the Blue Waters machine at the National Center for 
 Supercomputing Applications. For the weak scaling test, whose results are 
-shown in Figure \ref{fig:weak_scaling}, we ran a uniform grid binary white 
+shown in \autoref{fig:weak_scaling}, we ran a uniform grid binary white 
 dwarf simulation for resolutions of $128^3$ zones through $2048^3$ zones. The 
 number of processors was scaled with the number of zones so that each processor 
 had the same amount of work; the smallest test used 8 processors and the largest 
@@ -1979,7 +1985,7 @@ $\sim 16000$ grids. We run a scaling test for both cases, with the
 highest processor count in each case chosen so that the number of 
 MPI tasks is similar to the number of grids. There are no relative gains 
 to be achieved from further parallelism. The results are found in 
-\ref{fig:strong_scaling}. We find excellent scaling for low numbers 
+\autoref{fig:strong_scaling}. We find excellent scaling for low numbers 
 of processors, though the long wall time per timestep required for the 
 smallest processor counts makes such a simulation infeasible in practice.
 The best tradeoff between reasonable wall time and parallel efficiency 
@@ -2113,7 +2119,7 @@ multispecies flow and source terms.
 \subsection{Reference States}
 
 For all the runs, the PPM reconstruction is done using the original limiters for
-the parabolic profiles \citep{ppm}; see Section \ref{sec:Hydrodynamics} for a brief 
+the parabolic profiles \citep{ppm}; see \autoref{sec:Hydrodynamics} for a brief 
 discussion about the limiters.  The prediction of the interface
 states appears as:
 \begin{equation}
@@ -2159,15 +2165,15 @@ We comment on the choice of reference state for passively-advected
 quantities (like $X_k$ or the transverse velocity), which is not typically 
 discussed. First, consider one of the variables present in one-dimensional flow
 (density, velocity in the normal direction, and pressure), and let our 
-reference state be as in Eq.~\ref{eq:refchoice}.
+reference state be as in Eq.~\autoref{eq:refchoice}.
 Ignoring flattening, if there are no waves moving toward our
-interface, then Eq.~\ref{eq:ppmstatel} reduces to:
+interface, then Eq.~\autoref{eq:ppmstatel} reduces to:
 \begin{equation}
 q_{i+1/2,L}^{n+1/2} = \tilde{q}_L = q_i
 \end{equation}
 If instead only the fastest wave is moving toward the interface, then
 only the term corresponding to the fastest wave in the sum will be
-added in Eq.~\ref{eq:ppmstatel}, but our choice of reference state makes
+added in Eq.~\autoref{eq:ppmstatel}, but our choice of reference state makes
 that term zero by design, and our interface state is:
 \begin{equation}
 q_{i+1/2,L}^{n+1/2} = \tilde{q}_L = \mathcal{I}_+^{+}(q_i)
@@ -2176,7 +2182,7 @@ This is the desired behavior for each of these cases.
 
 However, now consider the same approach applied to passively advected quantities.
 If we use the same idea of the reference state as
-in Eq.~\ref{eq:refchoice}, and consider a quantity $\xi$ which should only
+in Eq.~\autoref{eq:refchoice}, and consider a quantity $\xi$ which should only
 jump across the contact, then our interface state becomes:
 \begin{equation}
 \xi_{i+1/2,L}^{n+1/2} = \tilde{\xi}_L -

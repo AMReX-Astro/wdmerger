@@ -6,6 +6,7 @@
 *.bbl
 *.bib
 *.blg
+*.brf
 *.lof
 *.lot
 *.png
