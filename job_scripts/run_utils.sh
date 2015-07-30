@@ -414,27 +414,31 @@ function archive {
   f=$(basename $1)
   d=$(dirname $1)
 
-  # Remove everything from the directory up to the username. The assumption here is that
+  # Get the absolute path to this directory, and then 
+  # remove everything from the directory up to the username. The assumption here is that
   # everything after that was created by the user, and that's the directory structure we want
   # to preserve when moving things over to the storage system.
 
-  storage_dir=$d
+  cd $d 
+  abs_path=$(pwd)
+  cd - > /dev/null
 
-  storage_dir=${storage_dir#*$USER/}
-  storage_dir=${storage_dir#*$USER}
+  local_path=$abs_path
+  storage_path=$abs_path
+
+  storage_path=${storage_path#*$USER/}
+  storage_path=${storage_path#*$USER}
 
   # Archive based on the method chosen for this machine.
 
   if   [ $archive_method == "htar" ]; then
 
-      $HTAR ${storage_dir}/${f}.tar $d/$f
+      $HTAR ${d}/${f}.tar $d/$f
 
   elif [ $archive_method == "globus" ]; then
 
-      archive_dir=$allocation/$USER/$storage_dir
-
-      src=$globus_src_endpoint/$d/$f
-      dst=$globus_dst_endpoint/$archive_dir/$f
+      src=$globus_src_endpoint/$local_path/$f
+      dst=$globus_dst_endpoint/$storage_dir/$f
 
       if [ -d $d/$f ]; then
           # If we're transferring a directory, Globus needs to explicitly know
@@ -1154,7 +1158,7 @@ elif [ $MACHINE == "BLUE_WATERS" ]; then
     batch_system="PBS"
     archive_method="globus"
     globus_src_endpoint="ncsa#BlueWaters"
-    globus_dst_endpoint="ncsa#Nearline/projects/sciteam"
+    globus_dst_endpoint="ncsa#Nearline/projects/sciteam/$allocation/$USER"
 
 elif [ $MACHINE == "TITAN" ]; then
 
