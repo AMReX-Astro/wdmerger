@@ -468,8 +468,8 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
   integer :: i, j, k, l, m, dir
   double precision :: proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
-  double precision :: omega(3) = ZERO
-  double precision :: theta = ZERO, rot_matrix(3,3) = ZERO
+  double precision :: omega(3)
+  double precision :: theta, rot_matrix(3,3)
   integer :: ax1, ax2, ax3
   
   ! Standard Kronecker delta.
@@ -532,6 +532,10 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
      ! at large distances. There is some clipping due to material
      ! that leaves or enters the domain boundaries, but this should
      ! average out over time, and will be negligible in magnitude.
+
+     theta = ZERO
+     omega = ZERO
+     rot_matrix = ZERO
 
      ax1 = 1 + MOD(rot_axis    , 3)
      ax2 = 1 + MOD(rot_axis + 1, 3)
