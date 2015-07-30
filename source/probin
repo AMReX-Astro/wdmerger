@@ -25,6 +25,8 @@
   center_fracz = 0.5d0
 
   maxTaggingRadius = 0.75d0
+
+  gw_dist = 10.0
 /
 
 &tagging 
