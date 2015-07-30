@@ -498,3 +498,36 @@ def get_star_locs(plotfile):
     zz_S_com = np.sum( dens[S_idx] * zz[S_idx] ) / np.sum(dens[S_idx])
 
     return [xx_P_com, yy_P_com, zz_P_com, xx_S_com, yy_S_com, zz_S_com]
+
+
+
+# Get a variable from the CASTRO constants file.
+
+def get_castro_const(var_name):
+
+    CASTRO_DIR = get_castro_dir()
+
+    file  = open(CASTRO_DIR + '/constants/constants_cgs.f90')
+    lines = units_file.readlines()
+
+    const = None
+
+    for line in lines:
+        lsplit = line.split()
+        if (len(lsplit) >= 4):
+            if (lsplit[3] == var_name):
+                const = lsplit[5]
+
+                # Remove the kind specification at the end of the string, if it exists.
+                const = const.split('_')[0]
+
+                # Convert from e notation to d notation.
+                const = float(const.replace("d","e"))
+
+    if (const == None):
+        print "Constant " + var_name + " not found in CGS constants file; exiting."
+        exit()
+
+    units_file.close()
+
+    return const
