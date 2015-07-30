@@ -675,7 +675,7 @@ unphysical energies or temperatures. We observe also that the specific implement
 has terms in their gravitational flux that are not proportional to $\rho$, and so it can lead to the 
 same troubles that plague the tensor-based formalism for the momentum equation, where small errors 
 in the discretization of the gravitational potential can lead to very large changes in the energy of the gas.
-(We note in passing too that although \cite{jiang:2013} claim their approach requires a Poisson 
+(We note in passing too that although \citeauthor{jiang:2013}\ claim their approach requires a Poisson 
 solve for the time derivative of the potential, $\dot{\Phi}$, this is not needed as in practice 
 we will already have the potential at time-levels $n$ and $n+1$, and to second order in time, 
 $\dot{\Phi}^{n+1/2} = (\Phi^{n+1} - \Phi^{n}) / \Delta t.$)
@@ -1517,7 +1517,7 @@ seeded.
     the columns each represent a grid resolution $n$ (the number of 
     zones per spatial dimension). The highest velocity simulation, 
     $v=100$, corresponds to approximately Mach 70. Compare to 
-    \citet{robertson:2010}, Figure 7. \label{fig:kh_p2}}
+    Robertson et al. (2010), Figure 7. \label{fig:kh_p2}}
 \end{figure*}
 
 \citet{robertson:2010} (hereafter, R10) observe that Galilean
@@ -1640,7 +1640,7 @@ by examining the first row of \autoref{fig:kh_p2}.
 
 \begin{figure*}[ht]
   \includegraphics[trim = 0in 1.25in 0.25in 1.25in, clip, scale=0.65]{{{plots/kh_p3_high_res_collage}}}
-  \caption{Time series of the Kelvin-Helmholtz problem proposed by \citet{mcnally:2012}
+  \caption{Time series of the Kelvin-Helmholtz problem proposed by McNally et al. (2012)
     as the simulation is just starting to go non-linear. The rows represent resolution, 
     where $n$ is the number of grid cells per spatial dimension, and the columns are 
     different snapshots in time.\label{fig:kh_p3_high_res}}
@@ -1677,7 +1677,7 @@ parameters in each case). This means that there are smaller scale numerical
 perturbations on the grid, which can be amplified by numerical noise in the time 
 evolution of the system.
 
-\citet{hopkins:2014} performed this test as part of the testing of their code GIZMO. 
+\citet{hopkins:2015} performed this test as part of the testing of their code GIZMO. 
 They showed the late-time evolution of this system, when non-linear effects have 
 taken over and significantly disrupted the initial flow. However, at low resolution the 
 tested grid algorithm had failed to disrupt both for $v = 0$ and $v = 10$. We too ran 
@@ -2109,11 +2109,6 @@ Project AST100037 supported use of the resources NICS/Kraken and NICS/Darter.
 
 \clearpage
 
-\bibliographystyle{../apj}
-\bibliography{../refs}
-
-
-\clearpage
 \appendix
 
 \section{CASTRO hydrodynamics changes}
@@ -2288,6 +2283,13 @@ Just like the gravity source, the rotation source terms only update the velociti
 the rotation source terms can be included in a manner identical to that of the gravity source
 terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. This is controlled in CASTRO
 with the parameter {\tt castro.ppm\_trace\_rot}.
+
+
+
+\clearpage
+
+\bibliographystyle{../apj}
+\bibliography{../refs}
 
 \clearpage
 
