@@ -862,7 +862,9 @@ function create_job_script {
 	echo "dir=." >> $dir/$job_script
 	echo "done_flag=\$(is_dir_done)" >> $dir/$job_script
 	echo "if [ \$done_flag -ne 1 ]; then" >> $dir/$job_script
-	echo "  $exec $job_script" >> $dir/$job_script
+	echo "  job_number=`$exec $job_script`" >> $dir/$job_script
+	echo "  job_number=\${job_number%%.*}" >> $dir/$job_script
+	echo "  echo $job_number >> jobs_submitted.txt" >> $dir/$job_script
 	echo "fi" >> $dir/$job_script
 	echo "" >> $dir/$job_script
 
