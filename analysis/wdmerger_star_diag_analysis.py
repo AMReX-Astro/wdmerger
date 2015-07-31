@@ -79,7 +79,6 @@ def plot_wd_distance(diag_filenames, output_filename, labels=''):
     for diag_filename, label in zip(diag_filenames, labels):
 
         diag_file = open(diag_filename, 'r')
-        lines = diag_file.readlines()
 
         time = get_column("TIME", diag_filename)
         dist = get_column("WD DISTANCE",diag_filename)
@@ -122,7 +121,7 @@ def plot_wd_distance(diag_filenames, output_filename, labels=''):
     plt.ylabel(ylabel, fontsize=20)
 
     # Use the 'best' location for the legend, since for a generic function like this
-    # it is hard to know ahead of time where the legend out to go.
+    # it is hard to know ahead of time where the legend ought to go.
     # The alpha value controls the transparency, since we may end up covering some data.
 
     if (label is not ''):
@@ -198,7 +197,6 @@ def plot_wd_location(diag_filenames, output_filename):
     for diag_filename in diag_filenames:
 
         diag_file = open(diag_filename, 'r')
-        lines = diag_file.readlines()
 
         # x and y locations of each star
 
@@ -305,4 +303,5 @@ def plot_wd_location(diag_filenames, output_filename):
     wdmerger.insert_commits_into_eps(output_filename, diag_filename, 'diag')
 
     plt.close()
+
 
