@@ -1241,7 +1241,9 @@ The symmetric trace-free (STF) operator is defined as:
 
 The strategy is then as follows. At the end of the coarse timestep, we first calculate $\ddot{Q}_{kl}$
 using an integral over the domain (using refined grids as usual by masking out the contributions from 
-coarse grids underlying more accurate fine grids). This quantity is independent of the observer. Then, 
+coarse grids underlying more accurate fine grids). This quantity is independent of the observer. If we 
+are using a rotating reference frame, we first convert velocities and positions back to the inertial 
+frame before evaluating the integral. Then, 
 we pick an observing location $\mathbf{x}$ relative to the domain, evaluate the projection operator, 
 and then perform the relevant tensor contraction to determine the strain tensor. We can 
 repeat this process for any number of observing locations at minimal cost, since the quadruple tensor 

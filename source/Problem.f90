@@ -377,11 +377,12 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
   double precision, intent(in   ) :: dx(3), time
   double precision, intent(inout) :: Qtt(3,3)
 
-  integer          :: i, j, k, l, m
+  integer          :: i, j, k, l, m, dir
   double precision :: dV
-  double precision :: r(3), vel(3), grav(3), rhoInv
+  double precision :: r(3), pos(3), vel(3), grav(3), rhoInv
   double precision :: dQtt(3,3)
   double precision :: omega(3)
+  double precision :: theta(3), rot_matrix(3,3)
 
   dV = dx(1) * dx(2) * dx(3)
   dQtt(:,:) = ZERO
@@ -391,7 +392,35 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
   else
      omega = ZERO
   endif
-  
+
+  ! If we are in a rotating reference frame, then we want
+  ! to rotate this by an amount corresponding to the time
+  ! that has passed since the beginning of the simulation.
+  ! This way it will correspond to an inertial observer
+  ! at large distances. There is some clipping due to material
+  ! that leaves or enters the domain boundaries, but this should
+  ! average out over time, and will be negligible in magnitude.
+        
+  theta = omega * time
+
+  ! This is the 3D rotation matrix for converting between reference frames.
+  ! It is the composition of rotations along the x, y, and z axes. Therefore 
+  ! it allows for the case where we are rotating about multiple axes. Normally 
+  ! we use the right-hand convention for constructing the usual rotation matrix, 
+  ! but this is the transpose of that rotation matrix to account for the fact 
+  ! that we are rotating *back* to the inertial frame, rather than from the 
+  ! inertial frame to the rotating frame.
+
+  rot_matrix(1,1) =  cos(theta(2)) * cos(theta(3))
+  rot_matrix(1,2) = -cos(theta(2)) * sin(theta(3))
+  rot_matrix(1,3) =  sin(theta(2))
+  rot_matrix(2,1) =  cos(theta(1)) * sin(theta(3)) + sin(theta(1)) * sin(theta(2)) * cos(theta(3))
+  rot_matrix(2,2) =  cos(theta(1)) * cos(theta(3)) - sin(theta(1)) * sin(theta(2)) * sin(theta(3))
+  rot_matrix(2,3) = -sin(theta(1)) * cos(theta(2))
+  rot_matrix(3,1) =  sin(theta(1)) * sin(theta(3)) - cos(theta(1)) * sin(theta(2)) * cos(theta(3))
+  rot_matrix(3,2) =  sin(theta(1)) * cos(theta(3)) + cos(theta(1)) * sin(theta(2)) * sin(theta(3))
+  rot_matrix(3,3) =  cos(theta(1)) * cos(theta(2))
+
   do k = lo(3), hi(3)
      r(3) = problo(3) + (k + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
@@ -411,9 +440,23 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
               vel(2) = ymom(i,j,k) * rhoInv
               vel(3) = zmom(i,j,k) * rhoInv
 
-              ! Account for rotation, if there is any.
-              
-              vel = vel + cross_product(omega, r)
+              ! Account for rotation, if there is any. These will leave 
+              ! r and vel and changed, if not.
+
+              ! Remember that this is going from the rotating frame back to the inertial frame.
+
+              pos = matmul(rot_matrix, r)
+
+              ! For constructing the velocity in the inertial frame, we need to 
+              ! account for the fact that we have rotated the system already, so that 
+              ! the r in omega x r is actually the position in the inertial frame, and 
+              ! not the usual position in the rotating frame. It has to be on physical 
+              ! grounds, because for binary orbits where the stars aren't moving, that 
+              ! r never changes, and so the contribution from rotation would never change.
+              ! But it must, since the motion vector of the stars changes in the inertial 
+              ! frame depending on where we are in the orbit.
+
+              vel = vel + cross_product(omega, pos)
 
               grav(1) = gx(i,j,k)
               grav(2) = gy(i,j,k)
@@ -421,7 +464,7 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
 
               do m = 1, 3
                  do l = 1, 3
-                    dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * dV * (vel(l) * vel(m) + r(l) * grav(m))
+                    dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * dV * (vel(l) * vel(m) + pos(l) * grav(m))
                  enddo
               enddo
 
@@ -455,8 +498,7 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
   use probdata_module, only: gw_dist, star_axis, initial_motion_dir
-  use meth_params_module, only: rot_axis, do_rotation
-  use rot_sources_module, only: get_omega
+  use meth_params_module, only: rot_axis
 
   implicit none
 
@@ -469,7 +511,6 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
   double precision :: proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
   double precision :: omega(3)
-  double precision :: theta, rot_matrix(3,3)
   integer :: ax1, ax2, ax3
   
   ! Standard Kronecker delta.
@@ -525,41 +566,6 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
 
      h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
 
-     ! If we are in a rotating reference frame, then we want
-     ! to rotate this by an amount corresponding to the time
-     ! that has passed since the beginning of the simulation.
-     ! This way it will correspond to an inertial observer
-     ! at large distances. There is some clipping due to material
-     ! that leaves or enters the domain boundaries, but this should
-     ! average out over time, and will be negligible in magnitude.
-
-     theta = ZERO
-     omega = ZERO
-     rot_matrix = ZERO
-
-     ax1 = 1 + MOD(rot_axis    , 3)
-     ax2 = 1 + MOD(rot_axis + 1, 3)
-     ax3 = rot_axis
-        
-     if (do_rotation .eq. 1) then
-        omega = get_omega()
-     endif
-
-     theta = omega(rot_axis) * time
-
-     ! This will reduce to the identity matrix
-     ! if we are not rotating.
-     
-     rot_matrix(ax1,ax1) =  cos(theta)
-     rot_matrix(ax2,ax2) =  cos(theta)
-     rot_matrix(ax3,ax3) =  ONE
-     rot_matrix(ax1,ax2) = -sin(theta)
-     rot_matrix(ax2,ax1) =  sin(theta)
-
-     ! Now apply the rotation matrix.
-
-     h = matmul(rot_matrix, h)
-     
      ! If rot_axis == 3, then h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}.
      ! Analogous statements hold along the other axes.
 
