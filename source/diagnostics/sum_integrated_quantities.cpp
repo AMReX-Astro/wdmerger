@@ -150,7 +150,7 @@ Castro::sum_integrated_quantities ()
 #ifdef GRAVITY
 #if (BL_SPACEDIM == 3)
       if ( do_grav and gravity->get_gravity_type() == "PoissonGrav" ) {
-        rho_phi  += ca_lev.volProductSum("density", "phi", time);
+        rho_phi  += ca_lev.volProductSum("density", "phiGrav", time);
       }
 #endif
 #endif
