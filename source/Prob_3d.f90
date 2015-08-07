@@ -42,11 +42,12 @@
      use prob_params_module, only: center
      use eos_module
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, rot_period
+          UEDEN, UEINT, UFS, rot_period, do_rotation
      use network, only: nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use initial_model_module, only: interpolate_3d_from_1d
+     use rot_sources_module, only: cross_product, get_omega
 
      implicit none
 
@@ -56,7 +57,7 @@
      double precision :: xlo(3), xhi(3), time, delta(3)
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
-     double precision :: loc(3)
+     double precision :: loc(3), omega(3)
      double precision :: dist_P(3), dist_S(3)
 
      type (eos_t) :: zone_state, ambient_state
@@ -68,6 +69,8 @@
      ! or if we are in an ambient zone.
 
      call get_ambient(ambient_state)
+
+     omega = get_omega()
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)
@@ -124,23 +127,10 @@
           do i = lo(1), hi(1)
              loc(1) = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
 
-             ! If we're in the inertial reference frame, and we want to provide an
-             ! initial orbital kick, use counter-clockwise rigid body rotation.
-
-             if (orbital_kick .and. (.not. single_star)) then
-
-                ! x velocity is -omega * r * sin(theta) == -omega * y
-                state(i,j,k,UMX+star_axis-1) = state(i,j,k,UMX+star_axis-1) &
-                                             + state(i,j,k,URHO) * (-TWO * M_PI / rot_period) * loc(initial_motion_dir)
-
-                ! y velocity is +omega * r * cos(theta) == +omega * x
-                state(i,j,k,UMX+initial_motion_dir-1) = state(i,j,k,UMX+initial_motion_dir-1) &
-                                                      + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * loc(star_axis)
-
              ! If we want a collision calculation, set the stars in 
              ! motion with the respective free-fall velocities.
 
-             else if (collision) then
+             if (collision) then
 
                 dist_P = loc - center_P_initial
                 dist_S = loc - center_S_initial
@@ -150,6 +140,13 @@
                 else if (sum(dist_S**2) < radius_S_initial**2) then
                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
                 endif
+
+             ! If we're in the inertial reference frame, and we want to provide an
+             ! initial orbital kick, use rigid body rotation with velocity omega x r.
+
+             else if ((do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. single_star)) then
+
+                state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
 
              endif
 
@@ -173,4 +170,3 @@
      enddo
 
    end subroutine ca_initdata
-

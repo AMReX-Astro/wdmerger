@@ -8,6 +8,8 @@ mass_S=0.81
 castro_do_rotation=0
 castro_rotational_period=100.0
 
+no_orbital_kick=T
+
 amr_plot_per=1.0
 amr_check_per=1.0
 

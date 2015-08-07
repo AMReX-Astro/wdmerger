@@ -191,31 +191,38 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
     
     const Real* dx       = geom.CellSize();
 
-    MultiFab*   mfrho    = derive("density",time,0);
-    MultiFab*   mfxmom   = derive("xmom",time,0);
-    MultiFab*   mfymom   = derive("ymom",time,0);
-    MultiFab*   mfzmom   = derive("zmom",time,0);
+    MultiFab* mfrho   = derive("density",time,0);
+    MultiFab* mfxmom  = derive("xmom",time,0);
+    MultiFab* mfymom  = derive("ymom",time,0);
+    MultiFab* mfzmom  = derive("zmom",time,0);
+    MultiFab* mfgravx = derive("grav_x",time,0);
+    MultiFab* mfgravy = derive("grav_y",time,0);
+    MultiFab* mfgravz = derive("grav_z",time,0);
 
-    BL_ASSERT(mfrho  != 0);
-    BL_ASSERT(mfxmom != 0);
-    BL_ASSERT(mfymom != 0);
-    BL_ASSERT(mfzmom != 0);
-
-    PArray<MultiFab>& grav = gravity->get_grad_phi_curr(level);
+    BL_ASSERT(mfrho   != 0);
+    BL_ASSERT(mfxmom  != 0);
+    BL_ASSERT(mfymom  != 0);
+    BL_ASSERT(mfzmom  != 0);
+    BL_ASSERT(mfgravx != 0);
+    BL_ASSERT(mfgravy != 0);
+    BL_ASSERT(mfgravz != 0);
 
     if (level < parent->finestLevel())
     {
 	const MultiFab* mask = getLevel(level+1).build_fine_mask();
 
-	MultiFab::Multiply(*mfrho,  *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfxmom, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfymom, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfrho,   *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfxmom,  *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfymom,  *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfzmom,  *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfgravx, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfgravy, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfgravz, *mask, 0, 0, 1, 0);
     }
 
     // Qtt stores the second time derivative of the quadrupole moment.
     // We calculate it directly rather than computing the quadrupole moment
-    // and differentiaing it in time, because the latter method is less accurate
+    // and differentiating it in time, because the latter method is less accurate
     // and requires the state at other timesteps. See, e.g., Equation 5 of 
     // Loren-Aguilar et al. 2005.
 
@@ -252,9 +259,9 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 		 BL_TO_FORTRAN((*mfxmom)[mfi]),
 		 BL_TO_FORTRAN((*mfymom)[mfi]),
 		 BL_TO_FORTRAN((*mfzmom)[mfi]),
-		 BL_TO_FORTRAN(grav[0][mfi]),
-		 BL_TO_FORTRAN(grav[1][mfi]),
-		 BL_TO_FORTRAN(grav[2][mfi]),
+		 BL_TO_FORTRAN((*mfgravx)[mfi]),
+		 BL_TO_FORTRAN((*mfgravy)[mfi]),
+		 BL_TO_FORTRAN((*mfgravz)[mfi]),
 		 lo,hi,dx,&time,
 #ifdef _OPENMP
 		 priv_Qtt[tid].dataPtr());
@@ -268,11 +275,14 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
     delete mfxmom;
     delete mfymom;
     delete mfzmom;
+    delete mfgravx;
+    delete mfgravy;
+    delete mfgravz;
 
     // Do an OpenMP reduction on the tensor.
 
 #ifdef _OPENMP
-	int n = bx.numPts();
+        int n = bx.numPts();
 	Real* p = Qtt.dataPtr();
 #pragma omp barrier
 #pragma omp for nowait
@@ -292,13 +302,11 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
     // Now that we have the second time derivative of the quadrupole 
     // tensor, we can calculate the transverse-trace gauge strain tensor.
 
-    FArrayBox h(bx);
-    h.setVal(0.0);
-
     BL_FORT_PROC_CALL(GW_STRAIN_TENSOR,gw_strain_tensor)
-        (h.dataPtr(), &h_plus_rot, &h_cross_rot,
+        (&h_plus_rot, &h_cross_rot,
 	 &h_plus_star, &h_cross_star,
-	 &h_plus_motion, &h_plus_motion, Qtt.dataPtr(), &time);
+	 &h_plus_motion, &h_plus_motion, 
+	 Qtt.dataPtr(), &time);
 
 }
 
