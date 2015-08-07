@@ -563,20 +563,22 @@ subroutine gw_strain_tensor(h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, 
      ! If rot_axis == 3, then h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}.
      ! Analogous statements hold along the other axes.
 
+     ! We are adding here so that this calculation makes sense on multiple levels.
+
      if (dir .eq. rot_axis) then
 
-        h_plus_rot = h(star_axis,star_axis)
-        h_cross_rot = h(star_axis,initial_motion_dir)
+        h_plus_rot = h_plus_rot + h(star_axis,star_axis)
+        h_cross_rot = h_cross_rot + h(star_axis,initial_motion_dir)
 
      else if (dir .eq. star_axis) then
 
-        h_plus_star = h(initial_motion_dir,initial_motion_dir)
-        h_cross_star = h(initial_motion_dir,rot_axis)
+        h_plus_star = h_plus_star + h(initial_motion_dir,initial_motion_dir)
+        h_cross_star = h_cross_star + h(initial_motion_dir,rot_axis)
 
      else if (dir .eq. initial_motion_dir) then
 
-        h_plus_motion = h(rot_axis,rot_axis)
-        h_cross_motion = h(rot_axis,star_axis)
+        h_plus_motion = h_plus_motion + h(rot_axis,rot_axis)
+        h_cross_motion = h_cross_motion + h(rot_axis,star_axis)
 
      endif
 

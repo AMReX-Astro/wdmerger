@@ -235,6 +235,11 @@ Castro::sum_integrated_quantities ()
 
       } 
 #endif
+
+      // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
+
+      ca_lev.gwstrain(time, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion);
+
     }
 
     // Divide the center of mass by the total amount of mass on the grid.
@@ -365,10 +370,6 @@ Castro::sum_integrated_quantities ()
         rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
 	rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
     }
-
-    // Compute gravitational wave signal.
-
-    gwstrain(time, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion);
 
 #endif
 
