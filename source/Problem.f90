@@ -428,47 +428,43 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
         do i = lo(1), hi(1)
            r(1) = problo(1) + (i + HALF) * dx(1) - center(1)
 
-           ! Only do this calculation if we're in a region that hasn't been
-           ! zeroed out by the finest mask; this will save us from trying to calculate 
-           ! a velocity from the momentum, and also the fine mask doesn't cover the 
-           ! gravitational acceleration so we should just skip those regions altogether.
-
            if (rho(i,j,k) > ZERO) then
               rhoInv = ONE / rho(i,j,k)
-
-              vel(1) = xmom(i,j,k) * rhoInv
-              vel(2) = ymom(i,j,k) * rhoInv
-              vel(3) = zmom(i,j,k) * rhoInv
-
-              ! Account for rotation, if there is any. These will leave 
-              ! r and vel and changed, if not.
-
-              ! Remember that this is going from the rotating frame back to the inertial frame.
-
-              pos = matmul(rot_matrix, r)
-
-              ! For constructing the velocity in the inertial frame, we need to 
-              ! account for the fact that we have rotated the system already, so that 
-              ! the r in omega x r is actually the position in the inertial frame, and 
-              ! not the usual position in the rotating frame. It has to be on physical 
-              ! grounds, because for binary orbits where the stars aren't moving, that 
-              ! r never changes, and so the contribution from rotation would never change.
-              ! But it must, since the motion vector of the stars changes in the inertial 
-              ! frame depending on where we are in the orbit.
-
-              vel = vel + cross_product(omega, pos)
-
-              grav(1) = gx(i,j,k)
-              grav(2) = gy(i,j,k)
-              grav(3) = gz(i,j,k)
-
-              do m = 1, 3
-                 do l = 1, 3
-                    dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * dV * (vel(l) * vel(m) + pos(l) * grav(m))
-                 enddo
-              enddo
-
+           else
+              rhoInv = ZERO
            endif
+
+           vel(1) = xmom(i,j,k) * rhoInv
+           vel(2) = ymom(i,j,k) * rhoInv
+           vel(3) = zmom(i,j,k) * rhoInv
+
+           ! Account for rotation, if there is any. These will leave 
+           ! r and vel and changed, if not.
+
+           ! Remember that this is going from the rotating frame back to the inertial frame.
+
+           pos = matmul(rot_matrix, r)
+
+           ! For constructing the velocity in the inertial frame, we need to 
+           ! account for the fact that we have rotated the system already, so that 
+           ! the r in omega x r is actually the position in the inertial frame, and 
+           ! not the usual position in the rotating frame. It has to be on physical 
+           ! grounds, because for binary orbits where the stars aren't moving, that 
+           ! r never changes, and so the contribution from rotation would never change.
+           ! But it must, since the motion vector of the stars changes in the inertial 
+           ! frame depending on where we are in the orbit.
+
+           vel = vel + cross_product(omega, pos)
+
+           grav(1) = gx(i,j,k)
+           grav(2) = gy(i,j,k)
+           grav(3) = gz(i,j,k)
+
+           do m = 1, 3
+              do l = 1, 3
+                 dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * dV * (vel(l) * vel(m) + pos(l) * grav(m))
+              enddo
+           enddo
 
         enddo
      enddo
@@ -493,7 +489,7 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion, Qtt, time)
+subroutine gw_strain_tensor(h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion, Qtt, time)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
@@ -502,16 +498,14 @@ subroutine gw_strain_tensor(h, h_plus_rot, h_cross_rot, h_plus_star, h_cross_sta
 
   implicit none
 
-  double precision, intent(in   ) :: Qtt(3,3)
-  double precision, intent(inout) :: h(3,3)
   double precision, intent(inout) :: h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion
+  double precision, intent(in   ) :: Qtt(3,3)
   double precision, intent(in   ) :: time
   
   integer :: i, j, k, l, m, dir
-  double precision :: proj(3,3,3,3), delta(3,3), n(3), r
+  double precision :: h(3,3), proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
   double precision :: omega(3)
-  integer :: ax1, ax2, ax3
   
   ! Standard Kronecker delta.
 
