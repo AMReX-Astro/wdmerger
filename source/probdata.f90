@@ -36,7 +36,7 @@ module probdata_module
 
   ! Whether or not to give stars an initial orbital velocity
   ! consistent with their Keplerian orbit speed.
-  logical :: orbital_kick
+  logical :: no_orbital_kick
 
   ! Whether or not to give the stars an initial velocity
   ! consistent with the free-fall speed.
@@ -181,7 +181,7 @@ contains
          mass_p, mass_s, &
          central_density_P, central_density_S, &
          nsub, &
-         orbital_kick, &
+         no_orbital_kick, &
          collision, &
          collision_separation, &
          interp_temp, &
@@ -223,7 +223,7 @@ contains
 
     ambient_density = 1.d-4
 
-    orbital_kick = .false.
+    no_orbital_kick = .false.
 
     collision = .false.
     collision_separation = 4.0
@@ -542,7 +542,7 @@ contains
               call bl_error("Error: probdata module: invalid choice for rot_axis.")
            endif
 
-           if ( (do_rotation .ne. 1) .and. orbital_kick ) then
+           if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
               vel_P(initial_motion_dir) = - orbital_speed_P
               vel_S(initial_motion_dir) =   orbital_speed_S
            endif

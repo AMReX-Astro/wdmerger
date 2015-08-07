@@ -42,7 +42,7 @@
      use prob_params_module, only: center
      use eos_module
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, rot_period
+          UEDEN, UEINT, UFS, rot_period, do_rotation
      use network, only: nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
@@ -124,23 +124,10 @@
           do i = lo(1), hi(1)
              loc(1) = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
 
-             ! If we're in the inertial reference frame, and we want to provide an
-             ! initial orbital kick, use counter-clockwise rigid body rotation.
-
-             if (orbital_kick .and. (.not. single_star)) then
-
-                ! x velocity is -omega * r * sin(theta) == -omega * y
-                state(i,j,k,UMX+star_axis-1) = state(i,j,k,UMX+star_axis-1) &
-                                             + state(i,j,k,URHO) * (-TWO * M_PI / rot_period) * loc(initial_motion_dir)
-
-                ! y velocity is +omega * r * cos(theta) == +omega * x
-                state(i,j,k,UMX+initial_motion_dir-1) = state(i,j,k,UMX+initial_motion_dir-1) &
-                                                      + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * loc(star_axis)
-
              ! If we want a collision calculation, set the stars in 
              ! motion with the respective free-fall velocities.
 
-             else if (collision) then
+             if (collision) then
 
                 dist_P = loc - center_P_initial
                 dist_S = loc - center_S_initial
@@ -150,6 +137,19 @@
                 else if (sum(dist_S**2) < radius_S_initial**2) then
                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
                 endif
+
+             ! If we're in the inertial reference frame, and we want to provide an
+             ! initial orbital kick, use counter-clockwise rigid body rotation.
+
+             else if ((do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. single_star)) then
+
+                ! x velocity is -omega * r * sin(theta) == -omega * y
+                state(i,j,k,UMX+star_axis-1) = state(i,j,k,UMX+star_axis-1) &
+                                             + state(i,j,k,URHO) * (-TWO * M_PI / rot_period) * loc(initial_motion_dir)
+
+                ! y velocity is +omega * r * cos(theta) == +omega * x
+                state(i,j,k,UMX+initial_motion_dir-1) = state(i,j,k,UMX+initial_motion_dir-1) &
+                                                      + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * loc(star_axis)
 
              endif
 
@@ -181,7 +181,7 @@
                          domlo,domhi,delta,xlo,time,bc)
 
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, rot_period
+          UEDEN, UEINT, UFS, rot_period, do_rotation
      use prob_params_module, only: center
      use bl_constants_module
      use probdata_module
@@ -226,7 +226,7 @@
                     adv(i,j,k,UTEMP) = ambient_state % T
                     adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)
 
-                    if ( orbital_kick ) then
+                    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
                       vx = (-2.0d0 * M_PI / rot_period) * yy
                       vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -267,7 +267,7 @@
                     adv(i,j,k,UTEMP) = ambient_state % T
                     adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                    if ( orbital_kick ) then
+                    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
                       vx = (-2.0d0 * M_PI / rot_period) * yy
                       vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -308,7 +308,7 @@
                     adv(i,j,k,UTEMP) = ambient_state % T
                     adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                    if ( orbital_kick ) then
+                    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
                       vx = (-2.0d0 * M_PI / rot_period) * yy
                       vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -349,7 +349,7 @@
                     adv(i,j,k,UTEMP) = ambient_state % T
                     adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                    if ( orbital_kick ) then
+                    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
                       vx = (-2.0d0 * M_PI / rot_period) * yy
                       vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -390,7 +390,7 @@
                     adv(i,j,k,UTEMP) = ambient_state % T
                     adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                    if ( orbital_kick ) then
+                    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
                       vx = (-2.0d0 * M_PI / rot_period) * yy
                       vy = ( 2.0d0 * M_PI / rot_period) * xx
@@ -431,7 +431,7 @@
                     adv(i,j,k,UTEMP) = ambient_state % T
                     adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
 
-                    if ( orbital_kick ) then
+                    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
                       vx = (-2.0d0 * M_PI / rot_period) * yy
                       vy = ( 2.0d0 * M_PI / rot_period) * xx

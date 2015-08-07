@@ -4,7 +4,7 @@
 
   nsub = 4
 
-  orbital_kick = F
+  no_orbital_kick = F
 
   collision = F
   collision_separation = 4.0

@@ -48,16 +48,6 @@ function set_run_opts {
 
   fi
 
-  if [ ! -z $castro_do_rotation ]; then
-
-    if [ $castro_do_rotation -eq 0 ]; then
-	orbital_kick=T
-    else
-	orbital_kick=F
-    fi
-
-  fi
-
 }
 
 
