@@ -98,7 +98,6 @@ module probdata_module
   logical          :: do_relax
   integer          :: relax_type ! 1 = SCF
   double precision :: relax_tol
-  double precision :: relax_tau
 
   ! Data for SCF relaxation
   double precision :: d_A, d_B, d_C
@@ -178,7 +177,7 @@ contains
     double precision :: mass_p, mass_s
 
     namelist /fortin/ &
-         mass_p, mass_s, &
+         mass_P, mass_S, &
          central_density_P, central_density_S, &
          nsub, &
          no_orbital_kick, &
@@ -186,15 +185,16 @@ contains
          collision_separation, &
          interp_temp, &
          damping, damping_alpha, &
-         do_relax, relax_tau, &
+         do_relax, &
          relax_type, &
          relax_tol, &
          d_A, d_B, d_C, &
          ambient_density, &
          stellar_temp, stellar_C12, stellar_O16, &
-         star_axis, &
+         star_axis, initial_motion_dir, &
          maxTaggingRadius, &
          bulk_velx, bulk_vely, bulk_velz, &
+         smallx, smallu, &
          center_fracx, center_fracy, center_fracz, &
          initial_model_dx, &
          initial_model_npts, &
@@ -203,8 +203,6 @@ contains
          sponge_dist, sponge_width, sponge_timescale, &
          gw_dist, &
          fill_ambient_bc
-
-    maxTaggingRadius = 0.75d0
 
     nsub = 1
 
@@ -232,6 +230,8 @@ contains
     damping  = .false.
     star_axis = 1
     initial_motion_dir = 2
+
+    maxTaggingRadius = 0.75d0
 
     do_relax = .false.
     relax_type = 1
@@ -273,9 +273,9 @@ contains
 
     initial_model_hse_tol = 1.d-10
 
-    sponge_dist      = 0.75
-    sponge_width     = 0.1
-    sponge_timescale = 0.01
+    sponge_dist      = 0.75d0
+    sponge_width     = 0.1d0
+    sponge_timescale = 0.01d0
 
     gw_dist = 10.0 ! kpc
 
