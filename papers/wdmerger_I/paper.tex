@@ -40,6 +40,14 @@
 
 \newcommand{\msolar}{\mathrm{M}_\odot}
 
+% Software names
+\newcommand{\boxlib}{\texttt{BoxLib}}
+\newcommand{\castro}{\texttt{CASTRO}}
+\newcommand{\wdmerger}{\texttt{wdmerger}}
+\newcommand{\python}{\texttt{Python}}
+\newcommand{\matplotlib}{\texttt{matplotlib}}
+\newcommand{\yt}{\texttt{yt}}
+
 \begin{document}
 
 %==========================================================================
@@ -66,7 +74,7 @@ of binary white dwarf systems using mesh-based hydrodynamics,
 relative to other methods. This is the first paper in a series designed to 
 describe simulations of these systems using a hydrodynamics code with 
 using the adaptive-mesh refinement approach. In this paper we describe our numerical 
-methodology and discuss our implementation in the code CASTRO. CASTRO 
+methodology and discuss our implementation in the code \castro. \castro\ 
 solves the Euler equations of hydrodynamics 
 and the Poisson equation for self-gravity. Standard techniques for 
 coupling gravitation and rotation forces to the hydrodynamics do 
@@ -323,17 +331,19 @@ plan to do.
 \section{Numerical Methodology}\label{sec:Numerical Methodology}
 
 To study the white dwarf merger problem, we use the grid-based
-hydrodynamics code CASTRO \citep{castro}. CASTRO solves the Euler
+hydrodynamics code \castro\footnote{\castro\ can be obtained at \url{https://github.com/BoxLib-Codes/Castro}.} \citep{castro}.
+\castro\ solves the Euler
 equations, along with the inclusion of optional modules for gravity,
-nuclear reactions and thermodynamics. CASTRO is based on the BoxLib
+nuclear reactions and thermodynamics. \castro\ is based on the \boxlib
+\footnote{\boxlib\ can be obtained at \url{https://github.com/BoxLib-Codes/BoxLib}.}
 adaptive-mesh refinement (AMR) framework \citep{rendleman:2000}, which
 represents fluid data on a mesh where regions of interest have higher
-spatial resolution. CASTRO is highly parallel and is designed for
+spatial resolution. \castro\ is highly parallel and is designed for
 large-scale use on modern supercomputers; see 
-\autoref{sec:Performance} for information on how CASTRO performs for our
+\autoref{sec:Performance} for information on how \castro\ performs for our
 problem. The next few subsections describe our approach to each of the
 physics components used in this work. We direct the reader to the
-original code paper for a full description of CASTRO's approach to
+original code paper for a full description of \castro's approach to
 solving the equations of hydrodynamics. In this work, we report mainly
 on the changes we have made to the code since its original release,
 for the purpose of approaching this problem.
@@ -351,11 +361,11 @@ vector, $p$ is the pressure, and $E = \mathbf{u}^2 / 2 + e$ is the
 total specific energy, where $e$ is the internal (thermal) specific
 energy (energy per unit mass).
 
-We use the unsplit piecewise-parabolic method (PPM) solver in CASTRO
+We use the unsplit piecewise-parabolic method (PPM) solver in \castro\
 to advance the hydrodynamics system in time \citep{ppmunsplit}.  A
 number of changes were made to the solver, which are detailed in the
 Appendix.  These changes bring the algorithm more in line with that of
-\cite{ppm}. CASTRO as originally released featured a slightly modified
+\cite{ppm}. \castro\ as originally released featured a slightly modified
 version of the higher resolution limiters of
 \cite{colella_sekora:2008}, which can be accessed in the code using
 \texttt{castro.ppm\_type = 2}. The advantage of this limiter is that
@@ -401,8 +411,8 @@ the thermodynamics to be consistent with these values. The
 velocity of the zone is set to zero. This latter approach will only
 occur in very rare situations, and is mainly there as a safeguard.
 
-CASTRO's approach to adaptive mesh refinement, based on its underlying
-BoxLib framework, is to refine zones based on certain user-specified
+\castro's approach to adaptive mesh refinement, based on its underlying
+\boxlib\ framework, is to refine zones based on certain user-specified
 criteria that tag regions of interest for higher spatial
 resolution. Data is represented on one of a number of AMR levels,
 where each level corresponds to a set of zones at the same resolution,
@@ -451,7 +461,7 @@ the iterative value approaches zero. In these cases we employ a
 ``floor'' that limits how low the temperature can go (typically 
 $10^5$ K). There is a choice here how to proceed: we can either
 assign this floor value to the temperature and let that zone be
-thermodynamically inconsistent (the original behavior in CASTRO), or
+thermodynamically inconsistent (the original behavior in \castro), or
 we can adjust the internal energy to be thermodynamically consistent
 with the temperature, at the cost of violating energy conservation. We
 have found in some test problems of strong one-dimensional shocks that reach 
@@ -465,12 +475,12 @@ that is consistent with the returned temperature. These inconsistencies
 are dependent on the threshold we set that determines how close the 
 returned energy should be to the original input energy. While this 
 threshold is typically very small in an individual zone (a relative 
-difference of $10^{-8}$ by default in CASTRO), over time and given 
+difference of $10^{-8}$ by default in \castro), over time and given 
 a large number of zones, this can result in a significant energy 
 drift. This is a serious enough problem that we opt for the energy 
 conserving approach for our simulations.
 
-CASTRO has the ability to do both nuclear reactions and radiative 
+\castro\ has the ability to do both nuclear reactions and radiative 
 transport (in the flux-limited diffusion approximation). For all simulations 
 in this paper we do not enable either, and will delay discussion of 
 these modules until a later paper in this series.
@@ -483,11 +493,11 @@ We solve the Poisson equation for self-gravity for our problem,
   \nabla^2 \Phi(\mathbf{x}) = 4\pi G\, \rho(\mathbf{x}),
 \end{equation}
 where $\Phi$ is the gravitational potential, $G$ is the gravitational
-constant, and $\rho$ is the mass density.\footnote{In the CASTRO code, the 
+constant, and $\rho$ is the mass density.\footnote{In the \castro\ code, the 
 right-hand side is negated and therefore $\Phi$ is positive. We use the 
 sign convention that is typical for astrophysics in this paper. 
 When $\Phi$ appears in the code it is negated to compensate for this.} 
-The solution of this equation in CASTRO is described in \cite{castro}, and
+The solution of this equation in \castro\ is described in \cite{castro}, and
 consists of both level and composite solves, and a final
 synchronization at the end.
 
@@ -575,7 +585,7 @@ use the cell density in the momentum update, we can avoid this possibility: the 
 will always be suitably small if the zone's density is small. Thus for our simulations
 we continue to use the standard source term for the momentum.
 
-Time centering of this source term is done in CASTRO using a predictor-corrector approach.
+Time centering of this source term is done in \castro\ using a predictor-corrector approach.
 At the start of a coarse grid timestep, we solve the gravitational potential for the density $\rho^n$.
 We then add to the momenta a prediction of the source term that is first-order accurate in time, 
 $\Delta t\, \rho^n\, \mathbf{g}^n$. After the hydrodynamics update, we recalculate
@@ -625,7 +635,7 @@ we are able to conserve the total energy completely (except for any energy loss 
 physical domain boundaries). In order for the method to be second-order accurate in time, 
 no change is needed to the fluxes since those are already time-centered 
 in the hydrodynamics update, so we need only to use a time-centered $\Phi$ (which can be computed 
-by averaging the time-level $n$ and $n+1$ potentials; we already have the latter because CASTRO 
+by averaging the time-level $n$ and $n+1$ potentials; we already have the latter because \castro\ 
 re-computes the potential at the new time after the hydrodynamics step, and we can apply this energy 
 at the end of the timestep).
 
@@ -681,7 +691,7 @@ we will already have the potential at time-levels $n$ and $n+1$, and to second o
 $\dot{\Phi}^{n+1/2} = (\Phi^{n+1} - \Phi^{n}) / \Delta t.$)
 
 A final issue worth noting relates to complications posed by mesh refinement. Like 
-many AMR codes, CASTRO implements a refluxing algorithm at the end of a timestep. 
+many AMR codes, \castro\ implements a refluxing algorithm at the end of a timestep. 
 At any locations on a particular grid level that are adjacent to, but not covered by,
 zones from a finer grid, there will be a disagreement about the fluxes crossing 
 this coarse-fine interface. If left uncorrected, this results in a violation of 
@@ -717,7 +727,7 @@ Here $(i, j, k)$ are the indices of cells inside the domain, and $(l,m, n)$
 are the indices of boundary locations. $\Delta V$ is the volume of the
 zone. We have implemented this as an option\footnote{It is controlled
   with the \texttt{gravity.direct\_sum\_bcs} input parameter.} in
-CASTRO. If there are $N$ zones per spatial dimension, then there are
+\castro. If there are $N$ zones per spatial dimension, then there are
 $6 N^2$ boundary zones, and each boundary zone requires a sum over
 $N^3$ zones, so the direct computation of the boundary conditions
 scales as $\mathcal{O}(N^5)$.  This method is expensive enough that it is not used
@@ -727,7 +737,7 @@ approximate solutions).
 In a typical simulation we place the boundaries of the domain far
 enough away from the region containing most of the mass that some
 method of approximation to this direct summation is justified. Many
-approaches exist in the literature. The original release of CASTRO
+approaches exist in the literature. The original release of \castro\
 featured the crudest possible approximation: a monopole prescription,
 where the boundary values were computed by summing up all the mass on
 the domain and treating it as a point source at the domain
@@ -829,7 +839,7 @@ Since the results of a merger simulation depend strongly on gravity,
 it is important to check whether proper numerical convergence is
 achieved for the Poisson solver. To do so, we created a simple test
 that inserts a sphere of radius $R$ and uniform mass density $\rho$
-onto our grid, and used CASTRO to calculate the gravitational
+onto our grid, and used \castro\ to calculate the gravitational
 potential $\Phi$ of this setup. We ensure that $R$ is an integer
 multiple of the grid spacing, and the center of the sphere is at the
 origin. The problem domain for our simulations is $[-1.6, 1.6]^3$, and
@@ -861,7 +871,7 @@ we choose a relative error tolerance of $10^{-10}$ to be satisfied in the multig
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.45]{plots/phi_comparison}
-  \caption{Comparison of the CASTRO gravitational potential to the analytical solution for: 
+  \caption{Comparison of the \castro\ gravitational potential to the analytical solution for: 
     a sphere of uniform density; the same sphere, but with the potential normalized using the 
     actual amount of mass on the grid instead of the mass of a perfect sphere; and, a 
     cube of uniform density. Plotted also is a notional curve whose slope represents
@@ -935,7 +945,7 @@ factors.
 
 For the evolution of binary systems, it is most natural to evolve the
 two stars in a frame that is co-rotating at the same period as the
-orbital period. Since the publication of the original code paper, CASTRO 
+orbital period. Since the publication of the original code paper, \castro\ 
 now has the ability to evolve systems in a rotating reference frame. 
 Source terms corresponding to the Coriolis and centrifugal 
 force terms are added to the momentum and energy equations. In this frame, 
@@ -1005,7 +1015,7 @@ We can directly solve this coupled system:
   (\rho u)^{n+1} &= \frac{ (\widetilde{\rho u}) + \omega \Delta t (\widetilde{\rho v})}{1 + \omega^2 \Delta t^2} \\
   (\rho v)^{n+1} &= \frac{ (\widetilde{\rho v}) - \omega \Delta t (\widetilde{\rho u})}{1 + \omega^2 \Delta t^2}
 \end{align}
-We use this form of the momentum update in CASTRO. This improvement is small
+We use this form of the momentum update in \castro. This improvement is small
 but increases the accuracy of our rotating white dwarf systems over long time-scales.
 
 The update to the energy equation can be determined by taking the dot product of the velocity
@@ -1298,16 +1308,16 @@ outside of the stellar orbits.
 
 The software used to generate the test problems in this paper
 (as well as the manuscript itself),
-\texttt{wdmerger}\footnote{\url{https://github.com/BoxLib-Codes/wdmerger}},
+\wdmerger\footnote{\wdmerger\ can be obtained at \url{https://github.com/BoxLib-Codes/wdmerger}.},
 is freely available at an online repository hosting service.
-Version control in both the parent software (BoxLib, CASTRO) and in \texttt{wdmerger}
+Version control in both the parent software (\boxlib, \castro) and in \wdmerger\
 permits us to reference the state of the code at the time a simulation
-was performed. In all plot files and diagnostic output generated by CASTRO, 
-and EPS figure files and plots generated by \texttt{wdmerger} for this work,
-we store the active \texttt{git} commit hashes of BoxLib, CASTRO and \texttt{wdmerger}.
-Line plots are generated using the \texttt{matplotlib} library for \texttt{Python} 
+was performed. In all plot files and diagnostic output generated by \castro, 
+and EPS figure files and plots generated by \wdmerger\ for this work,
+we store the active \texttt{git} commit hashes of \boxlib, \castro, and \wdmerger.
+Line plots are generated using the \matplotlib\ library for \python\ 
 \citep{matplotlib}, while slice plots and other multi-dimensional visualizations are 
-generated using the \texttt{yt} code \citep{yt}.
+generated using the \yt\ code \citep{yt}.
 
 
 
@@ -1325,7 +1335,7 @@ result in substantial motion of stellar material across the grid. This
 bulk motion presents an opportunity for advection errors to build up,
 and is only partially mitigated by evolving the white dwarfs in a
 co-rotating frame. It is therefore important to be be aware of the
-behavior of the code in such circumstances. The behavior of CASTRO for
+behavior of the code in such circumstances. The behavior of \castro\ for
 many standard hydrodynamics test problems was detailed in the original
 code paper \citep{castro}, and in the interest of brevity we will not
 repeat them here. Instead, we focus on a subset of problems that
@@ -1372,9 +1382,9 @@ increasing resolution.
     \label{fig:single_star_static_radius}}
 \end{figure}
 
-This problem was studied in the first CASTRO paper, but is worth
+This problem was studied in the first \castro\ paper, but is worth
 revisiting here. A single star explosion simulation may only last a
-couple of seconds, and the CASTRO paper studied the behavior of the
+couple of seconds, and the \castro\ paper studied the behavior of the
 star after one second of evolution. However, the dynamical timescale
 of a typical carbon-oxygen white dwarf is on the order of 1--10
 seconds. Additionally, a binary orbit is typically on the order of
@@ -1418,7 +1428,7 @@ this applied force and not the intrinsic numerical instability of the stars.
 
 \subsection{Gravitational Free Fall}\label{sec:Gravitational Free Fall}
 
-A simple dynamical test to verify the gravitation physics in CASTRO is
+A simple dynamical test to verify the gravitation physics in \castro\ is
 the case of gravitational free fall. We place two stars on the grid 
 in the manner of \autoref{sec:initial_models}. The distance $a$ between 
 them corresponds to a chosen orbital period $T$, consistent with the total
@@ -1465,7 +1475,7 @@ a more moderate $128^3$ zone simulation.
     time of the simulation, scaled to the time it would take two point masses
     to collide. The solid curve shows the analytical result,
     calculated from Newtonian mechanics, and the circles show the
-    samples from the time evolution with CASTRO. For visual clarity, we 
+    samples from the time evolution with \castro. For visual clarity, we 
     show only a small fraction of the timesteps.}
   \label{fig:freefall}
 \end{figure}
@@ -1478,7 +1488,7 @@ invariance of the underlying Euler equations, so that simulations
 moving at a uniform bulk velocity will appear different than an
 equivalent stationary simulation. If true, we need to understand 
 the importance of this effect when deciding whether to trust the 
-output of a code like CASTRO when applied for merger problems.
+output of a code like \castro\ when applied for merger problems.
 Recently, this has come up in two ways which are of note for us 
 in the present study. We will explain these situations and display 
 the results of tests we have run to determine whether this 
@@ -1495,7 +1505,7 @@ of the moving-mesh code AREPO being presented in that study, which
 demonstrated Galilean invariance even at large bulk velocities. 
 Inability to correctly model the Kelvin-Helmholtz instability would 
 ave important consequences for how much we can trust the ability of 
-CASTRO to test the violent merger progenitor model. Shearing between 
+\castro\ to test the violent merger progenitor model. Shearing between 
 the material flowing out of the secondary and material near the 
 surface of the primary may trigger fluid
 instabilities that play an important role in the evolution of that
@@ -1570,7 +1580,7 @@ variant of this test using white dwarf models.
 Following \cite{robertson:2010}, we set up a Kelvin-Helmholtz test in
 the following way. The problem domain runs from 0 to 1 in both the $x$
 and $y$ directions. This is a two-dimensional test, so we run
-CASTRO in 2D mainly to avoid extra computational expense; in 3D, it 
+\castro\ in 2D mainly to avoid extra computational expense; in 3D, it 
 would merely involve replicating the problem in the $z$ direction.
 The problem involves a fluid slab of density $\rho_2 = 2.0$ traveling rightward in the
 $x$-direction at velocity $v_2 = 0.5$, sandwiched by a fluid of
@@ -1785,7 +1795,7 @@ justifying our typical choice of maintaining terms up to $r^{-7}$.
 \end{figure}
 
 Another that we consider is the energy conservation of the system. Recalling \autoref{sec:gravity_hydro_coupling}, 
-there are several different methods of applying the gravitational source term to the hydrodynamics equations. In CASTRO we presently 
+there are several different methods of applying the gravitational source term to the hydrodynamics equations. In \castro\ we presently 
 have four options, controlled by the parameter {\tt castro.grav\_source\_type}, which we will shortern to {\tt gs} for the present 
 discussion. ${\tt gs} = 1$ is the standard cell-centered source term for gravity. ${\tt gs} = 2$ is a slight variation on this scheme 
 that determines the value of the energy source term after the momentum source term has been applied; the former approach uses 
@@ -1802,7 +1812,7 @@ value of the kinetic energy plus internal energy, rather than being evolved dire
 of magnitude better in energy conservation, justifying the effort in varying the scheme.
 
 In \autoref{table:sources} we show also the effects on energy conservation of using the inertial reference frame. 
-We use ${\tt rs}$ for the CASTRO parameter {\tt castro.rot\_source\_type}, and we have the same four options for updating
+We use ${\tt rs}$ for the \castro\ parameter {\tt castro.rot\_source\_type}, and we have the same four options for updating
 the energy source term as for gravity. The ${\tt rs} = 0$ column means that rotation is turned off and we are 
 in the inertial frame. We see that the choice of rotational coupling is much less important than the choice of gravity coupling. 
 Interestingly, the ``conservative'' ${\tt rs} = 4$ is slightly worse in energy conservation than the non-conservative, 
@@ -1879,20 +1889,20 @@ inspiral and merger is physically (not numerically) motivated.
 %==========================================================================
 \section{Parallel Strategy and Performance}\label{sec:Performance}
 
-CASTRO is designed to be deployed on high-performance computing systems using 
+\castro\ is designed to be deployed on high-performance computing systems using 
 many thousands of processors simultaneously. It is worth briefly examining 
 our strategy for parallelizing the problem over many computational nodes 
 and our performance in situations similar to production science simulations. 
 This is especially true because some aspects of our approach to parallelism 
-have changed since the first CASTRO paper, and we have obtained improved 
+have changed since the first \castro\ paper, and we have obtained improved 
 performance in certain settings.
 
-The BoxLib framework that CASTRO is based on splits each AMR level into a number 
+The \boxlib\ framework that \castro\ is based on splits each AMR level into a number 
 of boxes that collectively span the level. These boxes are distributed to processors 
 through MPI parallelism; each MPI task in general holds multiple boxes and 
 an update includes a loop over all the boxes an MPI task owns. The distribution 
 obeys a load-balancing algorithm that attempts to equalize the amount of work 
-done by each processor. BoxLib contains a number of strategies for distributing 
+done by each processor. \boxlib\ contains a number of strategies for distributing 
 work in this way, and by default uses a space-filling curve approach with a 
 Morton ordering. By experiment we have found that the most efficient load-balancing 
 strategy for our problem is actually a simple knapsack algorithm. In this approach, 
@@ -1918,7 +1928,7 @@ simulation. This size will therefore in general vary on different AMR levels.
 Generally we select a value in between 32 and 64 zones per dimension.
 
 We use OpenMP to accelerate the work associated with the boxes owned by each 
-MPI task. Originally CASTRO used OpenMP to accelerate individual loops in the 
+MPI task. Originally \castro\ used OpenMP to accelerate individual loops in the 
 hydrodynamics routines, such as the piecewise-parabolic edge state reconstruction 
 and the conservative flux update. However, there is a significant amount of 
 overhead associated with generating a new OpenMP region at each of the many 
@@ -1938,16 +1948,16 @@ certain systems.
 \begin{figure}
   \centering
   \includegraphics[scale=0.4]{plots/weak_scaling}
-  \caption{CASTRO weak scaling test, performed on the Blue Waters machine at 
+  \caption{\castro\ weak scaling test, performed on the Blue Waters machine at 
     NCSA. Each processor had a fixed amount of work, and we increased the 
     number of simulation zones in concert with the number of processors. The 
     solid curve represents perfect weak scaling, while the blue circles show 
-    CASTRO's performance at each processor count. The vertical axis measures 
+    \castro's performance at each processor count. The vertical axis measures 
     the median time per timestep, normalized to this value for the smallest 
     processor count.\label{fig:weak_scaling}}
 \end{figure}
 
-To examine the parallel performance of CASTRO, we performed both strong scaling 
+To examine the parallel performance of \castro, we performed both strong scaling 
 and weak scaling tests on the Blue Waters machine at the National Center for 
 Supercomputing Applications. For the weak scaling test, whose results are 
 shown in \autoref{fig:weak_scaling}, we ran a uniform grid binary white 
@@ -1971,12 +1981,12 @@ This is due entirely to the increased cost of the multigrid Poisson solve
 in each timestep and this cannot be mitigated except by improving 
 communication or computation efficiency in the multigrid solver. We observe 
 that this weak scaling behavior with Poisson gravity is a significant 
-improvement over the results presented in the first CASTRO paper.
+improvement over the results presented in the first \castro\ paper.
 
 \begin{figure}
   \centering
   \includegraphics[scale=0.4]{plots/strong_scaling}
-  \caption{CASTRO strong scaling test performed on the Blue Waters machine at
+  \caption{\castro\ strong scaling test performed on the Blue Waters machine at
     NCSA. The vertical axis measures the median time per timestep, and the 
     horizontal axis measures the number of processors in the simulation. Data 
     points are normalized to the time per timestep for the smallest number 
@@ -2118,9 +2128,9 @@ Project AST100037 supported use of the resources NICS/Kraken and NICS/Darter.
 
 \section{CASTRO hydrodynamics changes}
 
-The basic PPM algorithm in CASTRO has undergone a number of changes
+The basic PPM algorithm in \castro\ has undergone a number of changes
 since the original code paper \citep{castro}.  A discussion of the
-pure hydrodynamics changes along with verification of CASTRO when
+pure hydrodynamics changes along with verification of \castro\ when
 using the stellar equation of state was given in
 \citet{zingalekatz:2015}.  Here we discuss the changes that affect
 multispecies flow and source terms.
@@ -2152,7 +2162,7 @@ information that can reach the right interface of the zone $i$ as
 carried by the wave $\nu$.  The reader is referred to
 \citet{ppmunsplit} for further details.
 
-Since the original CASTRO paper, the reference state implementation
+Since the original \castro\ paper, the reference state implementation
 has been switched to:
 \begin{equation}
 \label{eq:refchoice}
@@ -2167,7 +2177,7 @@ where the $(+)$ superscript here means the fastest wave moving to the right
 portion of the parabolic profile that could possible reach the interface 
 over the timestep.  This is
 in agreement with \citet{ppmunsplit} (eq. 90).  The flattening
-in the original CASTRO paper has also been updated as discussed
+in the original \castro\ paper has also been updated as discussed
 in \citet{zingalekatz:2015}.
 
 We comment on the choice of reference state for passively-advected
@@ -2232,14 +2242,14 @@ itself, setting:
 \subsection{Gravity and Rotation Tracing}
 
 We note a few additional differences between the original PPM
-implementation of \citet{ppm} and CASTRO.  In the original PPM
+implementation of \citet{ppm} and \castro\.  In the original PPM
 implementation, the gravitational acceleration was reconstructed as a parabola, and
 this was traced under to find the forcing that affects the interface
-for each wave.  CASTRO originally followed \citet{ppmunsplit} which instead adds
+for each wave.  \castro\ originally followed \citet{ppmunsplit} which instead adds
 $(\Delta t/2)g$ to the interface states for velocity at the end of the
 reconstruction.  In the current implementation, we do the original
 parabolic reconstruction and characteristic tracing of the gravitation
-source. This can be controlled in CASTRO with the parameter 
+source. This can be controlled in \castro\ with the parameter 
 {\tt castro.ppm\_trace\_grav}. Our system with the source appears as:
 \begin{equation}
 q_t + A(q) q_x = G
@@ -2286,7 +2296,7 @@ the effects of rotation on the edge states. For the primitive variables, the rot
 source term is $F_R = (0, f_R, 0)^T$, where $f_R = -2\, {\bm{\omega}} \times \mathbf{u} - {\bm\omega}\times \left({\bm\omega} \times \mathbf{r}\right).$
 Just like the gravity source, the rotation source terms only update the velocities. Therefore 
 the rotation source terms can be included in a manner identical to that of the gravity source
-terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. This is controlled in CASTRO
+terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. This is controlled in \castro\
 with the parameter {\tt castro.ppm\_trace\_rot}.
 
 

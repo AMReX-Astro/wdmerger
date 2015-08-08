@@ -37,7 +37,7 @@
         omega = get_omega()
 
         do k = adv_l3, adv_h3
-           loc(3) = xlo(3) + dble(j - adv_l3 + HALF)*delta(3) - center(3)
+           loc(3) = xlo(3) + dble(k - adv_l3 + HALF)*delta(3) - center(3)
            do j = adv_l2, adv_h2
               loc(2) = xlo(2) + dble(j - adv_l2 + HALF)*delta(2) - center(2)
               do i = adv_l1, adv_h1

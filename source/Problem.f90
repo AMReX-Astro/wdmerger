@@ -460,6 +460,10 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
            grav(2) = gy(i,j,k)
            grav(3) = gz(i,j,k)
 
+           ! We need to rotate the gravitational field to be consistent with the rotated position.
+
+           grav = matmul(rot_matrix, grav)
+
            do m = 1, 3
               do l = 1, 3
                  dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * dV * (vel(l) * vel(m) + pos(l) * grav(m))
