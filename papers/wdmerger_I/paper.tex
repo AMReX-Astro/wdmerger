@@ -323,9 +323,11 @@ plan to do.
 \section{Numerical Methodology}\label{sec:Numerical Methodology}
 
 To study the white dwarf merger problem, we use the grid-based
-hydrodynamics code CASTRO \citep{castro}. CASTRO solves the Euler
+hydrodynamics code CASTRO\footnote{CASTRO can be obtained at \url{https://github.com/BoxLib-Codes/Castro}.} \citep{castro}.
+CASTRO solves the Euler
 equations, along with the inclusion of optional modules for gravity,
 nuclear reactions and thermodynamics. CASTRO is based on the BoxLib
+\footnote{BoxLib can be obtained at \url{https://github.com/BoxLib-Codes/BoxLib}.}
 adaptive-mesh refinement (AMR) framework \citep{rendleman:2000}, which
 represents fluid data on a mesh where regions of interest have higher
 spatial resolution. CASTRO is highly parallel and is designed for
@@ -1298,7 +1300,7 @@ outside of the stellar orbits.
 
 The software used to generate the test problems in this paper
 (as well as the manuscript itself),
-\texttt{wdmerger}\footnote{\url{https://github.com/BoxLib-Codes/wdmerger}},
+\texttt{wdmerger}\footnote{\texttt{wdmerger} can be obtained at \url{https://github.com/BoxLib-Codes/wdmerger}.},
 is freely available at an online repository hosting service.
 Version control in both the parent software (BoxLib, CASTRO) and in \texttt{wdmerger}
 permits us to reference the state of the code at the time a simulation
