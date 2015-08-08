@@ -53,28 +53,8 @@ radius   = diameter / 2.0e0
 
 # Get the gravitational constant from the CASTRO cgs constants file
 
-CASTRO_DIR = wdmerger.get_castro_dir()
-
-units_file  = open(CASTRO_DIR + '/constants/constants_cgs.f90')
-units_lines = units_file.readlines()
-
-Gconst = None
-
-for line in units_lines:
-    lsplit = line.split()
-    if (len(lsplit) >= 4):
-        if (lsplit[3] == 'Gconst'):
-            Gconst = lsplit[5]
-            # Remove the kind specification at the end of the string
-            Gconst = Gconst[:-5]
-            Gconst = float(Gconst.replace("d","e"))
-            Gconst = yt.YTQuantity(Gconst, 'cm**3*g**-1*s**-2')
-
-if (Gconst == None):
-    print "Gravitational constant not found in CGS constants file; exiting."
-    exit()
-
-units_file.close()
+Gconst = wdmerger.get_castro_const('Gconst')
+Gconst = yt.YTQuantity(Gconst, 'cm**3*g**-1*s**-2')
 
 for p in range(num_problems):
 

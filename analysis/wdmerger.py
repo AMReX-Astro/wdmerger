@@ -96,6 +96,47 @@ def get_inputs_var(inputs, var):
 
 
 
+# Get a variable value from a probin file.
+
+def get_probin_var(probin, var):
+
+    # Read in all the probin file lines and search for the one
+    # that starts with the desired variable name.
+
+    probin_file = open(probin, 'r')
+    lines = probin_file.readlines()
+
+    lines = filter(lambda s: s.split() != [], lines)
+    line = filter(lambda s: s.split()[0] == var, lines)
+
+    # The variable is the last item in a line before the comment.
+    # This should work correctly even if there is no comment.
+
+    var = (line[0].split('=')[1]).split('!')[0]
+    var = var.strip()
+
+    # Now, convert it into a list if it has multiple entries.
+
+    if (var.split() != []):
+        var = var.split()
+
+    # Convert this to a floating point array, if possible.
+    # If this fails, we'll just leave it as a string.
+
+    try:
+        var = np.array(var,dtype='float')    
+
+        # Now convert this to an integer array, if possible.
+
+        if (var[0].is_integer()):
+            var = np.array(var,dtype='int')
+    except:
+        pass
+
+    return var
+
+
+
 #
 # Given a plotfile directory, return the CASTRO and BoxLib git commit hashes.
 #
@@ -498,3 +539,36 @@ def get_star_locs(plotfile):
     zz_S_com = np.sum( dens[S_idx] * zz[S_idx] ) / np.sum(dens[S_idx])
 
     return [xx_P_com, yy_P_com, zz_P_com, xx_S_com, yy_S_com, zz_S_com]
+
+
+
+# Get a variable from the CASTRO constants file.
+
+def get_castro_const(var_name):
+
+    CASTRO_DIR = get_castro_dir()
+
+    file  = open(CASTRO_DIR + '/constants/constants_cgs.f90')
+    lines = file.readlines()
+
+    const = None
+
+    for line in lines:
+        lsplit = line.split()
+        if (len(lsplit) >= 4):
+            if (lsplit[3] == var_name):
+                const = lsplit[5]
+
+                # Remove the kind specification at the end of the string, if it exists.
+                const = const.split('_')[0]
+
+                # Convert from e notation to d notation.
+                const = float(const.replace("d","e"))
+
+    if (const == None):
+        print "Constant " + var_name + " not found in CGS constants file; exiting."
+        exit()
+
+    file.close()
+
+    return const

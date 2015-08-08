@@ -42,11 +42,12 @@
      use prob_params_module, only: center
      use eos_module
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, rot_period
+          UEDEN, UEINT, UFS, rot_period, do_rotation
      use network, only: nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use initial_model_module, only: interpolate_3d_from_1d
+     use rot_sources_module, only: cross_product, get_omega
 
      implicit none
 
@@ -56,7 +57,7 @@
      double precision :: xlo(3), xhi(3), time, delta(3)
      double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
 
-     double precision :: loc(3)
+     double precision :: loc(3), omega(3)
      double precision :: dist_P(3), dist_S(3)
 
      type (eos_t) :: zone_state, ambient_state
@@ -68,6 +69,8 @@
      ! or if we are in an ambient zone.
 
      call get_ambient(ambient_state)
+
+     omega = get_omega()
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)
@@ -124,23 +127,10 @@
           do i = lo(1), hi(1)
              loc(1) = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
 
-             ! If we're in the inertial reference frame, and we want to provide an
-             ! initial orbital kick, use counter-clockwise rigid body rotation.
-
-             if (orbital_kick .and. (.not. single_star)) then
-
-                ! x velocity is -omega * r * sin(theta) == -omega * y
-                state(i,j,k,UMX+star_axis-1) = state(i,j,k,UMX+star_axis-1) &
-                                             + state(i,j,k,URHO) * (-TWO * M_PI / rot_period) * loc(initial_motion_dir)
-
-                ! y velocity is +omega * r * cos(theta) == +omega * x
-                state(i,j,k,UMX+initial_motion_dir-1) = state(i,j,k,UMX+initial_motion_dir-1) &
-                                                      + state(i,j,k,URHO) * ( TWO * M_PI / rot_period) * loc(star_axis)
-
              ! If we want a collision calculation, set the stars in 
              ! motion with the respective free-fall velocities.
 
-             else if (collision) then
+             if (collision) then
 
                 dist_P = loc - center_P_initial
                 dist_S = loc - center_S_initial
@@ -150,6 +140,13 @@
                 else if (sum(dist_S**2) < radius_S_initial**2) then
                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
                 endif
+
+             ! If we're in the inertial reference frame, and we want to provide an
+             ! initial orbital kick, use rigid body rotation with velocity omega x r.
+
+             else if ((do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. single_star)) then
+
+                state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
 
              endif
 
@@ -181,286 +178,109 @@
                          domlo,domhi,delta,xlo,time,bc)
 
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, rot_period
+          UEDEN, UEINT, UFS, rot_period, do_rotation
      use prob_params_module, only: center
      use bl_constants_module
      use probdata_module
      use eos_module
+     use rot_sources_module, only: cross_product, get_omega
 
      implicit none
+
      include 'bc_types.fi'
-     integer adv_l1,adv_l2,adv_l3,adv_h1,adv_h2,adv_h3
-     integer bc(3,2,*)
-     integer domlo(3), domhi(3)
-     double precision delta(3), xlo(3), time
-     double precision adv(adv_l1:adv_h1,adv_l2:adv_h2,adv_l3:adv_h3,NVAR)
 
-     integer i, j, k, n
-     double precision :: vx, vy, vz
-     double precision :: xx, yy
+     integer          :: adv_l1,adv_l2,adv_l3,adv_h1,adv_h2,adv_h3
+     integer          :: bc(3,2,*)
+     integer          :: domlo(3), domhi(3)
+     double precision :: delta(3), xlo(3), time
+     double precision :: adv(adv_l1:adv_h1,adv_l2:adv_h2,adv_l3:adv_h3,NVAR)
 
-     type (eos_t) :: ambient_state
+     integer          :: i, j, k, n
+     double precision :: loc(3), omega(3)
 
-     call get_ambient(ambient_state)
-
-     do n = 1,NVAR
-        call filcc(adv(adv_l1,adv_l2,adv_l3,n), &
-                   adv_l1,adv_l2,adv_l3,adv_h1,adv_h2,adv_h3, &
-                   domlo,domhi,delta,xlo,bc(1,1,n))
-     enddo
+     type (eos_t)     :: ambient_state
 
      ! Override the generic routine at the physical boundaries by
-     ! setting the material to the ambient state
+     ! setting the material to the ambient state.
 
      if (fill_ambient_bc) then
 
-        ! -x
-        if (adv_l1 < domlo(1) .and. bc(1,1,1) .ne. 0) then
-           do k = adv_l3, adv_h3
-              do j = adv_l2, adv_h2
-                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-                 do i = adv_l1, domlo(1)-1
-                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+        call get_ambient(ambient_state)
 
-                    adv(i,j,k,URHO) = ambient_state % rho
-                    adv(i,j,k,UTEMP) = ambient_state % T
-                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)
+        omega = get_omega()
 
-                    if ( orbital_kick ) then
+        do k = adv_l3, adv_h3
+           loc(3) = xlo(3) + dble(j - adv_l3 + HALF)*delta(3) - center(3)
+           do j = adv_l2, adv_h2
+              loc(2) = xlo(2) + dble(j - adv_l2 + HALF)*delta(2) - center(2)
+              do i = adv_l1, adv_h1
+                 loc(1) = xlo(1) + dble(i - adv_l1 + HALF)*delta(1) - center(1)
 
-                      vx = (-2.0d0 * M_PI / rot_period) * yy
-                      vy = ( 2.0d0 * M_PI / rot_period) * xx
-                      vz = ZERO
+                 if (k .ge. domlo(3) .and. k .le. domhi(3) .and. &
+                     j .ge. domlo(2) .and. j .le. domhi(2) .and. &
+                     i .ge. domlo(1) .and. i .le. domhi(1)) then
+                    cycle
+                 endif
 
-                    else
+                 adv(i,j,k,URHO) = ambient_state % rho
+                 adv(i,j,k,UTEMP) = ambient_state % T
+                 adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)
 
-                      vx = adv(domlo(1),j,k,UMX)/adv(domlo(1),j,k,URHO)
-                      vy = adv(domlo(1),j,k,UMY)/adv(domlo(1),j,k,URHO)
-                      vz = adv(domlo(1),j,k,UMZ)/adv(domlo(1),j,k,URHO)
+                 if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
-                    endif
+                    adv(i,j,k,UMX:UMZ) = adv(i,j,k,URHO) * cross_product(omega, loc)
 
-                    adv(i,j,k,UMX) = ambient_state % rho*vx
-                    adv(i,j,k,UMY) = ambient_state % rho*vy
-                    adv(i,j,k,UMZ) = ambient_state % rho*vz
+                 else
 
-                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                         HALF*(adv(i,j,k,UMX)**2 + &
-                               adv(i,j,k,UMY)**2 + &
-                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+                    if (adv_l1 < domlo(1) .and. bc(1,1,1) .ne. 0) then
 
-                 enddo
-              enddo
-           enddo
-        endif
+                       adv(i,j,k,UMX:UMZ) = adv(domlo(1),j,k,UMX:UMZ)
 
-        ! +x
-        if (adv_h1 > domhi(1) .and. bc(1,2,1) .ne. 0) then
-           do k = adv_l3, adv_h3
-              do j = adv_l2, adv_h2
-                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-                 do i = domhi(1)+1, adv_h1
-                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+                    else if (adv_h1 > domhi(1) .and. bc(1,2,1) .ne. 0) then
 
-                    adv(i,j,k,URHO) = ambient_state % rho
-                    adv(i,j,k,UTEMP) = ambient_state % T
-                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
+                       adv(i,j,k,UMX:UMZ) = adv(domhi(1),j,k,UMX:UMZ)
 
-                    if ( orbital_kick ) then
+                    else if (adv_l2 < domlo(2) .and. bc(2,1,1) .ne. 0) then
 
-                      vx = (-2.0d0 * M_PI / rot_period) * yy
-                      vy = ( 2.0d0 * M_PI / rot_period) * xx
-                      vz = ZERO
+                       adv(i,j,k,UMX:UMZ) = adv(i,domlo(2),k,UMX:UMZ)
 
-                    else
+                    else if (adv_h2 > domhi(2) .and. bc(2,2,1) .ne. 0) then
 
-                      vx = adv(domhi(1),j,k,UMX)/adv(domhi(1),j,k,URHO)
-                      vy = adv(domhi(1),j,k,UMY)/adv(domhi(1),j,k,URHO)
-                      vz = adv(domhi(1),j,k,UMZ)/adv(domhi(1),j,k,URHO)
+                       adv(i,j,k,UMX:UMZ) = adv(i,domhi(2),k,UMX:UMZ)
+
+                    else if (adv_l3 < domlo(3) .and. bc(3,1,1) .ne. 0) then
+
+                       adv(i,j,k,UMX:UMZ) = adv(i,j,domlo(3),UMX:UMZ)
+
+                    else if (adv_h3 > domhi(3) .and. bc(3,2,1) .ne. 0) then
+
+                       adv(i,j,k,UMX:UMZ) = adv(i,j,domhi(3),UMX:UMZ)
 
                     endif
 
-                    adv(i,j,k,UMX) = ambient_state % rho*vx
-                    adv(i,j,k,UMY) = ambient_state % rho*vy
-                    adv(i,j,k,UMZ) = ambient_state % rho*vz
 
-                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                         HALF*(adv(i,j,k,UMX)**2 + &
-                               adv(i,j,k,UMY)**2 + &
-                               adv(i,j,k,UMZ)**2)/ambient_state % rho
+                 endif
 
-                 enddo
+                 adv(i,j,k,UEINT) = ambient_state % rho * ambient_state % e
+                 adv(i,j,k,UEDEN) = adv(i,j,k,UEINT) + &
+                      HALF*(adv(i,j,k,UMX)**2 + &
+                            adv(i,j,k,UMY)**2 + &
+                            adv(i,j,k,UMZ)**2) / adv(i,j,k,URHO)
+
               enddo
            enddo
-        endif
+        enddo
 
-        ! -y
-        if (adv_l2 < domlo(2) .and. bc(2,1,1) .ne. 0) then
-           do k = adv_l3, adv_h3
-              do j = adv_l2, domlo(2)-1
-                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-                 do i = adv_l1, adv_h1
-                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
+     else
 
-                    adv(i,j,k,URHO) = ambient_state % rho
-                    adv(i,j,k,UTEMP) = ambient_state % T
-                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
-
-                    if ( orbital_kick ) then
-
-                      vx = (-2.0d0 * M_PI / rot_period) * yy
-                      vy = ( 2.0d0 * M_PI / rot_period) * xx
-                      vz = ZERO
-
-                    else
-
-                      vx = adv(i,domlo(2),k,UMX)/adv(i,domlo(2),k,URHO)
-                      vy = adv(i,domlo(2),k,UMY)/adv(i,domlo(2),k,URHO)
-                      vz = adv(i,domlo(2),k,UMZ)/adv(i,domlo(2),k,URHO)
-
-                    endif
-
-                    adv(i,j,k,UMX) = ambient_state % rho*vx
-                    adv(i,j,k,UMY) = ambient_state % rho*vy
-                    adv(i,j,k,UMZ) = ambient_state % rho*vz
-
-                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                         HALF*(adv(i,j,k,UMX)**2 + &
-                               adv(i,j,k,UMY)**2 + &
-                               adv(i,j,k,UMZ)**2)/ambient_state % rho
-
-                 enddo
-              enddo
-           enddo
-        endif
-
-        ! +y
-        if (adv_h2 > domhi(2) .and. bc(2,2,1) .ne. 0) then
-           do k = adv_l3, adv_h3
-              do j = domhi(2)+1, adv_h2
-                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-                 do i = adv_l1, adv_h1
-                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                    adv(i,j,k,URHO) = ambient_state % rho
-                    adv(i,j,k,UTEMP) = ambient_state % T
-                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
-
-                    if ( orbital_kick ) then
-
-                      vx = (-2.0d0 * M_PI / rot_period) * yy
-                      vy = ( 2.0d0 * M_PI / rot_period) * xx
-                      vz = ZERO
-
-                    else
-
-                      vx = adv(i,domhi(2),k,UMX)/adv(i,domhi(2),k,URHO)
-                      vy = adv(i,domhi(2),k,UMY)/adv(i,domhi(2),k,URHO)
-                      vz = adv(i,domhi(2),k,UMZ)/adv(i,domhi(2),k,URHO)
-
-                    endif
-
-                    adv(i,j,k,UMX) = ambient_state % rho*vx
-                    adv(i,j,k,UMY) = ambient_state % rho*vy
-                    adv(i,j,k,UMZ) = ambient_state % rho*vz
-
-                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                         HALF*(adv(i,j,k,UMX)**2 + &
-                               adv(i,j,k,UMY)**2 + &
-                               adv(i,j,k,UMZ)**2)/ambient_state % rho
-
-                 enddo
-              enddo
-           enddo
-        endif
-
-        ! -z
-        if (adv_l3 < domlo(3) .and. bc(3,1,1) .ne. 0) then
-           do k = adv_l3, domlo(3)-1
-              do j = adv_l2, adv_h2
-                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-                 do i = adv_l1, adv_h1
-                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                    adv(i,j,k,URHO) = ambient_state % rho
-                    adv(i,j,k,UTEMP) = ambient_state % T
-                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
-
-                    if ( orbital_kick ) then
-
-                      vx = (-2.0d0 * M_PI / rot_period) * yy
-                      vy = ( 2.0d0 * M_PI / rot_period) * xx
-                      vz = ZERO
-
-                    else
-
-                      vx = adv(i,j,domlo(3),UMX)/adv(i,j,domlo(3),URHO)
-                      vy = adv(i,j,domlo(3),UMY)/adv(i,j,domlo(3),URHO)
-                      vz = adv(i,j,domlo(3),UMZ)/adv(i,j,domlo(3),URHO)
-
-                    endif
-
-                    adv(i,j,k,UMX) = ambient_state % rho*vx
-                    adv(i,j,k,UMY) = ambient_state % rho*vy
-                    adv(i,j,k,UMZ) = ambient_state % rho*vz
-
-                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                         HALF*(adv(i,j,k,UMX)**2 + &
-                               adv(i,j,k,UMY)**2 + &
-                               adv(i,j,k,UMZ)**2)/ambient_state % rho
-
-                 enddo
-              enddo
-           enddo
-        endif
-
-        ! +z
-        if (adv_h3 > domhi(3) .and. bc(3,2,1) .ne. 0) then
-           do k = domhi(3)+1, adv_h3
-              do j = adv_l2, adv_h2
-                 yy = xlo(2) + dble(j - domlo(2) + HALF)*delta(2) - center(2)
-                 do i = adv_l1, adv_h1
-                    xx = xlo(1) + dble(i - domlo(1) + HALF)*delta(1) - center(1)
-
-                    adv(i,j,k,URHO) = ambient_state % rho
-                    adv(i,j,k,UTEMP) = ambient_state % T
-                    adv(i,j,k,UFS:UFS-1+nspec) = ambient_state % rho*ambient_state % xn(:)
-
-                    if ( orbital_kick ) then
-
-                      vx = (-2.0d0 * M_PI / rot_period) * yy
-                      vy = ( 2.0d0 * M_PI / rot_period) * xx
-                      vz = ZERO
-
-                    else
-
-                      vx = adv(i,j,domhi(3),UMX)/adv(i,j,domhi(3),URHO)
-                      vy = adv(i,j,domhi(3),UMY)/adv(i,j,domhi(3),URHO)
-                      vz = adv(i,j,domhi(3),UMZ)/adv(i,j,domhi(3),URHO)
-
-                    endif
-
-                    adv(i,j,k,UMX) = ambient_state % rho*vx
-                    adv(i,j,k,UMY) = ambient_state % rho*vy
-                    adv(i,j,k,UMZ) = ambient_state % rho*vz
-
-                    adv(i,j,k,UEINT) = ambient_state % rho*ambient_state % e
-                    adv(i,j,k,UEDEN) = ambient_state % rho*ambient_state % e + &
-                         HALF*(adv(i,j,k,UMX)**2 + &
-                               adv(i,j,k,UMY)**2 + &
-                               adv(i,j,k,UMZ)**2)/ambient_state % rho
-
-                 enddo
-              enddo
-           enddo
-        endif
+        do n = 1,NVAR
+           call filcc(adv(adv_l1,adv_l2,adv_l3,n), &
+                      adv_l1,adv_l2,adv_l3,adv_h1,adv_h2,adv_h3, &
+                      domlo,domhi,delta,xlo,bc(1,1,n))
+        enddo
 
      endif
+
         
    end subroutine ca_hypfill
 

@@ -135,3 +135,112 @@ def plot_angular_momentum_error(diag_filename, output_filename):
     wdmerger.insert_commits_into_eps(output_filename, diag_filename, 'diag')
 
     plt.close()
+
+
+
+#
+# Plot the gravitational wave strain over time.
+# Optionally we can plot the expected signal for a circular orbit.
+#
+
+def plot_gw_signal(diag_filename, output_filename, n_orbits = -1, do_analytical = 0):
+
+    diag_file = open(diag_filename, 'r')
+
+    time   = get_column("TIME", diag_filename)
+    hplus  = get_column("h_+ (rotation axis)", diag_filename)
+    hcross = get_column("h_x (rotation axis)", diag_filename)
+
+    # Normalize time by rotational period.
+
+    rot_period = 0.0
+
+    dir = os.path.dirname(diag_filename)
+
+    inputs_filename = dir + '/' + wdmerger.get_inputs_filename(dir)
+    probin_filename = dir + '/probin'
+
+    rot_period = wdmerger.get_inputs_var(inputs_filename, "castro.rotational_period")
+
+    if (rot_period > 0.0):
+        time = time / rot_period
+        xlabel = "Time / Rotational Period"
+        if (n_orbits > 0):
+            idx = np.where(time < n_orbits)
+            time   = time[idx]
+            hplus  = hplus[idx]
+            hcross = hcross[idx]
+    else:
+        xlabel = "Time (s)"
+
+    ylabel = "Gravitational Wave Strain"
+
+    markers = ['o', '+', '.', ',', '*']
+
+
+    # Now work out the analytical result for a circular binary orbit, if desired.
+
+    if (do_analytical == 1):
+
+        # Get relevant CGS constants.
+
+        G_const = wdmerger.get_castro_const('Gconst')
+        M_solar = wdmerger.get_castro_const('M_solar')
+        c_light = wdmerger.get_castro_const('c_light')
+        parsec  = wdmerger.get_castro_const('parsec')
+
+        # Relevant variables from the probin file.
+
+        mass_P  = wdmerger.get_probin_var(probin_filename, 'mass_P') * M_solar
+        mass_S  = wdmerger.get_probin_var(probin_filename, 'mass_S') * M_solar
+
+        gw_dist = wdmerger.get_probin_var(probin_filename, 'gw_dist') # In kpc
+
+        mu = mass_P * mass_S / (mass_P + mass_S)
+        M_tot = mass_P + mass_S
+        dist = gw_dist * 1.e3 * parsec
+        omega = 2.0 * np.pi / rot_period
+        coeff = -4 * G_const * mu / (c_light**4 * dist) * (G_const * M_tot * omega)**(2.0/3.0)
+        hplus_true  = coeff * np.cos(2.0 * omega * rot_period * time)
+        hcross_true = coeff * np.sin(2.0 * omega * rot_period * time)
+
+        plt.plot(time,hplus_true,  lw = 4.0, ls='-')
+        plt.plot(time,hcross_true, lw = 4.0, ls='--')
+
+        plt.plot(time, hplus,  marker=markers[0], ms=12.0, markevery=200, label=r"$\plus$" + " polarization")
+        plt.plot(time, hcross, marker=markers[4], ms=12.0, markevery=200, label=r"$\times$" + " polarization")
+
+    else:
+
+        plt.plot(time, hplus,  lw = 4.0, ls = '-',  label=r"$\plus$" + " polarization")
+        plt.plot(time, hcross, lw = 4.0, ls = '--', label=r"$\times$" + " polarization")
+
+
+    plt.xlabel(xlabel, fontsize=20)
+    plt.ylabel(ylabel, fontsize=20)
+
+    # Use the 'best' location for the legend, since for a generic function like this
+    # it is hard to know ahead of time where the legend ought to go.
+    # The alpha value controls the transparency, since we may end up covering some data.
+
+    plt.legend(loc='best', fancybox=True)
+
+    # The padding ensures that the lower-left ticks on the x- and y-axes don't overlap.
+
+    plt.tick_params(labelsize=16, pad=10)
+
+    # We have now increased the size of both the ticks and the axis labels,
+    # which may have caused the latter to fall off the plot. Use tight_layout
+    # to automatically adjust the plot to fix this.
+
+    plt.tight_layout()
+
+    # Save it into our designated file, which is usually EPS format.
+
+    plt.savefig(output_filename)
+
+    # Insert git commit hashes into this file from the various code sources.
+
+    wdmerger.insert_commits_into_eps(output_filename, diag_filename, 'diag')
+
+    plt.close()

@@ -36,7 +36,7 @@ function replace_probin_var {
     # at least one space behind them and after them.
     # The equals sign cannot be adjacent to the name.
 
-    if (grep -q "$var[[:space:]]*=" $dir/$probin); then
+    if (grep -q "[[:space:]]$var[[:space:]]*=" $dir/$probin); then
 	sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/$probin
     fi
 
