@@ -533,6 +533,8 @@ subroutine gw_strain_tensor(h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, 
 
      n(:) = dist(:) / r
 
+     h = ZERO
+
      ! Projection operator onto the unit vector n.
 
      do l = 1, 3
