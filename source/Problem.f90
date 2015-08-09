@@ -750,7 +750,7 @@ subroutine get_coeff_info(loc_A,loc_B,loc_C,c_A,c_B,c_C)
 
   implicit none
 
-  double precision, intent(inout) :: loc_A(3), loc_B(3), loc_C(3)
+  integer,          intent(inout) :: loc_A(3), loc_B(3), loc_C(3)
   double precision, intent(inout) :: c_A(2,2,2), c_B(2,2,2), c_C(2,2,2)
   
   loc_A(:) = rloc(:,1)
@@ -777,21 +777,21 @@ subroutine get_omegasq(lo,hi,domlo,domhi, &
 
     implicit none
     
-    integer :: lo(3), hi(3), domlo(3), domhi(3)
-    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
+    integer          :: lo(3), hi(3), domlo(3), domhi(3)
+    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
+    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
     double precision :: problo(3), probhi(3), dx(3)
     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
     double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
     double precision :: omegasq
 
-    integer :: i, j, k
+    integer          :: i, j, k
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))    
 
-    do k = rloc(3,2), rloc(3,2)+1
-       do j = rloc(2,2), rloc(2,2)+1
-          do i = rloc(1,2), rloc(1,2)+1
+    do k = rloc(3,2), rloc(3,2) + 1
+       do j = rloc(2,2), rloc(2,2) + 1
+          do i = rloc(1,2), rloc(1,2) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
                 omegasq = omegasq - c(i-rloc(1,2),j-rloc(2,2),k-rloc(3,2),2) &
@@ -1022,7 +1022,7 @@ subroutine update_density(lo,hi,domlo,domhi, &
              ! We only want to call the EOS for zones with enthalpy > 0,
              ! but for distances far enough from the center, the rotation
              ! term can overcome the other terms and make the enthalpy 
-             ! spuriously positive. So we'll only consider zones with 75%
+             ! spuriously positive. So we'll only consider zones within 75%
              ! of the distance from the center.
 
              if (enthalpy(i,j,k) > enthalpy_min .and. sum(r**2) .lt. max_dist**2) then
@@ -1031,8 +1031,6 @@ subroutine update_density(lo,hi,domlo,domhi, &
                 eos_state % h   = enthalpy(i,j,k)
                 eos_state % xn  = state(i,j,k,UFS:UFS+nspec-1) / state(i,j,k,URHO)
                 eos_state % rho = state(i,j,k,URHO) ! Initial guess for the EOS
-
-                ! eos_state % loc = (/ i, j, k /)
 
                 call eos(eos_input_th, eos_state)
 
@@ -1090,7 +1088,7 @@ subroutine check_convergence(kin_eng, pot_eng, int_eng, &
                              delta_rho, l2_norm, &
                              is_relaxed, num_iterations)
 
-  use probdata_module, only: relax_tol
+  use probdata_module, only: relax_tol, ioproc
   use meth_params_module, only: rot_period
   use multifab_module
   use bl_constants_module, only: THREE
@@ -1101,7 +1099,6 @@ subroutine check_convergence(kin_eng, pot_eng, int_eng, &
 
   integer :: is_relaxed
   integer :: num_iterations
-  integer :: ioproc
 
   double precision :: kin_eng, pot_eng, int_eng
   double precision :: left_mass, right_mass
@@ -1115,23 +1112,22 @@ subroutine check_convergence(kin_eng, pot_eng, int_eng, &
     is_relaxed = 1
   endif
 
-  call bl_pd_is_ioproc(ioproc)
   if (ioproc == 1) then
-    print *, ""
-    print *, ""
-    print *, "  Relaxation iterations completed:", num_iterations
-    print *, "  Maximum change in rho:", delta_rho
-    print *, "  L2 Norm of Residual (relative to old state):", l2_norm
-    print *, "  Current value of rot_period:", rot_period
-    print *, "  Kinetic energy:", kin_eng 
-    print *, "  Potential energy:", pot_eng
-    print *, "  Internal energy:", int_eng
-    print *, "  Virial error:", virial_error
-    print *, "  Mass (M_sun) on left side of grid:", left_mass / M_solar
-    print *, "  Mass (M_sun) on right side of grid:", right_mass / M_solar
-    if (is_relaxed .eq. 1) print *, "  Relaxation completed!"
-    print *, ""
-    print *, ""
+    write(*,*) ""
+    write(*,*) ""
+    write(*,'(A,I2)')      "   Relaxation iterations completed: ", num_iterations
+    write(*,'(A,ES8.2)')   "   Maximum change in rho (g cm**-3): ", delta_rho
+    write(*,'(A,ES8.2)')   "   L2 Norm of Residual (relative to old state): ", l2_norm
+    write(*,'(A,f6.2)')    "   Rotational period (s): ", rot_period
+    write(*,'(A,ES8.2)')   "   Kinetic energy: ", kin_eng 
+    write(*,'(A,ES9.2)')   "   Potential energy: ", pot_eng
+    write(*,'(A,ES8.2)')   "   Internal energy: ", int_eng
+    write(*,'(A,ES9.3)')   "   Virial error: ", virial_error
+    write(*,'(A,f5.3,A)')  "   Primary mass: ", left_mass / M_solar, " solar masses"
+    write(*,'(A,f5.3,A)')  "   Secondary mass: ", right_mass / M_solar, " solar masses"
+    if (is_relaxed .eq. 1) write(*,*) "  Relaxation completed!"
+    write(*,*) ""
+    write(*,*) ""
   endif
 
 end subroutine check_convergence
