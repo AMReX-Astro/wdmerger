@@ -61,7 +61,7 @@ def get_column(col_name, diag_filename):
 # This can accept multiple runs, expressed as a list.
 #
 
-def plot_wd_distance(diag_filenames, output_filename, labels=''):
+def plot_wd_distance(diag_filenames, output_filename, n_orbits=-1, labels=''):
 
     # If we got only a single diagnostic file,
     # create a list out of it for the coming loop.
@@ -99,6 +99,10 @@ def plot_wd_distance(diag_filenames, output_filename, labels=''):
         if (rot_period > 0.0):
             time = time / rot_period
             xlabel = "Time / Rotational Period"
+            if (n_orbits > 0):
+                idx = np.where(time < n_orbits)
+                time = time[idx]
+                dist = dist[idx]
         else:
             xlabel = "Time (s)"
         ylabel = "WD Distance / Initial Distance"
@@ -119,6 +123,8 @@ def plot_wd_distance(diag_filenames, output_filename, labels=''):
 
     plt.xlabel(xlabel, fontsize=20)
     plt.ylabel(ylabel, fontsize=20)
+
+    plt.gca().get_yaxis().get_major_formatter().set_useOffset(False)
 
     # Use the 'best' location for the legend, since for a generic function like this
     # it is hard to know ahead of time where the legend ought to go.
