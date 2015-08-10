@@ -64,7 +64,7 @@
 %==========================================================================
 \begin{abstract}
 The Type Ia supernova progenitor problem is one of the most perplexing and 
-exciting problems in astrophysics, requiring detailed numerical modelling to 
+exciting problems in astrophysics, requiring detailed numerical modeling to 
 complement the observations of these explosions. One possibility that has 
 merited recent theoretical attention is the white dwarf merger scenario.
 This can naturally explain many of the observed characteristics of 
@@ -81,7 +81,7 @@ coupling gravitation and rotation forces to the hydrodynamics do
 not do an adequate job conserving the total energy of the system, 
 but recent advances in the literature have made advances on this 
 problem and we discuss our implementation here. We also run an 
-extensive set of test problems to verify that our software can sufficiently
+extensive set of test problems to determine whether our software can sufficiently
 model a system where large amounts of mass are advected on the computational 
 domain over very long timescales. Future papers in this series will describe
 our treatment of the initial conditions of these systems, and will 
@@ -106,8 +106,8 @@ events arise from the thermonuclear explosions of white dwarfs
 \citep{hoyle_fowler:1960}, but the cause of these explosions is
 uncertain. In particular, it is not clear what process causes the
 temperatures in these white dwarfs to become hot enough for explosive
-burning of its constituent nuclei. The model favored initially by the
-community was the so-called single-degenerate (SD) model
+burning of their constituent nuclei. The model favored initially by the
+community was the single-degenerate (SD) model
 \citep{whelan_iben:1973}. Accretion of material from a companion star
 such as a red giant would cause the star to approach the Chandrasekhar
 mass, and in doing so the temperature and density in the center would
@@ -118,14 +118,14 @@ the double-degenerate (DD) model, in which two white dwarfs merge and
 the merged object reaches the conditions necessary for a thermonuclear
 ignition \citep{ibentutukov:1984,webbink:1984}. Another is the double
 detonation scenario, where accretion of material onto a
-sub-Chandrasekhar white dwarf would lead to a detonation inside the
-accreted envelope, and this would send a compressional wave into the
-core of the star that would trigger a secondary detonation. A recent
+sub-Chandrasekhar mass white dwarf leads to a detonation inside the
+accreted envelope, sending a compressional wave into the
+core of the star that triggers a secondary detonation. A recent
 review of the progenitor models can be found in
 \citet{hillebrandt:2013}.
 
 There are several observational reasons why double-degenerate systems
-are a promising progenitor system for at least a substantial fraction
+are a promising progenitor model for at least a substantial fraction
 of normal SNe Ia. No conclusive evidence exists for a surviving
 companion star of a SN Ia; this is naturally explained by the DD model
 because both WDs are likely to be destroyed in the merger
@@ -483,7 +483,7 @@ conserving approach for our simulations.
 \castro\ has the ability to do both nuclear reactions and radiative 
 transport (in the flux-limited diffusion approximation). For all simulations 
 in this paper we do not enable either, and will delay discussion of 
-these modules until a later paper in this series.
+these modules until later papers in this series.
 
 \subsection{Gravity}
 \label{sec:gravity}
@@ -498,7 +498,7 @@ right-hand side is negated and therefore $\Phi$ is positive. We use the
 sign convention that is typical for astrophysics in this paper. 
 When $\Phi$ appears in the code it is negated to compensate for this.} 
 The solution of this equation in \castro\ is described in \cite{castro}, and
-consists of both level and composite solves, and a final
+consists of both level and composite solves, and (optionally) a final
 synchronization at the end.
 
 \subsubsection{Coupling to Hydrodynamics}\label{sec:gravity_hydro_coupling}
@@ -554,12 +554,12 @@ we will consider one spatial dimension.
   &= -\frac{1}{4\pi G} \left[\frac{\Phi_{i-1} - 2 \Phi_{i} + \Phi_{i+1}}{\Delta x^2}\right] \left[ \frac{\Phi_{i+1} - \Phi_{i-1}}{2\Delta x} \right] \notag \\
   &= -\frac{1}{8\pi G \Delta x^3} \left[ \Phi_{i+1}^2 - \Phi_{i-1}^2 - 2\Phi_i\left(\Phi_{i+1} - \Phi_{i-1}\right) \right] \label{eq:momentum_discretization}
 \end{align}
-It is easy to verify that adding the source terms two cells to the left
-and right of this zone will result in complete cancellation of the source terms.
+It is easy to verify that adding the source terms for the current zone and the two zones 
+to the left and right will result in complete cancellation of the source terms.
 However, if the potential if non-zero outside of the domain, then there will be
 momentum lost or gained from the grid, which will be encapsulated in the ghost cells
 just outside the domain. In addition, when we replace the Laplacian above by the full
-three-dimensional stencil including the $y$ and $z$ derivatives, and depending on the
+three-dimensional stencil including the $y$ and $z$ derivatives, depending on the
 discretization these will not be cancelled at all. This latter problem can be resolved by
 writing the momentum update in an explicitly conservative way.
 
@@ -576,7 +576,7 @@ within numerical roundoff error. This result can be derived by analytically reca
 formulations are identical. Thus the latter has been advocated by, for example, 
 \cite{jiang:2013} for the ATHENA code. However, in a finite discretization 
 the divergence of the gravitational acceleration is no longer guaranteed to equal
-the zone density. In particular, we find that the mixing of the gravitational components
+the zone density. In particular, we find that the mixing of the gravitational accleration components
 means that the truncation error in the gravitational field can lead to large errors
 that imply a density much different than the zone's actual density. This is especially
 problematic in a simulation with a low-density ambient medium, where even a small error 
@@ -589,7 +589,7 @@ Time centering of this source term is done in \castro\ using a predictor-correct
 At the start of a coarse grid timestep, we solve the gravitational potential for the density $\rho^n$.
 We then add to the momenta a prediction of the source term that is first-order accurate in time, 
 $\Delta t\, \rho^n\, \mathbf{g}^n$. After the hydrodynamics update, we recalculate
-the gravitational potential based on the new density, $\rho^n$, and then add 
+the gravitational potential based on the new density, $\rho^{n+1}$, and then add 
 $-(\Delta t/2) \rho^n \mathbf{g}^n + (\Delta t/2) \rho^{n+1} \mathbf{g}^{n+1}$ to the momenta.
 
 For the energy equation, the central challenge is to write down a form of the 
@@ -626,7 +626,7 @@ Note that while total energy is conserved, the gas energy is not: this does not 
 telescoping property of a flux formalism where energy gained by one zone is lost by another. 
 The energy is being exchanged with a potential field that responds indirectly when the mass moves.
 
-Now the change in the mass $\Delta \rho_{f}$ is proportional to the mass flux through the surface with area $\Delta A$:
+The change in the mass $\Delta \rho_{f}$ is proportional to the mass flux through the surface with area $\Delta A$:
 \begin{equation}
   \Delta \rho_f = \frac{\Delta t}{\Delta V} (\Delta A\, \rho v_{f}),\label{eq:mass_transfer}
 \end{equation}
@@ -652,7 +652,7 @@ the fix to this energy leaking -- evaluating the energy transfer at the six zone
 the single zone center -- has a very minor cost in terms of code complexity and computational time.
 
 It is worth pointing out that while \autoref{eq:grav_energy_conservation_update} was correctly obtained 
-by \cite{arepo} (and indeed that is the inspiration for this approach), there is a subtle error in that derivation. 
+by \cite{arepo} (whose work was the primary inspiration for this approach), there is a subtle error in that derivation. 
 Their argument was that if we integrate the work done over the volume of the zone, this volume integral can be 
 converted into a surface integral by use of the divergence theorem (see their Equation 93). Then we can simply 
 evaluate the work done at each zone face. However, this application of the divergence theorem appears to be 
@@ -685,33 +685,10 @@ unphysical energies or temperatures. We observe also that the specific implement
 has terms in their gravitational flux that are not proportional to $\rho$, and so it can lead to the 
 same troubles that plague the tensor-based formalism for the momentum equation, where small errors 
 in the discretization of the gravitational potential can lead to very large changes in the energy of the gas.
-(We note in passing too that although \citeauthor{jiang:2013}\ claim their approach requires a Poisson 
-solve for the time derivative of the potential, $\dot{\Phi}$, this is not needed as in practice 
-we will already have the potential at time-levels $n$ and $n+1$, and to second order in time, 
-$\dot{\Phi}^{n+1/2} = (\Phi^{n+1} - \Phi^{n}) / \Delta t.$)
-
-A final issue worth noting relates to complications posed by mesh refinement. Like 
-many AMR codes, \castro\ implements a refluxing algorithm at the end of a timestep. 
-At any locations on a particular grid level that are adjacent to, but not covered by,
-zones from a finer grid, there will be a disagreement about the fluxes crossing 
-this coarse-fine interface. If left uncorrected, this results in a violation of 
-the conservation condition. Therefore the value of the coarse flux on this interface 
-is replaced by the sum of the fine fluxes at that interface, at the end of the 
-coarse timestep. In general, this change in mass distribution on the grid 
-results in a change in the gravitational potential, meaning that an additional 
-corrective source term ought to be added. \cite{miniati:2007} and \cite{castro} 
-describe an algorithm for doing so. We consider the size of this effect to be 
-negligible and therefore we avoid the expense of solving for the potential change caused by 
-this mass change. Our grid boundaries are always located outside of the dense 
-stellar interiors that generate almost all of the gravitational potential. 
-Consequently the refluxing operation only changes the solution in regions of 
-ambient density, and even there only to the extent that there is disagreement 
-between the coarse and fine fluxes -- this clearly has a 
-vanishingly small effect on the gravitational potential.
 
 \subsubsection{Boundary Conditions}\label{sec:gravity_boundary_conditions}
 
-Analytic solutions to the Poisson equation customarily assume that the
+Analytical solutions to the Poisson equation customarily assume that the
 potential vanishes at large distances from the region of non-zero
 density. However, on a finite computational domain it is usually not
 possible to have the edges of the domain be far enough away that the
@@ -725,14 +702,12 @@ where the mass in each zone is treated as a point source:
 \end{equation}
 Here $(i, j, k)$ are the indices of cells inside the domain, and $(l,m, n)$ 
 are the indices of boundary locations. $\Delta V$ is the volume of the
-zone. We have implemented this as an option\footnote{It is controlled
-  with the \texttt{gravity.direct\_sum\_bcs} input parameter.} in
-\castro. If there are $N$ zones per spatial dimension, then there are
+zone. If there are $N$ zones per spatial dimension, then there are
 $6 N^2$ boundary zones, and each boundary zone requires a sum over
 $N^3$ zones, so the direct computation of the boundary conditions
 scales as $\mathcal{O}(N^5)$.  This method is expensive enough that it is not used
 for hydrodynamics simulations (though it is useful for comparison to
-approximate solutions).
+approximate solutions, so we have implemented it as an option in \castro).
 
 In a typical simulation we place the boundaries of the domain far
 enough away from the region containing most of the mass that some
@@ -815,13 +790,8 @@ obtained using the exact boundary conditions:
 \end{equation}
 The result is shown in \autoref{fig:bc_comparison}. At $l_{\text{max}} = 6$,
 the error is already well below $10^{-4}$ and we adopt this as our default 
-choice for all simulations with Poisson gravity. Our choice is also motivated by the 
-fact that at this value, the time for computing the boundary conditions on the
-coarse grid is comparable to the time for the multigrid solve itself; at higher values 
-the boundary condition calculation becomes much more expensive than the multigrid solve
-and so the overall returns are severely diminished. We note that in our implementation 
-there are no gains at all for going beyond $l_{\text{max}} \gtrsim 16$, as we 
-become limited by error due to the machine precision.
+choice for all simulations with Poisson gravity. In \autoref{sec:kepler} we 
+see that there are no gains to be had by increasing the accuracy further. 
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.45]{plots/bc_comparison}
@@ -843,9 +813,9 @@ onto our grid, and used \castro\ to calculate the gravitational
 potential $\Phi$ of this setup. We ensure that $R$ is an integer
 multiple of the grid spacing, and the center of the sphere is at the
 origin. The problem domain for our simulations is $[-1.6, 1.6]^3$, and
-we take $R = 1.0 \text{cm}$ and $\rho = 10^3\ \text{g cm}^{-3}$. 
+we take $R = 1.0\ \text{cm}$ and $\rho = 10^3\ \text{g cm}^{-3}$. 
 The zones with $r > R$ are filled with an ambient material of very low density 
-$\rho = 10^{-8}\ \text{g cm}^{-3}$. We run this problem at multiple 
+($10^{-8}\ \text{g cm}^{-3}$). We run this problem at multiple 
 resolutions corresponding to jumps by a factor of two. For
 comparison, at each grid point we evaluate the analytical potential of
 a uniform sphere, which can be easily determined using Gauss' law:
@@ -890,14 +860,12 @@ bonus from increased resolution with the artificial accuracy bonus
 from getting closer to solving the problem we are supposed to be solving. 
 On the other hand, at the highest resolution shown the error slightly increases.
 
-We can solve one of these two sources of error by evaluating 
-\autoref{eq:sphere-analytical} with a mass $M$ that corresponds to the
-amount of mass actually on the grid, defined as the sum of the density
-multiplied by the volume of each cell for all cells whose density is 
-greater than ambient. The resolution study for this case is also
+We can solve one of these two sources of error by changing the density on  
+the grid so that the total mass $M$ is actually what we intend it to be.
+The resolution study for this case is also
 plotted in \autoref{fig:gravity_convergence}. We still obtain
 convergence slightly better than second-order, indicating that we 
-still have the geometrical problem of the mass distribution changing.
+have not eliminated the geometrical problem of the mass distribution changing.
 
 The only way to fully eliminate this effect is to use a test problem that
 does not change with resolution. The obvious companion is a cube of
@@ -909,10 +877,10 @@ from better sampling at higher resolution. The gravitational potential for this
 object has been worked out analytically by \citet{waldvogel:1976} (see
 also a similar result by \citet{hummer:1996}, and an earlier calculation 
 by \citet{macmillan:1958}). The potential is in
-Equation 15 of that paper, though the last term is missing a factor of
-$1/2$, which destroys the symmetry. Inserting this missing factor and
-performing a simple coordinate transformation so that the center of
-the cube is at the origin, the potential is
+Equation 15 of that paper\footnote{The last term in that equation is missing a factor of
+$1/2$, which destroys the symmetry. We have inserted this missing factor and
+performed a simple coordinate transformation so that the center of
+the cube is at the origin.}:
 \begin{align}
   \Phi_{\text{cube}}(x,y,z) &= -G\rho\sum_{i,j,k=0}^1\left[x_i y_j\, \text{tanh}^{-1}\left(\frac{z_k}{r_{ijk}}\right)\right. \notag \\
   &+ \left. y_j z_k\, \text{tanh}^{-1}\left(\frac{x_i}{r_{ijk}}\right) + z_k x_i\, \text{tanh}^{-1}\left(\frac{y_j}{r_{ijk}}\right) \right.\notag \\
@@ -922,7 +890,7 @@ the cube is at the origin, the potential is
 where $x_0 = R + x$, $x_1 = R - x$, $y_0 = R + y$, 
 $y_1 = R - y$, $z_0 = R + z$, $z_1 = R - z$, 
 and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. In
-\texttt{Fortran} and \texttt{C}, the inverse hyperbolic tangent is
+\texttt{Fortran} and \texttt{C}, the inverse hyperbolic tangent used here is
 \texttt{atanh} and the inverse tangent is \texttt{atan} (\textit{not}
 \texttt{atan2}). This formula is valid both inside and outside the
 cube. The normalized $L^2$ error for this problem is also shown
@@ -963,12 +931,11 @@ angular momentum when the equations are written in conservative form
 for linear momentum. (See also \cite{motl:2002} for an example of how 
 to evolve the hydrodynamics equations for angular momentum.) 
 The extent to which angular momentum conservation is violated
-will be a function of the resolution. When this is sufficiently high
-and a rotating reference frame is employed, excellent conservation
-properties can result, as demonstrated in \autoref{sec:kepler}. 
+will be a function of the resolution. When this is sufficiently high, 
+excellent conservation properties can result, as demonstrated in \autoref{sec:kepler}. 
 In particular, at reasonable resolution for a binary orbit our code 
 conserves angular momentum well enough that this no longer becomes 
-a reason to use a Lagrangian method such as smoothed-particle hydrodynamics.
+a strong argument in favor of using a Lagrangian method.
 We note that as the stars begin to coalesce, the rotating reference frame
 will no longer provide a good approximation to the spatial motion of
 the stars and then they will begin to significantly move around the
@@ -1030,7 +997,7 @@ As observed by \cite{marcello:2012}, we can similarly write down a rotational po
 \begin{equation}
   \Phi^R = -\frac{1}{2} \left| {\bm\omega} \times \mathbf{r} \right|^2.
 \end{equation}
-So in the presence of rotation the total energy takes the form:
+In the presence of rotation the total energy becomes:
 \begin{equation}
   (\rho E_{\text{tot}}) = (\rho E) + \frac{1}{2} \rho \Phi + \rho \Phi^R.
 \end{equation}
@@ -1057,11 +1024,10 @@ binary systems, and the centrifugal force does not depend on the fluid velocity.
 However, this issue may be worth exploring in future work in situations where the Coriolis 
 term is non-negligible in determining the system evolution.
 
-In all simulations performed in a rotating reference frame, we will transform all relevant
-quantities back to the inertial reference frame when reporting them in this paper. In particular,
-for every zone we add to the displayed kinetic energy the rotational energy associated with motion 
-at the circular velocity corresponding to the distance of that zone from the rotation axis.
-We do the analogous calculation for angular momentum as well. When plotting the locations of 
+In all simulations performed in a rotating reference frame, we transform all relevant
+quantities back to the inertial reference frame when reporting them. In particular,
+for every zone we adjust the momenta and kinetic energy to account for rotation at 
+frequency $\omega$. When plotting the locations of 
 stars on the grid, we rotate them by an angle corresponding to the amount of time that has 
 passed since the simulation started.
 
@@ -1074,7 +1040,7 @@ passed since the simulation started.
 
 At the start of any full simulation, we generate initial model white
 dwarfs by integrating the equation of hydrostatic equilibrium, taking
-the temperature and composition to be constant, and using the general
+the temperature and composition to be constant, and using the
 stellar equation of state.  This results in a single non-linear
 equation to find the density in a zone given the conditions in the
 zone beneath it:
@@ -1085,7 +1051,7 @@ This equation is a function of $\rho_{i+1}$ only since the pressure is
 uniquely determined by the density in this case. Here, $\rho_i$ and $p_i$
 are known, $g_{i+1/2}$ is the gravitational acceleration at the
 interface between zones $i$ and $i+1$, found by simply adding up all
-the mass from zones $1, \ldots, i$ to get the enclosed mass,
+the mass from zones $1$ to $i$ to get the enclosed mass,
 $M_{i+1/2}$, and then setting $g_{i+1/2} =
 -GM_{i+1/2}/r_{i+1/2}^2$. We solve this equation for $\rho_{i+1}$
 using a Newton-Raphson iteration.
@@ -1178,7 +1144,7 @@ For stellar calculations, we separately record diagnostic
 information about the stars. Our strategy for tracking their 
 locations is as follows: at the beginning of the calculation, we store the 
 physical center of mass $\mathbf{x}_{\text{COM}}$ of the stars as determined 
-by Kepler's third law. We also store the space velocity $\mathbf{v}_{\text{COM}}$ 
+by Kepler's third law. We also store the velocity $\mathbf{v}_{\text{COM}}$ 
 of the stars. Then, at each new time step we make a preliminary guess for their 
 location by updating the location using the old velocity, 
 $\mathbf{x}_{\text{COM}} \rightarrow \mathbf{x}_{\text{COM}} + \mathbf{v}_{\text{COM}} \Delta t$.
@@ -1225,8 +1191,8 @@ The ``TT'' superscript indicates that we work in the commonly used tranverse-tra
 This strain is measured at time $t$ and position $\mathbf{x}$ relative to the binary system.
 $r\equiv |\mathbf{x}|$ is the distance from the observer to the binary system. The unit vector 
 $\mathbf{n} \equiv \mathbf{x} / r$ then measures the direction of the outgoing wave with 
-respect to the observer, and $P_{ikjl}(\mathbf{n})$ is an operator in the transverse-traceless 
-gauge that projects a tensor onto the direction orthogonal to $\mathbf{n}$:
+respect to the observer, and $P_{ijkl}(\mathbf{n})$ is an operator that projects a tensor 
+onto the direction orthogonal to $\mathbf{n}$:
 \begin{align}
   P_{ijkl}(\mathbf{n}) &= \left(\delta_{ik} - n_i n_k\right)\left(\delta_{jl} - n_j n_l\right) \notag \\
                       &- \frac{1}{2}\left(\delta_{ij} - n_i n_j\right)\left( \delta_{kl} - n_k n_l\right).
@@ -1250,7 +1216,7 @@ in addition to the logistical challenges that may be implied by saving and using
 \end{equation}
 The symmetric trace-free (STF) operator is defined as:
 \begin{equation}
-  \text{STF}\left\{A^{ij}\right\} = \frac{1}{2}A^{ij} + \frac{1}{2}A^{ji} - \frac{1}{3} \delta^{ij} \sum_{k}A^{kk}.
+  \text{STF}\left\{A_{ij}\right\} = \frac{1}{2}A_{ij} + \frac{1}{2}A_{ji} - \frac{1}{3} \delta_{ij} \sum_{k}A_{kk}.
 \end{equation}
 
 The strategy is then as follows. At the end of the coarse timestep, we first calculate $\ddot{Q}_{kl}$
@@ -1279,13 +1245,8 @@ gradients near the edge of the star are within the zone of refinement. We also e
 outer part of the domain is never tagged for refinement. In future work we will add criteria 
 that tag for refinement the gas between the stars, which is expected to feature nuclear burning.
 
-For ghost cells at the physical edge of the domain, we always use quantities 
-corresponding to the initial ambient material, to prevent material from raining down
-on to the grid in response to the disequilibrium outside the stars. This is an artificial 
-choice, but the dynamics outside of the stellar orbit is arbitrary anyway, due to the 
-lack of knowledge about the density and velocity field inside this gas. In addition, we employ 
-a ``sponge'' similar to that described by \citet{maestro3}. After the hydrodynamics update (but before 
-the gravity and rotation correction terms), we apply a damping force to the momentum 
+We employ a ``sponge'' similar to that described by \citet{maestro3} for the outer regions of the 
+computational domain. After the hydrodynamics update, we apply a damping force to the momentum 
 equation as follows:
 \begin{equation}
   (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u}^{n+1})}{1 + (\Delta t / \Delta t_S) f_S},
@@ -1313,7 +1274,7 @@ is freely available at an online repository hosting service.
 Version control in both the parent software (\boxlib, \castro) and in \wdmerger\
 permits us to reference the state of the code at the time a simulation
 was performed. In all plot files and diagnostic output generated by \castro, 
-and EPS figure files and plots generated by \wdmerger\ for this work,
+and figure files generated by \wdmerger,
 we store the active \texttt{git} commit hashes of \boxlib, \castro, and \wdmerger.
 Line plots are generated using the \matplotlib\ library for \python\ 
 \citep{matplotlib}, while slice plots and other multi-dimensional visualizations are 
@@ -1338,7 +1299,7 @@ co-rotating frame. It is therefore important to be be aware of the
 behavior of the code in such circumstances. The behavior of \castro\ for
 many standard hydrodynamics test problems was detailed in the original
 code paper \citep{castro}, and in the interest of brevity we will not
-repeat them here. Instead, we focus on a subset of problems that
+repeat them all here. Instead, we focus on a subset of problems that
 highlight the special difficulties introduced in merger
 simulations. These problems couple the hydrodynamics, gravity and
 equation of state modules. We observe that while in most non-trivial
@@ -1346,10 +1307,8 @@ three-dimensional problems this creates a complexity that makes it
 impossible to determine exact analytical solutions, it is
 straightforward to devise problems for which certain global properties
 should obey simple, expected behaviors. Where possible, these should
-be quantified and a convergence study performed. We recommend that all
-simulation codes should check their performance on such problems to
-ensure their reliability when coupling the various physics modules
-necessary to build a complete and realistic simulation.
+be quantified and a convergence study performed, and that will 
+be the focus of the current section.
 
 \subsection{Maintaining Hydrostatic Equilibrium}\label{sec:HSE}
 
@@ -1393,7 +1352,7 @@ initial conditions the system may survive for tens of orbits before
 the secondary is disrupted. When this does happen, we want to be
 confident that it was because of the dynamics of the merger process
 and not because of an instability in an individual star. Our goal here
-is thus to populate a single star onto our three-dimensional
+is thus to install a single star onto our three-dimensional
 coordinate grid and evolve it for a period of time long enough to
 assess whether the star is truly stable, and to probe how the size of
 deviation from equilibrium is affected by grid resolution.
@@ -1409,7 +1368,7 @@ to the numerical errors prevalent near the physical edge of the star.
 As expected, the star quickly approaches an equilibrium size that is different 
 (and in this case larger) than the one-dimensional model. However, the magnitude 
 of this change becomes smaller with resolution. The star is only approximately 
-in equilibrium Only when the coarse grid of $256^3$ zones has a level of 
+in equilibrium when the coarse grid of $256^3$ zones has a level of 
 refinement that jumps by a factor of four. However, even then there is a slight 
 uptick in the size toward the event, implying that the numerical stability 
 is not guaranteed for arbitrarily long timescales. This result suggests that when 
@@ -1462,8 +1421,7 @@ so that the point of contact would occur at $t = 1$. We actually stop the simula
 at $t = 0.9$, which is when the effects from the extended sizes of the stars
 starts to become important. The results of our simulation for our default $256^3$ zone 
 uniform grid are shown in \autoref{fig:freefall}. They show excellent agreement
-between the theory and the simulation results, and this agreement holds even for 
-a more moderate $128^3$ zone simulation.
+between the theory and the simulation results.
 
 \begin{figure}
   \centering
@@ -1504,7 +1462,7 @@ uniform bulk velocity.) This contrasted with the results
 of the moving-mesh code AREPO being presented in that study, which
 demonstrated Galilean invariance even at large bulk velocities. 
 Inability to correctly model the Kelvin-Helmholtz instability would 
-ave important consequences for how much we can trust the ability of 
+have important consequences for how much we can trust the ability of 
 \castro\ to test the violent merger progenitor model. Shearing between 
 the material flowing out of the secondary and material near the 
 surface of the primary may trigger fluid
@@ -1535,7 +1493,7 @@ seeded.
     Robertson et al. (2010), Figure 7. \label{fig:kh_p2}}
 \end{figure*}
 
-\citet{robertson:2010} (hereafter, R10) observe that Galilean
+\citet{robertson:2010} (hereafter, R10) observe that violation of Galilean
 invariance of simulation results for the Euler equations occurs only
 because of truncation error in the discretization of the fluid
 equations. This takes the form of a numerical diffusion term which is
