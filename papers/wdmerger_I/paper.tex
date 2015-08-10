@@ -1911,6 +1911,27 @@ level of agreement holds in the rotating frame as well.
            curves without markers are the analytical results for two point masses.\label{fig:gw_strain}}
 \end{figure}
 
+Finally we consider whether the dynamical behavior of the system converges with resolution. 
+In \autoref{fig:unequal_spatial_convergence} we plot the first 10 seconds of the orbit for 
+the unequal mass system, at three different resolutions in the inertial frame: our default 
+resolution of $256^3$ zones, as well as a single level of refinement with a jump by a factor of 
+two (effective resolution $512^3$) or a jump by a factor of four (effective resolution $1024^3$). 
+It is clear that at the latter resolution (corresponding to physical resolution of 100 km), 
+we have achieved convergent behavior. In the rotating frame (not shown here), the results are 
+not quite the same but for these resolutions the results do tend toward convergence.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/spatial_convergence_rot0.eps}
+  \caption{Distance between the two white dwarfs in the unequal mass system, for the first 
+           10 seconds of their orbit. The distance is scaled by the initial orbital distance. 
+           We plot at three different resolutions, corresponding to the number of 
+           effective zones per dimension in the refined regions. Note that the $n = 1024$ curve
+           falls nearly exactly on top of the $n = 512$ curve.\label{fig:unequal_spatial_convergence}}
+\end{figure}
+
+
+
 %==========================================================================
 % Performance
 %==========================================================================
