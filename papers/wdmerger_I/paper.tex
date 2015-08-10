@@ -1882,7 +1882,34 @@ inspiral and merger is physically (not numerically) motivated.
            \label{fig:angular_momentum_conservation_unequal}}
 \end{figure}
 
+As a simple verification test to ensure our gravitational wave calculations are correct, we plot the 
+gravitational wave strain along the rotation axis for the first two periods of the unequal mass system. 
+At this early time the orbit is circular and so to a good approximation we expect that the gravitational 
+wave signal should be that of two point masses, whose positions are:
+\begin{align}
+  \mathbf{r}_P(t) &= -a_P\, \text{cos}(\omega t) \hat{x} - a_P\, \text{sin}(\omega t) \hat{y} \\
+  \mathbf{r}_S(t) &= a_S\, \text{cos}(\omega t) \hat{x} + a_S\, \text{sin}(\omega t) \hat{y}.
+\end{align}
+Then the mass distribution is $\rho(\mathbf{r}) = M_P\, \delta^3(\mathbf{r} - \mathbf{r}_P) + M_S\, \delta^3(\mathbf{r} - \mathbf{r}_S)$.
+From this it is straightforward to calculate the quadruopole tensor, take its second time derivative, and then apply the 
+projection operator to get the gravitational wave polarizations along the rotation axis:
+\begin{align}
+  h_+ &= -4\frac{G\mu}{c^4 r}\left[G M_{\text{tot}} \omega \right]^{2/3}\, \text{cos}(2\omega t) \\
+  h_\times &= -4\frac{G\mu}{c^4 r}\left[G M_{\text{tot}} \omega \right]^{2/3}\, \text{sin}(2\omega t).
+\end{align}
+$\mu$ is the reduced mass, while $M_{\text{tot}}$ is the total mass. From this we see that the 
+gravitational wave frequency is twice the orbital frequency, and that the two polarizations 
+are out of phase by $90^\circ$ in time. We compare this analytical expectation to the 
+numerical results in \autoref{fig:gw_strain}. We find very good agreement in this case, and this 
+level of agreement holds in the rotating frame as well.
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/unequal_gw_rot0.eps}
+  \caption{Gravitational wave strain polarizations for the first two orbital periods of the 
+           unequal mass system. The curves with markers are the numerical data, while the 
+           curves without markers are the analytical results for two point masses.\label{fig:gw_strain}}
+\end{figure}
 
 %==========================================================================
 % Performance
