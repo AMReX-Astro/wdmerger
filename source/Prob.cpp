@@ -335,7 +335,7 @@ void Castro::problem_post_init() {
 
       MultiFab& S_new = get_new_data(State_Type);
 
-      int j = 0;
+      int j = 1;
       int relax_max_iterations = 30;
 
       const Real* dx  = parent->Geom(level).CellSize();
@@ -369,8 +369,6 @@ void Castro::problem_post_init() {
 
       BL_FORT_PROC_CALL(GET_COEFF_INFO,get_coeff_info)(loc_A, loc_B, loc_C, cA.dataPtr(), cB.dataPtr(), cC.dataPtr());
 
-      std::cout << loc_A[0] << loc_A[1] << loc_A[2] << "\n";
-
       // Get the phi MultiFab.
 
       MultiFab& phi = *gravity->get_phi_curr(level);
@@ -383,39 +381,45 @@ void Castro::problem_post_init() {
 
       int is_relaxed = 0;
 
-      while ( j < relax_max_iterations ) {
+      while ( j <= relax_max_iterations ) {
 
 	 // First step is to find the rotational frequency.
 
 	 Real omegasq = 0.0;
 
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:omegasq)
+#endif    	
 	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
 
 	   const Box& box  = mfi.tilebox();
 	   const int* lo   = box.loVect();
 	   const int* hi   = box.hiVect();
 
-   #ifdef _OPENMP
-   #pragma omp parallel reduction(+:omegasq)
-   #endif    	
+	   Real osq = 0.0;
+
 	   BL_FORT_PROC_CALL(GET_OMEGASQ,get_omegasq)
 	     (lo, hi, domlo, domhi,
 	      BL_TO_FORTRAN(S_new[mfi]),
 	      BL_TO_FORTRAN(phi[mfi]),
-	      dx, problo, probhi, &omegasq);
+	      dx, problo, probhi, &osq);
+
+	   omegasq += osq;
 
 	 }
 
 	 ParallelDescriptor::ReduceRealSum(omegasq);
 
 	 if (omegasq < 0.0 && ParallelDescriptor::IOProcessor()) {
-             std::cerr << "Omega squared is negative in the relaxation step; aborting." << std::endl;
+ 	     std::cerr << "Omega squared = " << omegasq << " is negative in the relaxation step; aborting." << std::endl;
 	     BoxLib::Error();
          }
 
+	 // Rotational period is 2 pi / omega.
+
 	 rotational_period = 2.0 * M_PI / sqrt(omegasq);
 
-	 // Now save the updated rotational frequency.
+	 // Now save the updated rotational frequency in the Fortran module.
 
 	 BL_FORT_PROC_CALL(SET_PERIOD, set_period)(&rotational_period);
 
@@ -426,20 +430,26 @@ void Castro::problem_post_init() {
 	 Real bernoulli_1 = 0.0;
 	 Real bernoulli_2 = 0.0;
 
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:bernoulli_1,bernoulli_2)
+#endif
 	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
 
 	   const Box& box  = mfi.tilebox();
 	   const int* lo   = box.loVect();
 	   const int* hi   = box.hiVect();
 
-   #ifdef _OPENMP
-   #pragma omp parallel reduction(+:bernoulli_1,bernoulli_2)
-   #endif    	
+	   Real b1 = 0.0;
+	   Real b2 = 0.0;
+
 	   BL_FORT_PROC_CALL(GET_BERNOULLI_CONST,get_bernoulli_const)
 	     (lo, hi, domlo, domhi,
 	      BL_TO_FORTRAN(S_new[mfi]),
 	      BL_TO_FORTRAN(phi[mfi]),
-	      dx, problo, probhi, &bernoulli_1, &bernoulli_2);
+	      dx, problo, probhi, &b1, &b2);
+
+	   bernoulli_1 += b1;
+	   bernoulli_2 += b2;
 
 	 }
 
@@ -454,27 +464,33 @@ void Castro::problem_post_init() {
 	 Real h_max_1 = 0.0;
 	 Real h_max_2 = 0.0;
 
-	 // Define the enthalpy MF to have one component and zero ghost cells.
+	 // Define the enthalpy MultiFAB to have one component and zero ghost cells.
 
 	 MultiFab enthalpy(grids,1,0,Fab_allocate);
 	 enthalpy.setVal(0.0);
 
+#ifdef _OPENMP
+#pragma omp parallel reduction(max:h_max_1,h_max_2)
+#endif    	
 	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
 
 	   const Box& box  = mfi.tilebox();
 	   const int* lo   = box.loVect();
 	   const int* hi   = box.hiVect();
 
-   #ifdef _OPENMP
-   #pragma omp parallel reduction(max:h_max_1,h_max_2)
-   #endif    	
+	   Real h1 = 0.0;
+	   Real h2 = 0.0;
+
 	   BL_FORT_PROC_CALL(CONSTRUCT_ENTHALPY,construct_enthalpy)
 	     (lo, hi, domlo, domhi,
 	      BL_TO_FORTRAN(S_new[mfi]),
 	      BL_TO_FORTRAN(phi[mfi]),
 	      BL_TO_FORTRAN(enthalpy[mfi]),
 	      dx, problo, probhi, 
-	      &bernoulli_1, &bernoulli_2, &h_max_1, &h_max_2);
+	      &bernoulli_1, &bernoulli_2, &h1, &h2);
+
+	   if (h1 > h_max_1) h_max_1 = h1;
+	   if (h2 > h_max_2) h_max_2 = h2;
 
 	 }
 
@@ -492,18 +508,27 @@ void Castro::problem_post_init() {
 
 	 // Finally, update the density using the enthalpy field.
 
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:kin_eng,pot_eng,int_eng)      \
+                     reduction(+:l2_norm_resid,l2_norm_source) \
+                     reduction(+:left_mass,right_mass)         \
+                     reduction(max:delta_rho)
+#endif
 	 for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
 
 	   const Box& box  = mfi.tilebox();
 	   const int* lo   = box.loVect();
 	   const int* hi   = box.hiVect();
 
-   #ifdef _OPENMP
-   #pragma omp parallel reduction(+:kin_eng,pot_eng,int_eng)      \
-			reduction(+:l2_norm_resid,l2_norm_source) \
-                        reduction(+:left_mass,right_mass)         \
-			reduction(max:delta_rho)
-   #endif    	
+	   Real ke = 0.0;
+	   Real pe = 0.0;
+	   Real ie = 0.0;
+	   Real lm = 0.0;
+	   Real rm = 0.0;
+	   Real dr = 0.0;
+	   Real nr = 0.0;
+	   Real ns = 0.0;
+
 	   BL_FORT_PROC_CALL(UPDATE_DENSITY,update_density)
 	     (lo, hi, domlo, domhi,
 	      BL_TO_FORTRAN(S_new[mfi]),
@@ -511,9 +536,18 @@ void Castro::problem_post_init() {
 	      BL_TO_FORTRAN(enthalpy[mfi]),
 	      dx, problo, probhi, 
 	      &h_max_1, &h_max_2,
-	      &kin_eng, &pot_eng, &int_eng,
-	      &left_mass, &right_mass,
-	      &delta_rho, &l2_norm_resid, &l2_norm_source);
+	      &ke, &pe, &ie,
+	      &lm, &rm,
+	      &dr, &nr, &ns);
+
+	   kin_eng += ke;
+	   pot_eng += pe;
+	   int_eng += ie;
+	   l2_norm_resid += nr;
+	   l2_norm_source += ns;
+	   left_mass += lm;
+	   right_mass += rm;
+	   if (dr > delta_rho) delta_rho = dr;
 
 	 }
 
