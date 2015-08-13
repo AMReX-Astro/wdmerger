@@ -146,7 +146,7 @@ The first attempts to model the results of the merger process came in the
 1980s. \cite{nomotoiben:1985} demonstrated that off-center carbon
 ignition would occur in the more massive white dwarf as it accreted
 mass near the Eddington rate from the less massive white dwarf
-overflowing its Roche lobe.\MarginPar{ref?} \cite{saionomoto:1985} tracked the
+overflowing its Roche lobe. \cite{saionomoto:1985} tracked the
 evolution of the flame and found that it propagated quiescently into
 the center, converting the carbon-oxygen white dwarf into an
 oxygen-neon-magnesium white dwarf. This would then be followed by
@@ -244,9 +244,8 @@ with a $1.1\ \msolar$ and $0.9\ \msolar$ setup, with better treatment
 of the initial conditions, and indeed found that the merger process
 happened over more than ten orbits. Nevertheless, they still determined
 that a carbon-oxygen detonation would occur, in line with their
-earlier results. \cite{moll:2014} was also able to find a detonation
-in a similarly massive system. Very recently, \cite{kashyap:2015} 
-found that a detonation occurred in a similarly massive system.\MarginPar{``similarly massive system'' repeated twice in succession} Notably,
+earlier results. \cite{moll:2014} and \cite{kashyap:2015} were also 
+able to find a detonation in similarly massive systems. Notably,
 the detonation occurred self-consistently and did not need to be inserted 
 by hand. \cite{dan:2012} and \cite{dan:2014} performed a large sweep 
 of the parameter space for merger pairs and
@@ -313,10 +312,9 @@ detonation could occur, and the importance of the initial white dwarf
 models, which should be more sophisticated than simple carbon-oxygen
 mixtures and in principle should use results from modern stellar
 evolution calculations. \autoref{sec:Numerical Methodology}
-%\hyperref[sec:Numerical Methodology]{Section \ref*{sec:Numerical Methodology}}
 describes our code and why it can provide useful results compared to
 other methodologies used for this problem. 
-\autoref{sec:initial_models} describes the method we use for setting up a
+\autoref{sec:implementation} describes the method we use for setting up a
 binary white dwarf simulation. \autoref{sec:Tests} discusses a few
 test problems that we use to demonstrate that our code accurately
 solves the equations of fluid dynamics. \autoref{sec:Performance}
@@ -350,13 +348,13 @@ for the purpose of approaching this problem.
 
 \subsection{Hydrodynamics}\label{sec:Hydrodynamics}
 
-The Euler equations for hydrodynamics (in the absence of source terms) in conservative form are: \MarginPar{we usually use $U$ for the velocity vector, with $U = (u, v, w)$}
+The Euler equations for hydrodynamics (in the absence of source terms) in conservative form are: 
 \begin{align}
   \frac{\partial \rho}{\partial t} &= -\bm{\nabla} \cdot (\rho \mathbf{u}) \label{eq:euler_density}\\
   \frac{\partial \rho \mathbf{u}}{\partial t} &= -\bm{\nabla} \cdot (\rho \mathbf{u}\mathbf{u}) - \bm{\nabla}p \label{eq:euler_momentum}\\
   \frac{\partial \rho E}{\partial t} &= -\bm{\nabla}\cdot(\rho\mathbf{u}E + p\mathbf{u}). \label{eq:euler_energy}
 \end{align}
-Here $\rho$ is the mass density, $\mathbf{u}$ is the fluid velocity
+Here $\rho$ is the mass density, $\mathbf{u} = (u, v, w)$ is the fluid velocity
 vector, $p$ is the pressure, and $E = \mathbf{u}^2 / 2 + e$ is the
 total specific energy, where $e$ is the internal (thermal) specific
 energy (energy per unit mass).
@@ -390,7 +388,7 @@ drag the density below zero. In practice, this will occur at the
 trailing edge of a star that is moving across a grid. In such a
 situation, there are two main approaches one could take: either
 explicitly introduce a positivity-guaranteeing diffusive flux, or
-reset the characteristics \MarginPar{``characteristics'' has a very precise meaning for hyperbolic systems, use a different word} of the affected zone. We choose the latter
+reset the properties of the affected zone. We choose the latter
 approach. Even though it is non-conservative, it preserves a
 characteristic we value, which is to keep the edge of the stars
 relatively sharp, as they physically should be. Since the mass of the
@@ -406,7 +404,7 @@ reset zone to be exactly equal to the field values of this
 adjacent zone. If no adjacent zone reaches the density floor, then
 the zone is set to the density floor, and given a temperature equal 
 to the temperature floor for our simulations (which is typically 
-$10^{5}\ \text{K}$ \MarginPar{do we really need it this cold?  I thought we were doing $10^6$~K} for our stellar simulations). We then recompute 
+$10^{5}\ \text{K}$ for our stellar simulations). We then recompute 
 the thermodynamics to be consistent with these values. The 
 velocity of the zone is set to zero. This latter approach will only
 occur in very rare situations, and is mainly there as a safeguard.
@@ -427,7 +425,7 @@ only Cartesian geometries, but we use a Cartesian mesh with uniform
 spacing in each dimension for the present study). For the time
 evolution of the AMR system we use subcycling, where each AMR level is
 advanced at a different timestep and a correction step is applied at
-the end to synchronize the various levels. Generally \MarginPar{why ``Generally''?  Is there ever as case where the subcycled step isn't the jump in refinement?} the number of
+the end to synchronize the various levels. The number of
 subcycled timesteps is equal to the jump in refinement between levels,
 so for example on a grid with three levels and two jumps of four in
 refinement, the level 2 zones will have 16 times higher spatial
@@ -520,13 +518,15 @@ In most hydrodynamics codes these are discretized as $\rho\,
 where $\rho$, $\mathbf{u}$, and $\mathbf{g}$ 
 are evaluated at the zone center. 
 
-There are two ways that these source terms enter the hydrodynamics update. \MarginPar{``hydrodynamics update'' appears twice in succession}
+There are two ways that these source terms enter the system evolution. 
 First, during the hydrodynamics update, we alter the edge states that enter
 into the determination of the fluxes. (This only applies for the momentum source term;
 the gravitational force does not directly do work on the internal energy, which is used 
 to infer the pressure.) To second order in space and time, 
 this can be done using the cell-centered
-source term evaluated at time-level $n$. \MarginPar{we trace, so it's not just the cell-centered source term} The details of this are described in 
+source term evaluated at time-level $n$. We choose a more accurate approach, 
+which is also second order, of tracing
+under the source term; the details of this are described in 
 the appendix. Second, after the hydrodynamics step, we add the time-centered source terms
 to the state. First we will describe how we do this for the momentum,
 and then we will describe our approach for the energy. This discussion will be somewhat detailed.
@@ -718,8 +718,8 @@ where the boundary values were computed by summing up all the mass on
 the domain and treating it as a point source at the domain
 center. This is exactly correct only for a spherically symmetric mass
 distribution, and therefore is best suited for problems like
-single-star Type Ia supernova simulations that employ
-self-gravity. \MarginPar{also try for Castro core-collapse sims---maybe reference a paper on each subject from castro} However, for a problem like that of a binary star system
+single-star Type Ia supernova simulations (e.g. \cite{malone:2014})
+that employ self-gravity. However, for a problem like that of a binary star system
 with significant departures from spherical symmetry, this assumption
 fails to produce accurate boundary values. This results in a
 significant drift of the center of the mass of the system over time,
@@ -773,7 +773,7 @@ between computational expense and accuracy of the result.
 
 As a demonstration of the method's accuracy, we consider the case of two 
 white dwarfs of mass ratio 2/3, loaded onto the grid by the method described 
-in \autoref{sec:initial_models}. We terminated the simulation just after
+in \autoref{sec:implementation}. We terminated the simulation just after
 initialization, so that we perform only an initial Poisson solve for this 
 density distribution. We did this for values of $l_{\text{max}}$ ranging
 from 0 to 20, and we also did this using the numerically exact solution 
@@ -862,8 +862,8 @@ On the other hand, at the highest resolution shown the error slightly increases.
 
 We can solve one of these two sources of error by changing the density on  
 the grid so that the total mass $M$ is actually what we intend it to be.
-The resolution study for this case is also
-plotted in \autoref{fig:gravity_convergence}. \MarginPar{explain that this is the ``normalized sphere'' in the figure} We still obtain
+The resolution study for this case (the ``normalized sphere'') is also
+plotted in \autoref{fig:gravity_convergence}. We still obtain
 convergence slightly better than second-order, indicating that we 
 have not eliminated the geometrical problem of the mass distribution changing.
 
@@ -960,7 +960,7 @@ We evaluate all quantities at cell centers. We use the same predictor-corrector
 approach that we use for the gravity source terms to the momentum equations. However, a slight 
 difference is that the Coriolis force for each velocity component is coupled to other velocity 
 components. If the rotation is about the $z$-axis, then the discrete update to 
-$v_x^{n+1}$ \MarginPar{we are using $u, v, w$ below, and is more consistent with other papers / User's Guide} depends on the value of $v_y^{n+1}$, and vice versa. If we fix the value of 
+$u^{n+1}$ depends on the value of $v^{n+1}$, and vice versa. If we fix the value of 
 the time-level $n+1$ quantities after coming out of the hydrodynamics update, there 
 would be a slight inconsistency between the $x$ and $y$ components of the velocity. 
 
@@ -1025,20 +1025,62 @@ However, this issue may be worth exploring in future work in situations where th
 term is non-negligible in determining the system evolution.
 
 In all simulations performed in a rotating reference frame, we transform all relevant
-quantities back to the inertial reference frame when reporting them. In particular,
-for every zone we adjust the momenta and kinetic energy to account for rotation at 
-frequency $\omega$. When plotting the locations of 
-stars on the grid, we rotate them by an angle corresponding to the amount of time that has 
-passed since the simulation started. \MarginPar{show the transforms.  Also, be more explicit---is this just done for the plotfiles?}
+quantities back to the inertial reference frame when reporting them in analysis routines 
+and visualization (though the data is saved to plotfiles while still in the rotating frame). In particular,
+for every zone we adjust the position, momentum, and energy to account for rotation.
+If the position is $\mathbf{x}$ in the inertial frame and $\mathbf{x}^\prime$ in 
+the rotating frame, and the rotation vector is $\bm{\omega}$, the transformation rules are:
+\begin{align}  
+  \mathbf{x}(t) &= \mathbf{R}\mathbf{x}^\prime(t) \\
+  \mathbf{v}(t) &= \mathbf{v}^\prime(t) + \bm{\omega} \times \left(\mathbf{R} \mathbf{x}^\prime(t)\right)
+\end{align}
+The rotation matrix $\mathbf{R}$ is:
+\begin{equation}
+  \mathbf{R} = \mathbf{R}_z({\bm{\theta}}_3) \mathbf{R}_y({\bm{\theta}}_2) \mathbf{R}_x({\bm{\theta}}_1) 
+             %% = \left( \begin{array}{ccc} 
+             %%     \text{cos}(\theta_2)\, \text{cos}(\theta_3) & 
+             %%     -\text{cos}(\theta_2)\, \text{sin}(\theta_3) & 
+             %%     \text{sin}(\theta_2) \\
+             %%     \text{cos}(\theta_1)\, \text{sin}(\theta_3) + \text{sin}(\theta_1)\, \text{sin}(\theta_2)\, \text{cos}(\theta_3) &
+             %%     \text{cos}\theta_1)\, \text{cos}(\theta_3) - \text{sin}(\theta_1)\, \text{sin}(\theta_2)\, \text{sin}(\theta_3) &
+             %%     -\text{sin}(\theta_1)\, \text{cos}(\theta_2) \\
+             %%     \text{sin}(\theta_1)\, \text{sin}(\theta_3) - \text{cos}(\theta_1)\, \text{sin}(\theta_2)\, \text{cos}(\theta_3) &
+             %%     \text{sin}(\theta_1)\, \text{cos}(\theta_3) + \text{cos}(\theta_1)\, \text{sin}(\theta_2)\, \text{sin}(\theta_3) &
+             %%     \text{cos}(\theta_1)\, \text{cos}(\theta_2) 
+             %%   \end{array} \right)
+\end{equation}
+where $\mathbf{R}_x$, $\mathbf{R}_y$, and $\mathbf{R}_z$ are the standard rotation matrices about 
+the $x$, $y$, and $z$ axes, and $\bm{\theta} = \bm{\omega} t$.
+
+
 
 %==========================================================================
-% Initial Models and Problem Setup
+% Problem Description and Software Implementation
 %==========================================================================
 
-\section{Initial Models and Problem Setup}
+\section{Problem Description and Software Implementation}
+\label{sec:implementation}
+
+In this section we describe our white dwarf merger software, and focus in 
+particular on the initial white dwarf models (\autoref{sec:initial_models}), 
+the initial problem setup (\autoref{sec:initial_state}), and analysis 
+(\autoref{sec:analysis}) components.
+
+The software used to generate the test problems in this paper
+(as well as the manuscript itself),
+\wdmerger\footnote{\wdmerger\ can be obtained at \url{https://github.com/BoxLib-Codes/wdmerger}.},
+is freely available at an online repository hosting service.
+Version control in both the parent software (\boxlib, \castro) and in \wdmerger\
+permits us to reference the state of the code at the time a simulation
+was performed. In all plot files and diagnostic output generated by \castro, 
+and figure files generated by \wdmerger,
+we store the active \texttt{git} commit hashes of \boxlib, \castro, and \wdmerger.
+Line plots are generated using the \matplotlib\ library for \python\ 
+\citep{matplotlib}, while slice plots and other multi-dimensional visualizations are 
+generated using the \yt\ code \citep{yt}.
+
+\subsection{White Dwarf Models}
 \label{sec:initial_models}
-
-\MarginPar{use subsections to break the distinct topics apart in this section---it all runs together}
 
 At the start of any full simulation, we generate initial model white
 dwarfs by integrating the equation of hydrostatic equilibrium, taking
@@ -1081,10 +1123,13 @@ deviations from the isothermal assumption we started with.  The
 interpolation process divides each zone into $n_{\text{sub}}$ 
 sub-zones of equal volume for
 the purpose of sampling the 1D model, and the sub-zones are added
-together to obtain the full zone's characteristics \MarginPar{use ``state'' instead of ``characteristics''}. This
+together to obtain the full zone's state. This
 sub-grid-scale interpolation is useful especially near the edge of the star,
 where the density falls off rapidly with radius. Typically we take 
 $n_{\text{sub}} = 4$.
+
+\subsection{Initial State}
+\label{sec:initial_state}
 
 For a single star simulation, the star is simply placed at the center
 of the computational domain, which we take to be the origin. For a
@@ -1135,6 +1180,40 @@ to come closer to equilibrium with the surface without having
 discontinuous jumps in the density or energy. For all simulations, 
 the maximum timestep is set to be equal to one-half of the CFL limit.
 
+The computational domain has a total size of $1.024 \times 10^{10}\ \text{cm}$ in each 
+spatial dimension, and is centered at the origin. Our coarse grid has $256^3$ zones,
+corresponding to a spatial resolution of 400 km. For the present study, we choose a simple 
+refinement strategy: all zones within twice the Roche radius of each star are tagged for maximal 
+refinement. The extra buffer from doubling the size of this region ensures that the sharp density
+gradients near the edge of the star are within the zone of refinement. We also ensure that the 
+outer part of the domain is never tagged for refinement. In future work we will add criteria 
+that tag for refinement the gas between the stars, which is expected to feature nuclear burning.
+
+We employ a ``sponge'' similar to that described by \citet{maestro3} for the outer regions of the 
+computational domain. After the hydrodynamics update, we apply a damping force to the momentum 
+equation as follows:
+\begin{equation}
+  (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u}^{n+1})}{1 + (\Delta t / \Delta t_S) f_S},
+\end{equation} 
+where $\Delta t_S$ is a timescale for the sponge to operate on, and $f_S$ is the damping factor.
+We choose it so that that the sponge is non-operational inside a radius $r_S$ from the origin, and 
+fully applied at a radius $r_S^\prime \equiv r_S + \Delta r_S$. We then smooth the sponge 
+out between $r_S$ and $r_S^\prime$:
+\begin{equation}
+  f_{S} = \begin{dcases} 0 & r < r_S \\ \frac{1}{2}\left(1 - \text{cos}\left[\pi\left(\dfrac{r - r_S}{\Delta r_S}\right)\right]\right) & r_S \leq r < r_S^\prime \\ 1 & r \geq r_S^\prime. \end{dcases}
+\end{equation}
+For the simulations in this paper we set $r_S$ to be 75\% of the distance from the origin to the domain boundaries,
+and $\Delta r_S$ so that the sponge extends another 10\% of that distance. We set 
+$\Delta t_S = 0.01$ s, which is of the same order as the as the CFL timestep 
+for typical problem setups. We find that this sponge is necessary especially in the 
+rotating reference frame, as standing instabilities can create very large velocities 
+in the ambient fluid that drag down the global timestep by up to an order of magnitude.
+However, this provides another reason to distrust the dynamics of the low-density fluid
+outside of the stellar orbits.
+
+\subsection{Analysis}
+\label{sec:analysis}
+
 We track a number of diagnostic quantities at the end of every coarse grid timestep. 
 For all simulations, we record the total energy (including the breakdown into
 its components: kinetic, internal, gravitational potential, rotation; we note
@@ -1166,6 +1245,9 @@ of each star as well as its location and velocity. Once we have the new centers 
 we compute the effective radius of each star at various density cutoffs. This involves 
 computing the volume $V$ of all zones within the Roche radius of the star's center 
 whose density is greater than the cutoff. We then compute $r_{\text{eff}} = (3V/4\pi)^{1/3}.$
+
+\subsubsection{Gravitational Waves}
+\label{sec:grvatational_waves}
 
 A final diagnostic quantity we consider is the gravitational wave emission by the 
 binary system. White dwarfs are not strongly affected by general relativistic effects;
@@ -1237,50 +1319,6 @@ $h_{\times} = h_{12} = h_{21} \propto \ddot{Q}_{12}$. All other entries vanish. 
 as shown by \citet{loren-aguilar:2005}, this is a typical distance scale over which an 
 experiment such as LISA could detect a coalescing binary white dwarf system. 
 However, the strain at any other distance is easily calculated and goes as the inverse of the distance.
-
-The computational domain has a total size of $1.024 \times 10^{10}\ \text{cm}$ in each 
-spatial dimension, and is centered at the origin. Our coarse grid has $256^3$ zones,
-corresponding to a spatial resolution of 400 km. For the present study, we choose a simple 
-refinement strategy: all zones within twice the Roche radius of each star are tagged for maximal 
-refinement. The extra buffer from doubling the size of this region ensures that the sharp density
-gradients near the edge of the star are within the zone of refinement. We also ensure that the 
-outer part of the domain is never tagged for refinement. In future work we will add criteria 
-that tag for refinement the gas between the stars, which is expected to feature nuclear burning.
-
-We employ a ``sponge'' similar to that described by \citet{maestro3} for the outer regions of the 
-computational domain. After the hydrodynamics update, we apply a damping force to the momentum 
-equation as follows:
-\begin{equation}
-  (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u}^{n+1})}{1 + (\Delta t / \Delta t_S) f_S},
-\end{equation} 
-where $\Delta t_S$ is a timescale for the sponge to operate on, and $f_S$ is the damping factor.
-We choose it so that that the sponge is non-operational inside a radius $r_S$ from the origin, and 
-fully applied at a radius $r_S^\prime \equiv r_S + \Delta r_S$. We then smooth the sponge 
-out between $r_S$ and $r_S^\prime$:
-\begin{equation}
-  f_{S} = \begin{dcases} 0 & r < r_S \\ \frac{1}{2}\left(1 - \text{cos}\left[\pi\left(\dfrac{r - r_S}{\Delta r_S}\right)\right]\right) & r_S \leq r < r_S^\prime \\ 1 & r \geq r_S^\prime. \end{dcases}
-\end{equation}
-For the simulations in this paper we set $r_S$ to be 75\% of the distance from the origin to the domain boundaries,
-and $\Delta r_S$ so that the sponge extends another 10\% of that distance. We set 
-$\Delta t_S = 0.01$ s, which is of the same order as the as the CFL timestep 
-for typical problem setups. We find that this sponge is necessary especially in the 
-rotating reference frame, as standing instabilities can create very large velocities 
-in the ambient fluid that drag down the global timestep by up to an order of magnitude.
-However, this provides another reason to distrust the dynamics of the low-density fluid
-outside of the stellar orbits.
-
-The software used to generate the test problems in this paper
-(as well as the manuscript itself),
-\wdmerger\footnote{\wdmerger\ can be obtained at \url{https://github.com/BoxLib-Codes/wdmerger}.},
-is freely available at an online repository hosting service.
-Version control in both the parent software (\boxlib, \castro) and in \wdmerger\
-permits us to reference the state of the code at the time a simulation
-was performed. In all plot files and diagnostic output generated by \castro, 
-and figure files generated by \wdmerger,
-we store the active \texttt{git} commit hashes of \boxlib, \castro, and \wdmerger.
-Line plots are generated using the \matplotlib\ library for \python\ 
-\citep{matplotlib}, while slice plots and other multi-dimensional visualizations are 
-generated using the \yt\ code \citep{yt}.
 
 
 
@@ -1362,7 +1400,7 @@ deviation from equilibrium is affected by grid resolution.
 We loaded a single star of mass $0.9\ \msolar$ onto the grid at the origin, 
 and evolved it for 200 seconds. Our diagnostic of choice is the effective 
 radius of the star, determined by the volume of the grid that has a density 
-greater than $10^3\ \text{g cm}^{-3}$ (see \autoref{sec:initial_models} 
+greater than $10^3\ \text{g cm}^{-3}$ (see \autoref{sec:implementation} 
 for details on this measure). This choice of density is intended to 
 mark a reasonable outer edge to the star that is not immediately susceptible 
 to the numerical errors prevalent near the physical edge of the star. 
@@ -1391,7 +1429,7 @@ this applied force and not the intrinsic numerical instability of the stars.
 
 A simple dynamical test to verify the gravitation physics in \castro\ is
 the case of gravitational free fall. We place two stars on the grid 
-in the manner of \autoref{sec:initial_models}. The distance $a$ between 
+in the manner of \autoref{sec:implementation}. The distance $a$ between 
 them corresponds to a chosen orbital period $T$, consistent with the total
 system mass $M$, but we disable the rotational source terms so that 
 the stars start at rest in an inertial reference frame. 
