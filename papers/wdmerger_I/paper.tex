@@ -150,7 +150,7 @@ overflowing its Roche lobe. \cite{saionomoto:1985} tracked the
 evolution of the flame and found that it propagated quiescently into
 the center, converting the carbon-oxygen white dwarf into an
 oxygen-neon-magnesium white dwarf. This would then be followed by
-collapse into a neutron star -- a result with significantly different
+collapse into a neutron star---a result with significantly different
 observational properties compared to a SN Ia. This scenario, termed
 accretion-induced collapse, would be avoided only if the accretion
 rate were well below the Eddington rate. \cite{tutukov_yungelson:1979}
@@ -208,7 +208,7 @@ Ia. \cite{pakmor:2011} tried a few different mass combinations and
 found empirically that this would hold as long as the secondary was at
 least 80\% as massive as the primary. These events, where the merger
 process resulted in the detonation of the system during the merger
-coalescence -- avoiding the much longer time-scale evolution -- were
+coalescence---avoiding the much longer time-scale evolution---were
 termed ``violent'' mergers.
 
 Around the same time, however, \cite{guillochon:2010} and
@@ -648,8 +648,8 @@ happening at the cell edges, and the energy change is actually partially compens
 in the adjacent zone that the mass is moving to. This is important enough that for simulations where the 
 potential can change substantially over the course of the evolution, massive amounts of energy can be lost. 
 This standard approach is therefore unacceptable in the case of a problem like white dwarf mergers, and 
-the fix to this energy leaking -- evaluating the energy transfer at the six zone faces instead of 
-the single zone center -- has a very minor cost in terms of code complexity and computational time.
+the fix to this energy leaking---evaluating the energy transfer at the six zone faces instead of 
+the single zone center---has a very minor cost in terms of code complexity and computational time.
 
 It is worth pointing out that while \autoref{eq:grav_energy_conservation_update} was correctly obtained 
 by \cite{arepo} (whose work was the primary inspiration for this approach), there is a subtle error in that derivation. 
@@ -1760,8 +1760,7 @@ that determines the value of the energy source term after the momentum source te
 the uncorrected momenta in calculating $\rho \mathbf{u} g$, which we have found to be more accurate. ${\tt gs} = 3$ is entirely 
 different: after calculating the new momenta, we reset the total energy to be equal to the internal energy plus the 
 kinetic energy. This has the virtue of ensuring that there is no conflict due to discretization between the momentum and 
-energy equations, and also correctly ensuring that the gravitational force does not directly change the internal energy -- 
-and thus the temperature -- of the fluid. However, it explicitly sacrifices total energy conservation. ${\tt gs} = 4$ is 
+energy equations, and also correctly ensuring that the gravitational force does not directly change the internal energy---and thus the temperature---of the fluid. However, it explicitly sacrifices total energy conservation. ${\tt gs} = 4$ is 
 the new conservative method of evaluating the energy source terms at cell faces. The results for the change in energy 
 after a single orbit are seen in the first column of \autoref{table:sources}. The first two versions give reasonable and 
 similar levels of energy conservation. The third has total energy changes on the order of 100\%, but this itself 
