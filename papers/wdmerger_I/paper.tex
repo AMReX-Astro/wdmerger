@@ -1405,25 +1405,28 @@ coordinate grid and evolve it for a period of time long enough to
 assess whether the star is truly stable, and to probe how the size of
 deviation from equilibrium is affected by grid resolution.
 
-We loaded a single star of mass $0.9\ \msolar$ onto the grid at the origin, 
-and evolved it for 200 seconds. Our diagnostic of choice is the effective 
-radius of the star, determined by the volume of the grid that has a density 
-greater than $10^3\ \text{g cm}^{-3}$ (see \autoref{sec:implementation} 
-for details on this measure). This choice of density is intended to 
-mark a reasonable outer edge to the star that is not immediately susceptible 
-to the numerical errors prevalent near the physical edge of the star. 
-\autoref{fig:single_star_static_radius} shows our results at various resolutions. 
-As expected, the star quickly approaches an equilibrium size that is different 
-(and in this case larger) than the one-dimensional model. However, the magnitude 
-of this change becomes smaller with resolution. The star is only approximately 
-in equilibrium when the coarse grid of $256^3$ zones has a level of 
-refinement that jumps by a factor of four. However, even then there is a slight 
-uptick in the size toward the event, implying that the numerical stability 
-is not guaranteed for arbitrarily long timescales. This result suggests that when 
-doing the equilibrium initial models that will former the basis of later calculations,
-we should carefully monitor the evolution of the stars before applying any 
-artificial damping to cause the merger, to ensure that the merger is due to 
-this applied force and not the intrinsic numerical instability of the stars.
+We loaded a single star of mass $0.9\ \msolar$ onto the grid at the
+origin, and evolved it for 200 seconds. Our diagnostic of choice is
+the effective radius of the star, determined by the volume of the grid
+that has a density greater than $10^3\ \text{g cm}^{-3}$ (see
+\autoref{sec:implementation} for details on this measure). This choice
+of density is intended to mark a reasonable outer edge to the star
+that is not immediately susceptible to the numerical errors prevalent
+near the physical edge of the star.
+\autoref{fig:single_star_static_radius} shows our results at various
+resolutions.  As expected, the star quickly approaches an equilibrium
+size that is different (and in this case larger) than the
+one-dimensional model. However, the magnitude of this change becomes
+smaller with resolution. The star is only approximately in equilibrium
+when the coarse grid of $256^3$ zones has a level of refinement that
+jumps by a factor of four. However, even then there is a slight uptick
+in the size toward the event, implying that the numerical stability is
+not guaranteed for arbitrarily long timescales. This result suggests
+that when doing the equilibrium initial models that will former the
+basis of later calculations, we should carefully monitor the evolution
+of the stars before applying any artificial damping to cause the
+merger, to ensure that the merger is due to this applied force and not
+the intrinsic numerical instability of the stars. \MarginPar{you never referenced figure 4}
 
 \begin{figure}
   \centering
@@ -1623,7 +1626,7 @@ the frequency of the perturbation ($n_A = 4$ and $n_B = 2$):
   \caption{2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
     conditions given by \autoref{eq:kh_p3_rho} through \autoref{eq:kh_p3_vy}. 
     The meaning of the rows and columns is the same as in \autoref{fig:kh_p2}.
-    \label{fig:kh_p3}}
+    \label{fig:kh_p3}  {\color{red} You should note this is $R_B$}}
 \end{figure*}
 
 Here $w_0 = 0.1$ is the scale of the velocity perturbation, $\sigma =
@@ -1698,28 +1701,34 @@ parameters in each case). This means that there are smaller scale numerical
 perturbations on the grid, which can be amplified by numerical noise in the time 
 evolution of the system.
 
-\citet{hopkins:2015} performed this test as part of the testing of their code GIZMO. 
-They showed the late-time evolution of this system, when non-linear effects have 
-taken over and significantly disrupted the initial flow. However, at low resolution the 
-tested grid algorithm had failed to disrupt both for $v = 0$ and $v = 10$. We too ran 
-this problem until $t = 10$, and confirm that the Kelvin-Helmholtz instability damps out 
-at low resolution but goes strongly non-linear and disrupts the flow at high resolution.
-However, we strongly emphasize the point that this does not objectively 
-demonstrate a defiency in fixed-grid codes for this problem. We can only determine 
-the validity of a method when we have a trustworthy, converged solution to compare to, and 
-this is lacking for this problem at late times. As observed by \citeauthor{mcnally:2012}, 
-this is because the secondary instabilities form for this problem when the whorls of 
-the Kelvin-Helmholtz tendrils stretch out and create gradients that approach the 
-grid resolution. This is prime breeding ground for numerical noise. But because 
-the nature of this noise will depend on the resolution, it will be very different for 
-simulations at different resolutions. If these instabilities are seeded because of 
-this resolution-dependent noise and are not seeded instead in a controlled manner 
-such that they appear at the same time and location, then we simply cannot draw 
-any conclusions that bear on the question of verification from this test at late times. 
-\autoref{fig:kh_p3_high_res} provides a sense of this by examining the crucial 
-time at which the transition from the linear to the non-linear regime is occurring. 
-At all of these very high resolutions the secondary instabilities develop, but they 
-occur at different times and have different spatial scales for each resolution.
+\citet{hopkins:2015} performed this test as part of the testing of
+their code GIZMO.  They showed the late-time evolution of this system,
+when non-linear effects have taken over and significantly disrupted
+the initial flow. However, at low resolution the tested grid algorithm
+had failed to disrupt both for $v = 0$ and $v = 10$. We too ran this
+problem until $t = 10$, and confirm that the Kelvin-Helmholtz
+instability damps out at low resolution but goes strongly non-linear
+and disrupts the flow at high resolution.  However, we strongly
+emphasize the point that this does not objectively demonstrate a
+defiency in fixed-grid codes for this problem. We can only determine
+the validity of a method when we have a trustworthy, converged
+solution to compare to, and this is lacking for this problem at late
+times. As observed by \citeauthor{mcnally:2012}, this is because the
+secondary instabilities form for this problem when the whirls of the
+Kelvin-Helmholtz tendrils stretch out and create gradients that
+approach the grid resolution. This is prime breeding ground for
+numerical noise. But because the nature of this noise will depend on
+the resolution, it will be very different for simulations at different
+resolutions. If these instabilities are seeded because of this
+resolution-dependent noise and are not seeded instead in a controlled
+manner such that they appear at the same time and location, then we
+simply cannot draw any conclusions that bear on the question of
+verification from this test at late times.
+\autoref{fig:kh_p3_high_res} provides a sense of this by examining the
+crucial time at which the transition from the linear to the non-linear
+regime is occurring.  At all of these very high resolutions the
+secondary instabilities develop, but they occur at different times and
+have different spatial scales for each resolution.
 
 We conclude that large bulk motions of fluid can have very significant effects 
 on numerical calculations of shear mixing in fixed-grid codes, but that this effect 
@@ -1732,21 +1741,30 @@ about the effect of the mixing on the nuclear burning.
 
 \subsubsection{Moving Star}\label{sec:moving_star}
 
-To see this effect in action for a stellar simulation, we repeated the test of  
-\autoref{sec:HSE} with a bulk velocity on the grid. We chose a velocity of $2.56 \times 10^{8}\ \text{cm s}^{-1}$.
-For context, this is comparable to the orbital velocities of the stars in \autoref{sec:kepler}.
-This test was inspired by \citet{tasker:2008}, who considered a moving galaxy cluster 
-and who obtained a long timescale evolution by using periodic boundary conditions, 
-so that the cluster would cross the domain multiple times throughout the evolution.
-We believe that periodic boundary conditions are unrealistic for our type of simulation,
-so we prefer to do one continuous simulation where the star does not cross the boundaries.
-Since our normal grid was not large enough to allow the motion to continue for very long, we expanded 
-the domain size by a factor of four, and then included an extra refined level around the star to 
-keep the effective resolution the same. We started the star off in the lower left corner of the domain, and 
-pointed its velocity towards the upper right corner. This allowed us to evolve the star for the 
-same length of time as for the original test. We note that getting the gravity boundary conditions right 
-required us to move the origin of the problem at the bulk velocity, so that the multipole moments 
-were computed with respect to the stellar center.
+To see this effect in action for a stellar simulation, we repeated the
+test of \autoref{sec:HSE} with a bulk velocity on the grid. We chose a
+velocity of $2.56 \times 10^{8}\ \text{cm s}^{-1}$.  \MarginPar{Approx
+  what Mach number is this?}  {For context, this is comparable to the
+  orbital velocities of the stars in \autoref{sec:kepler}.  This test
+  was inspired by \citet{tasker:2008}, who considered a moving galaxy
+  cluster and who obtained a long timescale evolution by using
+  periodic boundary conditions, so that the cluster would cross the
+  domain multiple times throughout the evolution.  We believe that
+  periodic boundary conditions are unrealistic for our type of
+  simulation, so we prefer to do one continuous simulation where the
+  star does not cross the boundaries.  Since our normal grid was not
+  large enough to allow the motion to continue for very long, we
+  expanded the domain size by a factor of four, and then included an
+  extra refined level around the star to keep the effective resolution
+  the same. We started the star off in the lower left corner of the
+  domain, and pointed its velocity towards the upper right
+  corner. This allowed us to evolve the star for the same length of
+  time as for the original test. We note that getting the gravity
+  boundary conditions right required us to move the origin of the
+  problem at the bulk velocity, so that the multipole moments were
+  computed with respect to the stellar center.  \MarginPar{are you
+    sure that the single WD left quiet in the {\em corner} of the
+    bigger domain is as stable as it was in the earlier test?}
 
 \begin{figure}
   \centering
@@ -1760,16 +1778,19 @@ were computed with respect to the stellar center.
     \label{fig:single_star_compare_radius}}
 \end{figure}
 
-In \autoref{fig:single_star_compare_radius}, we take the results of 
-\autoref{sec:HSE} (the ``static'' case), and plot on top of it the results of this 
-new simulation (the ``motion'' case). We see immediately that this bulk velocity
-causes the star to be much worse at maintaining hydrostatic equilibrium. Not only 
-is the absolute size of the star significantly larger (nearly a factor of two 
-at the lowest feasible resolution we consider), but also there is a clear upward 
-trend in the size that has not terminated at any resolution by the end of the simulation.
-This again emphasizes the results mentioned earlier, that we must be careful not 
-to trust any simulation with significant mass transfer if we are not confident that the 
-mass transfer is seeded in a controllable manner and free from numerical noise.
+In \autoref{fig:single_star_compare_radius}, we take the results of
+\autoref{sec:HSE} (the ``static'' case), and plot on top of it the
+results of this new simulation (the ``motion'' case). We see
+immediately that this bulk velocity causes the star to be much worse
+at maintaining hydrostatic equilibrium. Not only is the absolute size
+of the star significantly larger (nearly a factor of two at the lowest
+feasible resolution we consider), but also there is a clear upward
+trend in the size that has not terminated at any resolution by the end
+of the simulation.  This again emphasizes the results mentioned
+earlier, that we must be careful not to trust any simulation with
+significant mass transfer if we are not confident that the mass
+transfer is seeded in a controllable manner and free from numerical
+noise.  \MarginPar{I really think that we should be able to do better here---this is where I'd like to see ppm\_type = 2, or better hydro-gravity coupling (eventually)}
 
 \subsection{Keplerian Orbit}\label{sec:kepler}
 
