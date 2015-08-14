@@ -1821,21 +1821,35 @@ justifying our typical choice of maintaining terms up to $r^{-7}$.
            captured in the series expansion for the potential at the domain boundary.\label{fig:gravity_bcs}}
 \end{figure}
 
-Another that we consider is the energy conservation of the system. Recalling \autoref{sec:gravity_hydro_coupling}, 
-there are several different methods of applying the gravitational source term to the hydrodynamics equations. In \castro\ we presently 
-have four options, controlled by the parameter {\tt castro.grav\_source\_type}, which we will shortern to {\tt gs} for the present 
-discussion. ${\tt gs} = 1$ is the standard cell-centered source term for gravity. ${\tt gs} = 2$ is a slight variation on this scheme 
-that determines the value of the energy source term after the momentum source term has been applied; the former approach uses 
-the uncorrected momenta in calculating $\rho \mathbf{u} g$, which we have found to be more accurate. ${\tt gs} = 3$ is entirely 
-different: after calculating the new momenta, we reset the total energy to be equal to the internal energy plus the 
-kinetic energy. This has the virtue of ensuring that there is no conflict due to discretization between the momentum and 
-energy equations, and also correctly ensuring that the gravitational force does not directly change the internal energy---and thus the temperature---of the fluid. However, it explicitly sacrifices total energy conservation. ${\tt gs} = 4$ is 
-the new conservative method of evaluating the energy source terms at cell faces. The results for the change in energy 
-after a single orbit are seen in the first column of \autoref{table:sources}. The first two versions give reasonable and 
-similar levels of energy conservation. The third has total energy changes on the order of 100\%, but this itself 
-does not have a severe effect on the dynamics because in this scheme the total energy variable is effectively a placeholder 
-value of the kinetic energy plus internal energy, rather than being evolved directly. The last scheme is nearly two orders 
-of magnitude better in energy conservation, justifying the effort in varying the scheme.
+Another that we consider is the energy conservation of the
+system. Recalling \autoref{sec:gravity_hydro_coupling}, there are
+several different methods of applying the gravitational source term to
+the hydrodynamics equations. In \castro\ we presently have four
+options, controlled by the parameter {\tt castro.grav\_source\_type},
+which we will shortern to {\tt gs} for the present discussion. ${\tt
+  gs} = 1$ is the standard cell-centered source term for
+gravity. ${\tt gs} = 2$ is a slight variation on this scheme that
+determines the value of the energy source term after the momentum
+source term has been applied; the former approach uses the uncorrected
+momenta in calculating $\rho \mathbf{u} g$, which we have found to be
+more accurate. \MarginPar{which is more accurate?  Also, the ``standard approach'' is {\tt gs = 2} --- this is what is written, for exmaple, in the PPM paper}${\tt gs} = 3$ is entirely different: after calculating
+the new momenta, we reset the total energy to be equal to the internal
+energy plus the kinetic energy. This has the virtue of ensuring that
+there is no conflict due to discretization between the momentum and
+energy equations, and also correctly ensuring that the gravitational
+force does not directly change the internal energy---and thus the
+temperature---of the fluid. However, it explicitly sacrifices total
+energy conservation. ${\tt gs} = 4$ is the new conservative method of
+evaluating the energy source terms at cell faces. The results for the
+change in energy after a single orbit are seen in the first column of
+\autoref{table:sources}. The first two versions give reasonable and
+similar levels of energy conservation. The third has total energy
+changes on the order of 100\%, but this itself does not have a severe
+effect on the dynamics because in this scheme the total energy
+variable is effectively a placeholder value of the kinetic energy plus
+internal energy, rather than being evolved directly. The last scheme
+is nearly two orders of magnitude better in energy conservation,
+justifying the effort in varying the scheme.
 
 In \autoref{table:sources} we show also the effects on energy conservation of using the inertial reference frame. 
 We use ${\tt rs}$ for the \castro\ parameter {\tt castro.rot\_source\_type}, and we have the same four options for updating
@@ -1849,47 +1863,73 @@ domain boundaries may be enhanced by explicitly evaluating the flux at cell edge
 \input{plots/sources.table}
 \capstarttrue
 
-We are most interested in the stability of these systems over long timescales. To this end, we consider the same systems as above, 
-but evolve them for 25 orbital periods. In \autoref{fig:circular_orbit_comparison} we illustrate the evolution of these systems 
-by plotting the center of mass locations of the white dwarfs on the orbital ($xy$) plane. For the equal mass case in the inertial 
-reference frame, the curves essentially fall on top of each other, indicating that the stars are indeed orbiting at the initial 
-distance without substantial deviation. In the unequal mass case, the stars now orbit at different distances but do not much 
-deviate from their initial distance. We do observe a secular decline in the center of mass of these stars, indicating that 
-eventually the stellar orbits will degrade due to numerical error even without intervention. The co-rotating frame is different.
-For clarity of visualization, we rotate these results back into the inertial frame before displaying their orbits.
-The stellar orbit in the equal mass case does not show the same secular decline, and the system appears to be stable. However, 
-the cost is that the oscillations about this equilibrium are slightly larger than in the inertial frame. The unequal mass case displays 
-this effect starkly: while the average distance is not declining, there are huge oscillations about this average. In addition, 
-the stars move substantially within the rotating frame itself, yielding the chaotic-looking orbits in the figure. The oscillations 
-grow with time and will eventually cause the stars to merge; however, the stars would eventually merge even in the inertial frame 
-case, and at a faster rate than the equal mass case. This suggests that this mass ratio is too large to ignore tidal effects, and 
-that the tidal effects play out much differently in the rotating frame.
+We are most interested in the stability of these systems over long
+timescales. To this end, we consider the same systems as above, but
+evolve them for 25 orbital periods. In
+\autoref{fig:circular_orbit_comparison} we illustrate the evolution of
+these systems by plotting the center of mass locations of the white
+dwarfs on the orbital ($xy$) plane. For the equal mass case in the
+inertial reference frame, the curves essentially fall on top of each
+other, indicating that the stars are indeed orbiting at the initial
+distance without substantial deviation. In the unequal mass case, the
+stars now orbit at different distances but do not much deviate from
+their initial distance. We do observe a secular decline in the center
+of mass of these stars, indicating that eventually the stellar orbits
+will degrade due to numerical error even without intervention. The
+co-rotating frame is different.  For clarity of visualization, we
+rotate these results back into the inertial frame before displaying
+their orbits.  The stellar orbit in the equal mass case does not show
+the same secular decline, and the system appears to be
+stable. However, the cost is that the oscillations about this
+equilibrium are slightly larger than in the inertial frame. The
+unequal mass case displays this effect starkly: while the average
+distance is not declining, there are huge oscillations about this
+average. In addition, the stars move substantially within the rotating
+frame itself, yielding the chaotic-looking orbits in the figure. The
+oscillations grow with time and will eventually cause the stars to
+merge; however, the stars would eventually merge even in the inertial
+frame case, and at a faster rate than the equal mass case. This
+suggests that this mass ratio is too large to ignore tidal effects,
+and that the tidal effects play out much differently in the rotating
+frame. \MarginPar{this is interesting---has anyone else seen this?}
 
 \begin{figure*}
   \centering
   \includegraphics[scale=0.7]{plots/circular_orbit_comparison}
-  \caption{Positions of the white dwarfs in the orbital plane for four cases evolved over 25 orbital periods. 
-           The $x$ and $y$ axes are normalized to the size of the domain, so that $x = -0.5$ is the left edge 
-           and $x = 0.5$ is the right edge. The dashed blue curve is the position of the primary white dwarf, 
-           and the solid red curve is the position of the secondary. In plot (a) we have the equal mass system 
-           evolved in the inertial reference frame, and in plot (c) we have the same system evolved in a rotating frame, 
-           where the positions have been transformed back to the inertial frame for comparison. 
-           Plots (b) and (d) are analogous but for the unequal mass system.\label{fig:circular_orbit_comparison}}
+  \caption{Positions of the white dwarfs in the orbital plane for four
+    cases evolved over 25 orbital periods.  The $x$ and $y$ axes are
+    normalized to the size of the domain, so that $x = -0.5$ is the
+    left edge and $x = 0.5$ is the right edge. The dashed blue curve
+    is the position of the primary white dwarf, and the solid red
+    curve is the position of the secondary. In plot (a) we have the
+    equal mass system evolved in the inertial reference frame, and in
+    plot (c) we have the same system evolved in a rotating frame,
+    where the positions have been transformed back to the inertial
+    frame for comparison.  Plots (b) and (d) are analogous but for the
+    unequal mass system.\label{fig:circular_orbit_comparison}}
 \end{figure*}
 
-Turning to the conservation properties of the system, we examine as fairly typical cases the equal mass system 
-in the inertial frame for energy conservation (\autoref{fig:energy_conservation_equal}), and the unequal mass 
-system in the rotating frame for angular momentum conservation (\autoref{fig:angular_momentum_conservation_unequal}). 
-Angular momentum is conserved to within a few percent over the 25 orbits, while energy conservation is about 
-an order of magnitude better. We note that while this is already a fairly good level of energy conservation, it is not 
-nearly as good as the results of \citet{marcello:2012}. This is because we reset the internal energy to a level 
-corresponding to our temperature floor when it goes negative, while \citeauthor{marcello:2012} do not reset and 
-instead ignore the internal energy if it is negative. The resets impose an artificial floor on our ability to 
-conserve energy, but they only happen in low-density regions and do not much affect the large-scale dynamics. 
-Meanwhile, angular momentum conservation is not quite as good. This is linked to the decline (or increase) in 
-the size of the orbit. This implies that we ought to be careful in concluding that at these moderate resolutions 
-we can safely evolve systems for many dozens of orbits; this needs to be verified to ensure that an observed 
-inspiral and merger is physically (not numerically) motivated.
+Turning to the conservation properties of the system, we examine as
+fairly typical cases the equal mass system in the inertial frame for
+energy conservation (\autoref{fig:energy_conservation_equal}), and the
+unequal mass system in the rotating frame for angular momentum
+conservation (\autoref{fig:angular_momentum_conservation_unequal}).
+Angular momentum is conserved to within a few percent over the 25
+orbits, while energy conservation is about an order of magnitude
+better. We note that while this is already a fairly good level of
+energy conservation, it is not nearly as good as the results of
+\citet{marcello:2012}. This is because we reset the internal energy to
+a level corresponding to our temperature floor when it goes negative,
+while \citeauthor{marcello:2012} do not reset and instead ignore the
+internal energy if it is negative. The resets impose an artificial
+floor on our ability to conserve energy, but they only happen in
+low-density regions and do not much affect the large-scale dynamics.
+Meanwhile, angular momentum conservation is not quite as good.\MarginPar{``as good'' as what?}  This is
+linked to the decline (or increase) in the size of the orbit. This
+implies that we ought to be careful in concluding that at these
+moderate resolutions we can safely evolve systems for many dozens of
+orbits; this needs to be verified to ensure that an observed inspiral
+and merger is physically (not numerically) motivated.
 
 \begin{figure}
   \centering
@@ -2001,23 +2041,25 @@ based on the number of processors we use and the total number of cells in the
 simulation. This size will therefore in general vary on different AMR levels. 
 Generally we select a value in between 32 and 64 zones per dimension.
 
-We use OpenMP to accelerate the work associated with the boxes owned by each 
-MPI task. Originally \castro\ used OpenMP to accelerate individual loops in the 
-hydrodynamics routines, such as the piecewise-parabolic edge state reconstruction 
-and the conservative flux update. However, there is a significant amount of 
-overhead associated with generating a new OpenMP region at each of the many 
-different loops in a hydrodynamics algorithm. This makes such a strategy 
-sub-optimal for use on many-core processors and GPUs. We have recently switched 
-to a tiling approach, where an OpenMP region is generated at the start of 
-the hydrodynamics routine and the individual threads separately work on 
-different partitions of each box. This results in much less overhead for 
-the threading. In general we obtain more efficient simulations than 
-could be obtained using MPI only, because there are fewer boxes and thus 
-less communication for a given number of processor cores. We are currently 
-developing an approach to evaluating the equation of state and nuclear reactions 
-(and possibly the entire hydrodynamics algorithm) on GPUs, which will allow us
-to take advantage of the significant computational resources embedded in GPUs on 
-certain systems.
+We use OpenMP to accelerate the work associated with the boxes owned
+by each MPI task. Originally \castro\ used OpenMP to accelerate
+individual loops in the hydrodynamics routines, such as the
+piecewise-parabolic edge state reconstruction and the conservative
+flux update. However, there is a significant amount of overhead
+associated with generating a new OpenMP region at each of the many
+different loops in a hydrodynamics algorithm. This makes such a
+strategy sub-optimal for use on many-core processors and GPUs. We have
+recently switched to a tiling approach \MarginPar{ref Weiqun's paper}, where an OpenMP region is
+generated at the start of the hydrodynamics routine and the individual
+threads separately work on different partitions of each box. This
+results in much less overhead for the threading. In general we obtain
+more efficient simulations than could be obtained using MPI only,
+because there are fewer boxes and thus less communication for a given
+number of processor cores. We are currently developing an approach to
+evaluating the equation of state and nuclear reactions (and possibly
+the entire hydrodynamics algorithm) on GPUs, which will allow us to
+take advantage of the significant computational resources embedded in
+GPUs on certain systems.
 
 \begin{figure}
   \centering
@@ -2031,30 +2073,34 @@ certain systems.
     processor count.\label{fig:weak_scaling}}
 \end{figure}
 
-To examine the parallel performance of \castro, we performed both strong scaling 
-and weak scaling tests on the Blue Waters machine at the National Center for 
-Supercomputing Applications. For the weak scaling test, whose results are 
-shown in \autoref{fig:weak_scaling}, we ran a uniform grid binary white 
-dwarf simulation for resolutions of $128^3$ zones through $2048^3$ zones. The 
-number of processors was scaled with the number of zones so that each processor 
-had the same amount of work; the smallest test used 8 processors and the largest 
-used 32,768 (note that the number of processor cores on a Blue Waters node is twice 
-the number of floating point units on that node). The test was run for 10 timesteps,
-with each timestep including two Poisson solves and a hydrodynamics update (though 
-for a uniform grid calculation we generally do not need to perform any multigrid 
-iterations for the first Poisson solve in a timestep, since the density distribution 
-has not changed since the end of the last timestep). We disabled plotfile and 
-checkpoint writing, as well as calculation of diagnostic information (the latter 
-can contribute to a significant fraction of the run time at large processor 
-counts if computed every timestep). We computed the median wall time required per 
-time step for each simulation, and then normalized this to the median time per 
-timestep for the smallest simulation. We find excellent weak scaling through 
-4,096 processors. At the largest run, the simulation time required is 
-more than 1.5 times the amount required for the smallest simulation. 
-This is due entirely to the increased cost of the multigrid Poisson solve 
-in each timestep and this cannot be mitigated except by improving 
-communication or computation efficiency in the multigrid solver. We observe 
-that this weak scaling behavior with Poisson gravity is a significant 
+To examine the parallel performance of \castro, we performed both
+strong scaling and weak scaling tests on the Blue Waters machine at
+the National Center for Supercomputing Applications. For the weak
+scaling test, whose results are shown in \autoref{fig:weak_scaling},
+we ran a uniform grid binary white dwarf simulation for resolutions of
+$128^3$ zones through $2048^3$ zones. \MarginPar{is this really weak scaling?} The number of processors was
+scaled with the number of zones so that each processor had the same
+amount of work; the smallest test used 8 processors and the largest
+used 32,768 (note that the number of processor cores on a Blue Waters
+node is twice the number of floating point units on that node). The
+test was run for 10 timesteps, with each timestep including two
+Poisson solves and a hydrodynamics update (though for a uniform grid
+calculation we generally do not need to perform any multigrid
+iterations for the first Poisson solve in a timestep, since the
+density distribution has not changed since the end of the last
+timestep). We disabled plotfile and checkpoint writing, as well as
+calculation of diagnostic information (the latter can contribute to a
+significant fraction of the run time at large processor counts if
+computed every timestep). We computed the median wall time required
+per time step for each simulation, and then normalized this to the
+median time per timestep for the smallest simulation. We find
+excellent weak scaling through 4,096 processors. At the largest run,
+the simulation time required is more than 1.5 times the amount
+required for the smallest simulation.  This is due entirely to the
+increased cost of the multigrid Poisson solve in each timestep and
+this cannot be mitigated except by improving communication or
+computation efficiency in the multigrid solver. We observe that this
+weak scaling behavior with Poisson gravity is a significant
 improvement over the results presented in the first \castro\ paper.
 
 \begin{figure}
@@ -2089,7 +2135,7 @@ an expected consequence of processors becoming work-starved. In general
 we find very good strong scaling behavior in the regime we are presently 
 interested in, simulating the early phases of a simulation at moderate 
 resolution. The strong scaling behavior is acceptable, though not perfect, 
-at very large processor counts when self-gravity is considered.
+at very large processor counts when self-gravity is considered. \MarginPar{does this use the new MG initialization of $\Phi$ from the old step?}
 
 %==========================================================================
 % Conclusions
