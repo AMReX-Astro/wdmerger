@@ -29,6 +29,12 @@ for rot in ['0', '1']:
 
             grid_diag.plot_angular_momentum_error(diag_filename, eps_filename)
 
+        eps_filename = "plots/" + ratio + "_gw_rot" + rot + ".eps"
+
+        if (not os.path.isfile(eps_filename)):
+
+            grid_diag.plot_gw_signal(diag_filename, eps_filename, n_orbits=2, do_analytical=1)
+
         diag_filename = "results/" + ratio + "/rot" + rot + "/output/star_diag.out"
 
         eps_filename = "plots/" + ratio + "_location_rot" + rot + ".eps"
@@ -209,7 +215,11 @@ for rot in ['0', '1']:
 
         label_list.append('n = ' + ncell)
 
-    star_diag.plot_wd_distance(diag_list, eps_filename, label_list)
+    # Plot the first tenth of an orbit.
+
+    n_orbits = 0.1
+
+    star_diag.plot_wd_distance(diag_list, eps_filename, n_orbits, label_list)
 
 
 
@@ -235,4 +245,4 @@ for rot in ['0', '1']:
 
         label_list.append('dt = ' + dt)
 
-    star_diag.plot_wd_distance(diag_list, eps_filename, label_list)
+    star_diag.plot_wd_distance(diag_list, eps_filename, labels=label_list)
