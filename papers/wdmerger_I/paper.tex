@@ -1180,36 +1180,44 @@ to come closer to equilibrium with the surface without having
 discontinuous jumps in the density or energy. For all simulations, 
 the maximum timestep is set to be equal to one-half of the CFL limit.
 
-The computational domain has a total size of $1.024 \times 10^{10}\ \text{cm}$ in each 
-spatial dimension, and is centered at the origin. Our coarse grid has $256^3$ zones,
-corresponding to a spatial resolution of 400 km. For the present study, we choose a simple 
-refinement strategy: all zones within twice the Roche radius of each star are tagged for maximal 
-refinement. The extra buffer from doubling the size of this region ensures that the sharp density
-gradients near the edge of the star are within the zone of refinement. We also ensure that the 
-outer part of the domain is never tagged for refinement. In future work we will add criteria 
-that tag for refinement the gas between the stars, which is expected to feature nuclear burning.
+The computational domain has a total size of $1.024 \times
+10^{10}\ \text{cm}$ in each spatial dimension, and is centered at the
+origin. Our coarse grid has $256^3$ zones, corresponding to a spatial
+resolution of 400 km. For the present study, we choose a simple
+refinement strategy: all zones within twice the Roche radius of each
+star are tagged for maximal refinement. The extra buffer from doubling
+the size of this region ensures that the sharp density gradients near
+the edge of the star are within the zone of refinement. We also ensure
+that the outer part of the domain is never tagged for refinement. In
+future work we will add criteria that tag for refinement the gas
+between the stars, which is expected to feature nuclear burning.
 
-We employ a ``sponge'' similar to that described by \citet{maestro3} for the outer regions of the 
-computational domain. After the hydrodynamics update, we apply a damping force to the momentum 
+We employ a ``sponge'' similar to that described by \citet{maestro3}
+for the outer regions of the computational domain. After the
+hydrodynamics update, we apply a damping force to the momentum
 equation as follows:
 \begin{equation}
   (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u}^{n+1})}{1 + (\Delta t / \Delta t_S) f_S},
 \end{equation} 
-where $\Delta t_S$ is a timescale for the sponge to operate on, and $f_S$ is the damping factor.
-We choose it so that that the sponge is non-operational inside a radius $r_S$ from the origin, and 
-fully applied at a radius $r_S^\prime \equiv r_S + \Delta r_S$. We then smooth the sponge 
-out between $r_S$ and $r_S^\prime$:
+where $\Delta t_S$ is a timescale for the sponge to operate on, and
+$f_S$ is the damping factor.  We choose it so that that the sponge is
+non-operational inside a radius $r_S$ from the origin, and fully
+applied at a radius $r_S^\prime \equiv r_S + \Delta r_S$. We then
+smooth the sponge out between $r_S$ and $r_S^\prime$:
 \begin{equation}
   f_{S} = \begin{dcases} 0 & r < r_S \\ \frac{1}{2}\left(1 - \text{cos}\left[\pi\left(\dfrac{r - r_S}{\Delta r_S}\right)\right]\right) & r_S \leq r < r_S^\prime \\ 1 & r \geq r_S^\prime. \end{dcases}
 \end{equation}
-For the simulations in this paper we set $r_S$ to be 75\% of the distance from the origin to the domain boundaries,
-and $\Delta r_S$ so that the sponge extends another 10\% of that distance. We set 
-$\Delta t_S = 0.01$ s, which is of the same order as the as the CFL timestep 
-for typical problem setups. We find that this sponge is necessary especially in the 
-rotating reference frame, as standing instabilities can create very large velocities 
-in the ambient fluid that drag down the global timestep by up to an order of magnitude.
-However, this provides another reason to distrust the dynamics of the low-density fluid
-outside of the stellar orbits.
+For the simulations in this paper we set $r_S$ to be 75\% of the \MarginPar{maybe a plot of the sponge profile?}
+distance from the origin to the domain boundaries, and $\Delta r_S$ so
+that the sponge extends another 10\% of that distance. We set $\Delta
+t_S = 0.01$ s, which is of the same order as the as the CFL timestep
+for typical problem setups. We find that this sponge is necessary
+especially in the rotating reference frame, as standing instabilities
+can create very large velocities in the ambient fluid that drag down
+the global timestep by up to an order of magnitude.  However, this
+provides another reason to distrust the dynamics of the low-density
+fluid outside of the stellar orbits. \MarginPar{I am not sure I understand 
+this statement}
 
 \subsection{Analysis}
 \label{sec:analysis}
