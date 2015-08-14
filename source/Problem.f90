@@ -774,6 +774,7 @@ subroutine get_omegasq(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO
     use prob_params_module, only: center
     use probdata_module, only: c, d_vector, rloc
+    use rot_sources_module, only: get_omega
 
     implicit none
     
@@ -786,9 +787,11 @@ subroutine get_omegasq(lo,hi,domlo,domhi, &
     double precision :: omegasq
 
     integer          :: i, j, k
-    double precision :: theta2, theta3
+    double precision :: theta2, theta3, omega(3)
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))    
+
+    omega = get_omega()
 
     ! To ensure that this process is fully general for any orientation of
     ! the rotation axis with respect to the stellar configuration, 
@@ -798,8 +801,8 @@ subroutine get_omegasq(lo,hi,domlo,domhi, &
     ! The rotational potential is then given by:
     ! (1/2) * | omega x r |^2 = (1/2) |omega|^2 |r|^2 sin^2(theta)
 
-    theta2 = acos( dot_product(omega,d_vector(:,2)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,2)**2)))
-    theta3 = acos( dot_product(omega,d_vector(:,3)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,3)**2)))
+    theta2 = acos( dot_product(omega,d_vector(:,2)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,2)**2))) )
+    theta3 = acos( dot_product(omega,d_vector(:,3)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,3)**2))) )
 
     do k = rloc(3,2), rloc(3,2) + 1
        do j = rloc(2,2), rloc(2,2) + 1
