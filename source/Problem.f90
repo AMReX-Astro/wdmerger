@@ -786,16 +786,29 @@ subroutine get_omegasq(lo,hi,domlo,domhi, &
     double precision :: omegasq
 
     integer          :: i, j, k
+    double precision :: theta2, theta3
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))    
+
+    ! To ensure that this process is fully general for any orientation of
+    ! the rotation axis with respect to the stellar configuration, 
+    ! we define the angle between the rotation axis and the position vector,
+    ! using the standard formula:
+    ! cos(theta) = a . b / ( |a| |b| )
+    ! The rotational potential is then given by:
+    ! (1/2) * | omega x r |^2 = (1/2) |omega|^2 |r|^2 sin^2(theta)
+
+    theta2 = acos( dot_product(omega,d_vector(:,2)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,2)**2)))
+    theta3 = acos( dot_product(omega,d_vector(:,3)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,3)**2)))
 
     do k = rloc(3,2), rloc(3,2) + 1
        do j = rloc(2,2), rloc(2,2) + 1
           do i = rloc(1,2), rloc(1,2) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+
                 omegasq = omegasq - c(i-rloc(1,2),j-rloc(2,2),k-rloc(3,2),2) &
-                        * TWO * phi(i,j,k) / (sum(d_vector(:,3)**2)-sum(d_vector(:,2)**2))
+                        * TWO * phi(i,j,k) / (sin(theta3)**2 * sum(d_vector(:,3)**2) - sin(theta2)**2 * sum(d_vector(:,2)**2))
              endif
           enddo
        enddo
@@ -806,8 +819,10 @@ subroutine get_omegasq(lo,hi,domlo,domhi, &
           do i = rloc(1,3), rloc(1,3) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+
                 omegasq = omegasq + c(i-rloc(1,3),j-rloc(2,3),k-rloc(3,3),3) &
-                        * TWO * phi(i,j,k) / (sum(d_vector(:,3)**2)-sum(d_vector(:,2)**2))
+                        * TWO * phi(i,j,k) / (sin(theta3)**2 * sum(d_vector(:,3)**2) - sin(theta2)**2 * sum(d_vector(:,2)**2))
+
              endif
           enddo
        enddo
@@ -842,21 +857,22 @@ subroutine get_bernoulli_const(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO, rot_period
     use prob_params_module, only: center
     use probdata_module, only: c, d_vector, rloc
+    use rot_sources_module, only: get_omega, cross_product
 
     implicit none
     
-    integer :: lo(3), hi(3), domlo(3), domhi(3)
-    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
+    integer          :: lo(3), hi(3), domlo(3), domhi(3)
+    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
+    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
     double precision :: problo(3), probhi(3), dx(3)
     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
     double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
     double precision :: bernoulli_1, bernoulli_2
 
-    integer :: i, j, k
-    double precision :: omega
+    integer          :: i, j, k
+    double precision :: omega(3)
 
-    omega = TWO * M_PI / rot_period
+    omega = get_omega()
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
@@ -866,7 +882,7 @@ subroutine get_bernoulli_const(lo,hi,domlo,domhi, &
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
                 bernoulli_1 = bernoulli_1 + c(i-rloc(1,1),j-rloc(2,1),k-rloc(3,1),1) &
-                            * (phi(i,j,k) - HALF * omega**2 * sum(d_vector(:,1)**2))
+                            * (phi(i,j,k) - HALF * sum(cross_product(omega, d_vector(:,1))**2))
              endif
           enddo
        enddo
@@ -878,7 +894,7 @@ subroutine get_bernoulli_const(lo,hi,domlo,domhi, &
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
                 bernoulli_2 = bernoulli_2 + c(i-rloc(1,2),j-rloc(2,2),k-rloc(3,2),2) &
-                            * (phi(i,j,k) - HALF * omega**2 * sum(d_vector(:,2)**2))
+                            * (phi(i,j,k) - HALF * sum(cross_product(omega, d_vector(:,2))**2))
              endif
           enddo
        enddo
@@ -900,27 +916,36 @@ subroutine construct_enthalpy(lo,hi,domlo,domhi, &
     use bl_constants_module, only: ZERO, HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR, URHO, rot_period
     use prob_params_module, only: center
-    use probdata_module, only: star_axis
+    use probdata_module
+    use rot_sources_module, only: get_omega, cross_product
 
     implicit none
     
-    integer :: lo(3), hi(3), domlo(3), domhi(3)
-    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    integer :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
+    integer          :: lo(3), hi(3), domlo(3), domhi(3)
+    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
+    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
+    integer          :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
     double precision :: problo(3), probhi(3), dx(3)
     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
     double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
     double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
     double precision :: bernoulli_1, bernoulli_2, h_max_1,h_max_2
 
-    integer :: i, j, k
-    double precision :: r(3)
-    double precision :: omega
+    integer          :: i, j, k
+    double precision :: r(3), omega(3), max_dist
 
-    omega = TWO * M_PI / rot_period
+    omega = get_omega()
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
+
+    ! The Bernoulli equation says that energy is conserved:
+    ! enthalpy + gravitational potential + rotational potential = const
+    ! The rotational potential is equal to -1/2 | omega x r |^2.
+    ! We already have the constant, so our goal is to construct the enthalpy field.
+
+    ! We don't want to check regions that aren't part of the stars.
+
+    max_dist = 0.75 * max(maxval(abs(probhi-center)), maxval(abs(problo-center)))
 
     do k = lo(3), hi(3)
        r(3) = problo(3) + (dble(k) + HALF) * dx(3) - center(3)
@@ -929,16 +954,22 @@ subroutine construct_enthalpy(lo,hi,domlo,domhi, &
           do i = lo(1), hi(1)
              r(1) = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
 
-             if (r(star_axis) < ZERO) then
-                enthalpy(i,j,k) = bernoulli_1 - phi(i,j,k) + HALF * omega**2 * sum(r**2)
+             if (r(star_axis) < ZERO .and. sum(r**2) .lt. max_dist**2) then
+
+                enthalpy(i,j,k) = bernoulli_1 - phi(i,j,k) + HALF * sum(cross_product(omega, r)**2)
+
                 if (enthalpy(i,j,k) > h_max_1) then
                    h_max_1 = enthalpy(i,j,k)
                 endif
-             else
-                enthalpy(i,j,k) = bernoulli_2 - phi(i,j,k) + HALF * omega**2 * sum(r**2)
+
+             else if (r(star_axis) > ZERO .and. sum(r**2) .lt. max_dist**2) then
+
+                enthalpy(i,j,k) = bernoulli_2 - phi(i,j,k) + HALF * sum(cross_product(omega, r)**2)
+
                 if (enthalpy(i,j,k) > h_max_2) then
                    h_max_2 = enthalpy(i,j,k)
                 endif
+
              endif
 
           enddo
@@ -967,6 +998,7 @@ subroutine update_density(lo,hi,domlo,domhi, &
     use prob_params_module, only: center
     use probdata_module, only: star_axis, get_ambient, h_max_P, h_max_S, enthalpy_min
     use eos_module
+    use rot_sources_module, only: get_omega, cross_product
 
     implicit none
     
@@ -987,7 +1019,7 @@ subroutine update_density(lo,hi,domlo,domhi, &
     double precision :: r(3)
     double precision :: old_rho, drho
     double precision :: dV
-    double precision :: omega
+    double precision :: omega(3)
     double precision :: max_dist
 
     type (eos_t) :: eos_state, ambient_state
@@ -998,7 +1030,7 @@ subroutine update_density(lo,hi,domlo,domhi, &
 
     max_dist = 0.75 * max(maxval(abs(probhi-center)), maxval(abs(problo-center)))
 
-    omega = TWO * M_PI / rot_period
+    omega = get_omega()
 
     call get_ambient(ambient_state)
 
@@ -1057,7 +1089,7 @@ subroutine update_density(lo,hi,domlo,domhi, &
              l2_norm_resid = l2_norm_resid + dV * (state(i,j,k,URHO) - old_rho)**2
              l2_norm_source = l2_norm_source + dV * old_rho**2
 
-             kin_eng = kin_eng + HALF * omega**2 * state(i,j,k,URHO) * (r(1)**2 + r(2)**2) * dV
+             kin_eng = kin_eng + HALF * sum(cross_product(omega, r)**2) * state(i,j,k,URHO) * dV
 
              pot_eng = pot_eng + HALF * state(i,j,k,URHO) * phi(i,j,k) * dV
 
