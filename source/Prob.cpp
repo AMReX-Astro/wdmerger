@@ -313,6 +313,7 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 
 
 #ifdef GRAVITY
+#ifdef ROTATION
 #ifdef do_problem_post_init
 
 void Castro::problem_post_init() {
@@ -417,7 +418,7 @@ void Castro::problem_post_init() {
 
 	 // Rotational period is 2 pi / omega.
 
-	 Real rotational_period = 2.0 * M_PI / sqrt(omegasq);
+	 rotational_period = 2.0 * M_PI / sqrt(omegasq);
 
 	 // Now save the updated rotational frequency in the Fortran module.
 
@@ -597,5 +598,6 @@ void Castro::problem_post_init() {
 
 }
 
+#endif
 #endif
 #endif
