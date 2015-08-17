@@ -417,7 +417,7 @@ void Castro::problem_post_init() {
 
 	 // Rotational period is 2 pi / omega.
 
-	 rotational_period = 2.0 * M_PI / sqrt(omegasq);
+	 Real rotational_period = 2.0 * M_PI / sqrt(omegasq);
 
 	 // Now save the updated rotational frequency in the Fortran module.
 
