@@ -4,4 +4,4 @@
 Blocs := $(WDMERGER_HOME)/source/diagnostics/
 Bpack := $(WDMERGER_HOME)/source/diagnostics/Make.package
 
-include $(WDMERGER_HOME)/source/GNUmakefile
+include $(CASTRO_DIR)/Exec/KH/GNUmakefile
