@@ -73,7 +73,7 @@ However, to date there have been few fully self-consistent simulations
 of binary white dwarf systems using mesh-based hydrodynamics, 
 relative to other methods. This is the first paper in a series designed to 
 describe simulations of these systems using a hydrodynamics code with 
-using the adaptive-mesh refinement approach. In this paper we describe our numerical 
+the adaptive-mesh refinement approach. In this paper we describe our numerical 
 methodology and discuss our implementation in the code \castro. \castro\ 
 solves the Euler equations of hydrodynamics 
 and the Poisson equation for self-gravity. Standard techniques for 
@@ -301,7 +301,10 @@ model of a WD merger. Another reason for caution is that other than the
 most recent results of \cite{kashyap:2015}, no simulation has self-consistently
 resulted in a thermonuclear detonation. Reproducibility of the detonation 
 through direct numerical simulation is critical for building 
-confidence in this progenitor model.
+confidence in this progenitor model. \MarginPar{Direct numerical
+  simulation has a specific meaning to CFD community.  That is the
+  simulation resolve the viscous scale.  So maybe we should remove the
+word 'direct'.}
 
 This is the first in a series of papers designed to address these
 outstanding theoretical issues for white dwarf mergers. This work will
@@ -1206,7 +1209,7 @@ For the simulations in this paper we set $r_S$ to be 75\% of the
 distance from the origin to the domain boundaries, and $\Delta r_S$ so
 that the sponge extends another 10\% of that distance. The resulting profile 
 is displayed in Figure \autoref{fig:sponge}. We set $\Delta
-t_S = 0.01$ s, which is of the same order as the as the CFL timestep
+t_S = 0.01$ s, which is of the same order as the CFL timestep
 for typical problem setups. We find that this sponge is necessary
 especially in the rotating reference frame, as standing instabilities
 can create very large velocities in the ambient fluid that drag down
@@ -1346,7 +1349,7 @@ solver. There are also hydrodynamical issues: the merger process will
 result in substantial motion of stellar material across the grid. This
 bulk motion presents an opportunity for advection errors to build up,
 and is only partially mitigated by evolving the white dwarfs in a
-co-rotating frame. It is therefore important to be be aware of the
+co-rotating frame. It is therefore important to be aware of the
 behavior of the code in such circumstances. The behavior of \castro\ for
 many standard hydrodynamics test problems was detailed in the original
 code paper \citep{castro}, and in the interest of brevity we will not
@@ -2058,7 +2061,7 @@ different loops in a hydrodynamics algorithm. This makes such a
 strategy sub-optimal for use on many-core processors and GPUs. We have
 recently switched to a tiling approach where an OpenMP region is
 generated at the start of the hydrodynamics routine and the individual
-threads separately work on different partitions of each box. This
+threads separately work on different partitions of each box \citep{boxlib-tiling}. This
 results in much less overhead for the threading. In general we obtain
 more efficient simulations than could be obtained using MPI only,
 because there are fewer boxes and thus less communication for a given
