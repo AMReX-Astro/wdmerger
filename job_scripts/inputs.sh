@@ -135,6 +135,7 @@ function replace_inputs_var {
 
     if (grep -q "$inputs_var_name[[:space:]]*=" $dir/$inputs)
     then
+
 	# OK, so the parameter name does exist in the inputs file;
 	# now we just need to get its value in there. We can do this using
 	# bash indirect references -- if $var is a variable name, then
@@ -164,9 +165,16 @@ function replace_inputs_var {
 	fi
 
 	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/$inputs
+
+    # If the inputs variable doesn't exist in the inputs file, but we got to this point,
+    # it had a legitimate BoxLib or CASTRO namespace. We assume the user wants to add 
+    # this variable to the inputs file, so we'll add it on at the end of the file.
+
     else
-	echo "Variable "$var" given to replace_inputs_var was not found in the inputs file; exiting."
-	return
+
+	string="$inputs_var_name = ${!var}"
+	echo $string >> $dir/$inputs
+
     fi
 
 }

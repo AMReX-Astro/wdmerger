@@ -313,6 +313,7 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 
 
 #ifdef GRAVITY
+#ifdef ROTATION
 #ifdef do_problem_post_init
 
 void Castro::problem_post_init() {
@@ -597,5 +598,6 @@ void Castro::problem_post_init() {
 
 }
 
+#endif
 #endif
 #endif

@@ -237,9 +237,9 @@ Castro::sum_integrated_quantities ()
 #endif
 
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
-
+#ifdef merger
       ca_lev.gwstrain(time, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion);
-
+#endif
     }
 
     // Divide the center of mass by the total amount of mass on the grid.

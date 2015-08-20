@@ -31,7 +31,7 @@ do
 
       problem=$p
       bulk_velocity=$vel
-      amr_n_cell="$ncell $ncell $ncell"
+      amr_n_cell="$ncell $ncell"
       
       # Determine stopping time based on problem of interest
 
