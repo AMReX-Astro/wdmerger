@@ -372,7 +372,7 @@ void Castro::problem_post_init() {
 
       // Get the phi MultiFab.
 
-      MultiFab& phi = *gravity->get_phi_curr(level);
+      MultiFab& phi = get_new_data(PhiGrav_Type);
 
       int ns          = NUM_STATE;
       Real cur_time   = state[State_Type].curTime();
