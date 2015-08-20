@@ -313,6 +313,7 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 
 
 #ifdef GRAVITY
+#ifdef ROTATION
 #ifdef do_problem_post_init
 
 void Castro::problem_post_init() {
@@ -371,7 +372,7 @@ void Castro::problem_post_init() {
 
       // Get the phi MultiFab.
 
-      MultiFab& phi = *gravity->get_phi_curr(level);
+      MultiFab& phi = get_new_data(PhiGrav_Type);
 
       int ns          = NUM_STATE;
       Real cur_time   = state[State_Type].curTime();
@@ -597,5 +598,6 @@ void Castro::problem_post_init() {
 
 }
 
+#endif
 #endif
 #endif

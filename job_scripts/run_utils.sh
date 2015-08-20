@@ -856,7 +856,7 @@ function create_job_script {
 
       # Check to make sure we are done, and if not, re-submit the job.
 
-      if [ -z $do_chain ]; then
+      if [ -z $do_chain ] && [ -z $no_continue ]; then
 
 	echo "" >> $dir/$job_script
 	echo "dir=." >> $dir/$job_script
