@@ -642,7 +642,9 @@ subroutine setup_scf_relaxation(dx, problo, probhi)
     integer          :: ncell(3)
 
     double precision :: pos_l(3)
-    type (eos_t) :: eos_state
+    type (eos_t) :: eos_state, ambient_state
+
+    call get_ambient(ambient_state)
 
     ! Following Swesty, Wang and Calder (2000), and Motl et al. (2002), 
     ! we need to fix three points to uniquely determine an equilibrium 
@@ -705,17 +707,17 @@ subroutine setup_scf_relaxation(dx, problo, probhi)
 
     ! Convert the maximum densities into maximum enthalpies.
 
-    eos_state % T   = stellar_temp
-    eos_state % rho = central_density_P
-    eos_state % xn  = stellar_comp
+    eos_state % T   = model_P % central_temp
+    eos_state % rho = model_P % central_density
+    eos_state % xn  = model_P % core_comp
 
     call eos(eos_input_rt, eos_state)
 
     h_max_P = eos_state % h
 
-    eos_state % T   = stellar_temp
-    eos_state % rho = central_density_S
-    eos_state % xn  = stellar_comp
+    eos_state % T   = model_S % central_temp
+    eos_state % rho = model_S % central_density
+    eos_state % xn  = model_S % core_comp
 
     call eos(eos_input_rt, eos_state)
     
@@ -726,9 +728,7 @@ subroutine setup_scf_relaxation(dx, problo, probhi)
     ! against trying to compute a corresponding temperature
     ! in zones where the enthalpy is just too low for convergence.
 
-    eos_state % T   = stellar_temp
-    eos_state % rho = ambient_density
-    eos_state % xn  = stellar_comp
+    eos_state = ambient_state
 
     do while (eos_state % rho < 1.d11)
 

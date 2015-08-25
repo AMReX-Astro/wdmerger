@@ -86,10 +86,10 @@
               dist_P = loc - center_P_initial
               dist_S = loc - center_S_initial
 
-              if (sum(dist_P**2) < radius_P_initial**2) then
-                 call interpolate_3d_from_1d(model_P_r, model_P_state, initial_model_npts, dist_P, delta, zone_state, nsub)
-              else if (sum(dist_S**2) < radius_S_initial**2) then
-                 call interpolate_3d_from_1d(model_S_r, model_S_state, initial_model_npts, dist_S, delta, zone_state, nsub)
+              if (sum(dist_P**2) < model_P % radius**2) then
+                 call interpolate_3d_from_1d(model_P, dist_P, delta, zone_state, nsub)
+              else if (sum(dist_S**2) < model_S % radius**2) then
+                 call interpolate_3d_from_1d(model_S, dist_S, delta, zone_state, nsub)
               else
                  zone_state = ambient_state
               endif
@@ -135,9 +135,9 @@
                 dist_P = loc - center_P_initial
                 dist_S = loc - center_S_initial
 
-                if (sum(dist_P**2) < radius_P_initial**2) then
+                if (sum(dist_P**2) < model_P % radius**2) then
                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
-                else if (sum(dist_S**2) < radius_S_initial**2) then
+                else if (sum(dist_S**2) < model_S % radius**2) then
                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
                 endif
 

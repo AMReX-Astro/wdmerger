@@ -4,332 +4,301 @@
 
 module initial_model_module
 
-use bl_types
-use bl_constants_module
-use bl_error_module, only: bl_error
-use eos_module, only: eos_input_rt, eos
-use eos_type_module, only: eos_t
-use network, only: nspec
-use model_parser_module, only: itemp_model, idens_model, ipres_model, ispec_model
-use fundamental_constants_module, only: Gconst, M_solar
-use interpolate_module, only: interpolate
+  use bl_types
+  use bl_constants_module
+  use bl_error_module, only: bl_error
+  use eos_module, only: eos_input_rt, eos
+  use eos_type_module, only: eos_t
+  use network, only: nspec
+  use model_parser_module, only: itemp_model, idens_model, ipres_model, ispec_model
+  use fundamental_constants_module, only: Gconst, M_solar
+  use interpolate_module, only: interpolate
 
+  type :: initial_model
+
+     ! Physical characteristics
+
+     double precision :: mass, envelope_mass
+     double precision :: central_density, central_temp
+     double precision :: max_density, min_density
+     double precision :: radius
+
+     ! Composition
+
+     double precision :: core_comp(nspec), envelope_comp(nspec)
+
+     ! Model storage
+
+     double precision :: dx
+     integer          :: npts
+     double precision :: mass_tol, hse_tol
+
+     double precision, allocatable :: r(:), rl(:), rr(:)
+     double precision, allocatable :: M_enclosed(:), g(:)
+     type (eos_t), allocatable :: state(:)
+
+  end type initial_model
+  
 contains
 
-  subroutine init_1d(model_r, model_hse, nx, dx, hse_tol, mass_tol, &
-                     radius, mass, central_density, temp_core, xn_core, ambient_state)
+  subroutine initialize_model(model, dx, npts, mass_tol, hse_tol)
+
+    type (initial_model) :: model
+    integer :: npts
+    double precision :: dx, mass_tol, hse_tol
+
+    integer :: i
+
+    model % dx = dx
+    model % npts = npts
+    model % mass_tol = mass_tol
+    model % hse_tol = hse_tol
+
+    allocate(model % r(npts))
+    allocate(model % rl(npts))
+    allocate(model % rr(npts))
+    allocate(model % M_enclosed(npts))
+    allocate(model % g(npts))
+    allocate(model % state(npts))
+
+    do i = 1, npts
+
+       model % rl(i) = (dble(i) - ONE)*dx
+       model % rr(i) = (dble(i)      )*dx
+       model % r(i)  = HALF*(model % rl(i) + model % rr(i))
+
+    enddo
+
+  end subroutine initialize_model
+
+
+
+  subroutine establish_hse(model)
 
     implicit none
 
     ! Arguments
 
-    integer,          intent(in   ) :: nx
-    double precision, intent(in   ) :: dx
-    double precision, intent(in   ) :: hse_tol, mass_tol
-    double precision, intent(in   ) :: temp_core, xn_core(nspec)
-    double precision, intent(inout) :: radius
-    double precision, intent(inout) :: model_hse(nx,3+nspec)
-    double precision, intent(inout) :: model_r(nx)
-    double precision, intent(inout) :: mass, central_density
-
-    type (eos_t), intent(in) :: ambient_state
+    type (initial_model) :: model
 
     ! Local variables
 
-    double precision :: temp_base, delta
+    integer :: i, icutoff
 
-    double precision :: xzn_hse(nx), xznl(nx), xznr(nx), M_enclosed(nx)
+    double precision :: rho_c, rho_c_old, drho_c, mass, mass_old, radius
 
-    integer :: i, n
+    double precision :: p_want, rho_avg, rho, drho
 
-    double precision :: rho_c, rho_c_old, mass_wd, mass_wd_old, drho_c
+    integer :: max_hse_iter = 250, max_mass_iter
 
-    integer, parameter :: nvar = 3 + nspec
-
-    double precision :: dens_zone, temp_zone, pres_zone, entropy
-    double precision :: dpd, dpt, dsd, dst
-
-    double precision :: p_want, drho, dtemp, delx
-    double precision :: entropy_base
-
-    double precision :: g_zone
-
-    integer, parameter :: MAX_ITER = 250
-
-    integer :: iter, iter_mass
-
-    integer :: icutoff
+    integer :: hse_iter, mass_iter
 
     logical :: converged_hse, fluff, mass_converged
 
-    double precision, dimension(nspec) :: xn
-
     double precision :: smallx, smallt
-
-    double precision :: M_tot
 
     double precision :: max_hse_error, dpdr, rhog
 
-    integer :: narg
+    ! Note that if central_density > 0, then this initial model generator will use it in calculating
+    ! the model. If mass is also provided in this case, we assume it is an estimate used for the purpose of 
+    ! determining the envelope mass boundary. 
 
-    type (eos_t) :: eos_state
+    ! Check to make sure we've specified at least one of them.
 
-    ! First, make sure we haven't overspecified with both the mass and the central density,
-    ! and make sure we've specified at least one.
-
-    if (mass > ZERO .and. central_density > ZERO) then
-       call bl_error('Error: Cannot specify both mass and central density in the initial model generator.')
-    else if (mass < ZERO .and. central_density < ZERO) then
+    if (model % mass < ZERO .and. model % central_density < ZERO) then
        call bl_error('Error: Must specify either mass or central density in the initial model generator.')
     endif
 
     ! If we are specifying the mass, then we don't know what WD central density 
-    ! will give the desired total mass, 
-    ! so we need to do a secant iteration over central density.
-    ! rho_c_old is the 'old' guess for
-    ! the central density and rho_c is the current guess.  After 2
-    ! loops, we can start estimating the density required to yield our
-    ! desired mass.
+    ! will give the desired total mass, so we need to do a secant iteration 
+    ! over central density. rho_c_old is the 'old' guess for the central 
+    ! density and rho_c is the current guess.  After two loops, we can 
+    ! start estimating the density required to yield our desired mass.
 
     ! If instead we are specifying the central density, then we only need to do a 
     ! single HSE integration.
 
-    if (mass > ZERO) then
+    if (model % central_density > ZERO) then
 
-       ! Convert the WD mass into solar masses
-       M_tot = mass * M_solar
+       max_mass_iter = 1
+
+       rho_c_old = model % central_density
+       rho_c     = model % central_density
+
+    else
+
+       max_mass_iter = max_hse_iter
 
        rho_c_old = -ONE
        rho_c     = 1.d7     ! A reasonable starting guess for moderate-mass WDs
 
-    elseif (central_density > ZERO) then
-
-       rho_c_old = central_density
-       rho_c     = central_density
-
     endif
-
-
-    !----------------------------------------------------------------------------
-    ! Create a 1-D uniform grid.
-    !----------------------------------------------------------------------------
-
-    do i = 1, nx
-       xznl(i) = (dble(i) - ONE)*dx
-       xznr(i) = (dble(i))*dx
-       model_r(i) = HALF*(xznl(i) + xznr(i))
-    enddo
 
     mass_converged = .false.
 
-
-    do iter_mass = 1, MAX_ITER
+    do mass_iter = 1, max_mass_iter
 
        fluff = .false.
 
        ! We start at the center of the WD and integrate outward.  Initialize
        ! the central conditions.
-       eos_state%T     = temp_core
-       eos_state%rho   = rho_c
-       eos_state%xn(:) = xn_core(:)
 
-       ! (T, rho) -> (p, s)    
-       call eos(eos_input_rt, eos_state)
+       model % state(1) % T    = model % central_temp
+       model % state(1) % rho  = rho_c
+       model % state(1) % xn   = model % core_comp
 
-       ! Make the initial guess be completely uniform
-       model_hse(:,idens_model) = eos_state%rho
-       model_hse(:,itemp_model) = eos_state%T
-       model_hse(:,ipres_model) = eos_state%p
+       call eos(eos_input_rt, model % state(1))
 
-       do i = 1, nspec
-          model_hse(:,ispec_model-1+i) = eos_state%xn(i)
-       enddo
+       ! Make the initial guess be completely uniform.
 
-       ! Keep track of the mass enclosed below the current zone
-       M_enclosed(1) = FOUR3RD*M_PI*(xznr(1)**3 - xznl(1)**3)*model_hse(1,idens_model)
+       model % state(:) = model % state(1)
 
+       ! Keep track of the mass enclosed below the current zone.
+
+       model % M_enclosed(1) = FOUR3RD * M_PI * (model % rr(1)**3 - model % rl(1)**3) * model % state(1) % rho
 
        !-------------------------------------------------------------------------
-       ! HSE + entropy solve
+       ! HSE solve
        !-------------------------------------------------------------------------
-       do i = 2, nx
+       do i = 2, model % npts
 
-          delx = model_r(i) - model_r(i-1)
+          ! As the initial guess for the density, use the underlying zone.
 
-          ! As the initial guess for the density, use the previous zone
-          dens_zone = model_hse(i-1,idens_model)
+          model % state(i) % rho = model % state(i-1) % rho
 
-          temp_zone = temp_core
-          xn(:) = xn_core(:)
+          if (model % mass > ZERO .and. model % M_enclosed(i-1) .ge. model % mass - model % envelope_mass) then
+             model % state(i) % xn = model % envelope_comp
+          else
+             model % state(i) % xn = model % core_comp
+          endif
 
-          g_zone = -Gconst*M_enclosed(i-1)/(xznl(i)*xznl(i))
+          model % g(i) = -Gconst * model % M_enclosed(i-1) / model % rl(i)**2
 
 
           !----------------------------------------------------------------------
           ! Iteration loop
           !----------------------------------------------------------------------
 
-          ! Start off the Newton loop by assuming that the zone has not converged
+          ! Start off the Newton loop by assuming that the zone has not converged.
+
           converged_hse = .FALSE.
 
-          if (.not. fluff) then
+          do hse_iter = 1, max_hse_iter
 
-             do iter = 1, MAX_ITER
-
-                ! The core is isothermal, so we just need to constrain
-                ! the density and pressure to agree with the EOS and HSE.
-
-                ! We difference HSE about the interface between the current
-                ! zone and the one just inside.
-                p_want = model_hse(i-1,ipres_model) + &
-                     delx*0.5*(dens_zone + model_hse(i-1,idens_model))*g_zone
-
-                eos_state%T     = temp_zone
-                eos_state%rho   = dens_zone
-                eos_state%xn(:) = xn(:)
-
-                ! (T, rho) -> (p, s)
-                call eos(eos_input_rt, eos_state)
-
-                entropy = eos_state%s
-                pres_zone = eos_state%p
-
-                dpd = eos_state%dpdr
-
-                drho = (p_want - pres_zone)/(dpd - 0.5*delx*g_zone)
-
-                dens_zone = max(0.9*dens_zone, &
-                     min(dens_zone + drho, 1.1*dens_zone))
-
-                if (abs(drho) < hse_tol*dens_zone) then
-                   converged_hse = .TRUE.
-                   exit
-                endif
-
-                if (dens_zone < ambient_state % rho) then
-
-                   icutoff = i
-                   dens_zone = ambient_state % rho
-                   temp_zone = ambient_state % T
-                   converged_hse = .TRUE.
-                   fluff = .TRUE.
-                   exit
-
-                endif
-
-             enddo
-
-             if (.NOT. converged_hse) then
-
-                print *, 'Error zone', i, ' did not converge in init_1d'
-                print *, dens_zone, temp_zone
-                print *, p_want
-                print *, drho
-                call bl_error('Error: HSE non-convergence')
-
+             if (fluff) then
+                model % state(i) % rho = model % min_density
+                exit
              endif
 
-          else
-             dens_zone = ambient_state % rho
-             temp_zone = ambient_state % T
+             ! The core is isothermal, so we just need to constrain
+             ! the density and pressure to agree with the EOS and HSE.
+
+             ! We difference HSE about the interface between the current
+             ! zone and the one just inside.
+
+             rho_avg = HALF * (model % state(i) % rho + model % state(i-1) % rho)
+             p_want = model % state(i-1) % p + model % dx * rho_avg * model % g(i)
+
+             call eos(eos_input_rt, model % state(i))
+
+             drho = (p_want - model % state(i) % p) / (model % state(i) % dpdr - HALF * model % dx * model % g(i))
+             rho = model % state(i) % rho
+
+             rho = max(0.9 * rho, min(rho + drho, 1.1 * rho))
+
+             model % state(i) % rho = rho
+
+             if (rho < model % min_density) then
+                icutoff = i
+                fluff = .TRUE.
+             endif
+
+             if (abs(drho) < model % hse_tol * rho) then
+                converged_hse = .TRUE.
+                exit
+             endif
+
+          enddo
+
+          if (.NOT. converged_hse .and. (.NOT. fluff)) then
+
+             print *, 'Error: zone', i, ' did not converge in init_hse().'
+             print *, model % state(i) % rho, model % state (i) % T
+             print *, p_want, model % state(i) % p
+             print *, drho, model % hse_tol * model % state(i) % rho
+             call bl_error('Error: HSE non-convergence.')
+
           endif
 
+          ! Call the EOS to establish the final properties of this zone.
 
-          ! Call the EOS one more time for this zone and then go on
-          ! to the next.
-          eos_state%T     = temp_zone
-          eos_state%rho   = dens_zone
-          eos_state%xn(:) = xn(:)
+          call eos(eos_input_rt, model % state(i))
 
-          ! (T, rho) -> (p, s)    
-          call eos(eos_input_rt, eos_state)
+          ! Discretize the mass enclose as (4 pi / 3) * rho * dr * (rl**2 + rl * rr + rr**2).
 
-          pres_zone = eos_state%p
-
-
-          ! Update the thermodynamics in this zone.
-          model_hse(i,idens_model) = dens_zone
-          model_hse(i,itemp_model) = temp_zone
-          model_hse(i,ipres_model) = pres_zone
-
-          model_hse(i,ispec_model:ispec_model-1+nspec) = xn(:)
-
-          M_enclosed(i) = M_enclosed(i-1) + &
-               FOUR3RD*M_PI*(xznr(i) - xznl(i))* &
-               (xznr(i)**2 +xznl(i)*xznr(i) + xznl(i)**2)*model_hse(i,idens_model)
+          model % M_enclosed(i) = model % M_enclosed(i-1) + &
+                                  FOUR3RD * M_PI * model % state(i) % rho * model % dx * &
+                                  (model % rr(i)**2 + model % rl(i) * model % rr(i) + model % rl(i)**2)
 
        enddo  ! End loop over zones
 
-
-       mass_wd = FOUR3RD*M_PI*(xznr(1)**3 - xznl(1)**3)*model_hse(1,idens_model)
-
-       do i = 2, icutoff
-          mass_wd = mass_wd + &
-               FOUR3RD*M_PI*(xznr(i) - xznl(i))* &
-               (xznr(i)**2 +xznl(i)*xznr(i) + xznl(i)**2)*model_hse(i,idens_model)
-       enddo
+       mass = model % M_enclosed(icutoff)
+       radius = model % r(icutoff)
 
        if (rho_c_old < ZERO) then
-          ! Not enough iterations yet -- store the old central density and
-          ! mass and pick a new value.
-          rho_c_old = rho_c
-          mass_wd_old = mass_wd
 
-          rho_c = HALF*rho_c_old
+          ! Not enough iterations yet -- use an arbitrary guess for the next iteration.
+
+          rho_c_old = rho_c
+          rho_c = HALF * rho_c_old
 
        else
-          ! Check if we have converged. If we specified the central density, we can just stop here.
-          if ( abs(mass_wd - M_tot)/M_tot < mass_tol .or. central_density > ZERO ) then
+
+          ! Check if we have converged.
+
+          if ( abs(mass - model % mass) / model % mass < model % mass_tol ) then
              mass_converged = .true.
              exit
           endif
 
           ! Do a secant iteration:
           ! M_tot = M(rho_c) + dM/drho |_rho_c x drho + ...        
-          drho_c = (M_tot - mass_wd)/ &
-               ( (mass_wd  - mass_wd_old)/(rho_c - rho_c_old) )
+
+          drho_c = (model % mass - mass) / ( (mass  - mass_old) / (rho_c - rho_c_old) )
 
           rho_c_old = rho_c
-          mass_wd_old = mass_wd
-
-          rho_c = min(1.1d0*rho_c_old, &
-                      max((rho_c + drho_c), 0.9d0*rho_c_old))
+          rho_c = min(1.1d0 * rho_c_old, max((rho_c + drho_c), 0.9d0 * rho_c_old))
 
        endif     
 
+       mass_old = mass
+
     enddo  ! End mass constraint loop
 
-    if (.not. mass_converged) then
-       print *, 'ERROR: WD mass did not converge'
-       call bl_error("ERROR: mass did not converge")
+    if (.not. mass_converged .and. max_mass_iter .gt. 1) then
+       call bl_error("ERROR: WD mass did not converge.")
     endif
 
-    if (central_density < ZERO) then
-       central_density = model_hse(1,idens_model)
-    endif
+    model % central_density = model % state(1) % rho
+    model % radius = radius
+    model % mass = mass
 
-    radius = model_r(icutoff)
-    mass = mass_wd / M_solar
+  end subroutine establish_hse
 
-  end subroutine init_1d
+
 
   ! Takes a one-dimensional stellar model and interpolates it to a point in
   ! 3D Cartesian grid space. Optionally does a sub-grid-scale interpolation
   ! if nsub > 1 (set in the probin file).
 
-  subroutine interpolate_3d_from_1d(model_r, model_state, npts_model, loc, dx, state, nsub_in)
+  subroutine interpolate_3d_from_1d(model, loc, dx, state, nsub_in)
 
     implicit none
 
-    integer,          intent(in) :: npts_model
-
-    double precision, intent(in) :: model_r(npts_model)
-    double precision, intent(in) :: model_state(npts_model,3+nspec)
-    double precision, intent(in) :: loc(3), dx(3)
-
-    type (eos_t) :: state
-
-    integer, optional, intent(in) :: nsub_in
+    type (initial_model), intent(in   ) :: model
+    double precision,     intent(in   ) :: loc(3), dx(3)
+    type (eos_t),         intent(inout) :: state
+    integer, optional,    intent(in   ) :: nsub_in
 
     integer :: i, j, k, n
     integer :: nsub
@@ -363,13 +332,13 @@ contains
           do i = 0, nsub-1
              x = loc(1) + dble(i + HALF * (1 - nsub)) * dx(1) / nsub
 
-             r = (x**2 + y**2 + z**2)**(0.5)
+             r = (x**2 + y**2 + z**2)**HALF
 
-             state % rho = state % rho + interpolate(r, npts_model, model_r, model_state(:,idens_model))
-             state % T   = state % T   + interpolate(r, npts_model, model_r, model_state(:,itemp_model))
+             state % rho = state % rho + interpolate(r, model % npts, model % r, model % state(:) % rho)
+             state % T   = state % T   + interpolate(r, model % npts, model % r, model % state(:) % T)
 
              do n = 1, nspec
-                state % xn(n) = state % xn(n) + interpolate(r, npts_model, model_r, model_state(:,ispec_model-1+n))
+                state % xn(n) = state % xn(n) + interpolate(r, model % npts, model % r, model % state(:) % xn(n))
              enddo
 
           enddo

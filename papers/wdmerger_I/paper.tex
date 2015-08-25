@@ -1082,7 +1082,7 @@ generated using the \yt\ code \citep{yt}.
 
 At the start of any full simulation, we generate initial model white
 dwarfs by integrating the equation of hydrostatic equilibrium, taking
-the temperature and composition to be constant, and using the
+the temperature to be constant, and using the
 stellar equation of state.  This results in a single non-linear
 equation to find the density in a zone given the conditions in the
 zone beneath it:
@@ -1109,6 +1109,16 @@ themselves; for our normal domain size (see below), this corresponds to
 three jumps in refinement by a factor of four. We find that for low 
 resolution runs, this is a better choice than selecting the 1D grid 
 spacing to be equal to the 3D grid spacing.
+
+The white dwarf composition is determined by the chosen mass. For 
+this paper we adopt the scheme of \cite{dan:2012}. Low-mass WDs 
+are pure helium; low-to-intermediate-mass WDs are an even carbon-oxygen 
+core with a relatively large helium envelope; intermediate-mass 
+WDs are a carbon-oxygen core with slightly more oxygen than carbon; 
+and, high-mass WDs are composed of oxygen, neon, and magnesium. 
+This choice of composition distribution broadly resembles the 
+results of stellar evolution calculations in the respective 
+mass ranges, though it does not match the calculations in detail.
 
 We map the 1D model onto the 3D Cartesian grid by taking density,
 temperature, and composition as the independent variables,
