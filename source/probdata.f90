@@ -148,10 +148,6 @@ contains
 
     call read_namelist
 
-    ! Set small_pres and small_ener.
-
-    call set_small
-
     ! Determine if we are the I/O processor, and save it to the ioproc variable.
 
     call get_ioproc
@@ -159,6 +155,10 @@ contains
     ! Establish binary parameters and create initial models.
 
     call binary_setup
+
+    ! Set small_pres and small_ener.
+
+    call set_small
 
   end subroutine
 
