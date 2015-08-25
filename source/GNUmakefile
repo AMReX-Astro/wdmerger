@@ -41,7 +41,7 @@ EOS_dir ?= helmeos
 
 # This sets the network directory in $(NETWORK_HOME)
 Network_dir ?= general_null
-GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/triple_alpha_plus_o.net 
+GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/aprox13.net 
 
 # Determine where our source files are coming from
 # based on the relevant file in the source directory.
