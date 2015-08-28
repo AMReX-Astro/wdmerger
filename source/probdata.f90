@@ -490,9 +490,13 @@ contains
 
        endif
 
-    endif
+       ambient_comp = (model_P % envelope_comp + model_S % envelope_comp) / 2
 
-    ambient_comp = (model_P % envelope_comp + model_S % envelope_comp) / 2
+    else
+
+       ambient_comp = model_P % envelope_comp
+
+    endif
 
 
 

@@ -18,14 +18,17 @@ module initial_model_module
 
      ! Physical characteristics
 
-     double precision :: mass, envelope_mass
-     double precision :: central_density, central_temp
-     double precision :: max_density, min_density
-     double precision :: radius
+     double precision :: mass = ZERO
+     double precision :: envelope_mass = ZERO
+     double precision :: central_density = ZERO
+     double precision :: central_temp = ZERO
+     double precision :: min_density = ZERO
+     double precision :: radius = ZERO
 
      ! Composition
 
-     double precision :: core_comp(nspec), envelope_comp(nspec)
+     double precision :: core_comp(nspec) = ZERO
+     double precision :: envelope_comp(nspec) = ZERO
 
      ! Model storage
 
