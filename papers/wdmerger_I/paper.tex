@@ -69,22 +69,22 @@ complement the observations of these explosions. One possibility that has
 merited recent theoretical attention is the white dwarf merger scenario.
 This can naturally explain many of the observed characteristics of 
 Type Ia supernovae, as well as their distribution in time and space.
-However, to date there have been few fully self-consistent simulations 
+To date there have been few fully self-consistent simulations 
 of binary white dwarf systems using mesh-based hydrodynamics, 
 relative to other methods. This is the first paper in a series designed to 
-describe simulations of these systems using a hydrodynamics code with 
+describe simulations of these systems using a mesh-based hydrodynamics code with 
 the adaptive-mesh refinement approach. In this paper we describe our numerical 
 methodology and discuss our implementation in the code \castro. \castro\ 
 solves the Euler equations of hydrodynamics 
 and the Poisson equation for self-gravity. Standard techniques for 
 coupling gravitation and rotation forces to the hydrodynamics do 
 not do an adequate job conserving the total energy of the system, 
-but recent advances in the literature have made advances on this 
-problem and we discuss our implementation here. We also run an 
-extensive set of test problems to determine whether our software can sufficiently
+but recent advances in the literature allow progress on this 
+problem and we discuss our implementation here. We present an 
+extensive set of test problems demonstrating the extent to which our software can sufficiently
 model a system where large amounts of mass are advected on the computational 
 domain over very long timescales. Future papers in this series will describe
-our treatment of the initial conditions of these systems, and will 
+our treatment of the initial conditions of these systems and will 
 examine the early phases of the merger to determine its viability
 for triggering a thermonuclear detonation.
 
@@ -96,12 +96,12 @@ for triggering a thermonuclear detonation.
 %==========================================================================
 \section{Introduction}
 
-Type Ia supernovae (SNe Ia) are currently some of the most exciting
+Type Ia supernovae (SNe Ia) are among the most exciting
 events to study in astrophysics. These bright, brief pulses of light
 in the distant universe have led to a number of important discoveries
 in recent years, including the discovery of the accelerated expansion
-of the universe \citep{perlmutter1999,riess1998}. However, their
-origin is shrouded in mystery. It has long been expected that these
+of the universe \citep{perlmutter1999,riess1998}. Their origin, though,
+is shrouded in mystery. It has long been expected that these
 events arise from the thermonuclear explosions of white dwarfs
 \citep{hoyle_fowler:1960}, but the cause of these explosions is
 uncertain. In particular, it is not clear what process causes the
@@ -111,8 +111,8 @@ community was the single-degenerate (SD) model
 \citep{whelan_iben:1973}. Accretion of material from a companion star
 such as a red giant would cause the star to approach the Chandrasekhar
 mass, and in doing so the temperature and density in the center would
-become sufficient for thermonuclear fusion to proceed. However, in
-recent years many alternative progenitor models have been discussed. A
+become sufficient for thermonuclear fusion to proceed. In
+recent years the focus has shifted to a number of alternative progenitor models. A
 leading candidate for explaining some or most of these explosions is
 the double-degenerate (DD) model, in which two white dwarfs merge and
 the merged object reaches the conditions necessary for a thermonuclear
@@ -153,8 +153,10 @@ oxygen-neon-magnesium white dwarf. This would then be followed by
 collapse into a neutron star---a result with significantly different
 observational properties compared to a SN Ia. This scenario, termed
 accretion-induced collapse, would be avoided only if the accretion
-rate were well below the Eddington rate. \cite{tutukov_yungelson:1979}
-observed that this could happen if the mass loss from the secondary
+rate were well below the Eddington rate (see, e.g., \cite{fryer:1999}
+for a discussion of the possible implications of the accretion-induced 
+collapse scenario). \cite{tutukov_yungelson:1979}
+observed that the collapse could be avoided if the mass loss from the secondary
 was higher than the Eddington rate and thus the accreted material
 formed an accretion disc, which might rain down on the primary more
 slowly. The main finding was that double degenerate systems would not
@@ -218,14 +220,14 @@ were not carefully constructed. \cite{motl:2002}, \cite{dsouza:2006},
 and \cite{motl:2007} (the first three-dimensional grid-based
 simulations of mass transfer in binary white dwarf systems) pioneered
 the study of looking at the long-term dynamical evolution of binary
-white dwarf systems after constructing exact equilibrium initial
+white dwarf systems after constructing equilibrium initial
 conditions. Earlier work placed the stars too close together 
 and ignored the effects of tidal forces that change the shape of the 
 secondary, leading to the merger
-happening artificially too quickly. When the initial conditions are
+happening artificially too quickly \citep{fryer:2008}. When the initial conditions are
 constructed in exact equilibrium, the system can be stable for tens of
 orbital periods, substantially changing the character of the mass
-transfer phase. However, one limitation of this series of studies is
+transfer phase. One limitation of this series of studies is
 that the authors used a polytropic equation of state and thus could
 not consider nuclear reactions. \cite{guillochon:2010} and
 \cite{dan:2011} improved on this using a realistic equation of state,
@@ -261,7 +263,8 @@ white dwarf. For now there is preliminary support for the hypothesis
 that systems with helium shells (or helium WDs), and very massive carbon-oxygen binaries,
 could robustly lead to events resembling SNe Ia.
 
-Given the above, why is another approach using a different simulation
+Given the considerable research into the double degenerate problem 
+described above, why is another approach using a different simulation
 code warranted? First and foremost, reproducibility of the results
 across simulation codes and algorithms is important for gauging
 confidence in this result. Most of the existing results that study 
@@ -270,8 +273,8 @@ Type Ia supernovae (that is, including a realistic
 equation of state and nuclear reactions) have
 used the SPH method. SPH codes have a number of features which do aid
 them in the study of these systems, such as excellent conservation of
-angular momentum. However, the question of whether a prompt detonation
-in a merger actually happens depends in detail on the nature of the
+angular momentum. A drawback relates to the fact that whether a prompt detonation
+in a merger happens depends in detail on the nature of the
 gas at the interface between the two stars, which is at much lower
 density than the rest of the stellar material. The SPH codes use
 uniform mass particles, so their effective resolution is
@@ -300,13 +303,10 @@ none of these improvements have yet been incorporated into an SPH
 model of a WD merger. Another reason for caution is that other than the
 most recent results of \cite{kashyap:2015}, no simulation has self-consistently
 resulted in a thermonuclear detonation. Reproducibility of the detonation 
-through direct numerical simulation is critical for building 
-confidence in this progenitor model. \MarginPar{Direct numerical
-  simulation has a specific meaning to CFD community.  That is the
-  simulation resolve the viscous scale.  So maybe we should remove the
-word 'direct'.}
+through numerical simulation is critical for building 
+confidence in this progenitor model.
 
-This is the first in a series of papers designed to address these
+This paper is the first in a series designed to address these
 outstanding theoretical issues for white dwarf mergers. This work will
 discuss the verification of our hydrodynamics code for simulating
 these events. Later efforts will look at the initial conditions of the
@@ -319,7 +319,7 @@ describes our code and why it can provide useful results compared to
 other methodologies used for this problem. 
 \autoref{sec:implementation} describes the method we use for setting up a
 binary white dwarf simulation. \autoref{sec:Tests} discusses a few
-test problems that we use to demonstrate that our code accurately
+test problems that we use to verify that our code accurately
 solves the equations of fluid dynamics. \autoref{sec:Performance}
 demonstrates that the software scales well for supercomputer
 applications. Finally, \autoref{sec:Conclusions and Discussion}
@@ -371,8 +371,8 @@ version of the higher resolution limiters of
 \cite{colella_sekora:2008}, which can be accessed in the code using
 \texttt{castro.ppm\_type = 2}. The advantage of this limiter is that
 it preserves physical extrema rather than clipping them off as in the
-original approach of \cite{ppm}. However, we found these limiters to
-be unsatisfactory for our problem. There are many regions in our
+original approach of \cite{ppm}. Despite the advantages of this limiter 
+we have found it to be unsatisfactory for our problem. There are many regions in our
 problem with large density gradients (such as the interface between
 the star's atmosphere and the ambient gas outside of it) and in these
 regions the algorithm can yield negative densities. This often results
@@ -452,7 +452,7 @@ and densities. Thermodynamic quantities are calculated as derivatives
 of the Helmholtz free energy, and the values are interpolated from a
 table. The natural variables of the Helmholtz free energy are
 temperature and density, and calling the EOS is simplest in this
-form. However, in hydrodynamics we often have the density, and
+form. In hydrodynamics we often have the density and
 internal energy as independent variables, and we want to obtain the
 temperature, pressure, and other quantities. To do this, we employ a
 Newton-Raphson iteration over the temperature (given some sufficient
@@ -511,7 +511,7 @@ as traditionally written appears in integral form as
 \begin{equation}
   \left.\frac{\partial (\rho \mathbf{u})}{\partial t}\right|_{\text{grav}} = \frac{1}{\Delta V} \int \rho \mathbf{g}\, dV
 \end{equation}
-and for the energy source term the analogue it is
+and for the energy source term it is
 \begin{equation}
   \left.\frac{\partial (\rho E)}{\partial t}\right|_{\text{grav}} = \frac{1}{\Delta V} \int \rho \mathbf{u}\cdot\mathbf{g}\, dV \label{eq:cell_center_gravity_source}.
 \end{equation}
@@ -533,7 +533,7 @@ under the source term; the details of this are described in
 the appendix. Second, after the hydrodynamics step, we add the time-centered source terms
 to the state. First we will describe how we do this for the momentum,
 and then we will describe our approach for the energy. This discussion will be somewhat detailed.
-However, we believe that the attention is necessary because of the importance of accuracy
+We believe that the attention is necessary because of the importance of accuracy
 in the gravitational source terms for our problem. The stability of the white dwarf binary
 system is dependent in large part upon accurate coupling of the hydrodynamics and gravity;
 an error in this approach could lead to, for example, a spurious mass transfer episode
@@ -549,21 +549,22 @@ on every other mass element. However, the standard approach does not necessarily
 guarantee that momentum is conserved numerically. We cannot represent a vacuum state 
 in our code, so there is a small but non-zero density on the edge of the grid. 
 This allows momentum to leak out of the domain even if the gravitational source term 
-is written in an explicitly conservative manner. To see this, one can write the 
+is written in an explicitly conservative manner. To see this, one can use the Poisson equation to write the 
 density in terms of the potential and then consider its spatial discretization. For simplicity,
-we will consider one spatial dimension.
+we will consider one spatial dimension and a uniform discretization. Analogous results 
+may be readily obtained for the non-uniform case.
 \begin{align}
-  -\rho_{i}  \frac{d\Phi_{i}}{dx} &= -\frac{1}{4\pi G} \frac{d^2\Phi_i}{dx^2} \frac{d \Phi}{dx} \notag \\
+  -\rho_{i}  \frac{d\Phi_{i}}{dx} &= -\frac{1}{4\pi G} \frac{d^2\Phi_i}{dx^2} \frac{d \Phi_i}{dx} \notag \\
   &= -\frac{1}{4\pi G} \left[\frac{\Phi_{i-1} - 2 \Phi_{i} + \Phi_{i+1}}{\Delta x^2}\right] \left[ \frac{\Phi_{i+1} - \Phi_{i-1}}{2\Delta x} \right] \notag \\
   &= -\frac{1}{8\pi G \Delta x^3} \left[ \Phi_{i+1}^2 - \Phi_{i-1}^2 - 2\Phi_i\left(\Phi_{i+1} - \Phi_{i-1}\right) \right] \label{eq:momentum_discretization}
 \end{align}
 It is easy to verify that adding the source terms for the current zone and the two zones 
 to the left and right will result in complete cancellation of the source terms.
-However, if the potential if non-zero outside of the domain, then there will be
+The catch is that if the potential if non-zero outside of the domain, then there will be
 momentum lost or gained from the grid, which will be encapsulated in the ghost cells
 just outside the domain. In addition, when we replace the Laplacian above by the full
 three-dimensional stencil including the $y$ and $z$ derivatives, depending on the
-discretization these will not be cancelled at all. This latter problem can be resolved by
+discretization these may not be cancelled at all. This latter problem can be resolved by
 writing the momentum update in an explicitly conservative way.
 
 \citet[Chapter 4]{shu:1992} observes that it is possible to describe the source term 
@@ -577,7 +578,7 @@ subtracted from another, so that the total momentum in the domain interior stays
 within numerical roundoff error. This result can be derived by analytically recasting 
 \autoref{eq:momentum_discretization}. In the continuum limit, the two momentum
 formulations are identical. Thus the latter has been advocated by, for example, 
-\cite{jiang:2013} for the ATHENA code. However, in a finite discretization 
+\cite{jiang:2013} for the ATHENA code. A significant limitation to this approach is that in a finite discretization 
 the divergence of the gravitational acceleration is no longer guaranteed to equal
 the zone density. In particular, we find that the mixing of the gravitational accleration components
 means that the truncation error in the gravitational field can lead to large errors
@@ -610,10 +611,10 @@ Historically many simulation codes with gravity have not used a conservative for
 of the energy equation, but it is straightforward to do so. In particular, conservation of 
 total energy requires only that a change in gravitational energy is compensated for by a 
 change in gas energy, and that energy changes due to mass transfer are explicitly and 
-exactly tracked. At each zone face in a given timestep, there is some transfer of mass $\Delta \rho$ between 
+exactly tracked. At each zone face in a given timestep, there is some transfer of mass $\Delta \rho \Delta V$ between 
 the zones adjacent to that face, which is governed by the continuity equation. Suppose the 
 transfer of mass is positive to the right, and the face is located at the (one-dimensional)
-index $i-1/2$. Energy is transferred because an amount of mass $\Delta \rho_{i-1/2}$ moves from 
+index $i-1/2$. Energy is transferred because an amount of mass $\Delta \rho_{i-1/2} \Delta V$ moves from 
 potential $\Phi_{i-1}$ to potential $\Phi_{i}$; if these potentials are different, it requires some 
 work exerted by or on the zone to push the mass to this different potential energy. Therefore 
 the net change of gravitational energy is $\left[(1/2)\Delta \rho_{i-1/2} (\Phi_{i} - \Phi_{i-1})\right]$,
@@ -625,11 +626,11 @@ Thus the update in a zone for the total energy that conserves $(\rho E_{\text{to
 \end{equation}
 where the sum is over the cell faces $f$ and the indices $f+1/2$ and $f-1/2$ refer to 
 the zone centers immediately to the left and right in the direction perpendicular to the face.
-Note that while total energy is conserved, the gas energy is not: this does not have the 
+Note that while total energy is conserved, the gas energy is not because \autoref{eq:grav_energy_conservation_update} does not have the 
 telescoping property of a flux formalism where energy gained by one zone is lost by another. 
 The energy is being exchanged with a potential field that responds indirectly when the mass moves.
 
-The change in the mass $\Delta \rho_{f}$ is proportional to the mass flux through the surface with area $\Delta A$:
+The change in the density $\Delta \rho_{f}$ is proportional to the mass flux through the surface with area $\Delta A$:
 \begin{equation}
   \Delta \rho_f = \frac{\Delta t}{\Delta V} (\Delta A\, \rho v_{f}),\label{eq:mass_transfer}
 \end{equation}
@@ -640,47 +641,44 @@ no change is needed to the fluxes since those are already time-centered
 in the hydrodynamics update, so we need only to use a time-centered $\Phi$ (which can be computed 
 by averaging the time-level $n$ and $n+1$ potentials; we already have the latter because \castro\ 
 re-computes the potential at the new time after the hydrodynamics step, and we can apply this energy 
-at the end of the timestep).
+at the end of the timestep). Using this conservative energy formulation is very important for simulations where the 
+potential can change substantially over the course of the evolution, as massive amounts of energy can be lost. 
+The standard approach is therefore unacceptable in the case of a problem like white dwarf mergers, and 
+the fix to this energy leaking---evaluating the energy transfer at the six zone faces instead of 
+the single zone center---has a very minor cost in terms of code complexity and computational time.
 
 As observed by \cite{arepo}, when examining \autoref{eq:mass_transfer} one can see the relationship 
 between this method and the more common (non-conservative) approach of evaluating the change in 
 gas energy using the work done $(\mathbf{v} \cdot \rho \mathbf{g})$ by the gravitational force at the 
-cell center. Analytically this form expresses the same core idea via the work-energy theorem, and its 
-major flaw is that it evaluates the energy change at the cell center when in fact the mass transfer is 
-happening at the cell edges, and the energy change is actually partially compensated by the potential 
-in the adjacent zone that the mass is moving to. This is important enough that for simulations where the 
-potential can change substantially over the course of the evolution, massive amounts of energy can be lost. 
-This standard approach is therefore unacceptable in the case of a problem like white dwarf mergers, and 
-the fix to this energy leaking---evaluating the energy transfer at the six zone faces instead of 
-the single zone center---has a very minor cost in terms of code complexity and computational time.
+cell center. Analytically this form expresses the same core idea as \autoref{eq:grav_energy_conservation_update} 
+via the work-energy theorem, but a major flaw is that it evaluates the energy change at the cell center 
+when in fact the mass transfer is happening at the cell edges. However, there is a more fundamental issue. 
+As observed by \citet[Chapter 4]{shu:1992} and \citet{marcello:2012}, the energy source term $(-\rho \mathbf{u}\cdot\nabla\Phi)$ 
+includes a contribution that is not localizable and reflects the global nature of the gravitational potential. 
+It is only by integrating this source term over all space that the correct gravitational potential energy 
+for the system emerges. Integrating over only one zone cannot yield the correct description of this global 
+energy flow, and indeed therefore can never obtain the factor of 1/2 that arises from avoiding double-counting 
+of the pairwise gravitational interactions. So while \autoref{eq:grav_energy_conservation_update} was correctly obtained 
+by \cite{arepo} (whose work was the primary inspiration for this approach), their derivation that integrates the work 
+done over the volume of a zone does not correctly account\footnote{They argued that this volume integral 
+of the work can be converted into a surface integral by use of the divergence theorem (see their Equation 93). That 
+application of the divergence theorem is mathematically incorrect, because their formulation of the integrand cannot actually 
+be expressed only as the divergence of a vector field.} for this behavior. It is only by accounting for the global nature of the
+potential that we can obtain the correct factor of $1/2$ and have a correct accounting of the energy within a zone.
+The insight of applying the source term on the zone faces to conserve energy is still valid when 
+considering energy transfer between the gas energy and a potential field if the change in energy 
+is explicitly localizable. Indeed, we employ this formulation in \autoref{sec:rotation} for the case of the rotational potential.
 
-It is worth pointing out that while \autoref{eq:grav_energy_conservation_update} was correctly obtained 
-by \cite{arepo} (whose work was the primary inspiration for this approach), there is a subtle error in that derivation. 
-Their argument was that if we integrate the work done over the volume of the zone, this volume integral can be 
-converted into a surface integral by use of the divergence theorem (see their Equation 93). Then we can simply 
-evaluate the work done at each zone face. However, this application of the divergence theorem is 
-mathematically incorrect, despite the fact that this is similar in spirit to the approach discussed here. 
-Moreover, using the divergence theorem to integrate the work done in a zone can never obtain 
-the factor of $1/2$ corresponding to the change in gravitational self-energy. That factor can be thought of
-as a double-counting factor that ensures that we correctly capture the energy of a pairwise interaction. 
-When one integrates the work done in the zone, there is a contribution to the energy that cannot be 
-expressed as a full time derivative or the divergence of a flux. This reflects the 
-global nature of the gravitational potential and means that we cannot get the correct energy expression 
-unless we integrate over the entire mass distribution; see \citet[Chapter 4]{shu:1992} and \citet{marcello:2012}. 
-However, this approach is still valid when considering energy transfer between the gas energy and a  
-potential field, if the change in energy is explicitly local. In the case of gravity, the mass flux
-that generates a change in energy is local, but the change in energy is stored in the entire gravitational 
-field, and is only captured by a global integral because of the long-range nature of the potential.
-
-Another approach recently taken in the literature for conserving total energy has been to evolve an 
-equation for the total energy $(\rho E_{\text{tot}})$; see \cite{marcello:2012} and \cite{jiang:2013}.
-This can be done by adding a term corresponding to the ``flux'' of gravitational potential energy. We 
-avoid this approach in general because there will be regions on the computational domain where the total 
+Another approach to conserving total energy recently taken in the literature is to evolve an 
+equation for the total energy $(\rho E_{\text{tot}})$; see \cite{marcello:2012} and \cite{jiang:2013} (see also 
+\cite{arepo}, Section 5.3). That is, one can replace the gas energy equation with a total energy equation, 
+and then the energy flux includes a term corresponding to the flux of gravitational potential energy. We 
+avoid this approach for our problem because there will be regions on the computational domain where the total 
 energy is dominated by potential energy (especially the low-density regions near the edge of the white dwarfs),
 and the gas energy can only be retrieved by first subtracting $-\rho \Phi/2$ from the total energy. Like 
 \cite{arepo}, we find that this can result in some serious errors due to numerical discretization, yielding 
-unphysical energies or temperatures. We observe also that the specific implementation of \cite{jiang:2013} 
-has terms in their gravitational flux that are not proportional to $\rho$, and so it can lead to the 
+unphysical energies or temperatures. We observe also that the implementation of \cite{jiang:2013} 
+has terms in the gravitational flux that are not proportional to $\rho$, and so can lead to the 
 same troubles that plague the tensor-based formalism for the momentum equation, where small errors 
 in the discretization of the gravitational potential can lead to very large changes in the energy of the gas.
 
@@ -688,11 +686,11 @@ in the discretization of the gravitational potential can lead to very large chan
 
 Analytical solutions to the Poisson equation customarily assume that the
 potential vanishes at large distances from the region of non-zero
-density. However, on a finite computational domain it is usually not
+density. On a finite computational domain, however, it is usually not
 possible to have the edges of the domain be far enough away that the
 potential can be taken to be zero there. Solving the Poisson equation
 therefore requires knowledge of the values of the potential on the
-edges of the computational domain. In principle, they can be computed
+edges of the computational domain. In principle, the boundary values can be computed
 by doing a direct sum over the mass distribution inside the domain,
 where the mass in each zone is treated as a point source:
 \begin{equation}
@@ -714,14 +712,13 @@ approaches exist in the literature. The original release of \castro\
 featured the crudest possible approximation: a monopole prescription,
 where the boundary values were computed by summing up all the mass on
 the domain and treating it as a point source at the domain
-center. This is exactly correct only for a spherically symmetric mass
+center. This is correct only for a spherically symmetric mass
 distribution, and therefore is best suited for problems like
-single-star Type Ia supernova simulations (e.g. \cite{malone:2014})
-that employ self-gravity. However, for a problem like that of a binary star system
+single-star Type Ia supernova simulations (e.g.$\ $\cite{malone:2014})
+that employ self-gravity. For a problem like that of a binary star system
 with significant departures from spherical symmetry, this assumption
-fails to produce accurate boundary values. This results in a
-significant drift of the center of the mass of the system over time,
-which will be discussed in \autoref{sec:kepler}.
+fails to produce accurate boundary values, which we find in \autoref{sec:kepler}
+results in a significant drift of the center of the mass of the system over time.
 
 The most natural extension of the monopole prescription is to include
 higher-order multipole moments. If the entire mass distribution is
@@ -770,7 +767,7 @@ to the chosen value of $l_{\text{max}}$, so there is a trade-off
 between computational expense and accuracy of the result.
 
 As a demonstration of the method's accuracy, we consider the case of two 
-white dwarfs of mass ratio 2/3, loaded onto the grid by the method described 
+white dwarfs of mass ratio 2/3, loaded onto the grid by the method described below 
 in \autoref{sec:implementation}. We terminated the simulation just after
 initialization, so that we perform only an initial Poisson solve for this 
 density distribution. We did this for values of $l_{\text{max}}$ ranging
@@ -789,7 +786,14 @@ obtained using the exact boundary conditions:
 The result is shown in \autoref{fig:bc_comparison}. At $l_{\text{max}} = 6$,
 the error is already well below $10^{-4}$ and we adopt this as our default 
 choice for all simulations with Poisson gravity. In \autoref{sec:kepler} we 
-see that there are no gains to be had by increasing the accuracy further. 
+show that there are no gains to be had by increasing the accuracy further. At 
+very high orders the approximation breaks down, as seen in \autoref{fig:bc_comparison}. 
+This is a result of the ambient material on the grid. At each boundary point we 
+assume that all of the mass on the grid is contained within a sphere whose radius is 
+the distance from that boundary point to the center of the domain. This does not hold 
+for boundary points in the centers of domain faces, because of the material in the 
+domain corners. This can be fixed by using multiple mass shells at diferent radii, but the error 
+is negligible in practice for the values of $l_{\text{max}}$ that we use.
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.45]{plots/bc_comparison}
@@ -810,7 +814,7 @@ that inserts a sphere of radius $R$ and uniform mass density $\rho$
 onto our grid, and used \castro\ to calculate the gravitational
 potential $\Phi$ of this setup. We ensure that $R$ is an integer
 multiple of the grid spacing, and the center of the sphere is at the
-origin. The problem domain for our simulations is $[-1.6 \text{cm}, 1.6 \text{cm}]^3$, and
+origin. The problem domain for our simulations is $[-1.6\ \text{cm}, 1.6\ \text{cm}]^3$, and
 we take $R = 1.0\ \text{cm}$ and $\rho = 10^3\ \text{g cm}^{-3}$. 
 The zones with $r > R$ are filled with an ambient material of very low density 
 ($10^{-8}\ \text{g cm}^{-3}$). We run this problem at multiple 
@@ -847,26 +851,30 @@ we choose a relative error tolerance of $10^{-10}$ to be satisfied in the multig
 \end{figure}
 The results of this test are plotted in \autoref{fig:gravity_convergence}. 
 
-We find that at low resolution 
-convergence is actually substantially better than second-order. The 
-explanation for this is that we are attempting to model a spherical 
-object on a rectangular grid. At very low resolution, the object does 
-not look very spherical. As the resolution is increased, the total 
-amount of mass on the grid, as well as its location, will change 
-as the sphere fills out. This means we are combining the true accuracy 
-bonus from increased resolution with the artificial accuracy bonus 
-from getting closer to solving the problem we are supposed to be solving. 
-On the other hand, at the highest resolution shown the error slightly increases.
+We find that at low resolution convergence is actually substantially better 
+than second-order. The explanation for this is that we are attempting to 
+model a spherical object on a rectangular grid. This results in two sources of error.
+First, at very low resolution, the object does not look very spherical due to the rectangular 
+grid representation, so the potential it produces is not quite that of a sphere. 
+As the resolution is increased, the distribution of the mass on the grid will change.
+Second, the total amount of mass on the grid will change as the sphere fills out. 
+So we are combining the true accuracy bonus from increased resolution 
+with the artificial accuracy bonus from getting closer to solving the problem 
+we are supposed to be solving. At high resolution this effect levels off, though, 
+as the representation of the sphere is not significantly different in 
+our two highest resolutions shown. For example, at $128$ zones per dimension 
+the amount of mass on the grid happens to be slightly closer to the true spherical 
+mass than at $256$ zones per dimension.
 
-We can solve one of these two sources of error by changing the density on  
+We can solve the second source of error by changing the density on  
 the grid so that the total mass $M$ is actually what we intend it to be.
 The resolution study for this case (the ``normalized sphere'') is also
-plotted in \autoref{fig:gravity_convergence}. We still obtain
+plotted in \autoref{fig:gravity_convergence}. At low resolution We still obtain
 convergence slightly better than second-order, indicating that we 
 have not eliminated the geometrical problem of the mass distribution changing.
 
 The only way to fully eliminate this effect is to use a test problem that
-does not change with resolution. The obvious companion is a cube of
+does not change with resolution. The obvious companion problem is a cube of
 uniform density $\rho$, where now $R$ is half of the side length of
 the cube. At each resolution we use the same $R$ as for the sphere,
 which ensures that the cube always fills exactly the same fraction of
@@ -887,8 +895,8 @@ the cube is at the origin.}:
 \end{align}
 where $x_0 = R + x$, $x_1 = R - x$, $y_0 = R + y$, 
 $y_1 = R - y$, $z_0 = R + z$, $z_1 = R - z$, 
-and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. In
-\texttt{Fortran} and \texttt{C}, the inverse hyperbolic tangent used here is
+and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. We note that if implemented in 
+\texttt{Fortran} or \texttt{C}, the inverse hyperbolic tangent used here is
 \texttt{atanh} and the inverse tangent is \texttt{atan} (\textit{not}
 \texttt{atan2}). This formula is valid both inside and outside the
 cube. The normalized $L^2$ error for this problem is also shown
@@ -929,7 +937,7 @@ angular momentum when the equations are written in conservative form
 for linear momentum. (See also \cite{motl:2002} for an example of how 
 to evolve the hydrodynamics equations for angular momentum.) 
 The extent to which angular momentum conservation is violated
-will be a function of the resolution. When this is sufficiently high, 
+will be a function of the resolution. When the resolution is sufficiently high, 
 excellent conservation properties can result, as demonstrated in \autoref{sec:kepler}. 
 In particular, at reasonable resolution for a binary orbit our code 
 conserves angular momentum well enough that this no longer becomes 
@@ -955,7 +963,7 @@ $T$ is the rotation period, which is the most natural quantity to specify
 for a rotating stellar system. As described in the appendix, we include this source term
 in the edge state prediction in a way that is analogous to the gravity source.
 We evaluate all quantities at cell centers. We use the same predictor-corrector 
-approach that we use for the gravity source terms to the momentum equations. However, a slight 
+approach that we use for the gravity source terms to the momentum equations. A slight 
 difference is that the Coriolis force for each velocity component is coupled to other velocity 
 components. If the rotation is about the $z$-axis, then the discrete update to 
 $u^{n+1}$ depends on the value of $v^{n+1}$, and vice versa. If we fix the value of 
@@ -1014,12 +1022,12 @@ This order may matter because the Coriolis force depends on the fluid velocity, 
 in the predictor-corrector approach, we use the velocities both at 
 time-level $n$ and time-level $n+1$. If we update the latter with the gravitational force, 
 then the Coriolis force will see a different velocity than the one obtained through the 
-pure hydrodynamics step. (This does not matter for the energy equation in our new formulation,
+pure hydrodynamics step. (The energy equation does not face the same issue in our new formulation,
 because the velocities used are always the time-level $n+1/2$ values coming from the Riemann solver.)
 In practice, this will not matter significantly for our simulations in this work 
 because the centrifugal force plays the dominant role in maintaining stability of non-contact 
 binary systems, and the centrifugal force does not depend on the fluid velocity.
-However, this issue may be worth exploring in future work in situations where the Coriolis 
+This issue may be worth exploring in future work in situations where the Coriolis 
 term is non-negligible in determining the system evolution.
 
 In all simulations performed in a rotating reference frame, we transform all relevant
@@ -1176,15 +1184,15 @@ have commented on the importance of equilibrium initial conditions in
 determining the evolution of the system. As a consequence of starting 
 in a non-equilibrium setting, there are 
 large density and pressure gradients near the white dwarf surfaces
-that result in large amounts of mass flowing into the ambient
-medium. This can result in spurious non-physical consequences such as 
+that result in significant amounts of mass flowing out of the white dwarfs.
+This can result in spurious non-physical consequences such as 
 the total density or energy going negative in a zone. To compensate 
 for this, we start the simulation with a timestep that is a few orders 
 of magnitude smaller than that required by the CFL criterion, and allow
 the timestep to increase by 1\% each timestep so that the timestep reaches 
 its maximum allowed by the velocities on the grid over a span of approximately 
-1000 timesteps. This allows the ambient medium just outside the white dwarf
-to come closer to equilibrium with the surface without having 
+1000 timesteps. This allows the gas at the surface of the white dwarf
+to come closer to equilibrium without having 
 discontinuous jumps in the density or energy. For all simulations, 
 the maximum timestep is set to be equal to one-half of the CFL limit.
 
@@ -1200,9 +1208,15 @@ that the outer part of the domain is never tagged for refinement. In
 future work we will add criteria that tag for refinement the gas
 between the stars, which is expected to feature nuclear burning.
 
-We employ a ``sponge'' similar to that described by \citet{maestro3}
-for the outer regions of the computational domain. After the
-hydrodynamics update, we apply a damping force to the momentum
+Outside of the stars we fill the rest of the domain with a very low density 
+ambient gas because our hydrodynamics representation requires the density to be 
+non-zero everywhere. This ambient material can create difficulties for the simulation.
+In addition to the negative densities or energies at the stellar surfaces mentioned earlier, 
+in the rotating reference frame we observe that standing instabilities can create very 
+large velocities in the ambient fluid that drag down the global timestep by 
+up to an order of magnitude.  To deal with this we employ a ``sponge'' similar 
+to that described by \citet{maestro3} for the outer regions of the computational domain. 
+After the hydrodynamics update, we apply a damping force to the momentum
 equation as follows:
 \begin{equation}
   (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u}^{n+1})}{1 + (\Delta t / \Delta t_S) f_S},
@@ -1218,13 +1232,9 @@ smooth the sponge out between $r_S$ and $r_S^\prime$:
 For the simulations in this paper we set $r_S$ to be 75\% of the 
 distance from the origin to the domain boundaries, and $\Delta r_S$ so
 that the sponge extends another 10\% of that distance. The resulting profile 
-is displayed in Figure \autoref{fig:sponge}. We set $\Delta
+is displayed in \autoref{fig:sponge}. We set $\Delta
 t_S = 0.01$ s, which is of the same order as the CFL timestep
-for typical problem setups. We find that this sponge is necessary
-especially in the rotating reference frame, as standing instabilities
-can create very large velocities in the ambient fluid that drag down
-the global timestep by up to an order of magnitude.  This means, however, 
-that while the sponge is applied we should be cautious of imputing any physical 
+for typical problem setups. While the sponge is applied we should be cautious of imputing any physical 
 meaning to what is happening in the low-density gas far from the stars.
 \begin{figure}
   \centering
@@ -1248,11 +1258,11 @@ the total angular momentum, and the center of mass of the system.
 For stellar calculations, we separately record diagnostic 
 information about the stars. Our strategy for tracking their 
 locations is as follows: at the beginning of the calculation, we store the 
-physical center of mass $\mathbf{x}_{\text{COM}}$ of the stars as determined 
-by Kepler's third law. We also store the velocity $\mathbf{v}_{\text{COM}}$ 
+physical center of mass $\mathbf{x}_{c}$ of the stars as determined 
+by Kepler's third law. We also store the velocity $\mathbf{v}_{c}$ 
 of the stars. Then, at each new time step we make a preliminary guess for their 
 location by updating the location using the old velocity, 
-$\mathbf{x}_{\text{COM}} \rightarrow \mathbf{x}_{\text{COM}} + \mathbf{v}_{\text{COM}} \Delta t$.
+$\mathbf{x}_{c} \rightarrow \mathbf{x}_{c} + \mathbf{v}_{c} \Delta t$.
 We then refine our guess for the location and velocity of each star by computing a
 location-weighted sum of the mass and velocity over the computational domain. 
 To do this, we need a cutoff for determining what counts as part of the primary 
@@ -1270,6 +1280,10 @@ we compute the effective radius of each star at various density cutoffs. This in
 computing the volume $V$ of all zones within the Roche radius of the star's center 
 whose density is greater than the cutoff. We then compute $r_{\text{eff}} = (3V/4\pi)^{1/3}.$
 
+When we do simulations with adaptive-mesh refinement, there are multiple levels of refinement 
+that contribute to a global integral. To deal with this we employ a ``mask'' which zeros out 
+the data in a zone on a given level if there is a refined region overlying that zone.
+
 \subsubsection{Gravitational Waves}
 \label{sec:grvatational_waves}
 
@@ -1277,17 +1291,20 @@ A final diagnostic quantity we consider is the gravitational wave emission by th
 binary system. White dwarfs are not strongly affected by general relativistic effects;
 the orbital motions are much slower than the speed of light, and the relativity parameter 
 $GM / c^2 R$, which measures the ratio of the Schwarzschild radius of a mass $M$ to the actual 
-radius $R$ of the object, is much less than unity for a white dwarf. It is justified to 
-neglect any relativistic effects in computing the dynamical evolution of the system. However,
-the system emits gravitational waves during its evolution; this energy loss is what drives 
-the initial inspiral over very long timescales, and occurs at a greater rate during 
-the coalescence phase, though then being inconsequential on a dynamical timescale. The 
-frequency of the gravitational waves will be similar in size to the frequency of the 
-orbital motion, which is in the range 10-100 mHz for our problem. This is well outside 
-the range of currently existing gravitational wave detectors but is very well suited 
-for proposed space-based detectors such as eLISA.
+radius $R$ of the object, is much less than unity for a white dwarf. Thus at any given time the 
+relativistic effects are negligible compared to the Newtonian gravity and so we do not 
+directly include relativistic effects in computing the dynamical evolution of the system.
+A white dwarf binary system does emit gravitational waves during its evolution; this energy loss 
+is what drives the initial inspiral over very long timescales. Eventually it will drive the system 
+to become dynamically unstable due to the Newtonian tidal forces alone, though once that period begins, 
+the gravitational energy loss is inconsequential in affecting the dynamical evolution of the system. 
+The frequency of the gravitational waves emitted by the white dwarf binary 
+will be similar in size to the frequency of the orbital motion, which is in the range 
+10-100 mHz for our problem. This is well outside the range of currently existing 
+gravitational wave detectors but is very well suited for proposed space-based detectors such as eLISA.
 
-We follow the prescription of \citet{blanchet:1990}. At distances far from the 
+We follow the prescription of \citet{blanchet:1990} for computing a gravitational wave 
+signal for our simulation. At distances far from the 
 gravitational wave source, we can consider the leading term in the gravitational 
 wave signal:
 \begin{equation}
@@ -1310,9 +1327,8 @@ $Q_{kl}$ is the quadrupole moment tensor:
   Q_{kl} = \int dV \rho \left(x^k x^l - \frac{1}{3}\delta^{kl} \mathbf{x}^2\right).
 \end{equation}
 The argument $(t - r/c)$ indicates that to get the strain at time $t$ we evaluate the second derivative of the 
-quadrupole moment at the retarded time $t - r/c$. In practice we ignore this in calculating this strain,
-instead using the current simulation time, and so this merely yields a time delay of order $r/c$ between 
-when the waves are emitted and when we observe them. 
+quadrupole moment at the retarded time $t - r/c$. In practice the retarded time is simply the simulation time
+and the observer would see the gravitational waves after a time delay of order $r/c$.
 
 Therefore the primary component of the calculation is the evaluation of the second time derivative of $Q_{kl}$.
 Explicitly constructing a discretized form of this derivative, using the current state and the state at 
@@ -1328,8 +1344,7 @@ The symmetric trace-free (STF) operator is defined as:
 \end{equation}
 
 The strategy is then as follows. At the end of the coarse timestep, we first calculate $\ddot{Q}_{kl}$
-using an integral over the domain (using refined grids as usual by masking out the contributions from 
-coarse grids underlying more accurate fine grids). This quantity is independent of the observer. If we 
+using an integral over the domain. This quantity is independent of the observer. If we 
 are using a rotating reference frame, we first convert velocities and positions back to the inertial 
 frame before evaluating the integral. Then, 
 we pick an observing location $\mathbf{x}$ relative to the domain, evaluate the projection operator, 
@@ -1342,7 +1357,7 @@ the $x$, $y$ and $z$ axes. For the latter, as an example, $h_{+} = h_{11} = -h_{
 $h_{\times} = h_{12} = h_{21} \propto \ddot{Q}_{12}$. All other entries vanish. By default we take $r = 10$ kpc; 
 as shown by \citet{loren-aguilar:2005}, this is a typical distance scale over which an 
 experiment such as LISA could detect a coalescing binary white dwarf system. 
-However, the strain at any other distance is easily calculated and goes as the inverse of the distance.
+The strain at any other distance is easily calculated and goes as the inverse of the distance.
 
 
 
@@ -1432,17 +1447,17 @@ near the physical edge of the star.
 \autoref{fig:single_star_static_radius} shows our results at various
 resolutions.  As expected, the star quickly approaches an equilibrium
 size that is different (and in this case larger) than the
-one-dimensional model. However, the magnitude of this change becomes
+one-dimensional model, though the magnitude of this change becomes
 smaller with resolution. The star is only approximately in equilibrium 
 by this measure when the coarse grid of $256^3$ zones has a level of 
-refinement that jumps by a factor of four. However, even then there is a slight uptick
+refinement that jumps by a factor of four. Even then there is a slight uptick
 in the size toward the end, implying that the numerical stability is
 not guaranteed for arbitrarily long timescales. For another view, we 
 consider the kinetic energy on the grid, in \autoref{fig:single_star_static_ke}. 
 This is a more holistic measure that weights the contribution by the density. 
 At the end of the simulation the kinetic energy is not lower at the highest 
 resolution than at the lower resolutions. This result suggests
-that when doing the equilibrium initial models that will former the
+that when constructing the equilibrium initial models that will form the
 basis of later calculations, we should carefully monitor the evolution
 of the stars before applying any artificial damping to cause the
 merger, to ensure that the merger is due to this applied force and not
@@ -1465,7 +1480,7 @@ system mass $M$, but we disable the rotational source terms so that
 the stars start at rest in an inertial reference frame. 
 Thus the stars will simply begin moving toward each other.
 As long as the stars remain approximately spherical, the stars can be 
-treated as point masses (this only seriously breaks down after the stars
+treated as point masses (this approximation only seriously breaks down after the stars
 have come into contact). In dimensionless units where $r \to r / a$ and 
 $t \to 2\sqrt{2}\pi t / T$, the simple free fall equation of motion governing the
 distance $r$ between their centers of mass takes the form:
@@ -1491,7 +1506,7 @@ so that the point of contact would occur at $t = 1$. We actually stop the simula
 at $t = 0.9$, which is when the effects from the extended sizes of the stars
 starts to become important. The results of our simulation for our default $256^3$ zone 
 uniform grid are shown in \autoref{fig:freefall}. They show excellent agreement
-between the theory and the simulation results.
+between the analytical solution and the simulation results.
 
 \begin{figure}
   \centering
@@ -1514,10 +1529,10 @@ It is often stated in the literature that Eulerian methods for
 hydrodynamics with grids fixed in space do not obey the Galilean
 invariance of the underlying Euler equations, so that simulations
 moving at a uniform bulk velocity will appear different than an
-equivalent stationary simulation. If true, we need to understand 
+equivalent stationary simulation (e.g. \cite{arepo}). If true, we need to understand 
 the importance of this effect when deciding whether to trust the 
 output of a code like \castro\ when applied for merger problems.
-Recently, this has come up in two ways which are of note for us 
+Recently, concern for the issue of Galilean invariance has come up in two ways which are of note for us 
 in the present study. We will explain these situations and display 
 the results of tests we have run to determine whether this 
 actually is a significant concern for our study.
@@ -1533,7 +1548,8 @@ of the moving-mesh code AREPO being presented in that study, which
 demonstrated Galilean invariance even at large bulk velocities. 
 Inability to correctly model the Kelvin-Helmholtz instability would 
 have important consequences for how much we can trust the ability of 
-\castro\ to test the violent merger progenitor model. Shearing between 
+\castro\ to test the violent merger progenitor model, where a detonation 
+arises in the low-density material at the stellar surface. Shearing between 
 the material flowing out of the secondary and material near the 
 surface of the primary may trigger fluid
 instabilities that play an important role in the evolution of that
@@ -1573,12 +1589,14 @@ velocity, which substantially reduces the numerical
 diffusion. R10 argue that the differences seen
 between the moving-mesh and fixed-grid code are caused by the
 interaction of this numerical diffusion with small-scale instabilities
-(which may be physical or numerical) which couple with and
+(that may be physical or numerical) which couple with and
 fundamentally alter the large-scale modes. Small-scale instabilities
 are seeded by the choice of a sharp initial discontinuity between the 
 fluids in the problem posed by S10. Crucially though,
 R10 point out that this problem does not
-converge with resolution and so it is not possible to know the correct
+converge with resolution (because the initial perturbation is too sharp 
+and seeds numerical noise at the grid resolution level) 
+and so it is not possible to know the correct
 behavior of this problem. As such, we do not know whether the
 small-scale modes found in AREPO are real, and the problem is not
 useful in formally discriminating between methodologies. They instead
@@ -1667,13 +1685,13 @@ if the problem is numerically converged.
 
 We find the same result as R10 for IC A, which is equivalent to the 
 test proposed by S10: at low resolutions and high bulk velocity, the 
-Kelvin-Helmholtz instability completely fails to develop. However, 
+Kelvin-Helmholtz instability completely fails to develop. Furthermore 
 the problem does not converge even qualitatively at the highest 
 resolutions we used. Our results are very similar to Figure 3 of 
 R10 so we do not show them here. For IC B, our results can be seen 
 for the normal resolutions and all velocities in \autoref{fig:kh_p2}.
 At low resolutions and very large bulk velocities, the fluid 
-does get significantly disrupted by numerical error. However, this 
+does get significantly disrupted by numerical error. This 
 effect quickly converges away with resolution and qualitatively 
 at $512^2$ resolution the solution is nearly identical to the stationary 
 $v=0$ problem. We agree with R10 that this problem does converge 
@@ -1713,8 +1731,8 @@ other simulations presented here). We run this problem at all the same resolutio
 and bulk velocities as the previous two problems. The results for the normal resolutions 
 at $t = 2.0$ are displayed in \autoref{fig:kh_p3}. We see a similar pattern as for 
 the test proposed by R10: as we get to higher flow speeds we need to have higher 
-spatial resolution to compensate for the increased numerical diffusion. However, 
-the accuracy is much lower for the highest bulk velocities. This is probably because 
+spatial resolution to compensate for the increased numerical diffusion. The 
+accuracy is much lower for the highest bulk velocities. This is probably because 
 the initial conditions feature a transition that is twice as sharp (compare the $\Delta y$ 
 parameters in each case). This means that there are smaller scale numerical 
 perturbations on the grid, which can be amplified by numerical noise in the time 
@@ -1723,16 +1741,16 @@ evolution of the system.
 \citet{hopkins:2015} performed this test as part of the testing of
 their code GIZMO.  They showed the late-time evolution of this system,
 when non-linear effects have taken over and significantly disrupted
-the initial flow. However, at low resolution the tested grid algorithm
+the initial flow. At low resolution the tested grid algorithm
 had failed to disrupt both for $v = 0$ and $v = 10$. We too ran this
 problem until $t = 10$, and confirm that the Kelvin-Helmholtz
 instability damps out at low resolution but goes strongly non-linear
-and disrupts the flow at high resolution.  However, we strongly
+and disrupts the flow at high resolution.  We strongly
 emphasize the point that this does not objectively demonstrate a
 defiency in fixed-grid codes for this problem. We can only determine
 the validity of a method when we have a trustworthy, converged
 solution to compare to, and this is lacking for this problem at late
-times. As observed by \citeauthor{mcnally:2012}, this is because the
+times. As observed by \citeauthor{mcnally:2012}, this lack of a solution is because the
 secondary instabilities form for this problem when the whirls of the
 Kelvin-Helmholtz tendrils stretch out and create gradients that
 approach the grid resolution. This is prime breeding ground for
@@ -1760,7 +1778,7 @@ about the effect of the mixing on the nuclear burning.
 
 \subsubsection{Moving Star}\label{sec:moving_star}
 
-To see this effect in action for a stellar simulation, we repeated the
+To analyze the effects of velocity-dependent results for a stellar simulation, we repeated the
 test of \autoref{sec:HSE} with a bulk velocity on the grid. We chose a
 velocity of $2.56 \times 10^{8}\ \text{cm s}^{-1}$. For context, this is 
 comparable to the orbital velocities of the stars in \autoref{sec:kepler}, and the Mach
@@ -1781,9 +1799,7 @@ corner. This allowed us to evolve the star for the same length of
 time as for the original test. We note that getting the gravity
 boundary conditions right required us to move the origin of the
 problem at the bulk velocity, so that the multipole moments were
-computed with respect to the stellar center.  \MarginPar{are you
-  sure that the single WD left quiet in the {\em corner} of the
-  bigger domain is as stable as it was in the earlier test?}
+computed with respect to the stellar center.
 
 \begin{figure}
   \centering
@@ -1809,15 +1825,15 @@ of the simulation.  This again emphasizes the results mentioned
 earlier, that we must be careful not to trust any simulation with
 significant mass transfer if we are not confident that the mass
 transfer is seeded in a controllable manner and free from numerical
-noise.  \MarginPar{I really think that we should be able to do better here---this is where I'd like to see ppm\_type = 2, or better hydro-gravity coupling (eventually)}
+noise.
 
 \subsection{Keplerian Orbit}\label{sec:kepler}
 
 We now consider the phase of the binary system where the stars are orbiting each other 
 at distances great enough that the initial orbits should be approximately Keplerian. 
 There are a number of effects worth looking into here. For simplicity, we choose two 
-cases to demonstrate the simulation behavior: an equal mass case of two $0.9\msolar$ 
-white dwarfs, and an unequal mass case of $0.9\msolar$ and $0.6\msolar$ white dwarfs.
+cases to demonstrate the simulation behavior: an equal mass case of two $0.9\ \msolar$ 
+white dwarfs, and an unequal mass case of $0.9\ \msolar$ and $0.6\ \msolar$ white dwarfs.
 In each case, the initial orbital period is 100 seconds.
 
 For some of the algorithms described earlier in this work, a single orbit of these 
@@ -1840,7 +1856,7 @@ justifying our typical choice of maintaining terms up to $r^{-7}$.
            captured in the series expansion for the potential at the domain boundary.\label{fig:gravity_bcs}}
 \end{figure}
 
-Another that we consider is the energy conservation of the
+Another diagnostic that we consider is the energy conservation of the
 system. Recalling \autoref{sec:gravity_hydro_coupling}, there are
 several different methods of applying the gravitational source term to
 the hydrodynamics equations. In \castro\ we presently have four
@@ -1853,7 +1869,7 @@ source term has been applied, while ${\tt gs} = 1$ uses the uncorrected
 momenta in calculating $\rho \mathbf{u} g$. We have found ${\tt gs} = 2$ to be
 more accurate. ${\tt gs} = 3$ is entirely different: after calculating
 the new momenta, we reset the total energy to be equal to the internal
-energy plus the kinetic energy. This has the virtue of ensuring that
+energy plus the kinetic energy. This approach has the virtue of ensuring that
 there is no conflict due to discretization between the momentum and
 energy equations, and also correctly ensuring that the gravitational
 force does not directly change the internal energy---and thus the
@@ -1899,10 +1915,11 @@ co-rotating frame is different.  For clarity of visualization, we
 rotate these results back into the inertial frame before displaying
 their orbits.  The stellar orbit in the equal mass case does not show
 the same secular decline, and the system appears to be
-stable. However, the cost is that the oscillations about this
+stable. The cost is that the oscillations about this
 equilibrium are slightly larger than in the inertial frame. The
-unequal mass case displays this effect starkly: while the average
-distance is not declining, there are huge oscillations about this
+unequal mass case displays this effect starkly, to the point where the system 
+becomes unstable: while the average distance is not substantially declining, 
+there are huge oscillations about this
 average. In addition, the stars move substantially within the rotating
 frame itself, yielding the chaotic-looking orbits in the figure. The
 oscillations grow with time and will eventually cause the stars to
@@ -2028,7 +2045,7 @@ many thousands of processors simultaneously. It is worth briefly examining
 our strategy for parallelizing the problem over many computational nodes 
 and our performance in situations similar to production science simulations. 
 This is especially true because some aspects of our approach to parallelism 
-have changed since the first \castro\ paper, and we have obtained improved 
+have changed since the first \castro\ paper \citep{castro}, and we have obtained improved 
 performance in certain settings.
 
 The \boxlib\ framework that \castro\ is based on splits each AMR level into a number 
@@ -2044,7 +2061,7 @@ the amount of work owned by a processor is proportional to the number of grid ce
 associated with that processor, and the algorithm attempts to ensure that all 
 processors have a similar number of total grid cells. We demand an efficiency of 0.9,
 meaning that the average workload per processor should be no smaller than 90\% of the 
-maximum workload found on any processor. However, we find that in practice the 
+maximum workload found on any processor. We find that in practice the 
 performance is largely insensitive to this choice.
 
 The size and shape of grid boxes is an important consideration for efficiency. 
@@ -2190,7 +2207,7 @@ and cannot trust these techniques. We spent much time considering
 the role of bulk motions on the grid and we conclude that there 
 are real issues with substantial bulk velocities on static grids, 
 that can diminish the quality of the resulting solutions to the 
-fluid equations. However, these effects diminish with increasing 
+fluid equations, but that these effects diminish with increasing 
 resolution. We therefore make no explicit claims about the usefulness 
 of Langrangian versus Eulerian methods and instead simply observe 
 that whenever a simulation is performed, it is important to have 
@@ -2208,7 +2225,7 @@ constantly being in motion on the grid. It
 is not easy to predict the correct behavior of such systems, 
 though one recourse for assessing confidence in a model from a 
 verification standpoint is to see whether the observed 
-behavior converges with resolution. However, it is not clear 
+behavior converges with resolution. It is not clear 
 whether at practical resolutions the results in the 
 rotating and inertial frames will converge to each other.
 
@@ -2230,9 +2247,10 @@ these are possible under the framework we have established.
 
 \acknowledgments
 
-The authors thank Noel Scudder and Platon Karpov for their help with 
-this project, especially related to visualization of the results. 
-We also thank Adam Jacobs for his advice on and assistance with 
+The authors thank John Bell for helpful discussions on gravity 
+and hydrodynamics issues. We also thank Noel Scudder and Platon Karpov 
+for their help with this project, especially related to visualization of the results, 
+and Adam Jacobs for his advice on and assistance with 
 running on supercomputing resources. Special thanks are given 
 to the organizers of the 2015 Caltech Gravitational Wave 
 Astrophysics School, and their supporters: the NSF 
@@ -2357,7 +2375,7 @@ Again, ignoring flattening, if $u \ge 0$, then we have
 (where we used the fact that the eigenvectors are normalized to unity and
 don't mix in any other states when dealing with passive terms).  This
 is the expected behavior---we see a state that is traced only by the
-contact wave.  However, if $u < 0$ but $u + c \ge 0$, then we instead get:
+contact wave.  If $u < 0$ but $u + c \ge 0$, then we instead get:
 \begin{equation}
 \xi_{i+1/2,L}^{n+1/2} = \tilde{\xi}_L = \mathcal{I}^\evp_+(\xi_i)
 \end{equation}
