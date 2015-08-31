@@ -354,7 +354,7 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
   use meth_params_module, only: do_rotation, rot_period
-  use rot_sources_module, only: get_omega, cross_product
+  use rotation_module, only: get_omega, cross_product
   
   implicit none
 
@@ -774,7 +774,7 @@ subroutine get_omegasq(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO
     use prob_params_module, only: center
     use probdata_module, only: c, d_vector, rloc
-    use rot_sources_module, only: get_omega
+    use rotation_module, only: get_omega
 
     implicit none
     
@@ -860,7 +860,7 @@ subroutine get_bernoulli_const(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO, rot_period
     use prob_params_module, only: center
     use probdata_module, only: c, d_vector, rloc
-    use rot_sources_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega, cross_product
 
     implicit none
     
@@ -920,7 +920,7 @@ subroutine construct_enthalpy(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO, rot_period
     use prob_params_module, only: center
     use probdata_module
-    use rot_sources_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega, cross_product
 
     implicit none
     
@@ -1001,7 +1001,7 @@ subroutine update_density(lo,hi,domlo,domhi, &
     use prob_params_module, only: center
     use probdata_module, only: star_axis, get_ambient, h_max_P, h_max_S, enthalpy_min
     use eos_module
-    use rot_sources_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega, cross_product
 
     implicit none
     
