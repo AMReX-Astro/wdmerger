@@ -14,8 +14,8 @@
 
   interp_temp = T
 
-  damping = F
-  damping_alpha = 1.0d-2
+  orbital_damping = F
+  orbital_damping_alpha = 1.0d-2
 
   do_initial_relaxation = F
 
