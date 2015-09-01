@@ -98,22 +98,23 @@ module probdata_module
   ! Stores the effective Roche radii
   double precision :: roche_rad_P, roche_rad_S
 
-  ! Relaxation
+  ! Relaxation parameters
   logical          :: do_relax
   integer          :: relax_type ! 1 = SCF
-  double precision :: relax_tol
 
-  ! Data for SCF relaxation
-  double precision :: d_A, d_B, d_C
-  double precision :: h_max_P, h_max_S
-  double precision :: enthalpy_min
+  ! Input parameters for SCF relaxation
+  double precision :: scf_d_A, scf_d_B, scf_d_C
+  double precision :: scf_relax_tol
+  
+  ! Internal data for SCF relaxation
+  double precision :: scf_h_max_P, scf_h_max_S
+  double precision :: scf_enthalpy_min
+  double precision :: scf_rpos(3,3)         ! Relative position of points A, B, and C
+  double precision :: scf_d_vector(3,3)     ! Positions of points relative to system center
+  double precision :: scf_c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
+  integer          :: scf_rloc(3,3)         ! Indices of zones nearby to these points
 
-  double precision :: rpos(3,3)         ! Relative position of points A, B, and C
-  double precision :: d_vector(3,3)     ! Positions of points relative to system center
-  double precision :: c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
-  integer          :: rloc(3,3)         ! Indices of zones nearby to these points
-
-  ! Sponge
+  ! Sponge parameters
   double precision :: sponge_dist      ! Fraction of the domain size interior to which we should not sponge
   double precision :: sponge_width     ! Interval over which we should smooth out the sponging (in units of the domain size)
   double precision :: sponge_timescale ! Typical timescale to use in determining sponging strength
@@ -185,8 +186,8 @@ contains
          damping, damping_alpha, &
          do_relax, &
          relax_type, &
-         relax_tol, &
-         d_A, d_B, d_C, &
+         scf_d_A, scf_d_B, scf_d_C, &
+         scf_relax_tol, &
          ambient_density, &
          stellar_temp, ambient_temp, &
          max_he_wd_mass, &
@@ -248,11 +249,11 @@ contains
 
     do_relax = .false.
     relax_type = 1
-    relax_tol = 1.d-3
-    d_A = 1.0d9
-    d_B = 1.0d9
-    d_C = 1.8d9
-    enthalpy_min = 1.0d100
+
+    scf_d_A = 1.0d9
+    scf_d_B = 1.0d9
+    scf_d_C = 1.8d9
+    scf_relax_tol = 1.d-3
 
     bulk_velx = ZERO
     bulk_vely = ZERO
@@ -565,8 +566,8 @@ contains
 
            if (do_relax .and. relax_type .eq. 1) then
 
-              a_P_initial = d_A + model_P % radius
-              a_S_initial = d_B + model_S % radius
+              a_P_initial = scf_d_A + model_P % radius
+              a_S_initial = scf_d_B + model_S % radius
 
               a = a_P_initial + a_S_initial
 

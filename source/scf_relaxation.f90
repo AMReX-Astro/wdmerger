@@ -21,9 +21,9 @@ subroutine scf_setup_relaxation(dx, problo, probhi)
     ! Following Swesty, Wang and Calder (2000), and Motl et al. (2002), 
     ! we need to fix three points to uniquely determine an equilibrium 
     ! configuration for two unequal mass stars. We can do this by 
-    ! specifying d_A, the distance from the center of mass to the 
-    ! inner point of the primary; d_B, the distance from the center 
-    ! of mass to the inner point of the secondary; and d_C, the 
+    ! specifying scf_d_A, the distance from the center of mass to the 
+    ! inner point of the primary; scf_d_B, the distance from the center 
+    ! of mass to the inner point of the secondary; and scf_d_C, the 
     ! distance from the center of mass to the outer point of the secondary. 
     ! We give these widths in physical units, so in general these will 
     ! be locations on the grid that are not coincident with a corner. 
@@ -35,13 +35,13 @@ subroutine scf_setup_relaxation(dx, problo, probhi)
     ncell = NINT( (probhi - problo) / dx )
 
     do n = 1, 3
-       d_vector(:,n) = center
+       scf_d_vector(:,n) = center
        if (n .eq. 1) then
-          d_vector(star_axis,n) = d_vector(star_axis,n) - d_A
+          scf_d_vector(star_axis,n) = scf_d_vector(star_axis,n) - scf_d_A
        else if (n .eq. 2) then
-          d_vector(star_axis,n) = d_vector(star_axis,n) + d_B
+          scf_d_vector(star_axis,n) = scf_d_vector(star_axis,n) + scf_d_B
        else if (n .eq. 3) then
-          d_vector(star_axis,n) = d_vector(star_axis,n) + d_C
+          scf_d_vector(star_axis,n) = scf_d_vector(star_axis,n) + scf_d_C
        endif
     enddo
 
@@ -50,31 +50,31 @@ subroutine scf_setup_relaxation(dx, problo, probhi)
     ! which is what we want here since we want the lower left.
 
     do n = 1, 3
-       rloc(:,n) = INT( (d_vector(:,n) + dx(:)/TWO) / dx(:)) + ncell / 2 - 1
+       scf_rloc(:,n) = INT( (scf_d_vector(:,n) + dx(:)/TWO) / dx(:)) + ncell / 2 - 1
     enddo
 
     ! Obtain the location of these points relative to the cube surrounding them.
     ! The lower left corner is at (0,0,0) and the upper right corner is at (1,1,1).
 
     do n = 1, 3
-       pos_l = (rloc(:,n) - ncell / 2 + HALF) * dx
-       rpos(:,n) = (d_vector(:,n) - pos_l) / dx(:)
+       pos_l = (scf_rloc(:,n) - ncell / 2 + HALF) * dx
+       scf_rpos(:,n) = (scf_d_vector(:,n) - pos_l) / dx(:)
     enddo
 
     ! Determine the tri-linear coefficients
 
     do n = 1, 3
-       x = rpos(1,n)
-       y = rpos(2,n)
-       z = rpos(3,n)
-       c(0,0,0,n) = (ONE - x) * (ONE - y) * (ONE - z)
-       c(1,0,0,n) = x         * (ONE - y) * (ONE - z)
-       c(0,1,0,n) = (ONE - x) * y         * (ONE - z)
-       c(1,1,0,n) = x         * y         * (ONE - z)
-       c(0,0,1,n) = (ONE - x) * (ONE - y) * z
-       c(1,0,1,n) = x         * (ONE - y) * z
-       c(0,1,1,n) = (ONE - x) * y         * z
-       c(1,1,1,n) = x         * y         * z
+       x = scf_rpos(1,n)
+       y = scf_rpos(2,n)
+       z = scf_rpos(3,n)
+       scf_c(0,0,0,n) = (ONE - x) * (ONE - y) * (ONE - z)
+       scf_c(1,0,0,n) = x         * (ONE - y) * (ONE - z)
+       scf_c(0,1,0,n) = (ONE - x) * y         * (ONE - z)
+       scf_c(1,1,0,n) = x         * y         * (ONE - z)
+       scf_c(0,0,1,n) = (ONE - x) * (ONE - y) * z
+       scf_c(1,0,1,n) = x         * (ONE - y) * z
+       scf_c(0,1,1,n) = (ONE - x) * y         * z
+       scf_c(1,1,1,n) = x         * y         * z
     enddo
 
     ! Convert the maximum densities into maximum enthalpies.
@@ -85,7 +85,7 @@ subroutine scf_setup_relaxation(dx, problo, probhi)
 
     call eos(eos_input_rt, eos_state)
 
-    h_max_P = eos_state % h
+    scf_h_max_P = eos_state % h
 
     eos_state % T   = model_S % central_temp
     eos_state % rho = model_S % central_density
@@ -93,7 +93,7 @@ subroutine scf_setup_relaxation(dx, problo, probhi)
 
     call eos(eos_input_rt, eos_state)
     
-    h_max_S = eos_state % h
+    scf_h_max_S = eos_state % h
 
     ! Determine the lowest possible enthalpy that can be 
     ! obtained by the EOS; this is useful for protecting
@@ -102,13 +102,15 @@ subroutine scf_setup_relaxation(dx, problo, probhi)
 
     eos_state = ambient_state
 
+    scf_enthalpy_min = 1.0d100
+
     do while (eos_state % rho < 1.d11)
 
       eos_state % rho = eos_state % rho * 1.1
 
       call eos(eos_input_rt, eos_state)
 
-      if (eos_state % h < enthalpy_min) enthalpy_min = eos_state % h
+      if (eos_state % h < scf_enthalpy_min) scf_enthalpy_min = eos_state % h
 
     enddo
 
@@ -118,20 +120,20 @@ end subroutine scf_setup_relaxation
 
 subroutine scf_get_coeff_info(loc_A,loc_B,loc_C,c_A,c_B,c_C)
 
-  use probdata_module, only: rloc, c
+  use probdata_module, only: scf_rloc, scf_c
 
   implicit none
 
   integer,          intent(inout) :: loc_A(3), loc_B(3), loc_C(3)
   double precision, intent(inout) :: c_A(2,2,2), c_B(2,2,2), c_C(2,2,2)
   
-  loc_A(:) = rloc(:,1)
-  loc_B(:) = rloc(:,2)
-  loc_C(:) = rloc(:,3)
+  loc_A(:) = scf_rloc(:,1)
+  loc_B(:) = scf_rloc(:,2)
+  loc_C(:) = scf_rloc(:,3)
 
-  c_A(:,:,:) = c(:,:,:,1)
-  c_B(:,:,:) = c(:,:,:,2)
-  c_C(:,:,:) = c(:,:,:,3)
+  c_A(:,:,:) = scf_c(:,:,:,1)
+  c_B(:,:,:) = scf_c(:,:,:,2)
+  c_C(:,:,:) = scf_c(:,:,:,3)
 
 end subroutine scf_get_coeff_info
 
@@ -145,7 +147,7 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
     use bl_constants_module, only: ONE, TWO
     use meth_params_module, only: NVAR, URHO
     use prob_params_module, only: center
-    use probdata_module, only: c, d_vector, rloc
+    use probdata_module, only: scf_c, scf_d_vector, scf_rloc
     use rot_sources_module, only: get_omega
 
     implicit none
@@ -173,30 +175,32 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
     ! The rotational potential is then given by:
     ! (1/2) * | omega x r |^2 = (1/2) |omega|^2 |r|^2 sin^2(theta)
 
-    theta2 = acos( dot_product(omega,d_vector(:,2)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,2)**2))) )
-    theta3 = acos( dot_product(omega,d_vector(:,3)) / (sqrt(sum(omega**2)) * sqrt(sum(d_vector(:,3)**2))) )
+    theta2 = acos( dot_product(omega,scf_d_vector(:,2)) / (sqrt(sum(omega**2)) * sqrt(sum(scf_d_vector(:,2)**2))) )
+    theta3 = acos( dot_product(omega,scf_d_vector(:,3)) / (sqrt(sum(omega**2)) * sqrt(sum(scf_d_vector(:,3)**2))) )
 
-    do k = rloc(3,2), rloc(3,2) + 1
-       do j = rloc(2,2), rloc(2,2) + 1
-          do i = rloc(1,2), rloc(1,2) + 1
+    do k = scf_rloc(3,2), scf_rloc(3,2) + 1
+       do j = scf_rloc(2,2), scf_rloc(2,2) + 1
+          do i = scf_rloc(1,2), scf_rloc(1,2) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
 
-                omegasq = omegasq - c(i-rloc(1,2),j-rloc(2,2),k-rloc(3,2),2) &
-                        * TWO * phi(i,j,k) / (sin(theta3)**2 * sum(d_vector(:,3)**2) - sin(theta2)**2 * sum(d_vector(:,2)**2))
+                omegasq = omegasq - scf_c(i-scf_rloc(1,2),j-scf_rloc(2,2),k-scf_rloc(3,2),2) &
+                        * TWO * phi(i,j,k) / &
+                        (sin(theta3)**2 * sum(scf_d_vector(:,3)**2) - sin(theta2)**2 * sum(scf_d_vector(:,2)**2))
              endif
           enddo
        enddo
     enddo
 
-    do k = rloc(3,3), rloc(3,3) + 1
-       do j = rloc(2,3), rloc(2,3) + 1
-          do i = rloc(1,3), rloc(1,3) + 1
+    do k = scf_rloc(3,3), scf_rloc(3,3) + 1
+       do j = scf_rloc(2,3), scf_rloc(2,3) + 1
+          do i = scf_rloc(1,3), scf_rloc(1,3) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
 
-                omegasq = omegasq + c(i-rloc(1,3),j-rloc(2,3),k-rloc(3,3),3) &
-                        * TWO * phi(i,j,k) / (sin(theta3)**2 * sum(d_vector(:,3)**2) - sin(theta2)**2 * sum(d_vector(:,2)**2))
+                omegasq = omegasq + scf_c(i-scf_rloc(1,3),j-scf_rloc(2,3),k-scf_rloc(3,3),3) &
+                        * TWO * phi(i,j,k) / &
+                        (sin(theta3)**2 * sum(scf_d_vector(:,3)**2) - sin(theta2)**2 * sum(scf_d_vector(:,2)**2))
 
              endif
           enddo
@@ -217,7 +221,7 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR, URHO, rot_period
     use prob_params_module, only: center
-    use probdata_module, only: c, d_vector, rloc
+    use probdata_module, only: scf_c, scf_d_vector, scf_rloc
     use rot_sources_module, only: get_omega, cross_product
 
     implicit none
@@ -237,25 +241,25 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
-    do k = rloc(3,1), rloc(3,1)+1
-       do j = rloc(2,1), rloc(2,1)+1
-          do i = rloc(1,1), rloc(1,1)+1
+    do k = scf_rloc(3,1), scf_rloc(3,1)+1
+       do j = scf_rloc(2,1), scf_rloc(2,1)+1
+          do i = scf_rloc(1,1), scf_rloc(1,1)+1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
-                bernoulli_1 = bernoulli_1 + c(i-rloc(1,1),j-rloc(2,1),k-rloc(3,1),1) &
-                            * (phi(i,j,k) - HALF * sum(cross_product(omega, d_vector(:,1))**2))
+                bernoulli_1 = bernoulli_1 + scf_c(i-scf_rloc(1,1),j-scf_rloc(2,1),k-scf_rloc(3,1),1) &
+                            * (phi(i,j,k) - HALF * sum(cross_product(omega, scf_d_vector(:,1))**2))
              endif
           enddo
        enddo
     enddo
 
-    do k = rloc(3,2), rloc(3,2) + 1
-       do j = rloc(2,2), rloc(2,2) + 1
-          do i = rloc(1,2), rloc(1,2) + 1
+    do k = scf_rloc(3,2), scf_rloc(3,2) + 1
+       do j = scf_rloc(2,2), scf_rloc(2,2) + 1
+          do i = scf_rloc(1,2), scf_rloc(1,2) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
-                bernoulli_2 = bernoulli_2 + c(i-rloc(1,2),j-rloc(2,2),k-rloc(3,2),2) &
-                            * (phi(i,j,k) - HALF * sum(cross_product(omega, d_vector(:,2))**2))
+                bernoulli_2 = bernoulli_2 + scf_c(i-scf_rloc(1,2),j-scf_rloc(2,2),k-scf_rloc(3,2),2) &
+                            * (phi(i,j,k) - HALF * sum(cross_product(omega, scf_d_vector(:,2))**2))
              endif
           enddo
        enddo
@@ -357,7 +361,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS, rot_period
     use network, only: nspec
     use prob_params_module, only: center
-    use probdata_module, only: star_axis, get_ambient, h_max_P, h_max_S, enthalpy_min
+    use probdata_module, only: star_axis, get_ambient, scf_h_max_P, scf_h_max_S, scf_enthalpy_min
     use eos_module
     use rot_sources_module, only: get_omega, cross_product
 
@@ -407,9 +411,9 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
              ! Rescale the enthalpy by the maximum value.
 
              if (r(star_axis) .lt. ZERO) then
-                enthalpy(i,j,k) = h_max_P * (enthalpy(i,j,k) / h_max_1)
+                enthalpy(i,j,k) = scf_h_max_P * (enthalpy(i,j,k) / h_max_1)
              else
-                enthalpy(i,j,k) = h_max_S * (enthalpy(i,j,k) / h_max_2)
+                enthalpy(i,j,k) = scf_h_max_S * (enthalpy(i,j,k) / h_max_2)
              endif
 
              ! We only want to call the EOS for zones with enthalpy > 0,
@@ -418,7 +422,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
              ! spuriously positive. So we'll only consider zones within 75%
              ! of the distance from the center.
 
-             if (enthalpy(i,j,k) > enthalpy_min .and. sum(r**2) .lt. max_dist**2) then
+             if (enthalpy(i,j,k) > scf_enthalpy_min .and. sum(r**2) .lt. max_dist**2) then
 
                 eos_state % T   = state(i,j,k,UTEMP)
                 eos_state % h   = enthalpy(i,j,k)
@@ -477,7 +481,7 @@ subroutine scf_check_convergence(kin_eng, pot_eng, int_eng, &
                                  delta_rho, l2_norm, &
                                  is_relaxed, num_iterations)
 
-  use probdata_module, only: relax_tol, ioproc
+  use probdata_module, only: scf_relax_tol, ioproc
   use meth_params_module, only: rot_period
   use multifab_module
   use bl_constants_module, only: THREE
@@ -497,7 +501,7 @@ subroutine scf_check_convergence(kin_eng, pot_eng, int_eng, &
 
   virial_error = abs(TWO * kin_eng + pot_eng + THREE * int_eng) / abs(pot_eng)
 
-  if (l2_norm .lt. relax_tol) then
+  if (l2_norm .lt. scf_relax_tol) then
     is_relaxed = 1
   endif
 
