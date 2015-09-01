@@ -5,8 +5,6 @@
 
 #include "ParmParse.H"
 
-int Castro::do_relax = 0;
-
 //
 // This function computes the center-of-mass locations (and velocities of the center of masses)
 // of the primary and secondary white dwarfs.
@@ -320,9 +318,11 @@ void Castro::problem_post_init() {
     if (level > 0)
         return;
 
-    ParmParse pp("castro");
+    // Determine whether we are doing a relaxation step (from the probin file)
 
-    pp.query("do_relax", do_relax);
+    int do_relax = 0;
+
+    BL_FORT_PROC_CALL(GET_DO_RELAX,get_do_relax)(do_relax);
 
     if (do_relax) {
 

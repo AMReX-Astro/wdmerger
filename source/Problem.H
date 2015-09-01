@@ -31,7 +31,3 @@ void problem_post_init();
 // Self-consistent field relaxation routine.
 
 void scf_relaxation();
-
-// Parameter that controls whether we do a post-initialization relaxation.
-
-static int do_relax;

@@ -652,7 +652,7 @@ end subroutine update_center
 
 
 
-! Updates the CASTRO rotational period
+! Updates the CASTRO rotational period.
 
 subroutine set_period(period)
 
@@ -666,6 +666,26 @@ subroutine set_period(period)
 
 end subroutine set_period
 
+
+
+
+! Returns whether we are doing a relaxation step.
+
+subroutine get_do_relax(do_relax_out)
+
+  use probdata_module, only: do_relax
+
+  implicit none
+
+  integer :: do_relax_out
+
+  if (do_relax) then
+     do_relax_out = 1
+  else
+     do_relax_out = 0
+  endif
+
+end subroutine
 
 
 
