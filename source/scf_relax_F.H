@@ -10,13 +10,14 @@ BL_FORT_PROC_DECL(SCF_GET_OMEGASQ,scf_get_omegasq)
    (const int lo[], const int hi[], const int domlo[], const int domhi[],
     BL_FORT_FAB_ARG(state),
     BL_FORT_FAB_ARG(phi),
-    const Real dx[], const Real problo[], const Real probhi[], Real* omegasq);
+    const Real dx[], const Real problo[], const Real probhi[], 
+    const Real* time, Real* omegasq);
 
 BL_FORT_PROC_DECL(SCF_GET_BERNOULLI_CONST,scf_get_bernoulli_const)
    (const int lo[], const int hi[], const int domlo[], const int domhi[],
     BL_FORT_FAB_ARG(state),
     BL_FORT_FAB_ARG(phi),
-    const Real dx[], const Real problo[], const Real probhi[], 
+    const Real dx[], const Real problo[], const Real probhi[], const Real* time,
     Real* bernoulli_1, Real* bernoulli_2);
 
 BL_FORT_PROC_DECL(SCF_CONSTRUCT_ENTHALPY,scf_construct_enthalpy)
@@ -24,7 +25,7 @@ BL_FORT_PROC_DECL(SCF_CONSTRUCT_ENTHALPY,scf_construct_enthalpy)
     BL_FORT_FAB_ARG(state),
     BL_FORT_FAB_ARG(phi),
     BL_FORT_FAB_ARG(enthalpy),
-    const Real dx[], const Real problo[], const Real probhi[], 
+    const Real dx[], const Real problo[], const Real probhi[], const Real* time,
     Real* bernoulli_1, Real* bernoulli_2, Real* h_max_1, Real* h_max_2);
 
 BL_FORT_PROC_DECL(SCF_UPDATE_DENSITY,scf_update_density)
@@ -32,7 +33,7 @@ BL_FORT_PROC_DECL(SCF_UPDATE_DENSITY,scf_update_density)
     BL_FORT_FAB_ARG(state),
     BL_FORT_FAB_ARG(phi),
     BL_FORT_FAB_ARG(enthalpy),
-    const Real dx[], const Real problo[], const Real probhi[], 
+    const Real dx[], const Real problo[], const Real probhi[], const Real* time,
     Real* h_max_1, Real* h_max_2,
     Real* kin_eng, Real* pot_eng, Real* int_eng,
     Real* left_mass, Real* right_mass,

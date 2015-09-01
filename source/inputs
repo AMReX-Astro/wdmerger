@@ -40,6 +40,7 @@ castro.hi_bc = 2 2 2                               # Boundary conditions on hi x
 ############################################################################################
 
 amr.n_cell = 256 256 256                           # Number of cells on the coarse grid
+amr.n_cell = 64 64 64
 
 amr.max_level = 0                                  # Maximum level number allowed
 
@@ -63,6 +64,7 @@ castro.do_sponge = 1                               # Whether or not to apply the
 castro.add_ext_src = 1                             # Whether or not to apply external source terms
 castro.do_rotation = 1                             # Whether or not to include the rotation source term
 castro.rotational_period = 100.0                   # Rotational period of the rotating reference frame
+castro.rotational_period_dot = -0.0                # Time rate of change of the rotational period
 
 ############################################################################################
 # PPM options

@@ -398,7 +398,7 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
   dQtt(:,:) = ZERO
 
   if (do_rotation .eq. 1) then
-     omega = get_omega()
+     omega = get_omega(time)
   else
      omega = ZERO
   endif

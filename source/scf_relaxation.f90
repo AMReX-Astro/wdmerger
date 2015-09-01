@@ -142,7 +142,7 @@ end subroutine scf_get_coeff_info
 subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
                            state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
                            phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                           dx,problo,probhi,omegasq)
+                           dx,problo,probhi,time,omegasq)
 
     use bl_constants_module, only: ONE, TWO
     use meth_params_module, only: NVAR, URHO
@@ -155,7 +155,7 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
     integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
     integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: problo(3), probhi(3), dx(3), time
     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
     double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
     double precision :: omegasq
@@ -165,7 +165,7 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))    
 
-    omega = get_omega()
+    omega = get_omega(time)
 
     ! To ensure that this process is fully general for any orientation of
     ! the rotation axis with respect to the stellar configuration, 
@@ -216,7 +216,7 @@ end subroutine scf_get_omegasq
 subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
                                    state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
                                    phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                                   dx,problo,probhi,bernoulli_1,bernoulli_2)
+                                   dx,problo,probhi,time,bernoulli_1,bernoulli_2)
 
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR, URHO, rot_period
@@ -229,7 +229,7 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
     integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
     integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: problo(3), probhi(3), dx(3), time
     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
     double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
     double precision :: bernoulli_1, bernoulli_2
@@ -237,7 +237,7 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
     integer          :: i, j, k
     double precision :: omega(3)
 
-    omega = get_omega()
+    omega = get_omega(time)
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
@@ -275,7 +275,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
                                   state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
                                   phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
                                   enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
-                                  dx,problo,probhi,&
+                                  dx,problo,probhi,time, &
                                   bernoulli_1,bernoulli_2,h_max_1,h_max_2)
 
     use bl_constants_module, only: ZERO, HALF, ONE, TWO, M_PI
@@ -290,7 +290,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
     integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
     integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
     integer          :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
-    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: problo(3), probhi(3), dx(3), time
     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
     double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
     double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
@@ -299,7 +299,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
     integer          :: i, j, k
     double precision :: r(3), omega(3), max_dist
 
-    omega = get_omega()
+    omega = get_omega(time)
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
@@ -351,7 +351,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
                               state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
                               phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
                               enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
-                              dx,problo,probhi, &
+                              dx,problo,probhi,time, &
                               h_max_1,h_max_2, &
                               kin_eng, pot_eng, int_eng, &
                               left_mass, right_mass, &
@@ -371,7 +371,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
     integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
     integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
     integer :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
-    double precision :: problo(3), probhi(3), dx(3)
+    double precision :: problo(3), probhi(3), dx(3), time
     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
     double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
     double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
@@ -395,7 +395,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
 
     max_dist = 0.75 * max(maxval(abs(probhi-center)), maxval(abs(problo-center)))
 
-    omega = get_omega()
+    omega = get_omega(time)
 
     call get_ambient(ambient_state)
 

@@ -70,7 +70,7 @@
 
      call get_ambient(ambient_state)
 
-     omega = get_omega()
+     omega = get_omega(time)
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)

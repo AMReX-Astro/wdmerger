@@ -14,9 +14,6 @@
 
   interp_temp = T
 
-  orbital_damping = F
-  orbital_damping_alpha = 1.0d-2
-
   do_initial_relaxation = F
 
   do_scf_initial_models = F

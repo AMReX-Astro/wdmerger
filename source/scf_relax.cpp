@@ -51,8 +51,8 @@ void Castro::scf_relaxation() {
 
   MultiFab& phi = get_new_data(PhiGrav_Type);
 
-  int ns          = NUM_STATE;
-  Real cur_time   = state[State_Type].curTime();
+  int ns    = NUM_STATE;
+  Real time = state[State_Type].curTime();
 
   // Iterate until the system is relaxed by filling the level data 
   // and then doing a multilevel gravity solve.
@@ -80,7 +80,7 @@ void Castro::scf_relaxation() {
 	 (lo, hi, domlo, domhi,
 	  BL_TO_FORTRAN(S_new[mfi]),
 	  BL_TO_FORTRAN(phi[mfi]),
-	  dx, problo, probhi, &osq);
+	  dx, problo, probhi, &time, &osq);
 
        omegasq += osq;
 
@@ -124,7 +124,7 @@ void Castro::scf_relaxation() {
 	 (lo, hi, domlo, domhi,
 	  BL_TO_FORTRAN(S_new[mfi]),
 	  BL_TO_FORTRAN(phi[mfi]),
-	  dx, problo, probhi, &b1, &b2);
+	  dx, problo, probhi, &time, &b1, &b2);
 
        bernoulli_1 += b1;
        bernoulli_2 += b2;
@@ -164,7 +164,7 @@ void Castro::scf_relaxation() {
 	  BL_TO_FORTRAN(S_new[mfi]),
 	  BL_TO_FORTRAN(phi[mfi]),
 	  BL_TO_FORTRAN(enthalpy[mfi]),
-	  dx, problo, probhi, 
+	  dx, problo, probhi, &time,  
 	  &bernoulli_1, &bernoulli_2, &h1, &h2);
 
        if (h1 > h_max_1) h_max_1 = h1;
@@ -212,7 +212,7 @@ void Castro::scf_relaxation() {
 	  BL_TO_FORTRAN(S_new[mfi]),
 	  BL_TO_FORTRAN(phi[mfi]),
 	  BL_TO_FORTRAN(enthalpy[mfi]),
-	  dx, problo, probhi, 
+	  dx, problo, probhi, &time, 
 	  &h_max_1, &h_max_2,
 	  &ke, &pe, &ie,
 	  &lm, &rm,
@@ -268,7 +268,7 @@ void Castro::scf_relaxation() {
   {
      BoxArray ba = getLevel(k).boxArray();
      MultiFab grav_vec_new(ba,BL_SPACEDIM,0,Fab_allocate);
-     gravity->get_new_grav_vector(k,grav_vec_new,cur_time);
+     gravity->get_new_grav_vector(k,grav_vec_new,time);
   }
 
 }

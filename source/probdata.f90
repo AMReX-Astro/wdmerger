@@ -48,10 +48,6 @@ module probdata_module
   ! separate the WDs by.
   double precision :: collision_separation
 
-  ! Orbital damping
-  logical          :: orbital_damping
-  double precision :: orbital_damping_alpha
-
   ! Binary properties
   double precision :: a_P_initial, a_S_initial, a  
   double precision :: center_P_initial(3), center_S_initial(3)
@@ -184,7 +180,6 @@ contains
          collision, &
          collision_separation, &
          interp_temp, &
-         orbital_damping, orbital_damping_alpha, &
          do_initial_relaxation, &
          do_scf_initial_models, &
          scf_d_A, scf_d_B, scf_d_C, &
@@ -242,9 +237,6 @@ contains
     collision_separation = 4.0
 
     interp_temp = .false.
-
-    orbital_damping  = .false.
-    orbital_damping_alpha = 1.d-2
 
     star_axis = 1
     initial_motion_dir = 2
