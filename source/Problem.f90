@@ -123,7 +123,7 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
 
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo
-  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star, roche_rad_P, roche_rad_S
+  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
 
   implicit none
 
@@ -145,52 +145,66 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
   double precision, intent(inout) :: m_p, m_s
 
   integer          :: i, j, k
-  double precision :: x, y, z, r_p, r_s
+  double precision :: r(3), r_p, r_s, grav_force_P, grav_force_S
   double precision :: dV, dm
 
   ! If the stars have merged, then the Roche radius of the secondary will be zero (or effectively close).
-  ! In such a situation, we want to terminate this calculation gracefully. The simplest fix is simply by just returning zero for 
-  ! everything;
-  ! there is 
+  ! In such a situation, we want to terminate this calculation gracefully. 
+  ! The simplest fix is simply by just returning zero for everything;
 
   ! Volume of a zone
 
   dV = dx(1) * dx(2) * dx(3)
 
   ! Now, add to the COM locations and velocities depending on whether we're closer
-  ! to the primary or the secondary.
+  ! to the primary or the secondary. Note that in this routine we actually are 
+  ! summing mass-weighted quantities for the COM and the velocity; 
+  ! we will account for this at the end of the calculation in 
+  ! sum_integrated_quantities() by dividing by the mass.
+
+  ! We determine whether a zone is in the region corresponding to one star 
+  ! or the other depending on which star is exerting a stronger gravitational 
+  ! force on that zone.
 
   do k = lo(3), hi(3)
-     z = problo(3) + (dble(k) + HALF) * dx(3)
+     r(3) = problo(3) + (dble(k) + HALF) * dx(3)
      do j = lo(2), hi(2)
-        y = problo(2) + (dble(j) + HALF) * dx(2)
+        r(2) = problo(2) + (dble(j) + HALF) * dx(2)
         do i = lo(1), hi(1)
-           x = problo(1) + (dble(i) + HALF) * dx(1)
+           r(1) = problo(1) + (dble(i) + HALF) * dx(1)
 
-           r_P = ( (x - com_P(1))**2 + (y - com_P(2))**2 + (z - com_P(3))**2 )**0.5
-           r_S = ( (x - com_S(1))**2 + (y - com_S(2))**2 + (z - com_S(3))**2 )**0.5
+           r_P = sqrt(sum((r - com_P)**2))
+           r_S = sqrt(sum((r - com_S)**2))
 
            dm = rho(i,j,k) * dV
+
+           grav_force_P = mass_P / r_P
+
+           if (single_star .or. mass_S < 1d-12 * mass_P) then
+              grav_force_S = ZERO
+           else
+              grav_force_S = mass_S / r_S
+           endif
            
-           if (r_P < roche_rad_P .or. single_star) then
+           if (grav_force_P > grav_force_S) then
 
               m_p = m_p + dm
 
-              com_p_x = com_p_x + dm * x
-              com_p_y = com_p_y + dm * y
-              com_p_z = com_p_z + dm * z
+              com_p_x = com_p_x + dm * r(1)
+              com_p_y = com_p_y + dm * r(2)
+              com_p_z = com_p_z + dm * r(3)
 
               vel_p_x = vel_p_x + xmom(i,j,k) * dV
               vel_p_y = vel_p_y + ymom(i,j,k) * dV
               vel_p_z = vel_p_z + zmom(i,j,k) * dV
 
-           else if (r_S < roche_rad_S) then
+           else
 
               m_s = m_s + dm
 
-              com_s_x = com_s_x + dm * x
-              com_s_y = com_s_y + dm * y
-              com_s_z = com_s_z + dm * z
+              com_s_x = com_s_x + dm * r(1)
+              com_s_y = com_s_y + dm * r(2)
+              com_s_z = com_s_z + dm * r(3)
 
               vel_s_x = vel_s_x + xmom(i,j,k) * dV
               vel_s_y = vel_s_y + ymom(i,j,k) * dV
@@ -210,13 +224,13 @@ end subroutine wdcom
 ! and given a density cutoff, computes the total volume of all zones
 ! whose density is greater or equal to that density cutoff.
 ! We also impose a distance requirement so that we only look 
-! at zones that are within the effective Roche radius of the white dwarf.
+! at zones within the Roche lobe of the white dwarf.
 
 subroutine ca_volumeindensityboundary(rho,r_l1,r_l2,r_l3,r_h1,r_h2,r_h3,lo,hi,dx,&
                                       volp,vols,rho_cutoff)
 
   use bl_constants_module
-  use probdata_module, only: mass_P, mass_S, com_P, com_S, roche_rad_P, roche_rad_S, single_star
+  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
   use prob_params_module, only: problo
 
   implicit none
@@ -226,29 +240,35 @@ subroutine ca_volumeindensityboundary(rho,r_l1,r_l2,r_l3,r_h1,r_h2,r_h3,lo,hi,dx
   double precision :: rho(r_l1:r_h1,r_l2:r_h2,r_l3:r_h3)
 
   integer          :: i, j, k
-  double precision :: x, y, z
   double precision :: dV
-  double precision :: r_P, r_S
+  double precision :: r(3), r_P, r_S, grav_force_P, grav_force_S
 
   dV  = dx(1)*dx(2)*dx(3)
   volp = ZERO
   vols = ZERO
 
   do k = lo(3), hi(3)
-     z = problo(3) + (dble(k) + HALF) * dx(3)
+     r(3) = problo(3) + (dble(k) + HALF) * dx(3)
      do j = lo(2), hi(2)
-        y = problo(2) + (dble(j) + HALF) * dx(2)
+        r(2) = problo(2) + (dble(j) + HALF) * dx(2)
         do i = lo(1), hi(1)
-           x = problo(1) + (dble(i) + HALF) * dx(1)
+           r(1) = problo(1) + (dble(i) + HALF) * dx(1)
 
            if (rho(i,j,k) > rho_cutoff) then
 
-              r_P = ( (x - com_p(1))**2 + (y - com_p(2))**2 + (z - com_p(3))**2 )**0.5
-              r_S = ( (x - com_s(1))**2 + (y - com_s(2))**2 + (z - com_s(3))**2 )**0.5
+              r_P = sqrt(sum((r - com_p)**2))
+              r_S = sqrt(sum((r - com_s)**2))
+
+              grav_force_P = mass_P / r_P
+              if (single_star .or. mass_S < 1.d-12 * mass_P) then
+                 grav_force_S = ZERO
+              else
+                 grav_force_S = mass_S / r_S
+              endif
               
-              if (r_P < roche_rad_P .or. single_star) then
+              if (grav_force_P > grav_force_S) then
                  volp = volp + dV
-              elseif (r_S < roche_rad_S) then
+              else
                  vols = vols + dV
               endif
              
