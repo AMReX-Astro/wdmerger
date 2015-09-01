@@ -8,6 +8,7 @@
        use prob_params_module,  only: center
        use bl_constants_module, only: ZERO, HALF, ONE, TWO
        use rot_sources_module,  only: get_omega, cross_product
+       use probdata_module,     only: do_initial_relaxation, relaxation_timescale
 
        implicit none
 
@@ -22,7 +23,7 @@
 
        ! Local variables
 
-       double precision :: rho, rhoInv
+       double precision :: damping_factor
        double precision :: r(3)
        integer          :: i, j, k
 
@@ -30,6 +31,16 @@
        ! modify the zones between lo and hi. 
 
        src(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
+
+       if (do_initial_relaxation) then
+
+          damping_factor = ONE / relaxation_timescale
+
+       else
+
+          damping_factor = ZERO
+          
+       endif
 
        do k = lo(3), hi(3)
           r(3) = problo(3) + (dble(k) + HALF) * dx(3) - center(3)
@@ -39,6 +50,12 @@
 
              do i = lo(1), hi(1)
                 r(1) = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
+
+                   src(i,j,k,UMX:UMZ) = -new_state(i,j,k,UMX:UMZ) * damping_factor
+
+                   ! Kinetic energy source term is v . momentum source term
+
+                   src(i,j,k,UEDEN) = dot_product(new_state(i,j,k,UMX:UMZ) / new_state(i,j,k,URHO), src(i,j,k,UMX:UMZ))
 
              enddo
           enddo
