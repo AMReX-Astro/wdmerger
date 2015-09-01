@@ -17,9 +17,9 @@
   damping = F
   damping_alpha = 1.0d-2
 
-  do_relax = F
-  relax_type = 1
+  do_initial_relaxation = F
 
+  do_scf_initial_models = F
   scf_d_A = 1.0d9
   scf_d_B = 1.0d9
   scf_d_C = 1.8d9

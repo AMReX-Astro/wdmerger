@@ -99,10 +99,10 @@ module probdata_module
   double precision :: roche_rad_P, roche_rad_S
 
   ! Relaxation parameters
-  logical          :: do_relax
-  integer          :: relax_type ! 1 = SCF
+  logical          :: do_initial_relaxation
 
   ! Input parameters for SCF relaxation
+  logical          :: do_scf_initial_models
   double precision :: scf_d_A, scf_d_B, scf_d_C
   double precision :: scf_relax_tol
   
@@ -184,8 +184,8 @@ contains
          collision_separation, &
          interp_temp, &
          damping, damping_alpha, &
-         do_relax, &
-         relax_type, &
+         do_initial_relaxation, &
+         do_scf_initial_models, &
          scf_d_A, scf_d_B, scf_d_C, &
          scf_relax_tol, &
          ambient_density, &
@@ -247,9 +247,9 @@ contains
 
     maxTaggingRadius = 0.75d0
 
-    do_relax = .false.
-    relax_type = 1
+    do_initial_relaxation = .false.
 
+    do_scf_initial_models = .false.
     scf_d_A = 1.0d9
     scf_d_B = 1.0d9
     scf_d_C = 1.8d9
@@ -564,7 +564,7 @@ contains
            ! need a better first guess. The central location for each WD should be
            ! equal to their inner distance plus their radius.
 
-           if (do_relax .and. relax_type .eq. 1) then
+           if (do_scf_initial_models) then
 
               a_P_initial = scf_d_A + model_P % radius
               a_S_initial = scf_d_B + model_S % radius

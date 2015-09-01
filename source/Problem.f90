@@ -1,4 +1,4 @@
-! problem-specific Fortran stuff goes here
+! Problem-specific Fortran routines that are designed to interact with C++
 
 subroutine problem_checkpoint(int_dir_name, len)
 
@@ -39,6 +39,7 @@ subroutine problem_checkpoint(int_dir_name, len)
   close (un)
 
 end subroutine problem_checkpoint
+
 
 
 subroutine problem_restart(int_dir_name, len)
@@ -671,34 +672,18 @@ end subroutine set_period
 
 ! Returns whether we are doing a relaxation step.
 
-subroutine get_do_relax(do_relax_out)
+subroutine get_do_scf_initial_models(do_scf_initial_models_out)
 
-  use probdata_module, only: do_relax
+  use probdata_module, only: do_scf_initial_models
 
   implicit none
 
-  integer :: do_relax_out
+  integer :: do_scf_initial_models_out
 
-  if (do_relax) then
-     do_relax_out = 1
+  if (do_scf_initial_models) then
+     do_scf_initial_models_out = 1
   else
-     do_relax_out = 0
+     do_scf_initial_models_out = 0
   endif
 
-end subroutine
-
-
-
-! Returns the relaxation type.
-
-subroutine get_relax_type(relax_type_out)
-
-  use probdata_module, only: relax_type
-
-  implicit none
-
-  integer :: relax_type_out
-
-  relax_type_out = relax_type
-
-end subroutine
+end subroutine get_do_scf_initial_models

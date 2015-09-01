@@ -320,23 +320,18 @@ void Castro::problem_post_init() {
 
     // Determine whether we are doing a relaxation step (from the probin file)
 
-    int do_relax = 0;
+    int do_scf_initial_models = 0;
 
-    BL_FORT_PROC_CALL(GET_DO_RELAX,get_do_relax)(do_relax);
+    BL_FORT_PROC_CALL(GET_DO_SCF_INITIAL_MODELS,get_do_scf_initial_models)(do_scf_initial_models);
 
-    if (do_relax) {
+    if (do_scf_initial_models) {
 
       if (gravity->NoComposite() == 1) {
-	std::cerr << "Initial relaxation requires the use of multilevel gravity solves. Set gravity.no_composite = 0." << std::endl;
+	std::cerr << "Construction of SCF initial models requires the use of multilevel gravity solves. Set gravity.no_composite = 0." << std::endl;
 	BoxLib::Error();
       }
 
-      int relax_type = 0;
-
-      BL_FORT_PROC_CALL(GET_RELAX_TYPE,get_relax_type)(relax_type);
-
-      if (relax_type == 1)
-	scf_relaxation();
+      scf_relaxation();
 
     }
 

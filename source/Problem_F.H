@@ -58,10 +58,7 @@ BL_FORT_PROC_DECL(SET_PERIOD,set_period)
 BL_FORT_PROC_DECL(UPDATE_CENTER,update_center)
    (const Real* time);
 
-BL_FORT_PROC_DECL(GET_DO_RELAX,get_do_relax)
-   (int& do_relax);
-
-BL_FORT_PROC_DECL(GET_RELAX_TYPE,get_relax_type)
-   (int& relax_type);
+BL_FORT_PROC_DECL(GET_DO_SCF_INITIAL_MODELS,get_do_scf_initial_models)
+   (int& do_scf_initial_models);
 
 #include <scf_relax_F.H>
