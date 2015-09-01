@@ -24,15 +24,17 @@ BL_FORT_PROC_DECL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
 BL_FORT_PROC_DECL(GET_SINGLE_STAR,get_single_star)
    (int& flag);
 
-BL_FORT_PROC_DECL(SET_STAR_LOCATIONS,set_star_locations)
+BL_FORT_PROC_DECL(SET_STAR_DATA,set_star_data)
    (const Real com_p[], const Real com_s[], 
     const Real vel_p[], const Real vel_s[], 
-    const Real* mass_p, const Real* mass_s);
+    const Real* mass_p, const Real* mass_s,
+    const Real* t_ff_p, const Real* t_ff_s);
 
-BL_FORT_PROC_DECL(GET_STAR_LOCATIONS,get_star_locations)
+BL_FORT_PROC_DECL(GET_STAR_DATA,get_star_data)
    (Real com_p[], Real com_s[], 
     Real vel_p[], Real vel_s[], 
-    Real* mass_p, Real* mass_s);
+    Real* mass_p, Real* mass_s,
+    Real* t_ff_p, Real* t_ff_s);
 
 BL_FORT_PROC_DECL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
    (BL_FORT_FAB_ARG(rho), 

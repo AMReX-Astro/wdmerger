@@ -10,6 +10,7 @@
 #include <Problem_F.H>
 
 #include <Gravity.H>
+#include <Gravity_F.H>
 
 #include "buildInfo.H"
 
@@ -89,6 +90,12 @@ Castro::sum_integrated_quantities ()
 
     Real rad_p[7] = { 0.0 };
     Real rad_s[7] = { 0.0 };
+
+    Real rho_avg_p = 0.0;
+    Real rho_avg_s = 0.0;
+
+    Real t_ff_p = 0.0;
+    Real t_ff_s = 0.0;
 
     int single_star;
 
@@ -244,7 +251,7 @@ Castro::sum_integrated_quantities ()
 
     // Divide the center of mass by the total amount of mass on the grid.
 
-    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+    for ( int i = 0; i < 3; i++ ) {
 
       com[i]       = com[i] / mass;
       com_vel[i]   = momentum[i] / mass;
@@ -259,7 +266,7 @@ Castro::sum_integrated_quantities ()
     gas_energy = rho_E;
     total_energy = gravitational_energy + rho_E;
 
-    for (int i = 0; i < BL_SPACEDIM; i++) {
+    for (int i = 0; i < 3; i++) {
         momentum[i] = mom_grid[i];
         angular_momentum[i] = L_grid[i];
     }
@@ -280,25 +287,28 @@ Castro::sum_integrated_quantities ()
     // since the last update. Send it back to Fortran, then clear it out so we can update
     // using the full calculation.
 
-    BL_FORT_PROC_CALL(GET_STAR_LOCATIONS,get_star_locations)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);   
+    BL_FORT_PROC_CALL(GET_STAR_DATA,get_star_data)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
-    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+    for ( int i = 0; i < 3; i++ ) {
       com_p[i] += vel_p[i] * dt * sum_interval;
       com_s[i] += vel_s[i] * dt * sum_interval;
     }
 
-    BL_FORT_PROC_CALL(SET_STAR_LOCATIONS,set_star_locations)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);   
+    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_s, &t_ff_s);
 
-    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+    for ( int i = 0; i < 3; i++ ) {
       com_p[i] = 0.0;
       com_s[i] = 0.0;
       vel_p[i] = 0.0;
       vel_s[i] = 0.0;
-      mass_p   = 0.0;
-      mass_s   = 0.0;
     }
+
+    mass_p = 0.0;
+    mass_s = 0.0;
+    t_ff_p = 0.0;
+    t_ff_s = 0.0;
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -308,7 +318,7 @@ Castro::sum_integrated_quantities ()
       mass_p += lev_mass_p;
       mass_s += lev_mass_s;
 
-      for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+      for ( int i = 0; i < 3; i++ ) {
 	com_p[i] += lev_com_p[i];
 	com_s[i] += lev_com_s[i];
 	vel_p[i] += lev_vel_p[i];
@@ -319,7 +329,7 @@ Castro::sum_integrated_quantities ()
 
     // Complete calculations for center of mass quantities
 
-    for ( int i = 0; i <= BL_SPACEDIM-1; i++ ) {
+    for ( int i = 0; i < 3; i++ ) {
 
       com[i]       = com[i] / mass;
       com_vel[i]   = momentum[i] / mass;
@@ -352,11 +362,6 @@ Castro::sum_integrated_quantities ()
       }
     } 
 
-    // Send this information back to the Fortran probdata module
-
-    BL_FORT_PROC_CALL(SET_STAR_LOCATIONS,set_star_locations)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
-
     // Compute effective radii of stars at various density cutoffs
 
     for (int lev = 0; lev <= finest_level; lev++)
@@ -370,6 +375,27 @@ Castro::sum_integrated_quantities ()
         rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
 	rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
     }
+
+    // Free-fall timescale ~ 1 / sqrt(G * rho_avg}
+
+    Real Gconst;
+
+    BL_FORT_PROC_CALL(GET_GRAV_CONST, get_grav_const)(&Gconst);
+
+    if (mass_p > 0.0 && vol_p[0] > 0.0) {
+      rho_avg_p = mass_p / vol_p[2];
+      t_ff_p = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_p));
+    }
+
+    if (mass_s > 0.0 && vol_s[0] > 0.0) {
+      rho_avg_s = mass_s / vol_s[2];
+      t_ff_s = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_s));
+    }
+
+    // Send this information back to the Fortran probdata module
+
+    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
 #endif
 
@@ -538,6 +564,8 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(datawidth) << " PRIMARY Y VEL         ";
 	     star_log << std::setw(datawidth) << " PRIMARY Z VEL         ";
 	     star_log << std::setw(datawidth) << " PRIMARY MASS          ";
+	     star_log << std::setw(datawidth) << " PRIMARY AVG DENSITY   ";
+	     star_log << std::setw(datawidth) << " PRIMARY T_FREEFALL    ";
 	     for (int i = 0; i <= 6; ++i)
 	       star_log << "  PRIMARY 1E" << i << " RADIUS    ";
 
@@ -548,6 +576,8 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(datawidth) << " SECONDARY Y VEL       ";
 	     star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
 	     star_log << std::setw(datawidth) << " SECONDARY MASS        ";
+	     star_log << std::setw(datawidth) << " SECONDARY AVG DENSITY ";
+	     star_log << std::setw(datawidth) << " SECONDARY T_FREEFALL  ";
 	     for (int i = 0; i <= 6; ++i)
 	       star_log << "  SECONDARY 1E" << i << " RADIUS  ";
 
@@ -576,6 +606,8 @@ Castro::sum_integrated_quantities ()
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[1];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[2];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_p;
+	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rho_avg_p;
+	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << t_ff_p;
 	   for (int i = 0; i <= 6; ++i)
 	       star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rad_p[i];
 
@@ -586,7 +618,8 @@ Castro::sum_integrated_quantities ()
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[1];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[2];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_s;
-
+	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rho_avg_s;
+	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << t_ff_s;
 	   for (int i = 0; i <= 6; ++i)
 	       star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rad_s[i];
 

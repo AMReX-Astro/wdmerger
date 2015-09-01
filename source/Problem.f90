@@ -264,15 +264,16 @@ end subroutine ca_volumeindensityboundary
 
 ! Return the locations of the stellar centers of mass
 
-subroutine get_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
+subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass, P_t_dyn, S_t_dyn)
 
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S
 
   implicit none
 
-  double precision, intent (inout) :: P_com(3), S_com(3)
-  double precision, intent (inout) :: P_vel(3), S_vel(3)
-  double precision, intent (inout) :: P_mass, S_mass
+  double precision, intent(inout) :: P_com(3), S_com(3)
+  double precision, intent(inout) :: P_vel(3), S_vel(3)
+  double precision, intent(inout) :: P_mass, S_mass
+  double precision, intent(inout) :: P_t_dyn, S_t_dyn
 
   P_com = com_P
   S_com = com_S
@@ -283,28 +284,35 @@ subroutine get_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
   P_mass = mass_P
   S_mass = mass_S
 
-end subroutine get_star_locations
+  P_t_dyn = t_ff_P
+  S_t_dyn = t_ff_S
+
+end subroutine get_star_data
 
 
 
 ! Set the locations of the stellar centers of mass
 
-subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, roche_rad_P, roche_rad_S, single_star
+subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass, P_t_ff, S_t_ff)
+
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, &
+                             t_ff_P, t_ff_S, roche_rad_P, roche_rad_S, single_star
   use prob_params_module, only: center
   use bl_constants_module, only: TENTH, ZERO
 
   implicit none
 
-  double precision, intent (in) :: P_com(3), S_com(3)
-  double precision, intent (in) :: P_vel(3), S_vel(3)
-  double precision, intent (in) :: P_mass, S_mass
+  double precision, intent(in) :: P_com(3), S_com(3)
+  double precision, intent(in) :: P_vel(3), S_vel(3)
+  double precision, intent(in) :: P_mass, S_mass
+  double precision, intent(in) :: P_t_ff, S_t_ff
 
   double precision :: r
 
   com_P = P_com
   vel_P = P_vel
   mass_P = P_mass
+  t_ff_P = P_t_ff
 
   r = ZERO
 
@@ -313,6 +321,7 @@ subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
      com_S = S_com
      vel_S = S_vel
      mass_S = S_mass
+     t_ff_S = S_t_ff
 
      r = sum((com_P-com_S)**2)**(0.5)
 
@@ -332,7 +341,7 @@ subroutine set_star_locations(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
 
   endif
 
-end subroutine set_star_locations
+end subroutine set_star_data
 
 
 

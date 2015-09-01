@@ -21,6 +21,7 @@ module probdata_module
   double precision :: stellar_temp
   double precision :: primary_envelope_mass, secondary_envelope_mass
   double precision :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
+  double precision :: t_ff_P, t_ff_S
 
   ! Ambient medium
   double precision :: ambient_density, ambient_temp, ambient_comp(nspec)
