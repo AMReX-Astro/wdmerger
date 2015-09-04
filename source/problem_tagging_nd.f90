@@ -1,5 +1,5 @@
-subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
-                            state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3,&
+subroutine set_problem_tags(tag,tag_lo,tag_hi, &
+                            state,state_lo,state_hi, &
                             set,clear,&
                             lo,hi,&
                             dx,problo,time,level)
@@ -7,20 +7,19 @@ subroutine set_problem_tags(tag,tagl1,tagl2,tagl3,tagh1,tagh2,tagh3, &
   use bl_constants_module, only: ZERO, HALF, TWO
   use meth_params_module, only: URHO, UMX, UMY, UMZ, UEDEN, NVAR
   use prob_params_module, only: center, probhi
-  use probdata_module, only: maxTaggingRadius, com_P, com_S, roche_rad_P, roche_rad_S
- 
+  use probdata_module, only: maxTaggingRadius, com_P, com_S, roche_rad_P, roche_rad_S  
+  
   implicit none
   
-  integer         ,intent(in   ) :: lo(3),hi(3)
-  integer         ,intent(in   ) :: state_l1,state_l2,state_l3, &
-                                    state_h1,state_h2,state_h3
-  integer         ,intent(in   ) :: tagl1,tagl2,tagl3,tagh1,tagh2,tagh3
-  double precision,intent(in   ) :: state(state_l1:state_h1, &
-                                          state_l2:state_h2, &
-                                          state_l3:state_h3,NVAR)
-  integer         ,intent(inout) :: tag(tagl1:tagh1,tagl2:tagh2,tagl3:tagh3)
-  double precision,intent(in   ) :: problo(3),dx(3),time
-  integer         ,intent(in   ) :: level,set,clear
+  integer          :: lo(3),hi(3)
+  integer          :: state_lo(3),state_hi(3)
+  integer          :: tag_lo(3),tag_hi(3)
+  double precision :: state(state_lo(1):state_hi(1), &
+                            state_lo(2):state_hi(2), &
+                            state_lo(3):state_hi(3),NVAR)
+  integer          :: tag(tag_lo(1):tag_hi(1),tag_lo(2):tag_hi(2),tag_lo(3):tag_hi(3))
+  double precision :: problo(3),dx(3),time
+  integer          :: level,set,clear
 
   integer          :: i, j, k
   double precision :: x,y,z,r,r_P,r_S
