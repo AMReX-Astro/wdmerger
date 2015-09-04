@@ -14,15 +14,14 @@
 
   interp_temp = T
 
-  damping = F
-  damping_alpha = 1.0d-2
+  do_initial_relaxation = F
+  relaxation_timescale = 1.0d-3
 
-  do_relax = F
-  relax_type = 1
-  relax_tol = 1.0d-3
-  d_A = 1.0d9
-  d_B = 1.0d9
-  d_C = 1.8d9
+  do_scf_initial_models = F
+  scf_d_A = 1.0d9
+  scf_d_B = 1.0d9
+  scf_d_C = 1.8d9
+  scf_relax_tol = 1.0d-3
 
   ambient_density = 1.0d-4
 

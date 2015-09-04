@@ -28,7 +28,6 @@ void gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 
 void problem_post_init();
 
-// Parameter that controls whether we do a post-initialization relaxation.
+// Self-consistent field relaxation routine.
 
-static int do_relax;
-
+void scf_relaxation();

@@ -47,7 +47,7 @@
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use initial_model_module, only: interpolate_3d_from_1d
-     use rot_sources_module, only: cross_product, get_omega
+     use rotation_module, only: cross_product, get_omega
 
      implicit none
 
@@ -70,7 +70,7 @@
 
      call get_ambient(ambient_state)
 
-     omega = get_omega()
+     omega = get_omega(time)
 
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)
