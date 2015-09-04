@@ -113,11 +113,6 @@ module probdata_module
   double precision :: c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
   integer          :: rloc(3,3)         ! Indices of zones nearby to these points
 
-  ! Sponge
-  double precision :: sponge_dist      ! Fraction of the domain size interior to which we should not sponge
-  double precision :: sponge_width     ! Interval over which we should smooth out the sponging (in units of the domain size)
-  double precision :: sponge_timescale ! Typical timescale to use in determining sponging strength
-
   ! Distance (in kpc) used for calculation of the gravitational wave amplitude
   ! (this wil be calculated along all three coordinate axes).
   double precision :: gw_dist
@@ -201,7 +196,6 @@ contains
          initial_model_npts, &
          initial_model_mass_tol, &
          initial_model_hse_tol, &
-         sponge_dist, sponge_width, sponge_timescale, &
          gw_dist, &
          fill_ambient_bc
 
@@ -285,10 +279,6 @@ contains
     ! temperature).  hse_tol should be very small (~ 1.e-10).
 
     initial_model_hse_tol = 1.d-10
-
-    sponge_dist      = 0.75d0
-    sponge_width     = 0.1d0
-    sponge_timescale = 0.01d0
 
     gw_dist = 10.0 ! kpc
 
