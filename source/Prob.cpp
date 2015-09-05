@@ -234,7 +234,7 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 
 #ifdef _OPENMP
     int nthreads = omp_get_max_threads();
-    PArray<FArrayBox> priv_Qtt(nthreads);
+    PArray<FArrayBox> priv_Qtt(nthreads, PArrayManage);
     for (int i=0; i<nthreads; i++) {
 	priv_Qtt.set(i, new FArrayBox(bx));
     }
