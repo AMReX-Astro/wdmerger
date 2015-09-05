@@ -143,7 +143,7 @@ function replace_inputs_var {
 	# http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	# http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
 
-	old_string=$(grep "$inputs_var_name" $dir/$inputs)
+	old_string=$(grep "$inputs_var_name[[:space:]]" $dir/$inputs)
 	new_string="$inputs_var_name = ${!var}"
 
 	# We want to save the comment associated with this variable.

@@ -383,7 +383,7 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
-  use meth_params_module, only: do_rotation, rot_period
+  use meth_params_module, only: do_rotation, rot_period, rot_period_dot
   use rotation_module, only: get_omega, cross_product
   
   implicit none
@@ -416,13 +416,7 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
 
   dV = dx(1) * dx(2) * dx(3)
   dQtt(:,:) = ZERO
-
-  if (do_rotation .eq. 1) then
-     omega = get_omega(time)
-  else
-     omega = ZERO
-  endif
-
+  
   ! If we are in a rotating reference frame, then we want
   ! to rotate this by an amount corresponding to the time
   ! that has passed since the beginning of the simulation.
@@ -430,9 +424,39 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
   ! at large distances. There is some clipping due to material
   ! that leaves or enters the domain boundaries, but this should
   ! average out over time, and will be negligible in magnitude.
-        
-  theta = omega * time
 
+  ! To get the angle, we integrate omega over the time of the
+  ! simulation. Since the time rate of change is linear in the
+  ! period, let's work that variable. At some time t the current
+  ! period P is given by P = P_0 + Pdot * t. Then:
+  !
+  ! theta(t) = int( omega(t) * dt )
+  !      theta = int( omega(t) dt )
+  !            = (2 * pi / P_0) * int( dt / (1 + (dPdt / P_0) * t) )
+  !
+  ! if dPdt = 0, then theta = 2 * pi * t / P_0 = omega_0 * t, as expected.
+  ! if dPdt > 0, then theta = (2 * pi / P_0) * (P_0 / dPdt) * ln| (dPdt / P_0) * t + 1 |
+  ! Note that if dPdt << P_0, then we have ln(1 + x) = x, and we again
+  ! recover the original expression as expected.
+
+  if (do_rotation .eq. 1) then
+  
+     if (abs(rot_period_dot) > ZERO .and. time > ZERO) then
+        theta = get_omega(ZERO) * (rot_period / rot_period_dot) * &
+                log( abs( (rot_period_dot / rot_period) * time + 1 ) )
+     else
+        theta = get_omega(ZERO) * time
+     endif
+
+     omega = get_omega(time)
+     
+  else
+
+     omega = ZERO
+     theta = ZERO
+
+  endif
+       
   ! This is the 3D rotation matrix for converting between reference frames.
   ! It is the composition of rotations along the x, y, and z axes. Therefore 
   ! it allows for the case where we are rotating about multiple axes. Normally 
