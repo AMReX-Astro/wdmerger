@@ -40,7 +40,6 @@ castro.hi_bc = 2 2 2                               # Boundary conditions on hi x
 ############################################################################################
 
 amr.n_cell = 256 256 256                           # Number of cells on the coarse grid
-amr.n_cell = 64 64 64
 
 amr.max_level = 0                                  # Maximum level number allowed
 
