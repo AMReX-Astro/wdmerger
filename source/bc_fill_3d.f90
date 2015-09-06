@@ -34,7 +34,7 @@
 
         call get_ambient(ambient_state)
 
-        omega = get_omega()
+        omega = get_omega(time)
 
         do k = adv_l3, adv_h3
            loc(3) = xlo(3) + dble(k - adv_l3 + HALF)*delta(3) - center(3)

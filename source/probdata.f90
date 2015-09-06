@@ -3,26 +3,28 @@ module probdata_module
   use network, only: nspec, network_species_index
   use eos_type_module, only: eos_t
   use eos_module, only: eos_input_rt, eos
+  use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO, THREE, M_PI, FOUR
+  use fundamental_constants_module, only: Gconst, M_solar, AU
+  use initial_model_module, only: initial_model
 
   ! Probin file
   character (len=:), allocatable :: probin
 
-  ! Determine if we are the I/O processor
+  ! For determining if we are the I/O processor.
   integer :: ioproc
   
-  ! Model info
-  character (len=80) :: model_P_name
-  character (len=80) :: model_S_name
-  
-  double precision, allocatable :: model_P_r(:), model_P_state(:,:)
-  double precision, allocatable :: model_S_r(:), model_S_state(:,:)
-
   ! Initial binary orbit characteristics
-  double precision :: mass_P_initial, mass_S_initial
+  ! Note that the envelope mass is included within the total mass of the star
+  double precision :: mass_P, mass_S
   double precision :: central_density_P, central_density_S
-  double precision :: radius_P_initial, radius_S_initial
   double precision :: orbital_speed_P, orbital_speed_S
-  double precision :: stellar_temp, stellar_comp(nspec)
+  double precision :: stellar_temp
+  double precision :: primary_envelope_mass, secondary_envelope_mass
+  double precision :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
+  double precision :: t_ff_P, t_ff_S
+
+  ! Ambient medium
+  double precision :: ambient_density, ambient_temp, ambient_comp(nspec)
 
   ! Smallest allowed mass fraction
   double precision :: smallx
@@ -46,23 +48,15 @@ module probdata_module
   ! separate the WDs by.
   double precision :: collision_separation
 
-  ! Damping
-  logical          :: damping
-  double precision :: damping_alpha
-
   ! Binary properties
-  double precision :: a_P_initial, a_S_initial, a
-  
-  double precision, dimension(3) :: center_P_initial, center_S_initial
+  double precision :: a_P_initial, a_S_initial, a  
+  double precision :: center_P_initial(3), center_S_initial(3)
 
   integer :: star_axis
   integer :: initial_motion_dir
 
   ! Location of the physical center of the problem, as a fraction of domain size
   double precision :: center_fracx, center_fracy, center_fracz
-
-  ! Density of ambient medium
-  double precision :: ambient_density
 
   ! Bulk system motion
   double precision :: bulk_velx, bulk_vely, bulk_velz
@@ -77,11 +71,19 @@ module probdata_module
   ! ambient material?
   logical :: fill_ambient_bc
   
-  ! Resolution of 1D initial model
+  ! 1D initial models
+
+  type (initial_model) :: model_P, model_S
+
   double precision :: initial_model_dx
   integer          :: initial_model_npts
   double precision :: initial_model_mass_tol
   double precision :: initial_model_hse_tol
+
+  ! Composition properties of initial models
+  double precision :: max_he_wd_mass
+  double precision :: max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass
+  double precision :: max_co_wd_mass, co_wd_he_shell_mass
 
   ! Tagging criteria
   double precision :: maxTaggingRadius
@@ -89,27 +91,28 @@ module probdata_module
   ! Stores the center of mass location of the stars throughout the run
   double precision :: com_P(3), com_S(3)
   double precision :: vel_P(3), vel_S(3)
-  double precision :: mass_P,   mass_S
 
   ! Stores the effective Roche radii
   double precision :: roche_rad_P, roche_rad_S
 
-  ! Relaxation
-  logical          :: do_relax
-  integer          :: relax_type ! 1 = SCF
-  double precision :: relax_tol
+  ! Relaxation parameters
+  logical          :: do_initial_relaxation
+  double precision :: relaxation_timescale
 
-  ! Data for SCF relaxation
-  double precision :: d_A, d_B, d_C
-  double precision :: h_max_P, h_max_S
-  double precision :: enthalpy_min
+  ! Input parameters for SCF relaxation
+  logical          :: do_scf_initial_models
+  double precision :: scf_d_A, scf_d_B, scf_d_C
+  double precision :: scf_relax_tol
+  
+  ! Internal data for SCF relaxation
+  double precision :: scf_h_max_P, scf_h_max_S
+  double precision :: scf_enthalpy_min
+  double precision :: scf_rpos(3,3)         ! Relative position of points A, B, and C
+  double precision :: scf_d_vector(3,3)     ! Positions of points relative to system center
+  double precision :: scf_c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
+  integer          :: scf_rloc(3,3)         ! Indices of zones nearby to these points
 
-  double precision :: rpos(3,3)         ! Relative position of points A, B, and C
-  double precision :: d_vector(3,3)     ! Positions of points relative to system center
-  double precision :: c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
-  integer          :: rloc(3,3)         ! Indices of zones nearby to these points
-
-  ! Sponge
+  ! Sponge parameters
   double precision :: sponge_dist      ! Fraction of the domain size interior to which we should not sponge
   double precision :: sponge_width     ! Interval over which we should smooth out the sponging (in units of the domain size)
   double precision :: sponge_timescale ! Typical timescale to use in determining sponging strength
@@ -125,7 +128,6 @@ contains
 
   subroutine initialize(name, namlen, init_in)
 
-    use bl_constants_module, only: ZERO
     use bl_error_module, only: bl_error
 
     implicit none
@@ -145,10 +147,6 @@ contains
 
     call read_namelist
 
-    ! Set small_pres and small_ener.
-
-    call set_small
-
     ! Determine if we are the I/O processor, and save it to the ioproc variable.
 
     call get_ioproc
@@ -156,6 +154,10 @@ contains
     ! Establish binary parameters and create initial models.
 
     call binary_setup
+
+    ! Set small_pres and small_ener.
+
+    call set_small
 
   end subroutine
 
@@ -165,16 +167,11 @@ contains
 
   subroutine read_namelist
 
-    use bl_constants_module, only: ZERO, HALF, ONE
     use meth_params_module
 
     implicit none
 
-    integer :: untin, i
-
-    integer :: iC12, iO16
-    double precision :: stellar_C12, stellar_O16
-    double precision :: mass_p, mass_s
+    integer :: untin
 
     namelist /fortin/ &
          mass_P, mass_S, &
@@ -184,13 +181,16 @@ contains
          collision, &
          collision_separation, &
          interp_temp, &
-         damping, damping_alpha, &
-         do_relax, &
-         relax_type, &
-         relax_tol, &
-         d_A, d_B, d_C, &
+         do_initial_relaxation, &
+         relaxation_timescale, &
+         do_scf_initial_models, &
+         scf_d_A, scf_d_B, scf_d_C, &
+         scf_relax_tol, &
          ambient_density, &
-         stellar_temp, stellar_C12, stellar_O16, &
+         stellar_temp, ambient_temp, &
+         max_he_wd_mass, &
+         max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass, &
+         max_co_wd_mass, &
          star_axis, initial_motion_dir, &
          maxTaggingRadius, &
          bulk_velx, bulk_vely, bulk_velz, &
@@ -209,12 +209,24 @@ contains
     central_density_P = -ONE
     central_density_S = -ONE
 
-    mass_P_initial = 1.0d0
-    mass_S_initial = 1.0d0
+    mass_P = 1.0d0
+    mass_S = 1.0d0
 
     stellar_temp = 1.0d7
-    stellar_C12  = HALF
-    stellar_O16  = HALF
+    ambient_temp = 1.0d7
+
+    ! We follow the prescription of Dan et al. 2012 for determining
+    ! the composition of the WDs. In this approach, below a certain 
+    ! mass there are pure He WDs; just above that are hybrid WDs
+    ! with pure CO cores and a He mantle; above that are pure CO WDs
+    ! with slightly more oxygen than carbon; and above that are 
+    ! ONeMg WDs. All masses are in solar masses.
+
+    max_he_wd_mass = 0.45d0
+    max_hybrid_co_wd_mass = 0.6d0
+    hybrid_co_wd_he_shell_mass = 0.1d0
+    max_co_wd_mass = 1.05d0
+    co_wd_he_shell_mass = 0.0d0
 
     smallx = 1.d-12
     smallu = 1.d-12
@@ -227,19 +239,20 @@ contains
     collision_separation = 4.0
 
     interp_temp = .false.
-    damping  = .false.
+
     star_axis = 1
     initial_motion_dir = 2
 
     maxTaggingRadius = 0.75d0
 
-    do_relax = .false.
-    relax_type = 1
-    relax_tol = 1.d-3
-    d_A = 1.0d9
-    d_B = 1.0d9
-    d_C = 1.8d9
-    enthalpy_min = 1.0d100
+    do_initial_relaxation = .false.
+    relaxation_timescale = 0.001
+
+    do_scf_initial_models = .false.
+    scf_d_A = 1.0d9
+    scf_d_B = 1.0d9
+    scf_d_C = 1.8d9
+    scf_relax_tol = 1.d-3
 
     bulk_velx = ZERO
     bulk_vely = ZERO
@@ -281,25 +294,26 @@ contains
 
     fill_ambient_bc = .false.
     
-    ! Read namelist to override the defaults
+    ! Read namelist to override the defaults.
+
     untin = 9 
     open(untin,file=probin,form='formatted',status='old')
     read(untin,fortin)
     close(unit=untin)
 
-    mass_P_initial = mass_p
-    mass_S_initial = mass_s
+    ! Convert masses from solar masses to grams.
 
-    if (mass_S_initial < ZERO .and. central_density_S < ZERO) single_star = .true.
+    mass_P = mass_P * M_solar
+    mass_S = mass_S * M_solar
 
-    ! Fill in stellar composition using C12 and O16
+    max_he_wd_mass = max_he_wd_mass * M_solar
+    max_hybrid_co_wd_mass = max_hybrid_co_wd_mass * M_solar
+    max_co_wd_mass = max_co_wd_mass * M_solar
 
-    iC12 = network_species_index("carbon-12")
-    iO16 = network_species_index("oxygen-16")
+    hybrid_co_wd_he_shell_mass = hybrid_co_wd_he_shell_mass * M_solar
+    co_wd_he_shell_mass = co_wd_he_shell_mass * M_solar
 
-    stellar_comp(1:nspec) = smallx
-    stellar_comp(iC12)    = stellar_C12 - (nspec - 2) * smallx
-    stellar_comp(iO16)    = stellar_O16 - (nspec - 2) * smallx
+    if (mass_S < ZERO .and. central_density_S < ZERO) single_star = .true.
 
     ! Make sure that the primary mass is really the larger mass
 
@@ -315,7 +329,6 @@ contains
 
     implicit none
 
-    ! For outputting -- determine if we are the IO processor
     call bl_pd_is_ioproc(ioproc)
 
   end subroutine get_ioproc
@@ -336,7 +349,7 @@ contains
  
     eos_state % rho = small_dens
     eos_state % T   = small_temp
-    eos_state % xn  = stellar_comp
+    eos_state % xn  = ambient_comp
  
     call eos(eos_input_rt, eos_state)
 
@@ -355,11 +368,13 @@ contains
 
     type (eos_t) :: ambient_state
 
-    ! Define ambient state and call EOS to get eint and pressure
+    ! Define ambient state, using a composition that is an 
+    ! even mixture of the primary and secondary composition, 
+    ! and then call the EOS to get internal energy and pressure.
 
     ambient_state % rho = ambient_density
-    ambient_state % T   = stellar_temp
-    ambient_state % xn  = stellar_comp
+    ambient_state % T   = ambient_temp
+    ambient_state % xn  = ambient_comp
 
     call eos(eos_input_rt, ambient_state)
 
@@ -371,10 +386,8 @@ contains
 
   subroutine binary_setup
 
-    use bl_constants_module, only: ZERO, ONE
-    use fundamental_constants_module, only: M_solar, AU
     use meth_params_module, only: do_rotation, rot_period
-    use initial_model_module, only: init_1d
+    use initial_model_module, only: initialize_model, establish_hse
     use prob_params_module, only: center, problo, probhi
     use meth_params_module, only: rot_axis
 
@@ -382,8 +395,7 @@ contains
 
     type (eos_t) :: ambient_state
     double precision :: v_ff
-
-    call get_ambient(ambient_state)
+    double precision :: mass_temp
 
     ! Set up the center variable. We want it to be at 
     ! problo + center_frac * domain_width in each direction.
@@ -400,50 +412,100 @@ contains
     center_P_initial = center
     center_S_initial = center
 
-    radius_P_initial = ZERO
-    radius_S_initial = ZERO
-
     com_P = center
     com_S = center
 
     vel_P = ZERO
     vel_S = ZERO
 
-    ! If we're doing an initial relaxation, then we want to
-    ! specify central density and not total mass.
+    ! Allocate arrays to hold the stellar models.
 
-    if (do_relax) then
+    call initialize_model(model_P, initial_model_dx, initial_model_npts, initial_model_mass_tol, initial_model_hse_tol)
+    call initialize_model(model_S, initial_model_dx, initial_model_npts, initial_model_mass_tol, initial_model_hse_tol)
 
-       if (central_density_P < ZERO) then
-          call bl_error("Cannot have a negative primary central density if we're doing a relaxation step.")
-       else if (.not. single_star .and. central_density_S < ZERO) then
-          call bl_error("Cannot have a negative secondary central density if we're doing a relaxation step.")
+    model_P % min_density = ambient_density
+    model_S % min_density = ambient_density
+
+    model_P % central_temp = stellar_temp
+    model_S % central_temp = stellar_temp
+
+
+
+    ! Fill in the model's physical details.
+    ! If we're integrating to reach a desired mass, set the composition accordingly.
+    ! If instead we're fixing the central density, then first we'll assume the composition is
+    ! that of a solar mass WD as a initial guess, and get the corresponding mass. 
+    ! Then we set the composition to match this preliminary mass, and we'll get a final mass later.
+
+    if (mass_P > ZERO) then
+
+       model_P % mass = mass_P
+
+       call set_wd_composition(model_P)
+
+    elseif (central_density_P > ZERO) then
+
+       model_P % mass = M_solar
+
+       call set_wd_composition(model_P)
+
+       model_P % central_density = central_density_P
+
+       call establish_hse(model_P)
+
+       call set_wd_composition(model_P)
+
+    else
+
+       call bl_error("Must specify either a positive primary mass or a positive primary central density.")
+
+    endif
+
+
+
+    if (.not. single_star) then
+
+       if (mass_S > ZERO) then
+
+          model_S % mass = mass_S
+
+          call set_wd_composition(model_S)
+
+       elseif (central_density_S > ZERO) then
+
+          model_S % mass = M_solar
+
+          call set_wd_composition(model_S)
+
+          model_S % central_density = central_density_S
+
+          call establish_hse(model_S)
+
+          call set_wd_composition(model_S)
+
+       else
+
+          call bl_error("If we are doing a binary calculation, we must specify either a ", &
+                        "positive secondary mass or a positive secondary central density.")
+
        endif
 
-       mass_P_initial = -ONE
-       mass_S_initial = -ONE
+       ambient_comp = (model_P % envelope_comp + model_S % envelope_comp) / 2
+
     else
-       mass_P = mass_P_initial * M_solar
-       mass_S = mass_S_initial * M_solar
+
+       ambient_comp = model_P % envelope_comp
+
     endif
+
+
 
     roche_rad_P = ZERO
     roche_rad_S = ZERO
 
-    ! Allocate arrays to hold the stellar models
+    ! Generate primary and secondary WD models.
 
-    allocate(model_P_state(initial_model_npts,3+nspec))
-    allocate(model_S_state(initial_model_npts,3+nspec))
-
-    allocate(model_P_r(initial_model_npts))
-    allocate(model_S_r(initial_model_npts))
-
-    ! Generate primary and secondary WD
-
-    call init_1d(model_P_r, model_P_state, initial_model_npts, initial_model_dx, &
-                 initial_model_hse_tol, initial_model_mass_tol, &
-                 radius_P_initial, mass_P_initial, central_density_P, &
-                 stellar_temp, stellar_comp, ambient_state)
+    call establish_hse(model_P)
 
     if (ioproc == 1 .and. init == 1) then
        
@@ -452,29 +514,28 @@ contains
        
        print *, ''//achar(27)//'[1;32m'
        
-       write (*,1001) mass_P_initial, central_density_P, radius_P_initial
+       write (*,1001) model_P % mass / M_solar, model_P % central_density, model_P % radius
        1001 format ("Generated initial model for primary WD of mass ", f4.2, &
                     " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
        print *, ""
     endif
 
-    roche_rad_P = radius_P_initial
+    mass_P = model_P % mass
+    roche_rad_P = model_P % radius
 
     if (.not. single_star) then
 
-       call init_1d(model_S_r, model_S_state, initial_model_npts, initial_model_dx, &
-                    initial_model_hse_tol, initial_model_mass_tol, &
-                    radius_S_initial, mass_S_initial, central_density_S, &
-                    stellar_temp, stellar_comp, ambient_state)
+       call establish_hse(model_S)
 
        if (ioproc == 1 .and. init == 1) then
-          write (*,1002) mass_S_initial, central_density_S, radius_S_initial
+          write (*,1002) model_S % mass / M_solar, model_S % central_density, model_S % radius
           1002 format ("Generated initial model for secondary WD of mass ", f4.2, &
                        " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
           print *, ""
        endif
 
-       roche_rad_S = radius_S_initial
+       mass_S = model_S % mass
+       roche_rad_S = model_S % radius
 
        ! For a collision, set the stars up with a free-fall velocity at a specified number
        ! of secondary radii; for a circular orbit, use Kepler's third law.
@@ -483,7 +544,7 @@ contains
 
            initial_motion_dir = star_axis
 
-           collision_separation = collision_separation * radius_S_initial
+           collision_separation = collision_separation * model_S % radius
 
            call freefall_velocity(mass_P + mass_S, collision_separation, v_ff)
 
@@ -502,16 +563,16 @@ contains
            ! need a better first guess. The central location for each WD should be
            ! equal to their inner distance plus their radius.
 
-           if (do_relax .and. relax_type .eq. 1) then
+           if (do_scf_initial_models) then
 
-              a_P_initial = d_A + radius_P_initial
-              a_S_initial = d_B + radius_S_initial
+              a_P_initial = scf_d_A + model_P % radius
+              a_S_initial = scf_d_B + model_S % radius
 
               a = a_P_initial + a_S_initial
 
            else
 
-              call kepler_third_law(radius_P_initial, mass_P_initial, radius_S_initial, mass_S_initial, &
+              call kepler_third_law(model_P % radius, model_P % mass, model_S % radius, model_S % mass, &
                                     rot_period, a_P_initial, a_S_initial, a, &
                                     orbital_speed_P, orbital_speed_S)
 
@@ -573,26 +634,98 @@ contains
 
     ! Safety check: make sure the stars are actually inside the computational domain.
 
-    if (center_P_initial(1) - radius_P_initial .lt. problo(1) .or. &
-        center_P_initial(1) + radius_P_initial .gt. probhi(1) .or. &
-        center_P_initial(2) - radius_P_initial .lt. problo(2) .or. &
-        center_P_initial(2) + radius_P_initial .gt. probhi(2) .or. &
-        center_P_initial(3) - radius_P_initial .lt. problo(3) .or. &
-        center_P_initial(3) + radius_P_initial .gt. probhi(3)) then
+    if (center_P_initial(1) - model_P % radius .lt. problo(1) .or. &
+        center_P_initial(1) + model_P % radius .gt. probhi(1) .or. &
+        center_P_initial(2) - model_P % radius .lt. problo(2) .or. &
+        center_P_initial(2) + model_P % radius .gt. probhi(2) .or. &
+        center_P_initial(3) - model_P % radius .lt. problo(3) .or. &
+        center_P_initial(3) + model_P % radius .gt. probhi(3)) then
        call bl_error("Primary does not fit inside the domain.")
     endif
 
-    if (center_S_initial(1) - radius_S_initial .lt. problo(1) .or. &
-        center_S_initial(1) + radius_S_initial .gt. probhi(1) .or. &
-        center_S_initial(2) - radius_S_initial .lt. problo(2) .or. &
-        center_S_initial(2) + radius_S_initial .gt. probhi(2) .or. &
-        center_S_initial(3) - radius_S_initial .lt. problo(3) .or. &
-        center_S_initial(3) + radius_S_initial .gt. probhi(3)) then
+    if (center_S_initial(1) - model_S % radius .lt. problo(1) .or. &
+        center_S_initial(1) + model_S % radius .gt. probhi(1) .or. &
+        center_S_initial(2) - model_S % radius .lt. problo(2) .or. &
+        center_S_initial(2) + model_S % radius .gt. probhi(2) .or. &
+        center_S_initial(3) - model_S % radius .lt. problo(3) .or. &
+        center_S_initial(3) + model_S % radius .gt. probhi(3)) then
        call bl_error("Secondary does not fit inside the domain.")
     endif
 
 
   end subroutine binary_setup
+
+
+
+  ! Given a WD mass, set its core and envelope composition.
+
+  subroutine set_wd_composition(model)
+
+    type (initial_model), intent(inout) :: model
+
+    integer :: iHe4, iC12, iO16, iNe20, iMg24
+
+    iHe4 = network_species_index("helium-4")
+    iC12 = network_species_index("carbon-12")
+    iO16 = network_species_index("oxygen-16")
+    iNe20 = network_species_index("neon-20")
+    iMg24 = network_species_index("magnesium-24")
+
+    model % core_comp = smallx
+    model % envelope_comp = smallx
+
+    model % envelope_mass = ZERO
+
+    ! Here we follow the prescription of Dan et al. 2012.
+
+    if (model % mass > ZERO .and. model % mass < max_he_wd_mass) then
+
+       model % core_comp(iHe4) = ONE
+       
+       model % envelope_comp = model % core_comp
+
+    else if (model % mass >= max_he_wd_mass .and. model % mass < max_hybrid_co_wd_mass) then
+
+       model % core_comp(iC12) = HALF
+       model % core_comp(iO16) = HALF
+
+       model % envelope_mass = hybrid_co_wd_he_shell_mass
+
+       if (model % envelope_mass > ZERO) then
+          model % envelope_comp(iHe4) = ONE
+       else
+          model % envelope_comp = model % core_comp
+       endif
+
+    else if (model % mass >= max_hybrid_co_wd_mass .and. model % mass < max_co_wd_mass) then
+         
+       model % core_comp(iC12) = 0.4d0
+       model % core_comp(iO16) = 0.6d0
+
+       model % envelope_mass = co_wd_he_shell_mass
+
+       if (model % envelope_mass > ZERO) then
+          model % envelope_comp(iHe4) = ONE
+       else
+          model % envelope_comp = model % core_comp
+       endif
+
+    else if (model % mass > max_co_wd_mass) then
+
+       model % core_comp(iO16)  = 0.60d0
+       model % core_comp(iNe20) = 0.35d0
+       model % core_comp(iMg24) = 0.05d0
+
+       model % envelope_comp = model % core_comp
+
+    endif
+
+    ! Normalize compositions so that they sum to one.
+
+     model % core_comp = model % core_comp / sum(model % core_comp)
+     model % envelope_comp = model % envelope_comp / sum(model % envelope_comp)
+       
+  end subroutine set_wd_composition
 
 
 
@@ -603,8 +736,6 @@ contains
 
   subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, a_1, a_2, a, v_1, v_2)
 
-    use bl_constants_module, only: ONE, TWO, FOUR, THIRD, M_PI
-    use fundamental_constants_module, only: Gconst, M_solar
     use prob_params_module, only: problo, probhi
 
     implicit none
@@ -617,7 +748,7 @@ contains
 
     ! Evaluate Kepler's third law
 
-    a = (Gconst*(mass_1 + mass_2)*M_solar*period**2/(FOUR*M_PI**2))**THIRD
+    a = (Gconst*(mass_1 + mass_2)*period**2/(FOUR*M_PI**2))**THIRD
 
     a_2 = a/(ONE + mass_2/mass_1)
     a_1 = (mass_2/mass_1)*a_2
@@ -654,9 +785,6 @@ contains
 
   subroutine freefall_velocity(mass, distance, vel)
 
-    use bl_constants_module, only: TWO, HALF
-    use fundamental_constants_module, only: Gconst
-
     implicit none
 
     double precision, intent(in   ) :: mass, distance
@@ -680,15 +808,15 @@ contains
     ! We want the primary WD to be more massive. If what we're calling
     ! the primary is less massive, switch the stars.
 
-    if ( mass_P_initial < mass_S_initial ) then
+    if ( mass_P < mass_S ) then
 
       if (ioproc == 1) then
-        print *, "Primary mass is less than secondary mass; switching the stars."
+        print *, "Primary mass is less than secondary mass; switching the stars so that the primary is more massive."
       endif
 
-      temp_mass = mass_P_initial
-      mass_P_initial = mass_S_initial
-      mass_S_initial = temp_mass
+      temp_mass = mass_P
+      mass_P = mass_S
+      mass_S = temp_mass
 
     endif
 
