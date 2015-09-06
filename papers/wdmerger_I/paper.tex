@@ -598,76 +598,73 @@ $-(\Delta t/2) \rho^n \mathbf{g}^n + (\Delta t/2) \rho^{n+1} \mathbf{g}^{n+1}$ t
 
 For the energy equation, the central challenge is to write down a form of the 
 discretized energy equation that explicitly conserves total energy when 
-coupled to gravity. When gravity is included, the total energy is
+coupled to gravity. When gravity is included, the conserved total energy
+over the entire domain is
 \begin{equation}
-  \rho E_{\text{tot}} = \rho E + \frac{1}{2}\rho\Phi = \frac{1}{2}\rho \mathbf{u}^2 + \rho e + \frac{1}{2}\rho\Phi, \label{eq:total_energy_gravity}
+  \int \rho E_{\text{tot}}\, dV = \int dV \left(\rho E + \frac{1}{2}\rho\Phi\right), \label{eq:total_energy_gravity}
 \end{equation}
-where $\rho E$ is the total gas energy from the pure hydrodynamics equation,
-and the factor of $1/2$ in the gravitational energy term is necessary
-for simulations with self-gravity to prevent double-counting of
-interactions.
+where $\rho E$ is the total gas energy from the pure hydrodynamics equation. 
+The factor of 1/2 in the gravitational energy is necessary for simulations with
+self-gravity to prevent double-counting of interactions (since in dynamical evolution
+the relevant gravitational potential energy is $\rho \Phi$ and the gravitational force
+is $\rho \mathbf{g}$). Historically many simulation codes with gravity have not used
+a conservative formulation of the energy equation, but it is straightforward to do so.
+Our approach, and the discussion that follows, is based on that of \cite{arepo}.
 
-Historically many simulation codes with gravity have not used a conservative formulation 
-of the energy equation, but it is straightforward to do so. In particular, conservation of 
-total energy requires only that a change in gravitational energy is compensated for by a 
-change in gas energy, and that energy changes due to mass transfer are explicitly and 
-exactly tracked. At each zone face in a given timestep, there is some transfer of mass $\Delta \rho \Delta V$ between 
-the zones adjacent to that face, which is governed by the continuity equation. Suppose the 
-transfer of mass is positive to the right, and the face is located at the (one-dimensional)
-index $i-1/2$. Energy is transferred because an amount of mass $\Delta \rho_{i-1/2} \Delta V$ moves from 
-potential $\Phi_{i-1}$ to potential $\Phi_{i}$; if these potentials are different, it requires some 
-work exerted by or on the zone to push the mass to this different potential energy. Therefore 
-the net change of gravitational energy is $\left[(1/2)\Delta \rho_{i-1/2} (\Phi_{i} - \Phi_{i-1})\right]$,
-and if total energy is conserved, then the zone must have a change in gas energy 
-$(\rho E)$ that is equal in magnitude and opposite in sign to the change in potential energy. 
-Thus the update in a zone for the total energy that conserves $(\rho E_{\text{tot}})$ is:
+Conservation of total energy requires that a change in gravitational energy is compensated
+for by a change in gas energy, and that energy changes due to mass transfer are explicitly and 
+exactly tracked. Suppose that we have some fluid mass $\Delta M_{i+1/2} = \Delta \rho_{i+1/2} \Delta V$ leave some zone
+with index $i$ and enter some zone with index $i+1$. The subscript indicates that the mass change is
+occurring at the interface between the two zones, at index $i+1/2$. The work done by the gravitational
+force on the gas is $\Delta (\rho E) = W = \int F dx = (\Delta M_{i+1/2}\ g_{i+1/2}) (\Delta x / 2)$,
+where $g_{i+1/2}$ is the gravitational acceleration at the interface. The second term in parentheses
+is just the distance from the zone center to the zone edge: once the mass leaves the zone edge, it no longer
+needs to be tracked. To second order, $g_{i+1/2} = -(\Phi_{i+1} - \Phi_{i}) / \Delta x$, and also to second order the potential
+at the interface is given by $\Phi_{i+1/2} = (\Phi_{i+1} + \Phi_i) / 2$, so we can equivalently view the work done
+as $W = -\Delta M_{i+1/2} (\Phi_{i+1/2} - \Phi_i)$. Physically, this is just the negative of the gravitational
+potential energy change as the fluid is pushed from the cell center potential to the cell edge potential,
+exactly as the work-energy theorem implies. 
+
+Now, in a hydrodynamics code mass changes correspond to hydrodynamic fluxes. In particular,
+the continuity equation tells us that the mass flux $F_\rho = \rho^{n+1/2}_{i+1/2} v^{n+1/2}_{i+1/2}$ yields
+an integrated mass motion through the interface $i+1/2$ over a timestep $\Delta t$ of:
+\begin{equation}
+  \Delta \rho_{i+1/2} = \frac{\Delta t}{\Delta V} \left(\rho^{n+1/2}_{i+1/2} v^{n+1/2}_{i+1/2} dA\right).
+\end{equation}
+Note that here $v_{i+1/2}$ is the component of the velocity perpendicular to the zone face, whose
+area is $dA$.
+
+Finally, then, we write the update in a zone for the total energy that conserves $(\rho E_{\text{tot}})$ as:
 \begin{equation}
   \Delta (\rho E) = -\frac{1}{2}\sum_{f} \Delta \rho_{f} (\Phi_{f+1/2} - \Phi_{f-1/2}),\label{eq:grav_energy_conservation_update}
 \end{equation}
-where the sum is over the cell faces $f$ and the indices $f+1/2$ and $f-1/2$ refer to 
+where the sum is over the cell faces with indices $f$ and the indices $f+1/2$ and $f-1/2$ refer to 
 the zone centers immediately to the left and right in the direction perpendicular to the face.
-Note that while total energy is conserved, the gas energy is not because \autoref{eq:grav_energy_conservation_update} does not have the 
-telescoping property of a flux formalism where energy gained by one zone is lost by another. 
-The energy is being exchanged with a potential field that responds indirectly when the mass moves.
-
-The change in the density $\Delta \rho_{f}$ is proportional to the mass flux through the surface with area $\Delta A$:
-\begin{equation}
-  \Delta \rho_f = \frac{\Delta t}{\Delta V} (\Delta A\, \rho v_{f}),\label{eq:mass_transfer}
-\end{equation}
-So as long as we record these fluxes through the zone faces after coming out of the hydrodynamics step, 
+As long as we record the hydrodynamical fluxes through the zone faces after coming out of the hydrodynamics step, 
 we are able to conserve the total energy completely (except for any energy loss or gain through 
 physical domain boundaries). In order for the method to be second-order accurate in time, 
-no change is needed to the fluxes since those are already time-centered 
-in the hydrodynamics update, so we need only to use a time-centered $\Phi$ (which can be computed 
-by averaging the time-level $n$ and $n+1$ potentials; we already have the latter because \castro\ 
-re-computes the potential at the new time after the hydrodynamics step, and we can apply this energy 
-at the end of the timestep). Using this conservative energy formulation is very important for simulations where the 
-potential can change substantially over the course of the evolution, as massive amounts of energy can be lost. 
-The standard approach is therefore unacceptable in the case of a problem like white dwarf mergers, and 
-the fix to this energy leaking---evaluating the energy transfer at the six zone faces instead of 
-the single zone center---has a very minor cost in terms of code complexity and computational time.
+we need to use a time-centered $\Phi$ (which can be computed by averaging the time-level $n$ and $n+1$ potentials;
+we already have the latter because \castro\ re-computes the potential at the new time after the hydrodynamics step,
+and we can apply this energy at the end of the timestep). Note that of course the hydrodynamical
+flux is already second-order accurate in time. In passing, we observe that the factor of $1/2$ that
+appears in \autoref{eq:grav_energy_conservation_update} has nothing to do with the factor of
+$1/2$ that appears in the statement of conservation of total energy, \autoref{eq:total_energy_gravity}.
+The former comes simply from the fact that the energy change is evaluated using the mass motion through
+a distance of half of the zone width. The latter is needed to ensure that these local changes in energy
+are not double-counted when doing a global integral, since the gravitational potential is self-generated.
+\autoref{eq:grav_energy_conservation_update} applies to any conservative potential $\Phi$, and we will
+use this to our advantage for the rotation forces in \autoref{sec:rotation}.
 
-As observed by \cite{arepo}, when examining \autoref{eq:mass_transfer} one can see the relationship 
-between this method and the more common (non-conservative) approach of evaluating the change in 
-gas energy using the work done $(\mathbf{v} \cdot \rho \mathbf{g})$ by the gravitational force at the 
-cell center. Analytically this form expresses the same core idea as \autoref{eq:grav_energy_conservation_update} 
-via the work-energy theorem, but a major flaw is that it evaluates the energy change at the cell center 
-when in fact the mass transfer is happening at the cell edges. However, there is a more fundamental issue. 
-As observed by \citet[Chapter 4]{shu:1992} and \citet{marcello:2012}, the energy source term $(-\rho \mathbf{u}\cdot\nabla\Phi)$ 
-includes a contribution that is not localizable and reflects the global nature of the gravitational potential. 
-It is only by integrating this source term over all space that the correct gravitational potential energy 
-for the system emerges. Integrating over only one zone cannot yield the correct description of this global 
-energy flow, and indeed therefore can never obtain the factor of 1/2 that arises from avoiding double-counting 
-of the pairwise gravitational interactions. So while \autoref{eq:grav_energy_conservation_update} was correctly obtained 
-by \cite{arepo} (whose work was the primary inspiration for this approach), their derivation that integrates the work 
-done over the volume of a zone does not correctly account\footnote{They argued that this volume integral 
-of the work can be converted into a surface integral by use of the divergence theorem (see their Equation 93). That 
-application of the divergence theorem is mathematically incorrect, because their formulation of the integrand cannot actually 
-be expressed only as the divergence of a vector field.} for this behavior. It is only by accounting for the global nature of the
-potential that we can obtain the correct factor of $1/2$ and have a correct accounting of the energy within a zone.
-The insight of applying the source term on the zone faces to conserve energy is still valid when 
-considering energy transfer between the gas energy and a potential field if the change in energy 
-is explicitly localizable. Indeed, we employ this formulation in \autoref{sec:rotation} for the case of the rotational potential.
+As observed by \cite{arepo}, this is more accurate than the more common (non-conservative) approach
+of evaluating the change in gas energy using the work done $(\mathbf{v} \cdot \rho \mathbf{g})$
+by the gravitational force at the cell center. Analytically this form expresses the same core idea as
+\autoref{eq:grav_energy_conservation_update} via the work-energy theorem, but a major flaw is that
+it evaluates the energy change at the cell center when in fact the mass transfer is happening at
+the cell edges. This can result in a significant leaking of energy throughout the course of the
+evolution, dramatically affecting the course of the evolution. The standard approach is therefore
+unacceptable in the case of a problem like white dwarf mergers, and the fix to this energy
+leaking---evaluating the energy transfer at the six zone faces instead of the single zone
+center---has a very minor cost in terms of code complexity and computational time.
 
 Another approach to conserving total energy recently taken in the literature is to evolve an 
 equation for the total energy $(\rho E_{\text{tot}})$; see \cite{marcello:2012} and \cite{jiang:2013} (see also 
@@ -1001,20 +998,18 @@ with $\mathbf{f}^R \equiv  -{\bm\omega} \times \left({\bm\omega} \times \mathbf{
 This expression is identical in form to the gravity source under the interchange of $\mathbf{g}$ with $\mathbf{f}^R$.
 As observed by \cite{marcello:2012}, we can similarly write down a rotational potential,
 \begin{equation}
-  \Phi^R = -\frac{1}{2} \left| {\bm\omega} \times \mathbf{r} \right|^2.
+  \Phi^R = \frac{1}{2} \left| {\bm\omega} \times \mathbf{r} \right|^2.
 \end{equation}
-In the presence of rotation the total energy becomes:
+In the presence of rotation the conserved total energy becomes:
 \begin{equation}
-  (\rho E_{\text{tot}}) = (\rho E) + \frac{1}{2} \rho \Phi + \rho \Phi^R.
+  \int dV (\rho E_{\text{tot}}) = \int dV \left( \rho E + \frac{1}{2} \rho \Phi + \rho \Phi^R \right).
 \end{equation}
 Given that we can write down a potential energy for the rotation field, then we can use the machinery of 
 \autoref{sec:gravity_hydro_coupling}. We again continue to evolve explicitly an equation for 
 the gas energy, and allow it to change in response to work done by or on the rotational potential.
 \begin{align}
-  \left.\Delta(\rho E)\right|_{\text{rot}} &= - \sum_{f} \Delta \rho_{f} (\Phi^R_{f+1/2} - \Phi^R_{f-1/2})
+  \left.\Delta(\rho E)\right|_{\text{rot}} &= -\frac{1}{2}\sum_{f} \Delta \rho_{f} (\Phi^R_{f+1/2} - \Phi^R_{f-1/2})
 \end{align}
-Again we observe that this results a change in the global integral of $(\rho E)$, but keeps 
-the global integral of $(\rho E_{\text{tot}})$ conserved (except at physical domain boundaries).
 
 We apply the rotation forces after the gravitation forces, but 
 there is some freedom in the order in which to apply the gravitational and rotational terms.
