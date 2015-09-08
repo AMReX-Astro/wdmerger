@@ -641,19 +641,29 @@ Finally, then, we write the update in a zone for the total energy that conserves
 where the sum is over the cell faces with indices $f$ and the indices $f+1/2$ and $f-1/2$ refer to 
 the zone centers immediately to the left and right in the direction perpendicular to the face.
 As long as we record the hydrodynamical fluxes through the zone faces after coming out of the hydrodynamics step, 
-we are able to conserve the total energy completely (except for any energy loss or gain through 
+this algorithm is able to conserve the total energy completely (except for any energy loss or gain through 
 physical domain boundaries). In order for the method to be second-order accurate in time, 
 we need to use a time-centered $\Phi$ (which can be computed by averaging the time-level $n$ and $n+1$ potentials;
 we already have the latter because \castro\ re-computes the potential at the new time after the hydrodynamics step,
 and we can apply this energy at the end of the timestep). Note that of course the hydrodynamical
-flux is already second-order accurate in time. In passing, we observe that the factor of $1/2$ that
-appears in \autoref{eq:grav_energy_conservation_update} has nothing to do with the factor of
-$1/2$ that appears in the statement of conservation of total energy, \autoref{eq:total_energy_gravity}.
-The former comes simply from the fact that the energy change is evaluated using the mass motion through
-a distance of half of the zone width. The latter is needed to ensure that these local changes in energy
-are not double-counted when doing a global integral, since the gravitational potential is self-generated.
-\autoref{eq:grav_energy_conservation_update} applies to any conservative potential $\Phi$, and we will
-use this to our advantage for the rotation forces in \autoref{sec:rotation}.
+flux is already second-order accurate in time. We observe also that in practice we will not obtain 
+conservation of energy to machine precision even in the absence of open domain boundaries. The 
+method itself is conservative if it is time-centered and correctly evaluates the energy change 
+on cell faces \citep{marcello:2012}. However, in practice there is a non-zero numerical tolerance associated 
+with the Poisson gravity solver (in our case, the multigrid method) that results in a non-zero error 
+in the calculation of the gravitational potential. This results in a very small deviation from perfect 
+conservation. It is not usually larger than the other effects which result in energy non-conservation 
+for our simulations, such as resetting the state of zones that acquire a negative internal energy, and 
+in principle if desired it can be made smaller by using stricter tolerance levels on the gravity solve.
+
+In passing, the factor of $1/2$ that appears in \autoref{eq:grav_energy_conservation_update} 
+has nothing to do with the factor of $1/2$ that appears in the statement of conservation of total energy, 
+\autoref{eq:total_energy_gravity}. The former comes simply from the fact that the energy change is 
+evaluated using the mass motion through a distance of half of the zone width. The latter is needed 
+to ensure that these local changes in energy are not double-counted when doing a global integral, 
+since the gravitational potential is self-generated. \autoref{eq:grav_energy_conservation_update} 
+applies to any conservative potential $\Phi$, and we will use this to our advantage for the 
+rotation forces in \autoref{sec:rotation}.
 
 As observed by \cite{arepo}, this is more accurate than the more common (non-conservative) approach
 of evaluating the change in gas energy using the work done $(\mathbf{v} \cdot \rho \mathbf{g})$
