@@ -852,6 +852,7 @@ function create_job_script {
 
       # Run the archive script at the end of the simulation.
 
+      echo "do_storage=$do_storage" >> $dir/$job_script
       echo "archive_all ." >> $dir/$job_script
 
       # Check to make sure we are done, and if not, re-submit the job.
