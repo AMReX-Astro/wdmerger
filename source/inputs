@@ -138,4 +138,4 @@ mg.v = 0                                           # Control verbosity in the mu
 amr.derive_plot_vars = ALL                         # Calculate all variables for plotfiles, including derived variables
 castro.plot_phiGrav = 1                            # Include the gravitational potential in the plotfile
 
-amr.data_log = grid_diag.out star_diag.out         # Name of the diagnostic sum output files
+amr.data_log = grid_diag.out star_diag.out species_diag.out   # Name of the diagnostic sum output files

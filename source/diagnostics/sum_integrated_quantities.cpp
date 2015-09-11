@@ -91,14 +91,20 @@ Castro::sum_integrated_quantities ()
     Real rad_p[7] = { 0.0 };
     Real rad_s[7] = { 0.0 };
 
+    // Average density of the stars.
+    
     Real rho_avg_p = 0.0;
     Real rho_avg_s = 0.0;
 
+    // Gravitational free-fall timescale of the stars.
+    
     Real t_ff_p = 0.0;
     Real t_ff_s = 0.0;
 
     int single_star;
 
+    // Gravitational wave amplitudes.
+    
     Real h_plus_rot = 0.0;
     Real h_cross_rot = 0.0;
 
@@ -107,6 +113,19 @@ Castro::sum_integrated_quantities ()
 
     Real h_plus_motion = 0.0;
     Real h_cross_motion = 0.0;
+
+    // Number of species.
+    
+    int NumSpec;
+    BL_FORT_PROC_CALL(GET_NUM_SPEC, get_num_spec)(&NumSpec);    
+
+    // Species names and total masses on the domain.
+
+    Real M_solar = 1.9884e33;
+    
+    Real species_mass[NumSpec] = { 0.0 };
+    std::string species_names[NumSpec];
+    
 #endif
 
     std::string name1; 
@@ -247,6 +266,17 @@ Castro::sum_integrated_quantities ()
 #ifdef merger
       ca_lev.gwstrain(time, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion);
 #endif
+
+      // Integrated mass of all species on the domain.      
+#ifdef merger
+      for (int i = 0; i < NumSpec; i++) {
+	species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
+	species_mass[i] += ca_lev.volWgtSum(species_names[i], time) / M_solar;
+	
+	// For output, remove "rho_" from the name in state data.
+	species_names[i] = species_names[i].substr(4,std::string::npos);
+      }
+#endif		       
     }
 
     // Divide the center of mass by the total amount of mass on the grid.
@@ -628,6 +658,57 @@ Castro::sum_integrated_quantities ()
 	 }
       }
 #endif
+
+#ifdef merger
+      if (parent->NumDataLogs() > 2) {
+
+	 std::ostream& species_log = parent->DataLog(2);
+
+	 std::cout << "hello";
+	 
+	 if ( species_log.good() ) {
+
+	 std::cout << "hello";	   
+	   
+	   if (time == 0.0) {
+
+	     // Output the git commit hashes used to build the executable.
+
+	     const char* castro_hash   = buildInfoGetGitHash(1);
+	     const char* boxlib_hash   = buildInfoGetGitHash(2);
+	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
+
+	     species_log << "# Castro   git hash: " << castro_hash   << "\n";
+	     species_log << "# BoxLib   git hash: " << boxlib_hash   << "\n";
+	     species_log << "# wdmerger git hash: " << wdmerger_hash << "\n";
+
+	     species_log << std::setw(12)        << "#   TIMESTEP";
+	     species_log << std::setw(datawidth) << "     TIME              ";
+	     species_log << std::setw(datawidth) << "     DT                ";
+
+	     for (int i = 0; i < NumSpec; i++)
+	       species_log << std::setw(datawidth) << " Mass " + species_names[i];
+
+	     species_log << std::endl;
+
+	   }
+
+	   species_log << std::fixed;
+
+	   species_log << std::setw(12)                                            << step;
+	   species_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
+	   species_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
+
+	   species_log << std::scientific;
+
+	   for (int i = 0; i < NumSpec; i++)
+	     species_log << std::setw(datawidth) << std::setprecision(dataprecision) << species_mass[i];
+
+	   species_log << std::endl;	   
+	   
+	 }
+      }
+#endif      
     }
 }
 
