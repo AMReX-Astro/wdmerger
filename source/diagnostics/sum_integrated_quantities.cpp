@@ -664,12 +664,8 @@ Castro::sum_integrated_quantities ()
 
 	 std::ostream& species_log = parent->DataLog(2);
 
-	 std::cout << "hello";
-	 
 	 if ( species_log.good() ) {
 
-	 std::cout << "hello";	   
-	   
 	   if (time == 0.0) {
 
 	     // Output the git commit hashes used to build the executable.
