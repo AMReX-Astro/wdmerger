@@ -19,6 +19,8 @@ USE_REACT ?= TRUE
 USE_MODELPARSER ?= TRUE
 USE_ROTATION ?= TRUE
 
+DIMENSION_AGNOSTIC ?= TRUE
+
 # Override default compiler for certain machines.
 
 UNAMEN := $(shell uname -n)

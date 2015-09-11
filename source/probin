@@ -49,10 +49,6 @@
   initial_model_mass_tol = 1.d-6
   initial_model_hse_tol = 1.d-10
 
-  sponge_dist      = 0.75d0
-  sponge_width     = 0.1d0
-  sponge_timescale = 0.01d0
-
   gw_dist = 10.0
 
   fill_ambient_bc = F
@@ -61,6 +57,12 @@
 &tagging 
   max_temperr_lev    = 4
   temperr            = 2.d8
+/
+
+&sponge
+  sponge_lower_radius = 3.840d9
+  sponge_upper_radius = 4.352d9
+  sponge_timescale    = 0.01d0
 /
 
 &extern
