@@ -148,7 +148,7 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO
     use prob_params_module, only: center
     use probdata_module, only: scf_c, scf_d_vector, scf_rloc
-    use rot_sources_module, only: get_omega
+    use rotation_module, only: get_omega
 
     implicit none
     
@@ -222,7 +222,7 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO, rot_period
     use prob_params_module, only: center
     use probdata_module, only: scf_c, scf_d_vector, scf_rloc
-    use rot_sources_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega, cross_product
 
     implicit none
     
@@ -282,7 +282,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO, rot_period
     use prob_params_module, only: center
     use probdata_module
-    use rot_sources_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega, cross_product
 
     implicit none
     
@@ -363,7 +363,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
     use prob_params_module, only: center
     use probdata_module, only: star_axis, get_ambient, scf_h_max_P, scf_h_max_S, scf_enthalpy_min
     use eos_module
-    use rot_sources_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega, cross_product
 
     implicit none
     

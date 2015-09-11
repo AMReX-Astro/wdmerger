@@ -384,7 +384,7 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
   use meth_params_module, only: do_rotation, rot_period, rot_period_dot
-  use rot_sources_module, only: get_omega, cross_product
+  use rotation_module, only: get_omega, cross_product
   
   implicit none
 
@@ -719,7 +719,6 @@ subroutine set_period(period)
   rot_period = period
 
 end subroutine set_period
-
 
 
 

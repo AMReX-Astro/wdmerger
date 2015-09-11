@@ -35,8 +35,8 @@
    ! :::		   ghost region).
    ! ::: -----------------------------------------------------------
    subroutine ca_initdata(level,time,lo,hi,nscal, &
-                          state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-                          delta,xlo,xhi)
+                          state,state_lo,state_hi, &
+                          dx,xlo,xhi)
 
      use probdata_module
      use prob_params_module, only: center
@@ -47,15 +47,15 @@
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use initial_model_module, only: interpolate_3d_from_1d
-     use rot_sources_module, only: cross_product, get_omega
+     use rotation_module, only: cross_product, get_omega
 
      implicit none
 
-     integer :: level, nscal
-     integer :: lo(3), hi(3)
-     integer :: state_l1,state_l2,state_l3,state_h1,state_h2,state_h3
-     double precision :: xlo(3), xhi(3), time, delta(3)
-     double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
+     integer          :: level, nscal
+     integer          :: lo(3), hi(3)
+     integer          :: state_lo(3), state_hi(3)
+     double precision :: xlo(3), xhi(3), time, dx(3)
+     double precision :: state(state_lo(1):state_hi(1),state_lo(2):state_hi(2),state_lo(3):state_hi(3),NVAR)
 
      double precision :: loc(3), omega(3)
      double precision :: dist_P(3), dist_S(3)
@@ -75,21 +75,21 @@
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)
      do k = lo(3), hi(3)
-        loc(3) = xlo(3) + delta(3)*dble(k+HALF-lo(3)) 
+        loc(3) = xlo(3) + dx(3)*dble(k+HALF-lo(3)) 
 
         do j = lo(2), hi(2)
-           loc(2) = xlo(2) + delta(2)*dble(j+HALF-lo(2))
+           loc(2) = xlo(2) + dx(2)*dble(j+HALF-lo(2))
 
            do i = lo(1), hi(1)
-              loc(1) = xlo(1) + delta(1)*dble(i+HALF-lo(1))
+              loc(1) = xlo(1) + dx(1)*dble(i+HALF-lo(1))
 
               dist_P = loc - center_P_initial
               dist_S = loc - center_S_initial
 
               if (sum(dist_P**2) < model_P % radius**2) then
-                 call interpolate_3d_from_1d(model_P, dist_P, delta, zone_state, nsub)
+                 call interpolate_3d_from_1d(model_P, dist_P, dx, zone_state, nsub)
               else if (sum(dist_S**2) < model_S % radius**2) then
-                 call interpolate_3d_from_1d(model_S, dist_S, delta, zone_state, nsub)
+                 call interpolate_3d_from_1d(model_S, dist_S, dx, zone_state, nsub)
               else
                  zone_state = ambient_state
               endif
@@ -99,7 +99,6 @@
               state(i,j,k,UEINT) = zone_state % e * zone_state % rho
               state(i,j,k,UEDEN) = zone_state % e * zone_state % rho
               state(i,j,k,UFS:UFS+nspec-1) = zone_state % rho * zone_state % xn
-
            enddo
         enddo
      enddo
@@ -121,11 +120,11 @@
 
     !$OMP PARALLEL DO PRIVATE(i, j, k, loc, dist_P, dist_S)
     do k = lo(3), hi(3)
-       loc(3) = xlo(3) + dble(k - lo(3) + HALF)*delta(3) - center(3)
+       loc(3) = xlo(3) + dble(k - lo(3) + HALF)*dx(3) - center(3)
        do j = lo(2), hi(2)
-          loc(2) = xlo(2) + dble(j - lo(2) + HALF)*delta(2) - center(2)
+          loc(2) = xlo(2) + dble(j - lo(2) + HALF)*dx(2) - center(2)
           do i = lo(1), hi(1)
-             loc(1) = xlo(1) + dble(i - lo(1) + HALF)*delta(1) - center(1)
+             loc(1) = xlo(1) + dble(i - lo(1) + HALF)*dx(1) - center(1)
 
              ! If we want a collision calculation, set the stars in 
              ! motion with the respective free-fall velocities.
