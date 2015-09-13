@@ -5,6 +5,7 @@
 
 #ifdef GRAVITY
 #ifdef ROTATION
+#ifdef do_problem_post_init
 void Castro::scf_relaxation() {
 
   int finest_level = parent->finestLevel();
@@ -51,7 +52,6 @@ void Castro::scf_relaxation() {
 
   MultiFab& phi = get_new_data(PhiGrav_Type);
 
-  int ns    = NUM_STATE;
   Real time = state[State_Type].curTime();
 
   // Iterate until the system is relaxed by filling the level data 
@@ -272,5 +272,6 @@ void Castro::scf_relaxation() {
   }
 
 }
+#endif
 #endif
 #endif

@@ -7,12 +7,18 @@ SHELL=/bin/bash
 PRECISION ?= DOUBLE
 PROFILE ?= FALSE
 
-DEBUG ?= FALSE
+DEBUG ?= TRUE
 
 USE_MPI ?= TRUE
 USE_OMP ?= TRUE
 
 DIM ?= 3
+
+ifeq ($(DIM), 1)
+
+  $(error Error: wdmerger is not configured to run in only one dimension. Please use DIM = 2 or DIM = 3)
+
+endif
 
 USE_GRAV ?= TRUE
 USE_REACT ?= TRUE

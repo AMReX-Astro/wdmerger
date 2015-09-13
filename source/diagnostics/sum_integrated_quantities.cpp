@@ -30,6 +30,7 @@ Castro::sum_integrated_quantities ()
     Real rho_e        = 0.0;
     Real rho_K        = 0.0;
     Real rho_phi      = 0.0;
+    Real rho_phirot   = 0.0;
 
     Real gravitational_energy = 0.0; 
     Real kinetic_energy       = 0.0; 
@@ -43,7 +44,6 @@ Castro::sum_integrated_quantities ()
     Real m_r_squared[3]          = { 0.0 };
 
     Real omega[3]       = { 0.0 };
-    Real rot_kin_eng    = 0.0;
     Real rot_mom[3]     = { 0.0 };
     Real rot_ang_mom[3] = { 0.0 };
 
@@ -145,6 +145,16 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
 #endif
 
+    // Determine the names of the species in the simulation.    
+    
+#ifdef merger
+    for (int i = 0; i < NumSpec; i++) {
+      species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
+      species_names[i] = species_names[i].substr(4,std::string::npos);
+      species_mass[i]  = 0.0;	
+    }
+#endif    
+    
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
@@ -152,38 +162,34 @@ Castro::sum_integrated_quantities ()
 
       Castro& ca_lev = getLevel(lev);
 
-      for ( int i = 0; i < BL_SPACEDIM; i++ ) {
+      for ( int i = 0; i < 3; i++ ) {
         lev_com[i]    = ca_lev.locWgtSum("density", time, i);
         com[i]       += lev_com[i];
       }
 
       // Calculate total mass, momentum and energy of system.
 
-      mass     += ca_lev.volWgtSum("density", time);
+      mass += ca_lev.volWgtSum("density", time);
 
-      mom_grid[0]     += ca_lev.volWgtSum("xmom", time);
-#if (BL_SPACEDIM >= 2)      
-      mom_grid[1]     += ca_lev.volWgtSum("ymom", time);
-#endif
-#if (BL_SPACEDIM == 3)
-      mom_grid[2]     += ca_lev.volWgtSum("zmom", time);
-#endif
+      mom_grid[0] += ca_lev.volWgtSum("xmom", time);
+      mom_grid[1] += ca_lev.volWgtSum("ymom", time);
+      mom_grid[2] += ca_lev.volWgtSum("zmom", time);
 
-      rho_E    += ca_lev.volWgtSum("rho_E", time);
-      rho_K    += ca_lev.volWgtSum("kineng",time);
-      rho_e    += ca_lev.volWgtSum("rho_e", time);
+      rho_E += ca_lev.volWgtSum("rho_E", time);
+      rho_K += ca_lev.volWgtSum("kineng",time);
+      rho_e += ca_lev.volWgtSum("rho_e", time);
 
 #ifdef GRAVITY
-#if (BL_SPACEDIM == 3)
-      if ( do_grav and gravity->get_gravity_type() == "PoissonGrav" ) {
-        rho_phi  += ca_lev.volProductSum("density", "phiGrav", time);
-      }
-#endif
+      if ( do_grav and gravity->get_gravity_type() == "PoissonGrav" )
+        rho_phi += ca_lev.volProductSum("density", "phiGrav", time);
 #endif
 
+#ifdef ROTATION
+      if ( do_rotation )
+	rho_phirot += ca_lev.volProductSum("density", "phiRot", time);
+#endif            
+      
       // Calculate total angular momentum on the grid using L = r x p
-
-#if (BL_SPACEDIM == 3)
 
       for ( int i = 0; i < 3; i++ ) {
 
@@ -205,22 +211,13 @@ Castro::sum_integrated_quantities ()
 
       }
 
-#elif (BL_SPACEDIM == 2)
-
-      // If we're in 2D, only the z-component will be non-zero.
-
-      L_grid[2] = ca_lev.locWgtSum("ymom", time, 0) - ca_lev.locWgtSum("xmom", time, 1);
-      angular_momentum[2] += L_grid[2]; 
-
-#endif
-
       // Add rotation source terms
 #ifdef ROTATION
       if ( do_rotation ) {
 
         // Construct (symmetric) moment of inertia tensor
 
-	for ( int i = 0; i < BL_SPACEDIM; i++ ) {
+	for ( int i = 0; i < 3; i++ ) {
           m_r_squared[i] = ca_lev.locWgtSum2D("density", time, i, i);
         }
 
@@ -228,8 +225,7 @@ Castro::sum_integrated_quantities ()
 	  for ( int j = 0; j <= 2; j++ ) {
             if ( i <= j ) {
               if ( i != j )  {
-                if ( ( i < BL_SPACEDIM ) && ( j < BL_SPACEDIM ) ) // Protect against computing z direction sum in 2D
-                  moment_of_inertia[i][j] = -ca_lev.locWgtSum2D("density", time, i, j);
+		moment_of_inertia[i][j] = -ca_lev.locWgtSum2D("density", time, i, j);
               }
               else
                 moment_of_inertia[i][j] = m_r_squared[(i+1)%3] + m_r_squared[(i+2)%3];
@@ -245,17 +241,10 @@ Castro::sum_integrated_quantities ()
 
           rot_mom[i] += omega[(i+1)%3]*lev_com[(i+2)%3] - omega[(i+2)%3]*lev_com[(i+1)%3];
 
-          // Rotational energy from motion IN rotating frame == omega dot L_grid
-
-          rot_kin_eng += omega[i] * L_grid[i];
-
 	  // Now add quantities due to motion OF rotating frame
 
-	  for ( int j = 0; j <=2; j++ ) {
+	  for ( int j = 0; j <=2; j++ )
             rot_ang_mom[i] += moment_of_inertia[i][j] * omega[j];
-
-            rot_kin_eng += (1.0/2.0) * omega[i] * moment_of_inertia[i][j] * omega[j];
-          }
 
         }
 
@@ -269,24 +258,11 @@ Castro::sum_integrated_quantities ()
 
       // Integrated mass of all species on the domain.      
 #ifdef merger
-      for (int i = 0; i < NumSpec; i++) {
-	species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
-	species_mass[i] += ca_lev.volWgtSum(species_names[i], time) / M_solar;
-	
-	// For output, remove "rho_" from the name in state data.
-	species_names[i] = species_names[i].substr(4,std::string::npos);
-      }
+      for (int i = 0; i < NumSpec; i++)
+	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time) / M_solar;
+      
 #endif		       
     }
-
-    // Divide the center of mass by the total amount of mass on the grid.
-
-    for ( int i = 0; i < 3; i++ ) {
-
-      com[i]       = com[i] / mass;
-      com_vel[i]   = momentum[i] / mass;
-
-    } 
 
     // Complete calculations for energy and momenta
 
@@ -294,19 +270,13 @@ Castro::sum_integrated_quantities ()
     internal_energy = rho_e;
     kinetic_energy = rho_K;
     gas_energy = rho_E;
-    total_energy = gravitational_energy + rho_E;
-
+    rotational_energy = rho_phirot;
+    total_E_grid = gravitational_energy + rho_E;
+    total_energy = total_E_grid + rotational_energy;
+    
     for (int i = 0; i < 3; i++) {
-        momentum[i] = mom_grid[i];
-        angular_momentum[i] = L_grid[i];
-    }
-
-    total_E_grid = total_energy;
-    rotational_energy = rot_kin_eng;
-    total_energy += rotational_energy;
-    for (int i = 0; i <= 2; i++) {
-        momentum[i] += rot_mom[i];
-        angular_momentum[i] += rot_ang_mom[i];
+        momentum[i] = mom_grid[i] + rot_mom[i];
+        angular_momentum[i] = L_grid[i] + rot_ang_mom[i];
     }
 
 #ifdef merger

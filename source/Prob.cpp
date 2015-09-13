@@ -25,7 +25,7 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
     MultiFab*   mfxmom   = derive("xmom",time,0);
     MultiFab*   mfymom   = derive("ymom",time,0);
     MultiFab*   mfzmom   = derive("zmom",time,0);
-
+    
     BL_ASSERT(mfrho  != 0);
     BL_ASSERT(mfxmom != 0);
     BL_ASSERT(mfymom != 0);
@@ -67,17 +67,18 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 	FArrayBox& fabxmom = (*mfxmom)[mfi];
 	FArrayBox& fabymom = (*mfymom)[mfi];
 	FArrayBox& fabzmom = (*mfzmom)[mfi];
-    
+	
         const Box& box  = mfi.tilebox();
         const int* lo   = box.loVect();
         const int* hi   = box.hiVect();
 
 	BL_FORT_PROC_CALL(WDCOM,wdcom)
-            (BL_TO_FORTRAN(fabrho),
-	     BL_TO_FORTRAN(fabxmom),
-	     BL_TO_FORTRAN(fabymom),
-	     BL_TO_FORTRAN(fabzmom),
-	     lo,hi,dx,&time,
+            (BL_TO_FORTRAN_3D(fabrho),
+	     BL_TO_FORTRAN_3D(fabxmom),
+	     BL_TO_FORTRAN_3D(fabymom),
+	     BL_TO_FORTRAN_3D(fabzmom),
+	     BL_TO_FORTRAN_3D(volume[mfi]),
+	     ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
 	     &com_p_x, &com_p_y, &com_p_z,
 	     &com_s_x, &com_s_y, &com_s_z,
 	     &vel_p_x, &vel_p_y, &vel_p_z,
@@ -158,7 +159,7 @@ void Castro::volInBoundary (Real               time,
         const int* hi   = box.hiVect();
 
 	BL_FORT_PROC_CALL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
-	                  (BL_TO_FORTRAN(fab),lo,hi,dx,&sp,&ss,&rho_cutoff);
+	  (BL_TO_FORTRAN_3D(fab),BL_TO_FORTRAN_3D(volume[mfi]),ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&sp,&ss,&rho_cutoff);
         vp += sp;
 	vs += ss;
     }
@@ -223,10 +224,10 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
     // and requires the state at other timesteps. See, e.g., Equation 5 of 
     // Loren-Aguilar et al. 2005.
 
-    // It is a 3x3 rank-2 tensor, but BoxLib expects our boxes to be the same 
-    // dimensionality as the problem, so we add a redundant third index.
+    // It is a 3x3 rank-2 tensor, but BoxLib expects IntVect() to use BL_SPACEDIM
+    // dimensions, so we add a redundant third index in 3D.
 
-    Box bx( IntVect(0, 0, 0), IntVect(2, 2, 0) );
+    Box bx( IntVect(D_DECL(0, 0, 0)), IntVect(D_DECL(2, 2, 0)) );
 
     FArrayBox Qtt(bx);
 
@@ -252,14 +253,15 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 	    const int* hi   = box.hiVect();
 
 	    BL_FORT_PROC_CALL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
-	        (BL_TO_FORTRAN((*mfrho)[mfi]),
-		 BL_TO_FORTRAN((*mfxmom)[mfi]),
-		 BL_TO_FORTRAN((*mfymom)[mfi]),
-		 BL_TO_FORTRAN((*mfzmom)[mfi]),
-		 BL_TO_FORTRAN((*mfgravx)[mfi]),
-		 BL_TO_FORTRAN((*mfgravy)[mfi]),
-		 BL_TO_FORTRAN((*mfgravz)[mfi]),
-		 lo,hi,dx,&time,
+	        (BL_TO_FORTRAN_3D((*mfrho)[mfi]),
+		 BL_TO_FORTRAN_3D((*mfxmom)[mfi]),
+		 BL_TO_FORTRAN_3D((*mfymom)[mfi]),
+		 BL_TO_FORTRAN_3D((*mfzmom)[mfi]),
+		 BL_TO_FORTRAN_3D((*mfgravx)[mfi]),
+		 BL_TO_FORTRAN_3D((*mfgravy)[mfi]),
+		 BL_TO_FORTRAN_3D((*mfgravz)[mfi]),
+		 BL_TO_FORTRAN_3D(volume[mfi]),
+		 ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
 #ifdef _OPENMP
 		 priv_Qtt[tid].dataPtr());
 #else

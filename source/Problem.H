@@ -1,11 +1,17 @@
 // Define a preprocessor directive that determines if we're doing a full merger simulation.
 // This is useful for sharing C++ files like the diagnostics between multiple test problems.
 
+#ifndef merger
 #define merger
+#endif
 
 // Preprocessor directive for allowing us to do a post-initialization step.
 
+#if (BL_SPACEDIM==3)
+#ifndef do_problem_post_init
 #define do_problem_post_init
+#endif
+#endif
 
 // Routine for determining white dwarf masses, centers of mass and velocities.
 

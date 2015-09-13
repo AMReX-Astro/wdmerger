@@ -5,7 +5,7 @@ subroutine set_problem_tags(tag,tag_lo,tag_hi, &
                             dx,problo,time,level)
 
   use bl_constants_module, only: ZERO, HALF, TWO
-  use meth_params_module, only: URHO, UMX, UMY, UMZ, UEDEN, NVAR
+  use meth_params_module, only: NVAR
   use prob_params_module, only: center, probhi
   use probdata_module, only: maxTaggingRadius, com_P, com_S, roche_rad_P, roche_rad_S  
   
