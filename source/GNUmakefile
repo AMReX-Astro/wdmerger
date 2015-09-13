@@ -7,7 +7,7 @@ SHELL=/bin/bash
 PRECISION ?= DOUBLE
 PROFILE ?= FALSE
 
-DEBUG ?= TRUE
+DEBUG ?= FALSE
 
 USE_MPI ?= TRUE
 USE_OMP ?= TRUE
@@ -51,20 +51,10 @@ EOS_dir ?= helmeos
 Network_dir ?= general_null
 GENERAL_NET_INPUTS := $(CASTRO_DIR)/Networks/general_null/aprox13.net 
 
-# Determine where our source files are coming from
-# based on the relevant file in the source directory.
-# For building the full program, this will be irrelevant
-# and we will simply compile everything in the 
-# WDMERGER_HOME source directory.
+# Location where our source files are coming from.
 
-diag_locs = $(WDMERGER_HOME)/source/diagnostics/
-diag_pack = $(WDMERGER_HOME)/source/diagnostics/Make.package
-
-root_locs = $(WDMERGER_HOME)/source/
-root_pack = $(WDMERGER_HOME)/source/Make.package
-
-Blocs := $(root_locs) $(diag_locs)
-Bpack := $(root_pack) $(diag_pack)
+Blocs := $(WDMERGER_HOME)/source/
+Bpack := $(WDMERGER_HOME)/source/Make.package
 
 BUILD_GIT_NAME := wdmerger
 BUILD_GIT_DIR  := $(WDMERGER_HOME)

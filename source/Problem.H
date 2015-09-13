@@ -1,10 +1,3 @@
-// Define a preprocessor directive that determines if we're doing a full merger simulation.
-// This is useful for sharing C++ files like the diagnostics between multiple test problems.
-
-#ifndef merger
-#define merger
-#endif
-
 // Preprocessor directive for allowing us to do a post-initialization step.
 
 #if (BL_SPACEDIM==3)

@@ -61,7 +61,6 @@ Castro::sum_integrated_quantities ()
     Real lev_com[3]   = { 0.0 };
     Real com_vel[3]   = { 0.0 };
 
-#ifdef merger
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
 
@@ -126,8 +125,6 @@ Castro::sum_integrated_quantities ()
     Real species_mass[NumSpec] = { 0.0 };
     std::string species_names[NumSpec];
     
-#endif
-
     std::string name1; 
     std::string name2;
 
@@ -137,23 +134,19 @@ Castro::sum_integrated_quantities ()
     int datawidth     = 24;
     int dataprecision = 16;
 
-#ifdef merger
     // Determine whether we're doing a single star simulation
     BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
 
     // Update the problem center using the system bulk velocity
     BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
-#endif
 
     // Determine the names of the species in the simulation.    
-    
-#ifdef merger
+
     for (int i = 0; i < NumSpec; i++) {
       species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
       species_names[i] = species_names[i].substr(4,std::string::npos);
       species_mass[i]  = 0.0;	
     }
-#endif    
     
     for (int lev = 0; lev <= finest_level; lev++)
     {
@@ -252,16 +245,12 @@ Castro::sum_integrated_quantities ()
 #endif
 
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
-#ifdef merger
       ca_lev.gwstrain(time, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion);
-#endif
 
       // Integrated mass of all species on the domain.      
-#ifdef merger
       for (int i = 0; i < NumSpec; i++)
 	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time) / M_solar;
       
-#endif		       
     }
 
     // Complete calculations for energy and momenta
@@ -278,8 +267,6 @@ Castro::sum_integrated_quantities ()
         momentum[i] = mom_grid[i] + rot_mom[i];
         angular_momentum[i] = L_grid[i] + rot_ang_mom[i];
     }
-
-#ifdef merger
 
     // Compute the center of mass locations and velocities for the primary and secondary.
     // We'll start by predicting the current locations of their centers by taking the 
@@ -397,10 +384,9 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
       (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
-#endif
+    
 
-
-
+    
     // Write data out to the log.
 
     if ( ParallelDescriptor::IOProcessor() )
@@ -464,14 +450,12 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datawidth) << " X COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Y COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Z COM VEL             ";
-   #ifdef merger
 	     grid_log << std::setw(datawidth) << " h_+ (rotation axis)   ";
 	     grid_log << std::setw(datawidth) << " h_x (rotation axis)   ";
 	     grid_log << std::setw(datawidth) << " h_+ (star axis)       ";
 	     grid_log << std::setw(datawidth) << " h_x (star axis)       ";
 	     grid_log << std::setw(datawidth) << " h_+ (motion axis)     ";
 	     grid_log << std::setw(datawidth) << " h_x (motion axis)     ";
-   #endif
 
 	     grid_log << std::endl;
 	   }
@@ -518,20 +502,17 @@ Castro::sum_integrated_quantities ()
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
-   #ifdef merger
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_rot;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_rot;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_star;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_star;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_motion;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_motion;
-   #endif
 
 	   grid_log << std::endl;
 	 }
       }
 
-#ifdef merger
       if (parent->NumDataLogs() > 1) {
 
 	 std::ostream& star_log = parent->DataLog(1);
@@ -627,9 +608,7 @@ Castro::sum_integrated_quantities ()
 
 	 }
       }
-#endif
 
-#ifdef merger
       if (parent->NumDataLogs() > 2) {
 
 	 std::ostream& species_log = parent->DataLog(2);
@@ -674,7 +653,7 @@ Castro::sum_integrated_quantities ()
 	   
 	 }
       }
-#endif      
+
     }
 }
 
