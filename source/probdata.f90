@@ -696,6 +696,12 @@ contains
     iNe20 = network_species_index("neon-20")
     iMg24 = network_species_index("magnesium-24")
 
+    if (iHe4 < 0) call bl_error("Must have He4 in the nuclear network.")
+    if (iC12 < 0) call bl_error("Must have C12 in the nuclear network.")
+    if (iO16 < 0) call bl_error("Must have O16 in the nuclear network.")
+    if (iNe20 < 0) call bl_error("Must have Ne20 in the nuclear network.")
+    if (iMg24 < 0) call bl_error("Must have Mg24 in the nuclear network.")
+    
     model % core_comp = smallx
     model % envelope_comp = smallx
 
