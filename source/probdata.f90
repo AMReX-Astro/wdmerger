@@ -889,5 +889,103 @@ contains
     state(UEDEN) = state(UEINT) + HALF * sum(state(UMX:UMZ)**2) / state(URHO)
 
   end subroutine fill_ambient
+
+
+
+  ! If we are in a rotating reference frame, then rotate a vector
+  ! by an amount corresponding to the time that has passed
+  ! since the beginning of the simulation.
+
+  function inertial_rotation(vec, time) result(vec_i)
+
+    use rotation_module, only: get_omega
+    use meth_params_module, only: do_rotation, rot_period, rot_period_dot
+    
+    implicit none
+
+    double precision :: vec(3), time
+
+    double precision :: vec_i(3)
+    
+    double precision :: omega(3), theta(3), rot_matrix(3,3)
+    
+
+    ! To get the angle, we integrate omega over the time of the
+    ! simulation. Since the time rate of change is linear in the
+    ! period, let's work that variable. At some time t the current
+    ! period P is given by P = P_0 + Pdot * t. Then:
+    !
+    ! theta(t) = int( omega(t) * dt )
+    !      theta = int( omega(t) dt )
+    !            = (2 * pi / P_0) * int( dt / (1 + (dPdt / P_0) * t) )
+    !
+    ! if dPdt = 0, then theta = 2 * pi * t / P_0 = omega_0 * t, as expected.
+    ! if dPdt > 0, then theta = (2 * pi / P_0) * (P_0 / dPdt) * ln| (dPdt / P_0) * t + 1 |
+    ! Note that if dPdt << P_0, then we have ln(1 + x) = x, and we again
+    ! recover the original expression as expected.        
+    
+    if (do_rotation .eq. 1) then
+  
+       if (abs(rot_period_dot) > ZERO .and. time > ZERO) then
+          theta = get_omega(ZERO) * (rot_period / rot_period_dot) * &
+                  log( abs( (rot_period_dot / rot_period) * time + 1 ) )
+       else
+          theta = get_omega(ZERO) * time
+       endif
+       
+       omega = get_omega(time)
+     
+    else
+
+       omega = ZERO
+       theta = ZERO
+
+    endif
+       
+    ! This is the 3D rotation matrix for converting between reference frames.
+    ! It is the composition of rotations along the x, y, and z axes. Therefore 
+    ! it allows for the case where we are rotating about multiple axes. Normally 
+    ! we use the right-hand convention for constructing the usual rotation matrix, 
+    ! but this is the transpose of that rotation matrix to account for the fact 
+    ! that we are rotating *back* to the inertial frame, rather than from the 
+    ! inertial frame to the rotating frame.
+
+    rot_matrix(1,1) =  cos(theta(2)) * cos(theta(3))
+    rot_matrix(1,2) = -cos(theta(2)) * sin(theta(3))
+    rot_matrix(1,3) =  sin(theta(2))
+    rot_matrix(2,1) =  cos(theta(1)) * sin(theta(3)) + sin(theta(1)) * sin(theta(2)) * cos(theta(3))
+    rot_matrix(2,2) =  cos(theta(1)) * cos(theta(3)) - sin(theta(1)) * sin(theta(2)) * sin(theta(3))
+    rot_matrix(2,3) = -sin(theta(1)) * cos(theta(2))
+    rot_matrix(3,1) =  sin(theta(1)) * sin(theta(3)) - cos(theta(1)) * sin(theta(2)) * cos(theta(3))
+    rot_matrix(3,2) =  sin(theta(1)) * cos(theta(3)) + cos(theta(1)) * sin(theta(2)) * sin(theta(3))
+    rot_matrix(3,3) =  cos(theta(1)) * cos(theta(2))
+
+    vec_i = matmul(rot_matrix, vec)
+  
+  end function inertial_rotation
+
+  
+  
+  ! Given a rotating frame velocity, get the inertial frame velocity.
+  ! Note that this will simply return the original velocity if we're
+  ! already in the inertial frame, since omega = 0.
+
+  function inertial_velocity(loc, vel, time) result (vel_i)
+    
+    use rotation_module, only: get_omega, cross_product
+    
+    implicit none
+
+    double precision :: loc(3), vel(3), time
+    double precision :: omega(3)
+    
+    double precision :: vel_i(3)
+
+    omega = get_omega(time)
+    
+    vel_i = vel + cross_product(omega, loc)
+
+  end function inertial_velocity
+  
   
 end module probdata_module

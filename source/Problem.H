@@ -23,6 +23,18 @@ void gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 	       Real& h_plus_star, Real& h_cross_star,
 	       Real& h_plus_motion, Real& h_cross_motion);
 
+// Computes standard dot product of two three-vectors.
+
+Real dot_product(const Real a[], const Real b[]);
+
+// Computes standard cross-product of two three-vectors.
+
+void cross_product(const Real a[], const Real b[], Real c[]);
+
+// Computes norm of a three vector.
+
+Real norm(const Real a[]);
+
 // Problem post-initialization routine.
 
 void problem_post_init();

@@ -63,6 +63,12 @@ BL_FORT_PROC_DECL(SET_PERIOD,set_period)
 BL_FORT_PROC_DECL(UPDATE_CENTER,update_center)
    (const Real* time);
 
+BL_FORT_PROC_DECL(GET_OMEGA_VEC,get_omega_vec)
+   (const Real omega[], const Real& time);
+
+BL_FORT_PROC_DECL(GET_AXES,get_axes)
+   (int& star_axis, int& motion_axis, int& rotation_axis);
+
 BL_FORT_PROC_DECL(GET_DO_SCF_INITIAL_MODELS,get_do_scf_initial_models)
    (int& do_scf_initial_models);
 

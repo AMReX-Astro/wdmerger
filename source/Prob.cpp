@@ -311,6 +311,45 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 
 
 
+// Computes standard dot-product of two three-vectors.
+
+Real Castro::dot_product(const Real a[], const Real b[]) {
+
+  Real c = 0.0;
+
+  c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+  return c;
+
+}  
+
+
+
+// Computes standard cross-product of two three-vectors.
+
+void Castro::cross_product(const Real a[], const Real b[], Real c[]) {
+
+  c[0] = a[1] * b[2] - a[2] * b[1];
+  c[1] = a[2] * b[0] - a[0] * b[2];
+  c[2] = a[0] * b[1] - a[1] * b[0];
+
+}
+
+
+// Computes norm of a three-vector.
+
+Real Castro::norm(const Real a[]) {
+
+  Real n = 0.0;
+
+  n = sqrt( dot_product(a, a) );
+
+  return n;
+
+}
+
+
+
 #ifdef GRAVITY
 #ifdef ROTATION
 #ifdef do_problem_post_init

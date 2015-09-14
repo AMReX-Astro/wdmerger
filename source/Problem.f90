@@ -379,8 +379,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
-  use meth_params_module, only: do_rotation, rot_period, rot_period_dot
-  use rotation_module, only: get_omega, cross_product
+  use probdata_module, only: inertial_rotation, inertial_velocity
   
   implicit none
 
@@ -408,69 +407,9 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
   integer          :: i, j, k, l, m
   double precision :: r(3), pos(3), vel(3), g(3), rhoInv
   double precision :: dQtt(3,3)
-  double precision :: omega(3)
-  double precision :: theta(3), rot_matrix(3,3)
 
   dQtt(:,:) = ZERO
   
-  ! If we are in a rotating reference frame, then we want
-  ! to rotate this by an amount corresponding to the time
-  ! that has passed since the beginning of the simulation.
-  ! This way it will correspond to an inertial observer
-  ! at large distances. There is some clipping due to material
-  ! that leaves or enters the domain boundaries, but this should
-  ! average out over time, and will be negligible in magnitude.
-
-  ! To get the angle, we integrate omega over the time of the
-  ! simulation. Since the time rate of change is linear in the
-  ! period, let's work that variable. At some time t the current
-  ! period P is given by P = P_0 + Pdot * t. Then:
-  !
-  ! theta(t) = int( omega(t) * dt )
-  !      theta = int( omega(t) dt )
-  !            = (2 * pi / P_0) * int( dt / (1 + (dPdt / P_0) * t) )
-  !
-  ! if dPdt = 0, then theta = 2 * pi * t / P_0 = omega_0 * t, as expected.
-  ! if dPdt > 0, then theta = (2 * pi / P_0) * (P_0 / dPdt) * ln| (dPdt / P_0) * t + 1 |
-  ! Note that if dPdt << P_0, then we have ln(1 + x) = x, and we again
-  ! recover the original expression as expected.
-
-  if (do_rotation .eq. 1) then
-  
-     if (abs(rot_period_dot) > ZERO .and. time > ZERO) then
-        theta = get_omega(ZERO) * (rot_period / rot_period_dot) * &
-                log( abs( (rot_period_dot / rot_period) * time + 1 ) )
-     else
-        theta = get_omega(ZERO) * time
-     endif
-
-     omega = get_omega(time)
-     
-  else
-
-     omega = ZERO
-     theta = ZERO
-
-  endif
-       
-  ! This is the 3D rotation matrix for converting between reference frames.
-  ! It is the composition of rotations along the x, y, and z axes. Therefore 
-  ! it allows for the case where we are rotating about multiple axes. Normally 
-  ! we use the right-hand convention for constructing the usual rotation matrix, 
-  ! but this is the transpose of that rotation matrix to account for the fact 
-  ! that we are rotating *back* to the inertial frame, rather than from the 
-  ! inertial frame to the rotating frame.
-
-  rot_matrix(1,1) =  cos(theta(2)) * cos(theta(3))
-  rot_matrix(1,2) = -cos(theta(2)) * sin(theta(3))
-  rot_matrix(1,3) =  sin(theta(2))
-  rot_matrix(2,1) =  cos(theta(1)) * sin(theta(3)) + sin(theta(1)) * sin(theta(2)) * cos(theta(3))
-  rot_matrix(2,2) =  cos(theta(1)) * cos(theta(3)) - sin(theta(1)) * sin(theta(2)) * sin(theta(3))
-  rot_matrix(2,3) = -sin(theta(1)) * cos(theta(2))
-  rot_matrix(3,1) =  sin(theta(1)) * sin(theta(3)) - cos(theta(1)) * sin(theta(2)) * cos(theta(3))
-  rot_matrix(3,2) =  sin(theta(1)) * cos(theta(3)) + cos(theta(1)) * sin(theta(2)) * sin(theta(3))
-  rot_matrix(3,3) =  cos(theta(1)) * cos(theta(2))
-
   do k = lo(3), hi(3)
      r(3) = problo(3) + (k + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
@@ -484,16 +423,10 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
               rhoInv = ZERO
            endif
 
-           vel(1) = xmom(i,j,k) * rhoInv
-           vel(2) = ymom(i,j,k) * rhoInv
-           vel(3) = zmom(i,j,k) * rhoInv
-
            ! Account for rotation, if there is any. These will leave 
            ! r and vel and changed, if not.
 
-           ! Remember that this is going from the rotating frame back to the inertial frame.
-
-           pos = matmul(rot_matrix, r)
+           pos = inertial_rotation(r, time)
 
            ! For constructing the velocity in the inertial frame, we need to 
            ! account for the fact that we have rotated the system already, so that 
@@ -504,7 +437,11 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
            ! But it must, since the motion vector of the stars changes in the inertial 
            ! frame depending on where we are in the orbit.
 
-           vel = vel + cross_product(omega, pos)
+           vel(1) = xmom(i,j,k) * rhoInv
+           vel(2) = ymom(i,j,k) * rhoInv
+           vel(3) = zmom(i,j,k) * rhoInv           
+           
+           vel = inertial_velocity(pos, vel, time)
 
            g(1) = gravx(i,j,k)
            g(2) = gravy(i,j,k)
@@ -512,7 +449,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
 
            ! We need to rotate the gravitational field to be consistent with the rotated position.
 
-           g = matmul(rot_matrix, g)
+           g = inertial_rotation(g, time)
 
            do m = 1, 3
               do l = 1, 3
@@ -725,6 +662,41 @@ subroutine set_period(period)
   rot_period = period
 
 end subroutine set_period
+
+
+
+! Returns the CASTRO rotation frequency vector.
+
+subroutine get_omega_vec(omega_in, time)
+
+  use rotation_module, only: get_omega
+
+  implicit none
+
+  double precision :: omega_in(3), time
+
+  omega_in = get_omega(time)
+
+end subroutine get_omega_vec
+
+
+
+! Returns the CASTRO rotation frequency vector.
+
+subroutine get_axes(star_axis_in, motion_axis_in, rotation_axis_in)
+
+  use probdata_module, only: star_axis, initial_motion_dir
+  use meth_params_module, only: rot_axis
+
+  implicit none
+
+  integer :: star_axis_in, motion_axis_in, rotation_axis_in
+
+  star_axis_in = star_axis
+  motion_axis_in = initial_motion_dir
+  rotation_axis_in = rot_axis
+
+end subroutine get_axes
 
 
 
