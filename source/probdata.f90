@@ -124,12 +124,18 @@ contains
   subroutine initialize(name, namlen, init_in)
 
     use bl_error_module, only: bl_error
-
+    use prob_params_module, only: dim
+    
     implicit none
 
     integer :: namlen, i, init_in
     integer :: name(namlen)
-
+ 
+    ! Safety check: we can't run this problem in one dimension.       
+    if (dim .eq. 1) then
+       call bl_error("Cannot run wdmerger problem in one dimension. Exiting.")
+    endif
+    
     init = init_in
 
     ! Build "probin" filename -- the name of the file containing the fortin namelist.
@@ -163,6 +169,7 @@ contains
   subroutine read_namelist
 
     use meth_params_module
+    use prob_params_module, only: dim, coord_type
 
     implicit none
 
@@ -309,6 +316,19 @@ contains
 
     call ensure_primary_mass_larger
 
+    ! We enforce star_axis = 2 (the z-axis) for two-dimensional problems.
+
+    if (dim .eq. 2) then
+
+       if (coord_type .ne. 1) then
+          call bl_error("We only support cylindrical coordinates in two dimensions. Set coord_type == 1.")
+       endif
+       
+       star_axis = 2
+       rot_axis = 1
+       
+    endif
+    
   end subroutine read_namelist
 
 
@@ -340,7 +360,7 @@ contains
     eos_state % rho = small_dens
     eos_state % T   = small_temp
     eos_state % xn  = ambient_comp
- 
+
     call eos(eos_input_rt, eos_state)
 
     small_pres = eos_state % p
@@ -378,23 +398,33 @@ contains
 
     use meth_params_module, only: do_rotation, rot_period
     use initial_model_module, only: initialize_model, establish_hse
-    use prob_params_module, only: center, problo, probhi
+    use prob_params_module, only: center, problo, probhi, dim
     use meth_params_module, only: rot_axis
 
     implicit none
 
-    type (eos_t) :: ambient_state
     double precision :: v_ff
-    double precision :: mass_temp
 
     ! Set up the center variable. We want it to be at 
     ! problo + center_frac * domain_width in each direction.
     ! center_frac is 1/2 by default, so the problem
     ! would be set up exactly in the center of the domain.
+    ! Note that we override this for 2D axisymmetric, as the
+    ! radial coordinate must be centered at zero for the problem to make sense.
 
-    center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
-    center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
-    center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
+    if (dim .eq. 3) then
+    
+       center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
+       center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
+       center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
+
+    else
+
+       center(1) = problo(1)
+       center(2) = problo(2) + center_fracz * (probhi(2) - problo(2))
+       center(3) = ZERO
+
+    endif
 
     ! Set some default values for these quantities;
     ! we'll update them soon.
@@ -577,20 +607,25 @@ contains
               1005 format ("The secondary orbits the center of mass at distance ", ES8.2, " cm = ", ES8.2, " AU.")
            endif      
 
-           ! Direction of initial motion -- it is the position axis
+           ! Direction of initial motion -- in 3D it is the position axis
            ! that is not star axis and that is also not the rotation axis.
+           ! In 2D we require it to be the (un-simulated) phi coordinate.
 
-           if (rot_axis .eq. 3) then
-              if (star_axis .eq. 1) initial_motion_dir = 2
-              if (star_axis .eq. 2) initial_motion_dir = 1
-           else if (rot_axis .eq. 2) then
-              if (star_axis .eq. 1) initial_motion_dir = 3
-              if (star_axis .eq. 3) initial_motion_dir = 1
-           else if (rot_axis .eq. 1) then
-              if (star_axis .eq. 2) initial_motion_dir = 3
-              if (star_axis .eq. 3) initial_motion_dir = 2
+           if (dim .eq. 3) then
+              if (rot_axis .eq. 3) then
+                 if (star_axis .eq. 1) initial_motion_dir = 2
+                 if (star_axis .eq. 2) initial_motion_dir = 1
+              else if (rot_axis .eq. 2) then
+                 if (star_axis .eq. 1) initial_motion_dir = 3
+                 if (star_axis .eq. 3) initial_motion_dir = 1
+              else if (rot_axis .eq. 1) then
+                 if (star_axis .eq. 2) initial_motion_dir = 3
+                 if (star_axis .eq. 3) initial_motion_dir = 2
+              else
+                 call bl_error("Error: probdata module: invalid choice for rot_axis.")              
+              endif
            else
-              call bl_error("Error: probdata module: invalid choice for rot_axis.")
+              initial_motion_dir = 3
            endif
 
            if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
@@ -624,21 +659,21 @@ contains
 
     ! Safety check: make sure the stars are actually inside the computational domain.
 
-    if (center_P_initial(1) - model_P % radius .lt. problo(1) .or. &
-        center_P_initial(1) + model_P % radius .gt. probhi(1) .or. &
-        center_P_initial(2) - model_P % radius .lt. problo(2) .or. &
-        center_P_initial(2) + model_P % radius .gt. probhi(2) .or. &
-        center_P_initial(3) - model_P % radius .lt. problo(3) .or. &
-        center_P_initial(3) + model_P % radius .gt. probhi(3)) then
+    if ( ( center_P_initial(1) - model_P % radius .lt. problo(1) .and. dim .eq. 3 ) .or. &
+         center_P_initial(1) + model_P % radius .gt. probhi(1) .or. &
+         center_P_initial(2) - model_P % radius .lt. problo(2) .or. &
+         center_P_initial(2) + model_P % radius .gt. probhi(2) .or. &
+         ( center_P_initial(3) - model_P % radius .lt. problo(3) .and. dim .eq. 3 ) .or. &
+         ( center_P_initial(3) + model_P % radius .gt. probhi(3) .and. dim .eq. 3 ) ) then
        call bl_error("Primary does not fit inside the domain.")
     endif
 
-    if (center_S_initial(1) - model_S % radius .lt. problo(1) .or. &
-        center_S_initial(1) + model_S % radius .gt. probhi(1) .or. &
-        center_S_initial(2) - model_S % radius .lt. problo(2) .or. &
-        center_S_initial(2) + model_S % radius .gt. probhi(2) .or. &
-        center_S_initial(3) - model_S % radius .lt. problo(3) .or. &
-        center_S_initial(3) + model_S % radius .gt. probhi(3)) then
+    if ( ( center_S_initial(1) - model_S % radius .lt. problo(1) .and. dim .eq. 3 ) .or. &
+         center_S_initial(1) + model_S % radius .gt. probhi(1) .or. &
+         center_S_initial(2) - model_S % radius .lt. problo(2) .or. &
+         center_S_initial(2) + model_S % radius .gt. probhi(2) .or. &
+         ( center_S_initial(3) - model_S % radius .lt. problo(3) .and. dim .eq. 3 ) .or. &
+         ( center_S_initial(3) + model_S % radius .gt. probhi(3) .and. dim .eq. 3 ) ) then
        call bl_error("Secondary does not fit inside the domain.")
     endif
 
@@ -661,6 +696,12 @@ contains
     iNe20 = network_species_index("neon-20")
     iMg24 = network_species_index("magnesium-24")
 
+    if (iHe4 < 0) call bl_error("Must have He4 in the nuclear network.")
+    if (iC12 < 0) call bl_error("Must have C12 in the nuclear network.")
+    if (iO16 < 0) call bl_error("Must have O16 in the nuclear network.")
+    if (iNe20 < 0) call bl_error("Must have Ne20 in the nuclear network.")
+    if (iMg24 < 0) call bl_error("Must have Mg24 in the nuclear network.")
+    
     model % core_comp = smallx
     model % envelope_comp = smallx
 
@@ -753,9 +794,7 @@ contains
 
     length = a + radius_1 + radius_2
 
-    if (length > (probhi(1)-problo(1)) .or. &
-        length > (probhi(2)-problo(2)) .or. &
-        length > (probhi(3)-problo(3))) then
+    if (length > (probhi(star_axis)-problo(star_axis))) then
         call bl_error("ERROR: The domain width is too small to include the binary orbit.")
     endif
 
@@ -812,4 +851,147 @@ contains
 
   end subroutine ensure_primary_mass_larger
 
+
+
+  ! Given a zone state, fill it with ambient material.
+   
+   subroutine fill_ambient(state, loc, time)
+
+    use bl_constants_module, only: ZERO
+    use meth_params_module, only: NVAR, URHO, UMX, UMZ, UTEMP, UEINT, UEDEN, UFS, do_rotation
+    use network, only: nspec
+    use rotation_module, only: get_omega, cross_product
+
+    implicit none
+
+    double precision :: state(NVAR)
+    double precision :: loc(3), time
+
+    type (eos_t) :: ambient_state
+    double precision :: omega(3)
+
+    omega = get_omega(time)
+
+    call get_ambient(ambient_state)
+
+    state(URHO) = ambient_state % rho
+    state(UTEMP) = ambient_state % T
+    state(UFS:UFS-1+nspec) = ambient_state % rho * ambient_state % xn(:)                 
+
+    ! If we're in the inertial frame, give the material the rigid-body rotation speed.
+    ! Otherwise set it to zero.
+
+    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
+
+       state(UMX:UMZ) = state(URHO) * cross_product(omega, loc)
+
+    else
+
+       state(UMX:UMZ) = ZERO
+
+    endif
+
+    state(UEINT) = ambient_state % rho * ambient_state % e
+    state(UEDEN) = state(UEINT) + HALF * sum(state(UMX:UMZ)**2) / state(URHO)
+
+  end subroutine fill_ambient
+
+
+
+  ! If we are in a rotating reference frame, then rotate a vector
+  ! by an amount corresponding to the time that has passed
+  ! since the beginning of the simulation.
+
+  function inertial_rotation(vec, time) result(vec_i)
+
+    use rotation_module, only: get_omega
+    use meth_params_module, only: do_rotation, rot_period, rot_period_dot
+    
+    implicit none
+
+    double precision :: vec(3), time
+
+    double precision :: vec_i(3)
+    
+    double precision :: omega(3), theta(3), rot_matrix(3,3)
+    
+
+    ! To get the angle, we integrate omega over the time of the
+    ! simulation. Since the time rate of change is linear in the
+    ! period, let's work that variable. At some time t the current
+    ! period P is given by P = P_0 + Pdot * t. Then:
+    !
+    ! theta(t) = int( omega(t) * dt )
+    !      theta = int( omega(t) dt )
+    !            = (2 * pi / P_0) * int( dt / (1 + (dPdt / P_0) * t) )
+    !
+    ! if dPdt = 0, then theta = 2 * pi * t / P_0 = omega_0 * t, as expected.
+    ! if dPdt > 0, then theta = (2 * pi / P_0) * (P_0 / dPdt) * ln| (dPdt / P_0) * t + 1 |
+    ! Note that if dPdt << P_0, then we have ln(1 + x) = x, and we again
+    ! recover the original expression as expected.        
+    
+    if (do_rotation .eq. 1) then
+  
+       if (abs(rot_period_dot) > ZERO .and. time > ZERO) then
+          theta = get_omega(ZERO) * (rot_period / rot_period_dot) * &
+                  log( abs( (rot_period_dot / rot_period) * time + 1 ) )
+       else
+          theta = get_omega(ZERO) * time
+       endif
+       
+       omega = get_omega(time)
+     
+    else
+
+       omega = ZERO
+       theta = ZERO
+
+    endif
+       
+    ! This is the 3D rotation matrix for converting between reference frames.
+    ! It is the composition of rotations along the x, y, and z axes. Therefore 
+    ! it allows for the case where we are rotating about multiple axes. Normally 
+    ! we use the right-hand convention for constructing the usual rotation matrix, 
+    ! but this is the transpose of that rotation matrix to account for the fact 
+    ! that we are rotating *back* to the inertial frame, rather than from the 
+    ! inertial frame to the rotating frame.
+
+    rot_matrix(1,1) =  cos(theta(2)) * cos(theta(3))
+    rot_matrix(1,2) = -cos(theta(2)) * sin(theta(3))
+    rot_matrix(1,3) =  sin(theta(2))
+    rot_matrix(2,1) =  cos(theta(1)) * sin(theta(3)) + sin(theta(1)) * sin(theta(2)) * cos(theta(3))
+    rot_matrix(2,2) =  cos(theta(1)) * cos(theta(3)) - sin(theta(1)) * sin(theta(2)) * sin(theta(3))
+    rot_matrix(2,3) = -sin(theta(1)) * cos(theta(2))
+    rot_matrix(3,1) =  sin(theta(1)) * sin(theta(3)) - cos(theta(1)) * sin(theta(2)) * cos(theta(3))
+    rot_matrix(3,2) =  sin(theta(1)) * cos(theta(3)) + cos(theta(1)) * sin(theta(2)) * sin(theta(3))
+    rot_matrix(3,3) =  cos(theta(1)) * cos(theta(2))
+
+    vec_i = matmul(rot_matrix, vec)
+  
+  end function inertial_rotation
+
+  
+  
+  ! Given a rotating frame velocity, get the inertial frame velocity.
+  ! Note that this will simply return the original velocity if we're
+  ! already in the inertial frame, since omega = 0.
+
+  function inertial_velocity(loc, vel, time) result (vel_i)
+    
+    use rotation_module, only: get_omega, cross_product
+    
+    implicit none
+
+    double precision :: loc(3), vel(3), time
+    double precision :: omega(3)
+    
+    double precision :: vel_i(3)
+
+    omega = get_omega(time)
+    
+    vel_i = vel + cross_product(omega, loc)
+
+  end function inertial_velocity
+  
+  
 end module probdata_module

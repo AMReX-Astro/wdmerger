@@ -316,6 +316,18 @@ start all zones in the domain with a velocity corresponding to the equivalent ro
 reference frame velocity. This means that the stars will be synchronously rotating (though we
 may relax this assumption in future work).
 
+Though we are mainly interested in 3D simulations, it is sometimes useful to compare to 2D
+simulations which are much cheaper and can be run at higher resolutions. The only physically
+meaningful analogue to these mergers in lower dimensions occurs in 2D axisymmetric cylindrical
+coordinates. CASTRO represents these as $(r,z,\theta)$. In this coordinate system we enforce
+that the stars lie along the $z$ axis and that the center of the stars lies at $r = 0$. The
+$\theta$ dimension doesn't get directly evolved hydrodynamically but that is the dimension
+along which the rotational motion occurs, so in some circumstances the velocity in that
+direction will change with time because we still allow the $\theta$-velocity to participate in
+the Coriolis force. When rotation is enabled, the rotation is along the $z = 0$ axis in the $r$
+coordinate dimension. To try this out you should use \texttt{DIM = 2} in the makefile and
+use \texttt{inputs\_2d} in the \texttt{source/} directory.
+
 For the nuclear network we use the \texttt{aprox13} network provided by Frank Timmes, which 
 we have ported for use in the \texttt{Microphysics} repository. It is an alpha-chain network 
 with isotopes ranging from ${}^4$He to ${}^{56}$Ni.
@@ -394,7 +406,7 @@ of the individual stars. The former is, by default, printed to \texttt{grid\_dia
 saved for the purposes of plotting later on (since it may be too expensive to write out enough plotfiles to 
 generate these types of curves at the end of the run).
 
-The routines that generate both of these are found in \\\texttt{source/diagnostics/sum\_integrated\_quantities.cpp}. 
+The routines that generate both of these are found in \\\texttt{source/sum\_integrated\_quantities.cpp}. 
 This is a replacement of the \texttt{CASTRO} function that does something similar. We use the same 
 conventions; for example, if summing over the whole grid and we encounter a region that is covered by 
 a fine grid, we zero out the contribution from the coarse grid and only count the fine grid quantities 

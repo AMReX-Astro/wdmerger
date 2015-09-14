@@ -1,11 +1,10 @@
-// Define a preprocessor directive that determines if we're doing a full merger simulation.
-// This is useful for sharing C++ files like the diagnostics between multiple test problems.
-
-#define merger
-
 // Preprocessor directive for allowing us to do a post-initialization step.
 
+#if (BL_SPACEDIM==3)
+#ifndef do_problem_post_init
 #define do_problem_post_init
+#endif
+#endif
 
 // Routine for determining white dwarf masses, centers of mass and velocities.
 
@@ -23,6 +22,18 @@ void volInBoundary (Real               time,
 void gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
 	       Real& h_plus_star, Real& h_cross_star,
 	       Real& h_plus_motion, Real& h_cross_motion);
+
+// Computes standard dot product of two three-vectors.
+
+Real dot_product(const Real a[], const Real b[]);
+
+// Computes standard cross-product of two three-vectors.
+
+void cross_product(const Real a[], const Real b[], Real c[]);
+
+// Computes norm of a three vector.
+
+Real norm(const Real a[]);
 
 // Problem post-initialization routine.
 

@@ -145,8 +145,7 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
                            dx,problo,probhi,time,omegasq)
 
     use bl_constants_module, only: ONE, TWO
-    use meth_params_module, only: NVAR, URHO
-    use prob_params_module, only: center
+    use meth_params_module, only: NVAR
     use probdata_module, only: scf_c, scf_d_vector, scf_rloc
     use rotation_module, only: get_omega
 
@@ -219,8 +218,7 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
                                    dx,problo,probhi,time,bernoulli_1,bernoulli_2)
 
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
-    use meth_params_module, only: NVAR, URHO, rot_period
-    use prob_params_module, only: center
+    use meth_params_module, only: NVAR
     use probdata_module, only: scf_c, scf_d_vector, scf_rloc
     use rotation_module, only: get_omega, cross_product
 
@@ -279,7 +277,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
                                   bernoulli_1,bernoulli_2,h_max_1,h_max_2)
 
     use bl_constants_module, only: ZERO, HALF, ONE, TWO, M_PI
-    use meth_params_module, only: NVAR, URHO, rot_period
+    use meth_params_module, only: NVAR
     use prob_params_module, only: center
     use probdata_module
     use rotation_module, only: get_omega, cross_product
@@ -358,7 +356,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
                               delta_rho, l2_norm_resid, l2_norm_source)
 
     use bl_constants_module, only: ZERO, ONE, TWO, M_PI
-    use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS, rot_period
+    use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS
     use network, only: nspec
     use prob_params_module, only: center
     use probdata_module, only: star_axis, get_ambient, scf_h_max_P, scf_h_max_S, scf_enthalpy_min

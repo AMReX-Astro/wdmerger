@@ -14,6 +14,12 @@ USE_OMP ?= TRUE
 
 DIM ?= 3
 
+ifeq ($(DIM), 1)
+
+  $(error Error: wdmerger is not configured to run in only one dimension. Please use DIM = 2 or DIM = 3)
+
+endif
+
 USE_GRAV ?= TRUE
 USE_REACT ?= TRUE
 USE_MODELPARSER ?= TRUE
@@ -44,20 +50,10 @@ EOS_dir ?= helmholtz
 # This sets the network directory in $(MICROPHYSICS_DIR)/networks
 Network_dir ?= aprox13
 
-# Determine where our source files are coming from
-# based on the relevant file in the source directory.
-# For building the full program, this will be irrelevant
-# and we will simply compile everything in the 
-# WDMERGER_HOME source directory.
+# Location where our source files are coming from.
 
-diag_locs = $(WDMERGER_HOME)/source/diagnostics/
-diag_pack = $(WDMERGER_HOME)/source/diagnostics/Make.package
-
-root_locs = $(WDMERGER_HOME)/source/
-root_pack = $(WDMERGER_HOME)/source/Make.package
-
-Blocs := $(root_locs) $(diag_locs)
-Bpack := $(root_pack) $(diag_pack)
+Blocs := $(WDMERGER_HOME)/source/
+Bpack := $(WDMERGER_HOME)/source/Make.package
 
 BUILD_GIT_NAME := wdmerger
 BUILD_GIT_DIR  := $(WDMERGER_HOME)

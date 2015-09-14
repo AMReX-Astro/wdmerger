@@ -1,4 +1,3 @@
-
 ############################## CASTRO INPUTS ###############################################
 
 ############################################################################################
@@ -12,11 +11,11 @@ stop_time = 100.0                                  # Simulation time to stop at
 
 geometry.is_periodic = 0 0 0                       # Non-periodic boundary conditions
 
-geometry.coord_sys = 0                             # Cartesian coordinate system
+geometry.coord_sys = 1                             # Cylindrical (R-Z) coordinate system
 
-geometry.prob_lo = -5.12e9 -5.12e9 -5.12e9         # Lower boundary limits in physical space
-geometry.prob_hi =  5.12e9  5.12e9  5.12e9         # Upper boundary limits in physical space
-castro.center =      0.0e0   0.0e0   0.0e0         # System center of mass
+geometry.prob_lo =  0.0e0 -5.12e9		   # Lower boundary limits in physical space
+geometry.prob_hi = 5.12e9  5.12e9  		   # Upper boundary limits in physical space
+castro.center =     0.0e0   0.0e0   		   # System center of mass
 
 castro.dt_cutoff = 1.e-8                           # Level 0 timestep below which we halt
 castro.cfl = 0.5                                   # CFL number for hyperbolic system
@@ -33,14 +32,14 @@ castro.sum_interval = 1                            # Timesteps between computing
 # 2 = Outflow            5 = NoSlipWall
 ############################################################################################
 
-castro.lo_bc = 2 2 2                               # Boundary conditions on lo x, y, and z edges
-castro.hi_bc = 2 2 2                               # Boundary conditions on hi x, y, and z edges
+castro.lo_bc = 3 2	                           # Boundary conditions on lo r and z edges
+castro.hi_bc = 2 2				   # Boundary conditions on hi r and z edges
 
 ############################################################################################ 
 # Resolution, gridding and AMR
 ############################################################################################
 
-amr.n_cell = 256 256 256                           # Number of cells on the coarse grid
+amr.n_cell = 128 256                               # Number of cells on the coarse grid
 
 amr.max_level = 0                                  # Maximum level number allowed
 
@@ -59,8 +58,8 @@ amr.grid_eff = 0.9                                 # What constitutes an efficie
 
 castro.do_hydro = 1                                # Whether or not to do hydrodynamics
 castro.do_grav = 1                                 # Whether or not to do gravity
-castro.do_react = 1                                # Whether or not to do reactions
-castro.do_sponge = 1                               # Whether or not to apply the sponge
+castro.do_react = 0                                # Whether or not to do reactions
+castro.do_sponge = 0                               # Whether or not to apply the sponge
 castro.add_ext_src = 1                             # Whether or not to apply external source terms
 castro.do_rotation = 1                             # Whether or not to include the rotation source term
 castro.rotational_period = 100.0                   # Rotational period of the rotating reference frame

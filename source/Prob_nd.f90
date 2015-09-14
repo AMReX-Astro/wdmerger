@@ -39,10 +39,10 @@
                           dx,xlo,xhi)
 
      use probdata_module
-     use prob_params_module, only: center
+     use prob_params_module, only: center, dim
      use eos_module
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, rot_period, do_rotation
+          UEDEN, UEINT, UFS, do_rotation
      use network, only: nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
@@ -62,7 +62,7 @@
 
      type (eos_t) :: zone_state, ambient_state
 
-     integer :: i,j,k,ii,jj,kk,n
+     integer :: i,j,k
 
      ! Loop through the zones and set the zone state depending on whether we are
      ! inside the primary or secondary (in which case interpolate from the respective model)
@@ -75,13 +75,13 @@
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)
      do k = lo(3), hi(3)
-        loc(3) = xlo(3) + dx(3)*dble(k+HALF-lo(3)) 
+        loc(3) = xlo(3) + dx(3) * dble(k + HALF - lo(3)) 
 
         do j = lo(2), hi(2)
-           loc(2) = xlo(2) + dx(2)*dble(j+HALF-lo(2))
+           loc(2) = xlo(2) + dx(2) * dble(j + HALF - lo(2))
 
            do i = lo(1), hi(1)
-              loc(1) = xlo(1) + dx(1)*dble(i+HALF-lo(1))
+              loc(1) = xlo(1) + dx(1) * dble(i + HALF - lo(1))
 
               dist_P = loc - center_P_initial
               dist_S = loc - center_S_initial
@@ -142,10 +142,14 @@
 
              ! If we're in the inertial reference frame, and we want to provide an
              ! initial orbital kick, use rigid body rotation with velocity omega x r.
+             ! In 2D we have to be careful, though: the third coordinate is an angular
+             ! coordinate, whose unit vector is tangent to the unit circle, so we should
+             ! have the same velocity everywhere along that coordinate to begin with.
 
              else if ((do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. single_star)) then
 
                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
+                if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))
 
              endif
 
@@ -160,9 +164,7 @@
         do j = lo(2), hi(2)
            do i = lo(1), hi(1)
 
-              state(i,j,k,UEDEN) = state(i,j,k,UEDEN) + &
-                ( state(i,j,k,UMX)**2 + state(i,j,k,UMY)**2 + state(i,j,k,UMZ)**2 ) / &
-                ( 2.0 * state(i,j,k,URHO) )
+              state(i,j,k,UEDEN) = state(i,j,k,UEDEN) + HALF * sum(state(i,j,k,UMX:UMZ)**2) / state(i,j,k,URHO)
 
            enddo
         enddo

@@ -23,13 +23,16 @@ Castro::sum_integrated_quantities ()
 
     if (time == 0.0) dt = 0.0; // dtLevel returns the next timestep for t = 0, so overwrite
 
-    int step          = parent->levelSteps(0);
-    Real mass         = 0.0;
-    Real momentum[3]  = { 0.0 };
-    Real rho_E        = 0.0;
-    Real rho_e        = 0.0;
-    Real rho_K        = 0.0;
-    Real rho_phi      = 0.0;
+    int timestep = parent->levelSteps(0);
+
+    Real mass                 = 0.0;
+    Real momentum[3]          = { 0.0 };
+    Real angular_momentum[3]  = { 0.0 };
+    Real rho_E                = 0.0;
+    Real rho_e                = 0.0;
+    Real rho_K                = 0.0;
+    Real rho_phi              = 0.0;
+    Real rho_phirot           = 0.0;
 
     Real gravitational_energy = 0.0; 
     Real kinetic_energy       = 0.0; 
@@ -38,36 +41,25 @@ Castro::sum_integrated_quantities ()
     Real internal_energy      = 0.0; 
     Real total_energy         = 0.0;
 
-    Real angular_momentum[3]     = { 0.0 };
-    Real moment_of_inertia[3][3] = { 0.0 };
-    Real m_r_squared[3]          = { 0.0 };
+    Real omega[3] = { 0.0 };
 
-    Real omega[3]       = { 0.0 };
-    Real rot_kin_eng    = 0.0;
-    Real rot_mom[3]     = { 0.0 };
-    Real rot_ang_mom[3] = { 0.0 };
-
-#ifdef ROTATION
-    omega[rot_axis-1] = 2.0 * M_PI / rotational_period;
-#else
-    int rot_axis = 3;
-#endif
-
+    BL_FORT_PROC_CALL(GET_OMEGA_VEC,get_omega_vec)(omega, time);
+    
     Real total_E_grid = 0.0;
-    Real mom_grid[3]  = { 0.0 };
-    Real L_grid[3]    = { 0.0 };
 
     Real com[3]       = { 0.0 };
     Real lev_com[3]   = { 0.0 };
     Real com_vel[3]   = { 0.0 };
 
-#ifdef merger
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
 
     Real lev_mass_p   = 0.0;
     Real lev_mass_s   = 0.0;
 
+    Real wd_dist[3] = { 0.0 };
+    Real wd_dist_init[3] = { 0.0 };
+    
     Real com_p[3]     = { 0.0 };
     Real com_s[3]     = { 0.0 };
     Real lev_com_p[3] = { 0.0 };
@@ -126,8 +118,6 @@ Castro::sum_integrated_quantities ()
     Real species_mass[NumSpec] = { 0.0 };
     std::string species_names[NumSpec];
     
-#endif
-
     std::string name1; 
     std::string name2;
 
@@ -137,14 +127,29 @@ Castro::sum_integrated_quantities ()
     int datawidth     = 24;
     int dataprecision = 16;
 
-#ifdef merger
+    int star_axis;
+    int motion_axis;
+    int rotation_axis;
+    
     // Determine whether we're doing a single star simulation
     BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
 
     // Update the problem center using the system bulk velocity
     BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
-#endif
 
+    // Determine various coordinate axes
+    BL_FORT_PROC_CALL(GET_AXES,get_axes)(star_axis, motion_axis, rotation_axis);
+
+    wd_dist_init[star_axis - 1] = 1.0;
+    
+    // Determine the names of the species in the simulation.    
+
+    for (int i = 0; i < NumSpec; i++) {
+      species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
+      species_names[i] = species_names[i].substr(4,std::string::npos);
+      species_mass[i]  = 0.0;	
+    }
+    
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
@@ -152,141 +157,45 @@ Castro::sum_integrated_quantities ()
 
       Castro& ca_lev = getLevel(lev);
 
-      for ( int i = 0; i < BL_SPACEDIM; i++ ) {
+      for ( int i = 0; i < 3; i++ ) {
         lev_com[i]    = ca_lev.locWgtSum("density", time, i);
         com[i]       += lev_com[i];
       }
 
-      // Calculate total mass, momentum and energy of system.
+      // Calculate total mass, momentum, angular momentum, and energy of system.
 
-      mass     += ca_lev.volWgtSum("density", time);
+      mass += ca_lev.volWgtSum("density", time);
 
-      mom_grid[0]     += ca_lev.volWgtSum("xmom", time);
-#if (BL_SPACEDIM >= 2)      
-      mom_grid[1]     += ca_lev.volWgtSum("ymom", time);
-#endif
-#if (BL_SPACEDIM == 3)
-      mom_grid[2]     += ca_lev.volWgtSum("zmom", time);
-#endif
+      momentum[0] += ca_lev.volWgtSum("momentum_x", time);
+      momentum[1] += ca_lev.volWgtSum("momentum_y", time);
+      momentum[2] += ca_lev.volWgtSum("momentum_z", time);
 
-      rho_E    += ca_lev.volWgtSum("rho_E", time);
-      rho_K    += ca_lev.volWgtSum("kineng",time);
-      rho_e    += ca_lev.volWgtSum("rho_e", time);
+      angular_momentum[0] += ca_lev.volWgtSum("angular_momentum_x", time);
+      angular_momentum[1] += ca_lev.volWgtSum("angular_momentum_y", time);
+      angular_momentum[2] += ca_lev.volWgtSum("angular_momentum_z", time);
+      
+      rho_E += ca_lev.volWgtSum("rho_E", time);
+      rho_K += ca_lev.volWgtSum("kineng",time);
+      rho_e += ca_lev.volWgtSum("rho_e", time);
 
 #ifdef GRAVITY
-#if (BL_SPACEDIM == 3)
-      if ( do_grav and gravity->get_gravity_type() == "PoissonGrav" ) {
-        rho_phi  += ca_lev.volProductSum("density", "phiGrav", time);
-      }
-#endif
+      if (do_grav)
+        rho_phi += ca_lev.volProductSum("density", "phiGrav", time);
 #endif
 
-      // Calculate total angular momentum on the grid using L = r x p
-
-#if (BL_SPACEDIM == 3)
-
-      for ( int i = 0; i < 3; i++ ) {
-
-        index1 = (i+1) % 3; 
-        index2 = (i+2) % 3;
-
-        switch (i) {
-          case 0 :
-            name1 = "ymom"; name2 = "zmom"; break;
-          case 1 :
-            name1 = "zmom"; name2 = "xmom"; break;
-          case 2 :
-            name1 = "xmom"; name2 = "ymom"; break;
-        }
-
-        L_grid[i] = ca_lev.locWgtSum(name2, time, index1) - ca_lev.locWgtSum(name1, time, index2);
-
-        angular_momentum[i] += L_grid[i];
-
-      }
-
-#elif (BL_SPACEDIM == 2)
-
-      // If we're in 2D, only the z-component will be non-zero.
-
-      L_grid[2] = ca_lev.locWgtSum("ymom", time, 0) - ca_lev.locWgtSum("xmom", time, 1);
-      angular_momentum[2] += L_grid[2]; 
-
-#endif
-
-      // Add rotation source terms
 #ifdef ROTATION
-      if ( do_rotation ) {
-
-        // Construct (symmetric) moment of inertia tensor
-
-	for ( int i = 0; i < BL_SPACEDIM; i++ ) {
-          m_r_squared[i] = ca_lev.locWgtSum2D("density", time, i, i);
-        }
-
-        for ( int i = 0; i <= 2; i++ ) {
-	  for ( int j = 0; j <= 2; j++ ) {
-            if ( i <= j ) {
-              if ( i != j )  {
-                if ( ( i < BL_SPACEDIM ) && ( j < BL_SPACEDIM ) ) // Protect against computing z direction sum in 2D
-                  moment_of_inertia[i][j] = -ca_lev.locWgtSum2D("density", time, i, j);
-              }
-              else
-                moment_of_inertia[i][j] = m_r_squared[(i+1)%3] + m_r_squared[(i+2)%3];
-            }
-	    else
-              moment_of_inertia[i][j] = moment_of_inertia[j][i];
-          }
-        }
-
-        for ( int i = 0; i <= 2; i++ ) {
-
-	  // Momentum source from motion IN rotating frame == omega x (rho * r)
-
-          rot_mom[i] += omega[(i+1)%3]*lev_com[(i+2)%3] - omega[(i+2)%3]*lev_com[(i+1)%3];
-
-          // Rotational energy from motion IN rotating frame == omega dot L_grid
-
-          rot_kin_eng += omega[i] * L_grid[i];
-
-	  // Now add quantities due to motion OF rotating frame
-
-	  for ( int j = 0; j <=2; j++ ) {
-            rot_ang_mom[i] += moment_of_inertia[i][j] * omega[j];
-
-            rot_kin_eng += (1.0/2.0) * omega[i] * moment_of_inertia[i][j] * omega[j];
-          }
-
-        }
-
-      } 
-#endif
-
+      if (do_rotation)
+	rho_phirot += ca_lev.volProductSum("density", "phiRot", time);
+#endif            
+      
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
-#ifdef merger
       ca_lev.gwstrain(time, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion);
-#endif
 
       // Integrated mass of all species on the domain.      
-#ifdef merger
-      for (int i = 0; i < NumSpec; i++) {
-	species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
-	species_mass[i] += ca_lev.volWgtSum(species_names[i], time) / M_solar;
-	
-	// For output, remove "rho_" from the name in state data.
-	species_names[i] = species_names[i].substr(4,std::string::npos);
-      }
-#endif		       
+      for (int i = 0; i < NumSpec; i++)
+	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time) / M_solar;
+      
     }
-
-    // Divide the center of mass by the total amount of mass on the grid.
-
-    for ( int i = 0; i < 3; i++ ) {
-
-      com[i]       = com[i] / mass;
-      com_vel[i]   = momentum[i] / mass;
-
-    } 
 
     // Complete calculations for energy and momenta
 
@@ -294,23 +203,10 @@ Castro::sum_integrated_quantities ()
     internal_energy = rho_e;
     kinetic_energy = rho_K;
     gas_energy = rho_E;
-    total_energy = gravitational_energy + rho_E;
-
-    for (int i = 0; i < 3; i++) {
-        momentum[i] = mom_grid[i];
-        angular_momentum[i] = L_grid[i];
-    }
-
-    total_E_grid = total_energy;
-    rotational_energy = rot_kin_eng;
-    total_energy += rotational_energy;
-    for (int i = 0; i <= 2; i++) {
-        momentum[i] += rot_mom[i];
-        angular_momentum[i] += rot_ang_mom[i];
-    }
-
-#ifdef merger
-
+    rotational_energy = rho_phirot;
+    total_E_grid = gravitational_energy + rho_E;
+    total_energy = total_E_grid + rotational_energy;
+    
     // Compute the center of mass locations and velocities for the primary and secondary.
     // We'll start by predicting the current locations of their centers by taking the 
     // old locations and updating them using the old velocities and the time passed 
@@ -374,22 +270,30 @@ Castro::sum_integrated_quantities ()
 	 if ( mass_s > 0.0 ) {
 	   com_s[i] = com_s[i] / mass_s;
 	   vel_s[i] = vel_s[i] / mass_s;
+
+	   wd_dist[i] = com_s[i] - com_p[i];
 	 }
 
 	 // Calculate the distance between the primary and secondary.
 
-	 separation = sqrt( pow(com_p[0] - com_s[0], 2.0) + pow(com_p[1] - com_s[1], 2.0) + pow(com_p[2] - com_s[2], 2.0) );
+	 separation = norm(wd_dist);
 
-	 // Calculate the angle between the x-axis and the line joining the two stars.
-	 // We will assume that the motion along the rotation axis is negligible. 
+	 // Calculate the angle between the initial stellar axis and
+	 // the line currently joining the two stars.
 	 // We can use the atan2 function to calculate the angle of a line 
-	 // specified by two points with respect to the x-axis.
+	 // specified by two points with respect to the initial axis.
 
-	 angle = atan2( com_s[(rot_axis+1)%3] - com_p[(rot_axis+1)%3], com_s[(rot_axis)%3] - com_p[(rot_axis)%3] ) * 180.0 / M_PI;
-	 if (angle < 0.0)
-	   angle += 360.0;
+	 Real wd_cross[3] = { 0.0 };
+	 
+	 cross_product(wd_dist, wd_dist_init, wd_cross);
+
+	 Real wd_dot = dot_product(wd_dist, wd_dist_init);
+
+	 angle = atan2( norm(wd_cross), wd_dot ) * 180.0 / M_PI;
+	 if (angle < 0.0) angle += 360.0;
 
       }
+
     } 
 
     // Compute effective radii of stars at various density cutoffs
@@ -427,10 +331,9 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
       (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
-#endif
+    
 
-
-
+    
     // Write data out to the log.
 
     if ( ParallelDescriptor::IOProcessor() )
@@ -472,21 +375,9 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datawidth) << " XMOM                  ";
 	     grid_log << std::setw(datawidth) << " YMOM                  ";
 	     grid_log << std::setw(datawidth) << " ZMOM                  ";
-	     grid_log << std::setw(datawidth) << " XMOM GRID             ";
-	     grid_log << std::setw(datawidth) << " YMOM GRID             ";
-	     grid_log << std::setw(datawidth) << " ZMOM GRID             ";
-	     grid_log << std::setw(datawidth) << " XMOM ROT.             ";
-	     grid_log << std::setw(datawidth) << " YMOM ROT.             ";
-	     grid_log << std::setw(datawidth) << " ZMOM ROT.             ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. X           ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. Y           ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
-	     grid_log << std::setw(datawidth) << " ANG. MOM. X GRID      ";
-	     grid_log << std::setw(datawidth) << " ANG. MOM. Y GRID      ";
-	     grid_log << std::setw(datawidth) << " ANG. MOM. Z GRID      ";
-	     grid_log << std::setw(datawidth) << " ANG. MOM. X ROT.      ";
-	     grid_log << std::setw(datawidth) << " ANG. MOM. Y ROT.      ";
-	     grid_log << std::setw(datawidth) << " ANG. MOM. Z ROT.      ";
 	     grid_log << std::setw(datawidth) << " MASS                  ";
 	     grid_log << std::setw(datawidth) << " X COM                 ";
 	     grid_log << std::setw(datawidth) << " Y COM                 ";
@@ -494,14 +385,12 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datawidth) << " X COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Y COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Z COM VEL             ";
-   #ifdef merger
 	     grid_log << std::setw(datawidth) << " h_+ (rotation axis)   ";
 	     grid_log << std::setw(datawidth) << " h_x (rotation axis)   ";
 	     grid_log << std::setw(datawidth) << " h_+ (star axis)       ";
 	     grid_log << std::setw(datawidth) << " h_x (star axis)       ";
 	     grid_log << std::setw(datawidth) << " h_+ (motion axis)     ";
 	     grid_log << std::setw(datawidth) << " h_x (motion axis)     ";
-   #endif
 
 	     grid_log << std::endl;
 	   }
@@ -510,7 +399,7 @@ Castro::sum_integrated_quantities ()
 
 	   grid_log << std::fixed;
 
-	   grid_log << std::setw(12)                                            << step;
+	   grid_log << std::setw(12)                                            << timestep;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
 
@@ -526,21 +415,9 @@ Castro::sum_integrated_quantities ()
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[0];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[1];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mom_grid[2];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[0];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[1];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_mom[2];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1]; 
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[2];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[0];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[1]; 
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << L_grid[2];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[0];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[1]; 
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rot_ang_mom[2];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
@@ -548,20 +425,17 @@ Castro::sum_integrated_quantities ()
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
-   #ifdef merger
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_rot;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_rot;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_star;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_star;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_motion;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_motion;
-   #endif
 
 	   grid_log << std::endl;
 	 }
       }
 
-#ifdef merger
       if (parent->NumDataLogs() > 1) {
 
 	 std::ostream& star_log = parent->DataLog(1);
@@ -617,7 +491,7 @@ Castro::sum_integrated_quantities ()
 
 	   star_log << std::fixed;
 
-	   star_log << std::setw(12)                                            << step;
+	   star_log << std::setw(12)                                            << timestep;
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
 
@@ -657,9 +531,7 @@ Castro::sum_integrated_quantities ()
 
 	 }
       }
-#endif
 
-#ifdef merger
       if (parent->NumDataLogs() > 2) {
 
 	 std::ostream& species_log = parent->DataLog(2);
@@ -691,7 +563,7 @@ Castro::sum_integrated_quantities ()
 
 	   species_log << std::fixed;
 
-	   species_log << std::setw(12)                                            << step;
+	   species_log << std::setw(12)                                            << timestep;
 	   species_log << std::setw(datawidth) << std::setprecision(dataprecision) << time;
 	   species_log << std::setw(datawidth) << std::setprecision(dataprecision) << dt;
 
@@ -704,7 +576,7 @@ Castro::sum_integrated_quantities ()
 	   
 	 }
       }
-#endif      
+
     }
 }
 

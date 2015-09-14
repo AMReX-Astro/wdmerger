@@ -110,10 +110,11 @@ end subroutine
 ! going back to C++ for the full MPI reduce. We'll then update the module locations accordingly.
 ! The same is true for mass_S and mass_P versus m_s and m_p.
 
-subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
-                 xmom, x_l1, x_l2, x_l3, x_h1, x_h2, x_h3, &
-                 ymom, y_l1, y_l2, y_l3, y_h1, y_h2, y_h3, &
-                 zmom, z_l1, z_l2, z_l3, z_h1, z_h2, z_h3, &
+subroutine wdcom(rho,  r_lo, r_hi, &
+                 xmom, px_lo, px_hi, &
+                 ymom, py_lo, py_hi, &
+                 zmom, pz_lo, pz_hi, &
+                 vol,  vo_lo, vo_hi, &
                  lo, hi, dx, time, &
                  com_p_x, com_p_y, com_p_z, & 
                  com_s_x, com_s_y, com_s_z, &
@@ -127,15 +128,18 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
 
   implicit none
 
-  integer         , intent(in   ) :: r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
-  integer         , intent(in   ) :: x_l1, x_l2, x_l3, x_h1, x_h2, x_h3
-  integer         , intent(in   ) :: y_l1, y_l2, y_l3, y_h1, y_h2, y_h3
-  integer         , intent(in   ) :: z_l1, z_l2, z_l3, z_h1, z_h2, z_h3
-
-  double precision, intent(in   ) :: rho(r_l1:r_h1,r_l2:r_h2,r_l3:r_h3)
-  double precision, intent(in   ) :: xmom(x_l1:x_h1,x_l2:x_h2,x_l3:x_h3)
-  double precision, intent(in   ) :: ymom(y_l1:y_h1,y_l2:y_h2,y_l3:y_h3)
-  double precision, intent(in   ) :: zmom(z_l1:z_h1,z_l2:z_h2,z_l3:z_h3)
+  integer         , intent(in   ) :: r_lo(3), r_hi(3)
+  integer         , intent(in   ) :: px_lo(3), px_hi(3)
+  integer         , intent(in   ) :: py_lo(3), py_hi(3)
+  integer         , intent(in   ) :: pz_lo(3), pz_hi(3)
+  integer         , intent(in   ) :: vo_lo(3), vo_hi(3)
+  
+  double precision, intent(in   ) :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
+  double precision, intent(in   ) :: xmom(px_lo(1):px_hi(1),px_lo(2):px_hi(2),px_lo(3):px_hi(3))
+  double precision, intent(in   ) :: ymom(py_lo(1):py_hi(1),py_lo(2):py_hi(2),py_lo(3):py_hi(3))
+  double precision, intent(in   ) :: zmom(pz_lo(1):pz_hi(1),pz_lo(2):pz_hi(2),pz_lo(3):pz_hi(3))  
+  double precision, intent(in   ) :: vol(vo_lo(1):vo_hi(1),vo_lo(2):vo_hi(2),vo_lo(3):vo_hi(3))
+  
   integer         , intent(in   ) :: lo(3), hi(3)
   double precision, intent(in   ) :: dx(3), time
   double precision, intent(inout) :: com_p_x, com_p_y, com_p_z
@@ -146,15 +150,11 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
 
   integer          :: i, j, k
   double precision :: r(3), r_p, r_s, grav_force_P, grav_force_S
-  double precision :: dV, dm
+  double precision :: dm
 
   ! If the stars have merged, then the Roche radius of the secondary will be zero (or effectively close).
   ! In such a situation, we want to terminate this calculation gracefully. 
   ! The simplest fix is simply by just returning zero for everything;
-
-  ! Volume of a zone
-
-  dV = dx(1) * dx(2) * dx(3)
 
   ! Now, add to the COM locations and velocities depending on whether we're closer
   ! to the primary or the secondary. Note that in this routine we actually are 
@@ -176,7 +176,7 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
            r_P = sqrt(sum((r - com_P)**2))
            r_S = sqrt(sum((r - com_S)**2))
 
-           dm = rho(i,j,k) * dV
+           dm = rho(i,j,k) * vol(i,j,k)
 
            grav_force_P = mass_P / r_P
 
@@ -185,7 +185,7 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
            else
               grav_force_S = mass_S / r_S
            endif
-           
+
            if (grav_force_P > grav_force_S) then
 
               m_p = m_p + dm
@@ -194,9 +194,9 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
               com_p_y = com_p_y + dm * r(2)
               com_p_z = com_p_z + dm * r(3)
 
-              vel_p_x = vel_p_x + xmom(i,j,k) * dV
-              vel_p_y = vel_p_y + ymom(i,j,k) * dV
-              vel_p_z = vel_p_z + zmom(i,j,k) * dV
+              vel_p_x = vel_p_x + xmom(i,j,k) * vol(i,j,k)
+              vel_p_y = vel_p_y + ymom(i,j,k) * vol(i,j,k)
+              vel_p_z = vel_p_z + zmom(i,j,k) * vol(i,j,k)
 
            else
 
@@ -206,9 +206,9 @@ subroutine wdcom(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
               com_s_y = com_s_y + dm * r(2)
               com_s_z = com_s_z + dm * r(3)
 
-              vel_s_x = vel_s_x + xmom(i,j,k) * dV
-              vel_s_y = vel_s_y + ymom(i,j,k) * dV
-              vel_s_z = vel_s_z + zmom(i,j,k) * dV
+              vel_s_x = vel_s_x + xmom(i,j,k) * vol(i,j,k)
+              vel_s_y = vel_s_y + ymom(i,j,k) * vol(i,j,k)
+              vel_s_z = vel_s_z + zmom(i,j,k) * vol(i,j,k)
 
            endif
 
@@ -226,24 +226,24 @@ end subroutine wdcom
 ! We also impose a distance requirement so that we only look 
 ! at zones within the Roche lobe of the white dwarf.
 
-subroutine ca_volumeindensityboundary(rho,r_l1,r_l2,r_l3,r_h1,r_h2,r_h3,lo,hi,dx,&
-                                      volp,vols,rho_cutoff)
+subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,vols,rho_cutoff)
 
   use bl_constants_module
   use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
   use prob_params_module, only: problo
 
   implicit none
-  integer          :: r_l1,r_l2,r_l3,r_h1,r_h2,r_h3
+  
+  integer          :: r_lo(3), r_hi(3)
+  integer          :: v_lo(3), v_hi(3)
   integer          :: lo(3), hi(3)
   double precision :: volp, vols, rho_cutoff, dx(3)
-  double precision :: rho(r_l1:r_h1,r_l2:r_h2,r_l3:r_h3)
+  double precision :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
+  double precision :: vol(v_lo(1):v_hi(1),v_lo(2):v_hi(2),v_lo(3):v_hi(3))
 
   integer          :: i, j, k
-  double precision :: dV
   double precision :: r(3), r_P, r_S, grav_force_P, grav_force_S
 
-  dV  = dx(1)*dx(2)*dx(3)
   volp = ZERO
   vols = ZERO
 
@@ -267,9 +267,9 @@ subroutine ca_volumeindensityboundary(rho,r_l1,r_l2,r_l3,r_h1,r_h2,r_h3,lo,hi,dx
               endif
               
               if (grav_force_P > grav_force_S) then
-                 volp = volp + dV
+                 volp = volp + vol(i,j,k)
               else
-                 vols = vols + dV
+                 vols = vols + vol(i,j,k)
               endif
              
            endif
@@ -371,110 +371,45 @@ end subroutine set_star_data
 ! trace-free part of the tensor. We can do the latter operation here since the 
 ! integral is a linear operator and each part of the domain contributes independently.
 
-subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3, &
-                                        xmom, x_l1, x_l2, x_l3, x_h1, x_h2, x_h3, &
-                                        ymom, y_l1, y_l2, y_l3, y_h1, y_h2, y_h3, &
-                                        zmom, z_l1, z_l2, z_l3, z_h1, z_h2, z_h3, &
-                                        gx,  gx_l1, gx_l2, gx_l3, gx_h1, gx_h2, gx_h3, &
-                                        gy,  gy_l1, gy_l2, gy_l3, gy_h1, gy_h2, gy_h3, &
-                                        gz,  gz_l1, gz_l2, gz_l3, gz_h1, gz_h2, gz_h3, &
-                                        lo, hi, dx, time, &
-                                        Qtt)
+subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
+                                        xmom, px_lo, px_hi, ymom, py_lo, py_hi, zmom, pz_lo, pz_hi, &
+                                        gravx, gx_lo, gx_hi, gravy, gy_lo, gy_hi, gravz, gz_lo, gz_hi, &
+                                        vol, vo_lo, vo_hi, &
+                                        lo, hi, dx, time, Qtt)
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
-  use meth_params_module, only: do_rotation, rot_period, rot_period_dot
-  use rotation_module, only: get_omega, cross_product
+  use probdata_module, only: inertial_rotation, inertial_velocity
   
   implicit none
 
-  integer         , intent(in   ) :: r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
-  integer         , intent(in   ) :: x_l1, x_l2, x_l3, x_h1, x_h2, x_h3
-  integer         , intent(in   ) :: y_l1, y_l2, y_l3, y_h1, y_h2, y_h3
-  integer         , intent(in   ) :: z_l1, z_l2, z_l3, z_h1, z_h2, z_h3
-  integer         , intent(in   ) :: gx_l1, gx_l2, gx_l3, gx_h1, gx_h2, gx_h3
-  integer         , intent(in   ) :: gy_l1, gy_l2, gy_l3, gy_h1, gy_h2, gy_h3
-  integer         , intent(in   ) :: gz_l1, gz_l2, gz_l3, gz_h1, gz_h2, gz_h3
+  integer         , intent(in   ) :: r_lo(3), r_hi(3)
+  integer         , intent(in   ) :: px_lo(3), px_hi(3)
+  integer         , intent(in   ) :: py_lo(3), py_hi(3)
+  integer         , intent(in   ) :: pz_lo(3), pz_hi(3)
+  integer         , intent(in   ) :: gx_lo(3), gx_hi(3)
+  integer         , intent(in   ) :: gy_lo(3), gy_hi(3)
+  integer         , intent(in   ) :: gz_lo(3), gz_hi(3)
+  integer         , intent(in   ) :: vo_lo(3), vo_hi(3)
 
-  double precision, intent(in   ) :: rho(r_l1:r_h1,r_l2:r_h2,r_l3:r_h3)
-  double precision, intent(in   ) :: xmom(x_l1:x_h1,x_l2:x_h2,x_l3:x_h3)
-  double precision, intent(in   ) :: ymom(y_l1:y_h1,y_l2:y_h2,y_l3:y_h3)
-  double precision, intent(in   ) :: zmom(z_l1:z_h1,z_l2:z_h2,z_l3:z_h3)
-  double precision, intent(in   ) :: gx(gx_l1:gx_h1,gx_l2:gx_h2,gx_l3:gx_h3)
-  double precision, intent(in   ) :: gy(gy_l1:gy_h1,gy_l2:gy_h2,gy_l3:gy_h3)
-  double precision, intent(in   ) :: gz(gz_l1:gz_h1,gz_l2:gz_h2,gz_l3:gz_h3)
+  double precision, intent(in   ) :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
+  double precision, intent(in   ) :: xmom(px_lo(1):px_hi(1),px_lo(2):px_hi(2),px_lo(3):px_hi(3))
+  double precision, intent(in   ) :: ymom(py_lo(1):py_hi(1),py_lo(2):py_hi(2),py_lo(3):py_hi(3))
+  double precision, intent(in   ) :: zmom(pz_lo(1):pz_hi(1),pz_lo(2):pz_hi(2),pz_lo(3):pz_hi(3))
+  double precision, intent(in   ) :: gravx(gx_lo(1):gx_hi(1),gx_lo(2):gx_hi(2),gx_lo(3):gx_hi(3))
+  double precision, intent(in   ) :: gravy(gy_lo(1):gy_hi(1),gy_lo(2):gy_hi(2),gy_lo(3):gy_hi(3))
+  double precision, intent(in   ) :: gravz(gz_lo(1):gz_hi(1),gz_lo(2):gz_hi(2),gz_lo(3):gz_hi(3))
+  double precision, intent(in   ) :: vol(vo_lo(1):vo_hi(1),vo_lo(2):vo_hi(2),vo_lo(3):vo_hi(3))
   integer         , intent(in   ) :: lo(3), hi(3)
   double precision, intent(in   ) :: dx(3), time
   double precision, intent(inout) :: Qtt(3,3)
 
-  integer          :: i, j, k, l, m, dir
-  double precision :: dV
-  double precision :: r(3), pos(3), vel(3), grav(3), rhoInv
+  integer          :: i, j, k, l, m
+  double precision :: r(3), pos(3), vel(3), g(3), rhoInv
   double precision :: dQtt(3,3)
-  double precision :: omega(3)
-  double precision :: theta(3), rot_matrix(3,3)
 
-  dV = dx(1) * dx(2) * dx(3)
   dQtt(:,:) = ZERO
   
-  ! If we are in a rotating reference frame, then we want
-  ! to rotate this by an amount corresponding to the time
-  ! that has passed since the beginning of the simulation.
-  ! This way it will correspond to an inertial observer
-  ! at large distances. There is some clipping due to material
-  ! that leaves or enters the domain boundaries, but this should
-  ! average out over time, and will be negligible in magnitude.
-
-  ! To get the angle, we integrate omega over the time of the
-  ! simulation. Since the time rate of change is linear in the
-  ! period, let's work that variable. At some time t the current
-  ! period P is given by P = P_0 + Pdot * t. Then:
-  !
-  ! theta(t) = int( omega(t) * dt )
-  !      theta = int( omega(t) dt )
-  !            = (2 * pi / P_0) * int( dt / (1 + (dPdt / P_0) * t) )
-  !
-  ! if dPdt = 0, then theta = 2 * pi * t / P_0 = omega_0 * t, as expected.
-  ! if dPdt > 0, then theta = (2 * pi / P_0) * (P_0 / dPdt) * ln| (dPdt / P_0) * t + 1 |
-  ! Note that if dPdt << P_0, then we have ln(1 + x) = x, and we again
-  ! recover the original expression as expected.
-
-  if (do_rotation .eq. 1) then
-  
-     if (abs(rot_period_dot) > ZERO .and. time > ZERO) then
-        theta = get_omega(ZERO) * (rot_period / rot_period_dot) * &
-                log( abs( (rot_period_dot / rot_period) * time + 1 ) )
-     else
-        theta = get_omega(ZERO) * time
-     endif
-
-     omega = get_omega(time)
-     
-  else
-
-     omega = ZERO
-     theta = ZERO
-
-  endif
-       
-  ! This is the 3D rotation matrix for converting between reference frames.
-  ! It is the composition of rotations along the x, y, and z axes. Therefore 
-  ! it allows for the case where we are rotating about multiple axes. Normally 
-  ! we use the right-hand convention for constructing the usual rotation matrix, 
-  ! but this is the transpose of that rotation matrix to account for the fact 
-  ! that we are rotating *back* to the inertial frame, rather than from the 
-  ! inertial frame to the rotating frame.
-
-  rot_matrix(1,1) =  cos(theta(2)) * cos(theta(3))
-  rot_matrix(1,2) = -cos(theta(2)) * sin(theta(3))
-  rot_matrix(1,3) =  sin(theta(2))
-  rot_matrix(2,1) =  cos(theta(1)) * sin(theta(3)) + sin(theta(1)) * sin(theta(2)) * cos(theta(3))
-  rot_matrix(2,2) =  cos(theta(1)) * cos(theta(3)) - sin(theta(1)) * sin(theta(2)) * sin(theta(3))
-  rot_matrix(2,3) = -sin(theta(1)) * cos(theta(2))
-  rot_matrix(3,1) =  sin(theta(1)) * sin(theta(3)) - cos(theta(1)) * sin(theta(2)) * cos(theta(3))
-  rot_matrix(3,2) =  sin(theta(1)) * cos(theta(3)) + cos(theta(1)) * sin(theta(2)) * sin(theta(3))
-  rot_matrix(3,3) =  cos(theta(1)) * cos(theta(2))
-
   do k = lo(3), hi(3)
      r(3) = problo(3) + (k + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
@@ -488,16 +423,10 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
               rhoInv = ZERO
            endif
 
-           vel(1) = xmom(i,j,k) * rhoInv
-           vel(2) = ymom(i,j,k) * rhoInv
-           vel(3) = zmom(i,j,k) * rhoInv
-
            ! Account for rotation, if there is any. These will leave 
            ! r and vel and changed, if not.
 
-           ! Remember that this is going from the rotating frame back to the inertial frame.
-
-           pos = matmul(rot_matrix, r)
+           pos = inertial_rotation(r, time)
 
            ! For constructing the velocity in the inertial frame, we need to 
            ! account for the fact that we have rotated the system already, so that 
@@ -508,19 +437,23 @@ subroutine quadrupole_tensor_double_dot(rho,  r_l1, r_l2, r_l3, r_h1, r_h2, r_h3
            ! But it must, since the motion vector of the stars changes in the inertial 
            ! frame depending on where we are in the orbit.
 
-           vel = vel + cross_product(omega, pos)
+           vel(1) = xmom(i,j,k) * rhoInv
+           vel(2) = ymom(i,j,k) * rhoInv
+           vel(3) = zmom(i,j,k) * rhoInv           
+           
+           vel = inertial_velocity(pos, vel, time)
 
-           grav(1) = gx(i,j,k)
-           grav(2) = gy(i,j,k)
-           grav(3) = gz(i,j,k)
+           g(1) = gravx(i,j,k)
+           g(2) = gravy(i,j,k)
+           g(3) = gravz(i,j,k)
 
            ! We need to rotate the gravitational field to be consistent with the rotated position.
 
-           grav = matmul(rot_matrix, grav)
+           g = inertial_rotation(g, time)
 
            do m = 1, 3
               do l = 1, 3
-                 dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * dV * (vel(l) * vel(m) + pos(l) * grav(m))
+                 dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * vol(i,j,k) * (vel(l) * vel(m) + pos(l) * g(m))
               enddo
            enddo
 
@@ -560,10 +493,9 @@ subroutine gw_strain_tensor(h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, 
   double precision, intent(in   ) :: Qtt(3,3)
   double precision, intent(in   ) :: time
   
-  integer :: i, j, k, l, m, dir
+  integer :: i, j, k, l, dir
   double precision :: h(3,3), proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
-  double precision :: omega(3)
   
   ! Standard Kronecker delta.
 
@@ -682,9 +614,10 @@ end subroutine get_roche_radii
 
 subroutine update_center(time)
 
+  use bl_constants_module, only: ZERO  
   use probdata_module, only: bulk_velx, bulk_vely, bulk_velz, &
                              center_fracx, center_fracy, center_fracz
-  use prob_params_module, only: center, problo, probhi
+  use prob_params_module, only: center, problo, probhi, dim
 
   implicit none
 
@@ -692,9 +625,19 @@ subroutine update_center(time)
 
   ! Determine the original location of the center.
 
-  center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
-  center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
-  center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
+  if (dim .eq. 3) then
+  
+     center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
+     center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
+     center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
+
+  else
+
+     center(1) = problo(1)
+     center(2) = problo(2) + center_fracz * (probhi(2) - problo(2))
+     center(3) = ZERO
+
+  endif
 
   ! Now update using the time passed since the beginning of the simulation.
 
@@ -719,6 +662,41 @@ subroutine set_period(period)
   rot_period = period
 
 end subroutine set_period
+
+
+
+! Returns the CASTRO rotation frequency vector.
+
+subroutine get_omega_vec(omega_in, time)
+
+  use rotation_module, only: get_omega
+
+  implicit none
+
+  double precision :: omega_in(3), time
+
+  omega_in = get_omega(time)
+
+end subroutine get_omega_vec
+
+
+
+! Returns the CASTRO rotation frequency vector.
+
+subroutine get_axes(star_axis_in, motion_axis_in, rotation_axis_in)
+
+  use probdata_module, only: star_axis, initial_motion_dir
+  use meth_params_module, only: rot_axis
+
+  implicit none
+
+  integer :: star_axis_in, motion_axis_in, rotation_axis_in
+
+  star_axis_in = star_axis
+  motion_axis_in = initial_motion_dir
+  rotation_axis_in = rot_axis
+
+end subroutine get_axes
 
 
 

@@ -5,12 +5,13 @@ BL_FORT_PROC_DECL(PROBLEM_CHECKPOINT,problem_checkpoint)(int * int_dir_name, int
 BL_FORT_PROC_DECL(PROBLEM_RESTART,problem_restart)(int * int_dir_name, int * len);
 
 BL_FORT_PROC_DECL(WDCOM,wdcom)
-    (BL_FORT_FAB_ARG(rho), 
-     BL_FORT_FAB_ARG(xmom), 
-     BL_FORT_FAB_ARG(ymom), 
-     BL_FORT_FAB_ARG(zmom),
-     const int lo[], const int hi[],
-     const Real dx[], const Real* time,
+    (BL_FORT_FAB_ARG_3D(rho), 
+     BL_FORT_FAB_ARG_3D(xmom), 
+     BL_FORT_FAB_ARG_3D(ymom), 
+     BL_FORT_FAB_ARG_3D(zmom),
+     BL_FORT_FAB_ARG_3D(vol),
+     const int* lo, const int* hi,
+     const Real* dx, const Real* time,
      Real* com_p_x, Real* com_p_y, Real* com_p_z,
      Real* com_s_x, Real* com_s_y, Real* com_s_z,
      Real* vel_p_x, Real* vel_p_y, Real* vel_p_z,
@@ -18,7 +19,8 @@ BL_FORT_PROC_DECL(WDCOM,wdcom)
      Real* m_p, Real* m_s);
 
 BL_FORT_PROC_DECL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
-   (BL_FORT_FAB_ARG(rho), const int lo[], const int hi[], const Real dx[],  
+   (BL_FORT_FAB_ARG_3D(rho), BL_FORT_FAB_ARG_3D(vol),
+    const int* lo, const int* hi, const Real* dx,  
     Real* volp, Real* vols, Real* rho_cutoff);
 
 BL_FORT_PROC_DECL(GET_SINGLE_STAR,get_single_star)
@@ -37,15 +39,16 @@ BL_FORT_PROC_DECL(GET_STAR_DATA,get_star_data)
     Real* t_ff_p, Real* t_ff_s);
 
 BL_FORT_PROC_DECL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
-   (BL_FORT_FAB_ARG(rho), 
-    BL_FORT_FAB_ARG(xmom), 
-    BL_FORT_FAB_ARG(ymom), 
-    BL_FORT_FAB_ARG(zmom),
-    BL_FORT_FAB_ARG(gx),
-    BL_FORT_FAB_ARG(gy),
-    BL_FORT_FAB_ARG(gz),
-    const int lo[], const int hi[],
-    const Real dx[], const Real* time,
+   (BL_FORT_FAB_ARG_3D(rho), 
+    BL_FORT_FAB_ARG_3D(xmom), 
+    BL_FORT_FAB_ARG_3D(ymom), 
+    BL_FORT_FAB_ARG_3D(zmom),
+    BL_FORT_FAB_ARG_3D(gx),
+    BL_FORT_FAB_ARG_3D(gy),
+    BL_FORT_FAB_ARG_3D(gz),
+    BL_FORT_FAB_ARG_3D(vol),
+    const int* lo, const int* hi,
+    const Real* dx, const Real* time,
     Real* Qtt);
 
 BL_FORT_PROC_DECL(GW_STRAIN_TENSOR,gw_strain_tensor)
@@ -59,6 +62,12 @@ BL_FORT_PROC_DECL(SET_PERIOD,set_period)
 
 BL_FORT_PROC_DECL(UPDATE_CENTER,update_center)
    (const Real* time);
+
+BL_FORT_PROC_DECL(GET_OMEGA_VEC,get_omega_vec)
+   (const Real omega[], const Real& time);
+
+BL_FORT_PROC_DECL(GET_AXES,get_axes)
+   (int& star_axis, int& motion_axis, int& rotation_axis);
 
 BL_FORT_PROC_DECL(GET_DO_SCF_INITIAL_MODELS,get_do_scf_initial_models)
    (int& do_scf_initial_models);
