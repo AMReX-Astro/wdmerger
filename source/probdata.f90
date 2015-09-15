@@ -575,6 +575,7 @@ contains
        ! of secondary radii; for a circular orbit, use Kepler's third law.
 
        collision_offset = 0.0
+       offset_dir = initial_motion_dir
        
        if (collision) then
 
