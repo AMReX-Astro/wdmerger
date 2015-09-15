@@ -11,6 +11,7 @@
 
   collision = F
   collision_separation = 4.0
+  collision_impact_parameter = 0.0
 
   interp_temp = T
 

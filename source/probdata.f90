@@ -48,6 +48,10 @@ module probdata_module
   ! separate the WDs by.
   double precision :: collision_separation
 
+  ! For a collision, the impact parameter measured in
+  ! units of the primary's initial radius.
+  double precision :: collision_impact_parameter
+  
   ! Binary properties
   double precision :: a_P_initial, a_S_initial, a  
   double precision :: center_P_initial(3), center_S_initial(3)
@@ -182,6 +186,7 @@ contains
          no_orbital_kick, &
          collision, &
          collision_separation, &
+         collision_impact_parameter, &
          interp_temp, &
          do_initial_relaxation, &
          relaxation_timescale, &
@@ -238,6 +243,7 @@ contains
 
     collision = .false.
     collision_separation = 4.0
+    collision_impact_parameter = 0.0
 
     interp_temp = .false.
 
@@ -328,6 +334,12 @@ contains
        rot_axis = 1
        
     endif
+
+    ! Make sure we have a sensible collision impact parameter.
+
+    if (collision_impact_parameter > 1.0) then
+       call bl_error("Impact parameter must be less than one in our specified units.")
+    endif
     
   end subroutine read_namelist
 
@@ -404,7 +416,9 @@ contains
     implicit none
 
     double precision :: v_ff
-
+    double precision :: collision_offset
+    integer :: offset_dir
+    
     ! Set up the center variable. We want it to be at 
     ! problo + center_frac * domain_width in each direction.
     ! center_frac is 1/2 by default, so the problem
@@ -560,6 +574,8 @@ contains
        ! For a collision, set the stars up with a free-fall velocity at a specified number
        ! of secondary radii; for a circular orbit, use Kepler's third law.
 
+       collision_offset = 0.0
+       
        if (collision) then
 
            initial_motion_dir = star_axis
@@ -576,6 +592,16 @@ contains
 
            a = a_P_initial + a_S_initial
 
+           ! We also permit a non-zero impact parameter b in the direction perpendicular
+           ! to the motion of the stars. This is measured in units of the radius of the
+           ! primary, so that b > 1 doesn't make any sense as the stars won't collide.
+           ! Since the secondary's radius is greater than the primary's, measuring in the
+           ! units of the primary's radius will guarantee contact.
+
+           collision_offset = collision_impact_parameter * model_P % radius
+
+           offset_dir = MOD(initial_motion_dir + 1, 3)
+           
        else
 
            ! Now, if we're not doing a relaxation step, then we want to put the WDs 
@@ -641,6 +667,11 @@ contains
        center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
        center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
+       ! Add a collision offset if there is one.
+
+       center_P_initial(offset_dir) = center_P_initial(offset_dir) - collision_offset
+       center_S_initial(offset_dir) = center_S_initial(offset_dir) + collision_offset
+       
        ! Compute initial Roche radii
 
        call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
