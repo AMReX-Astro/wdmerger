@@ -364,8 +364,8 @@ energy (energy per unit mass).
 
 We use the unsplit piecewise-parabolic method (PPM) solver in \castro\
 to advance the hydrodynamics system in time \citep{ppmunsplit}.  A
-number of changes were made to the solver, which are detailed in the
-Appendix.  These changes bring the algorithm more in line with that of
+number of changes were made to the solver, which are detailed in \autoref{app:hydro}.
+These changes bring the algorithm more in line with that of
 \cite{ppm}. \castro\ as originally released featured a slightly modified
 version of the higher resolution limiters of
 \cite{colella_sekora:2008}, which can be accessed in the code using
@@ -530,7 +530,7 @@ this can be done using the cell-centered
 source term evaluated at time-level $n$. We choose a more accurate approach, 
 which is also second order, of tracing
 under the source term; the details of this are described in 
-the appendix. Second, after the hydrodynamics step, we add the time-centered source terms
+\autoref{app:hydro}. Second, after the hydrodynamics step, we add the time-centered source terms
 to the state. First we will describe how we do this for the momentum,
 and then we will describe our approach for the energy. This discussion will be somewhat detailed.
 We believe that the attention is necessary because of the importance of accuracy
@@ -649,7 +649,10 @@ and we can apply this energy at the end of the timestep). Note that of course th
 flux is already second-order accurate in time. We observe also that in practice we will not obtain 
 conservation of energy to machine precision even in the absence of open domain boundaries. The 
 method itself is conservative if it is time-centered and correctly evaluates the energy change 
-on cell faces \citep{marcello:2012}. However, in practice there is a non-zero numerical tolerance associated 
+on cell faces. This was demonstrated empirically by \cite{jiang:2013} and is obvious in the case of a
+fixed external potential; it is not as obvious in the case of the gravitational potential, which
+changes in response to the mass distribution, so we give a short proof of this in \autoref{app:gravity}.
+However, in practice there is a non-zero numerical tolerance associated 
 with the Poisson gravity solver (in our case, the multigrid method) that results in a non-zero error 
 in the calculation of the gravitational potential. This results in a very small deviation from perfect 
 conservation. It is not usually larger than the other effects which result in energy non-conservation 
@@ -967,7 +970,7 @@ In a rotating reference frame with angular frequency vector $\bm{\omega}$, the m
 Here $\mathbf{r}$ is the position vector with respect to the origin. Typically we choose $\bm{\omega} = (0, 0, 2\pi / T)^T$,
 with the rotation axis coincident with the $z$ axis at $x = y = 0$.
 $T$ is the rotation period, which is the most natural quantity to specify
-for a rotating stellar system. As described in the appendix, we include this source term
+for a rotating stellar system. As described in \autoref{app:hydro}, we include this source term
 in the edge state prediction in a way that is analogous to the gravity source.
 We evaluate all quantities at cell centers. We use the same predictor-corrector 
 approach that we use for the gravity source terms to the momentum equations. A slight 
@@ -2290,6 +2293,7 @@ Project AST100037 supported use of the resources NICS/Kraken and NICS/Darter.
 \appendix
 
 \section{CASTRO hydrodynamics changes}
+\label{app:hydro}
 
 The basic PPM algorithm in \castro\ has undergone a number of changes
 since the original code paper \citep{castro}.  A discussion of the
@@ -2463,6 +2467,61 @@ terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. T
 with the parameter {\tt castro.ppm\_trace\_rot}.
 
 
+
+\section{Proof of Energy Conservation in Simulations using Self-Gravity}
+\label{app:gravity}
+
+In \autoref{sec:gravity_hydro_coupling}, we described our approach to updating the gas energy
+in response to motions of fluid through the self-generated gravitational potential using 
+\autoref{eq:grav_energy_conservation_update}. While it is straightforward to observe that this approach
+should be conservative for an arbitrary fixed external potential $\Phi$, it is not as obvious that this
+should be so for a self-generated potential which changes in response to mass motions on the domain. To
+see that this still holds for the self-generated gravitational potential $\Phi$, let us start with 
+\autoref{eq:grav_energy_conservation_update} in a slightly revised form:
+\begin{equation}
+  \Delta(\rho E)_i = -\frac{1}{2}\sum_{j} \Delta\rho_{ij}(\Phi_i - \Phi_{j}) \label{eq:grav_energy_conservation_update_revised}
+\end{equation}
+where by $\Delta \rho_{ij}$ we mean the density transferred from zone $j$ to zone $i$, so that
+$\Delta \rho_{ij} = - \Delta \rho_{ji}$, and the sum is over all zone indices $j$ that are adjacent
+to zone $i$. Let us define $\Phi_{ij} = \Phi_{ji} = (\Phi_{i} + \Phi_{j}) / 2$ as the potential on the
+zone interface between zones $i$ and $j$. Then we have:
+\begin{equation}
+  \Delta(\rho E)_i = -\sum_{j} \Delta\rho_{ij}(\Phi_i - \Phi_{ij}).
+\end{equation}
+We can evalute the sum for all of the terms proportional to $\Phi_i$ by observing that the change in
+density from time-level $n$ to time-level $n+1$ is the sum of the density fluxes from all adjacent zones.
+\begin{equation*}
+  \Delta(\rho E)_i = - (\rho_i^{n+1} - \rho_i^{n}) \Phi_i + \sum_{j}\Delta \rho_{ij} \ \Phi_{ij}
+\end{equation*}
+Now let us sum this over all zones $i$ in the domain, and ignore the domain boundaries, or assume that they are
+far enough away from the region of compact support for $\rho$ that $\Phi$ is negligible there. As the second
+term on the right-hand side is antisymmetric in $i$ and $j$, it cancels when summing adjacent zones, and we have:
+\begin{equation*}
+  \sum_{i} (\rho E)_i^{n+1} - \sum_{i} (\rho E)_i^{n} = -\frac{1}{2}\sum_{i} (\Phi_{i}^{n+1} + \Phi_{i}^{n})(\rho_i^{n+1} - \rho_i^{n})
+\end{equation*}
+Note that, as explained the text, we are using a time-centered $\Phi$ to correspond to the mass fluxes
+at time-level $n+1/2$. Finally we re-write this in a form where the difference in total energy between time-levels
+$n$ and $n+1$ is on the left-hand side and any sources causing this to be non-zero are on the right-hand side:
+\begin{align}
+  \sum_{i} \left(\rho E + \frac{1}{2}\rho\Phi\right)_i^{n+1} - \sum_{i} \left(\rho E + \frac{1}{2}\rho\Phi\right)_i^{n} &= \frac{1}{2}\sum_{i} \left(\Phi_i^{n+1}\rho_i^{n} - \Phi_i^{n}\rho_i^{n+1}\right) \notag \\
+       &= \frac{1}{8\pi G} \sum_{i}\left(\Phi_{i}^{n+1}\nabla^2 \Phi_{i}^{n} - \Phi_i^{n}\nabla^2 \Phi_{i}^{n+1}\right) \label{eq:total_energy_difference}
+\end{align}
+\autoref{eq:total_energy_difference} expresses total energy conversation if and only if the right-hand side vanishes.
+We observe that the right-hand side has the form of a variant of the divergence theorem often called Green's second identity:
+\begin{equation}
+  \int (\Phi^{n}\nabla^2 \Phi^{n+1} - \Phi^{n+1}\nabla^2 \Phi^{n}) dV = \int \left(\Phi^{n} \nabla \Phi^{n+1} - \Phi^{n+1} \nabla \Phi^{n}\right) \cdot d\mathbf{S}, \label{eq:green_second_identity}
+\end{equation}
+where $d\mathbf{S}$ is the area element with vector component parallel to the outward normal. The analogous result holds for the
+discretized form in \autoref{eq:total_energy_difference}. With the assumptions used above, the right-hand side of
+\autoref{eq:green_second_identity} will vanish as the surface integral is evaluated at infinity, where the potential
+tends to zero. This concludes the proof that the method is conservative when the potential used at the zone interfaces
+is time-centered, even in light of the change of the potential over the timestep due to the mass motion that is causing the change in the energy.
+
+From the above discussion it is straightforward to see exactly why the method will not be fully conservative to machine
+precision in practice. First, we cannot simulate the domain out to infinity, so Green's second identity does not hold exactly
+and there will be some loss or addition of energy at domain boundaries. Second, \autoref{eq:total_energy_difference} holds in the
+continuum limit by using the Poisson equation, but in practice it is not exactly true that $\rho_i = 4\pi G \nabla^2 \Phi_{i}$ due
+to small errors in the potential at the level of the tolerances used in the Poisson solver.
 
 \clearpage
 
