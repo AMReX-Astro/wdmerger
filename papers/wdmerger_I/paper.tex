@@ -65,23 +65,23 @@
 \begin{abstract}
 The Type Ia supernova progenitor problem is one of the most perplexing and 
 exciting problems in astrophysics, requiring detailed numerical modeling to 
-complement the observations of these explosions. One possibility that has 
+complement the observations of these explosions. One possible progenitor that has 
 merited recent theoretical attention is the white dwarf merger scenario.
 This can naturally explain many of the observed characteristics of 
 Type Ia supernovae, as well as their distribution in time and space.
 To date there have been few fully self-consistent simulations 
-of binary white dwarf systems using mesh-based hydrodynamics, 
+of merging binary white dwarf systems using mesh-based hydrodynamics, 
 relative to other methods. This is the first paper in a series designed to 
 describe simulations of these systems using a mesh-based hydrodynamics code with 
-the adaptive-mesh refinement approach. In this paper we describe our numerical 
+adaptive-mesh refinement. In this paper we describe our numerical 
 methodology and discuss our implementation in the code \castro. \castro\ 
-solves the Euler equations of hydrodynamics 
+solves the Euler equations 
 and the Poisson equation for self-gravity. Standard techniques for 
 coupling gravitation and rotation forces to the hydrodynamics do 
 not do an adequate job conserving the total energy of the system, 
 but recent advances in the literature allow progress on this 
-problem and we discuss our implementation here. We present an 
-extensive set of test problems demonstrating the extent to which our software can sufficiently
+problem and we discuss our implementation here. We present a
+set of test problems demonstrating the extent to which our software can sufficiently
 model a system where large amounts of mass are advected on the computational 
 domain over very long timescales. Future papers in this series will describe
 our treatment of the initial conditions of these systems and will 
@@ -89,6 +89,7 @@ examine the early phases of the merger to determine its viability
 for triggering a thermonuclear detonation.
 
 \end{abstract}
+
 \keywords{hydrodynamics - methods: numerical - supernovae: general - white dwarfs}
 
 %==========================================================================
@@ -301,7 +302,7 @@ of the SPH codes to exhibit this instability. There have since been a
 number of other papers discussing this issue, but to our knowledge
 none of these improvements have yet been incorporated into an SPH
 model of a WD merger. Another reason for caution is that other than the
-most recent results of \cite{kashyap:2015}, no simulation has self-consistently
+most recent results of \cite{kashyap:2015}, no white dwarf merger simulation has self-consistently
 resulted in a thermonuclear detonation. Reproducibility of the detonation 
 through numerical simulation is critical for building 
 confidence in this progenitor model.
@@ -368,8 +369,10 @@ number of changes were made to the solver, which are detailed in \autoref{app:hy
 These changes bring the algorithm more in line with that of
 \cite{ppm}. \castro\ as originally released featured a slightly modified
 version of the higher resolution limiters of
-\cite{colella_sekora:2008}, which can be accessed in the code using
-\texttt{castro.ppm\_type = 2}. The advantage of this limiter is that
+\cite{colella_sekora:2008}, which can be used in the code by setting 
+\texttt{castro.ppm\_type = 2} in the inputs file, which is a set of code parameters
+accessed at runtime to determine the algorithms used in the simulation.
+The advantage of this limiter is that
 it preserves physical extrema rather than clipping them off as in the
 original approach of \cite{ppm}. Despite the advantages of this limiter 
 we have found it to be unsatisfactory for our problem. There are many regions in our
@@ -379,7 +382,7 @@ regions the algorithm can yield negative densities. This often results
 from the limiters interpreting these gradients as being true
 minima. As a result, we use the original limiter, which is strictly
 monotonicity preserving in the parabolic profiles it generates; this
-is activated with \texttt{castro.ppm\_type = 1}.
+is activated with \texttt{castro.ppm\_type = 1} in the inputs file.
 
 A related issue that required a code improvement is that in cases of
 large density gradients such as the edge of a star, it is possible to
@@ -733,37 +736,29 @@ results in a significant drift of the center of the mass of the system over time
 The most natural extension of the monopole prescription is to include
 higher-order multipole moments. If the entire mass distribution is
 enclosed, then the potential can be expanded in a series of spherical
-harmonics $Y_{lm}$:
+harmonics $Y_{lm}(\theta,\phi)$ (where $\theta \in [0, \pi]$ is the usual polar angle
+with respect to the $z$ axis and $\phi \in [0, 2\pi)$ is the usual azimuthal angle with
+respect to the positive $x$ axis):
 \begin{equation}
-  \Phi(\mathbf{x}) = -\sum_{l=0}^{\infty}\sum_{m=-l}^{l} \frac{4\pi}{2l + 1} q_{lm} \frac{Y_{lm}(\theta,\phi)}{r^{l+1}}, \label{spherical_harmonic_expansion}
+  \Phi(\mathbf{x}) = -\sum_{l=0}^{\infty}\sum_{m=-l}^{l} \frac{4\pi}{2l + 1} q_{lm} \frac{Y_{lm}(\theta,\phi)}{r^{l+1}}, \label{eq:spherical_harmonic_expansion}
 \end{equation}
 where $q_{lm}$ are the so-called multipole moments. The origin of the
 coordinate system is taken to be the center of the computational
 domain, and $r$ is the distance to the origin. The multipole moments
 can be calculated by expanding the Green's function for the Poisson
-equation as a series of spherical harmonics.
-%% \begin{equation}
-%%   q_{lm} = \int Y^*_{lm}(\theta^\prime, \phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3x^\prime. \label{multipole_moments_original}
-%% \end{equation}
-After some algebraic simplification of \autoref{spherical_harmonic_expansion} 
-using the addition theorem for spherical harmonics,
-%% \begin{align}
-%%   &\frac{4\pi}{2l+1} \sum_{m=-l}^{l} Y^*_{lm}(\theta^\prime,\phi^\prime)\, Y_{lm}(\theta, \phi) = P_l(\text{cos}\, \theta) P_l(\text{cos}\, \theta^\prime) \notag \\
-%%   &\ \ + 2 \sum_{m=1}^{l} \frac{(l-m)!}{(l+m)!} P_{l}^{m}(\text{cos}\, \theta)\, P_{l}^{m}(\text{cos}\, \theta^\prime)\, \left[\text{cos}(m\phi)\, \text{cos}(m\phi^\prime) + \text{sin}(m\phi)\, \text{sin}(m\phi^\prime)\right].
-%% \end{align}
+equation as a series of spherical harmonics. After some algebraic
+simplification of \autoref{eq:spherical_harmonic_expansion}, 
 the potential outside of the mass distribution can be written as:
 \begin{align}
   \Phi(\mathbf{x}) &= -\sum_{l=0}^{\infty} \left\{Q_l^{(0)} \frac{P_l(\text{cos}\, \theta)}{r^{l+1}} \right. \notag \\
-    &+ \left. \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right\}.\label{multipole_potential}
+    &+ \left. \sum_{m = 1}^{l}\left[ Q_{lm}^{(C)}\, \text{cos}(m\phi) + Q_{lm}^{(S)}\, \text{sin}(m\phi)\right] \frac{P_{l}^{m}(\text{cos}\, \theta)}{r^{l+1}} \right\}.\label{eq:multipole_potential}
 \end{align}
-$P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials. $Q_l^{(0)}$ and $Q_{lm}^{(C,S)}$ are variants of the multipole moments that involve integrals of $P_l$ and $P_l^m$, respectively, over the computational domain.
-%% \begin{align}
-%%   Q_l^{(0)}   &= \int P_l(\text{cos}\, \theta^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
-%%   Q_{lm}^{(C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
-%%   Q_{lm}^{(S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime.
-%% \end{align}
+$P_l(x)$ are the Legendre polynomials and $P_{l}^{m}(x)$ are the associated Legendre polynomials.
+$Q_l^{(0)}$ and $Q_{lm}^{(C,S)}$ are variants of the multipole moments that involve integrals of
+$P_l$ and $P_l^m$, respectively, over the computational domain; their definition is given in \autoref{app:multipole}.
+
 This approach becomes computationally feasible when we cut off the
-outer summation in \autoref{multipole_potential} at some finite
+outer summation in \autoref{eq:multipole_potential} at some finite
 value of $l_{\text{max}}$. If it is of sufficiently high order, we
 will accurately capture the distribution of mass on the grid. In
 practice we first evaluate the discretized analog of the modified
@@ -797,7 +792,7 @@ The result is shown in \autoref{fig:bc_comparison}. At $l_{\text{max}} = 6$,
 the error is already well below $10^{-4}$ and we adopt this as our default 
 choice for all simulations with Poisson gravity. In \autoref{sec:kepler} we 
 show that there are no gains to be had by increasing the accuracy further. At 
-very high orders the approximation breaks down, as seen in \autoref{fig:bc_comparison}. 
+very high orders ($l \gtrsim 18$) the approximation breaks down, as seen in \autoref{fig:bc_comparison}. 
 This is a result of the ambient material on the grid. At each boundary point we 
 assume that all of the mass on the grid is contained within a sphere whose radius is 
 the distance from that boundary point to the center of the domain. This does not hold 
@@ -963,7 +958,8 @@ proceeds on a dynamical timescale, the conservation properties may be
 slightly worse but angular momentum conservation is also less
 important.
 
-In a rotating reference frame with angular frequency vector $\bm{\omega}$, the momentum equation becomes:
+In a rotating reference frame with angular frequency vector $\bm{\omega}$,
+non-inertial contribution to the momentum equation is:
 \begin{equation}
   \left.\frac{\partial(\rho \mathbf{u})}{\partial t}\right|_{\text{rot}} = -2\, {\bm\omega} \times (\rho\mathbf{u}) - \rho {\bm\omega} \times \left({\bm\omega} \times \mathbf{r}\right).
 \end{equation}
@@ -1307,9 +1303,9 @@ is what drives the initial inspiral over very long timescales. Eventually it wil
 to become dynamically unstable due to the Newtonian tidal forces alone, though once that period begins, 
 the gravitational energy loss is inconsequential in affecting the dynamical evolution of the system. 
 The frequency of the gravitational waves emitted by the white dwarf binary 
-will be similar in size to the frequency of the orbital motion, which is in the range 
+will be similar to the frequency of the orbital motion, which is in the range 
 10-100 mHz for our problem. This is well outside the range of currently existing 
-gravitational wave detectors but is very well suited for proposed space-based detectors such as eLISA.
+gravitational wave detectors but is very well suited for proposed space-based detectors such as eLISA \citep{eLISA}.
 
 We follow the prescription of \citet{blanchet:1990} for computing a gravitational wave 
 signal for our simulation. At distances far from the 
@@ -1358,7 +1354,7 @@ frame before evaluating the integral. Then,
 we pick an observing location $\mathbf{x}$ relative to the domain, evaluate the projection operator, 
 and then perform the relevant tensor contraction to determine the strain tensor. We can 
 repeat this process for any number of observing locations at minimal cost, since the quadruple tensor 
-only needs to be calculated once. Now, gravitational waves only excite modes orthogonal to their 
+only needs to be calculated once. Gravitational waves only excite modes orthogonal to their 
 direction of travel. These are the ``plus'' and ``cross'' modes, $h_+$ and $h_\times$, named after 
 the types of spatial distortions they exhibit. We calculate the signal at a distance $r$ along 
 the $x$, $y$ and $z$ axes. For the latter, as an example, $h_{+} = h_{11} = -h_{22} \propto (\ddot{Q}_{11} - \ddot{Q}_{22})/2$ and 
@@ -1374,7 +1370,7 @@ The strain at any other distance is easily calculated and goes as the inverse of
 %==========================================================================
 \section{Numerical Test Problems}\label{sec:Tests}
 
-Merger simulations face a number of numerical difficulties that are
+White dwarf merger simulations face a number of numerical difficulties that are
 not present in single-degenerate Type Ia and core-collapse supernova
 simulations. In \autoref{sec:gravity}, we discussed how the lack
 of spherical symmetry necessitates a careful look at the gravity
@@ -1849,7 +1845,7 @@ systems is enough to examine their effects. In \autoref{sec:gravity_boundary_con
 we discussed the replacement of a monopole boundary condition solver for the gravitational 
 potential with a more general multipole solver for the boundaries. To test the relevance 
 of this effect, we considered a single orbit of the unequal mass system and measured 
-the distance between the two white dwarfs at the beginning of the simulation and after 
+the distance between the two white dwarf centers of mass at the beginning of the simulation and after 
 the full orbital period. This distance should not change significantly over that timescale.
 We performed this test for maximum multipole moments ranging from 0 (the monopole term) to 16.
 The results are shown in \autoref{fig:gravity_bcs}. Terms in the boundary potential 
@@ -1895,8 +1891,12 @@ is nearly two orders of magnitude better in energy conservation,
 justifying the effort in varying the scheme.
 
 In \autoref{table:sources} we show also the effects on energy conservation of using the inertial reference frame. 
-We use ${\tt rs}$ for the \castro\ parameter {\tt castro.rot\_source\_type}, and we have the same four options for updating
-the energy source term as for gravity. The ${\tt rs} = 0$ column means that rotation is turned off and we are 
+We use ${\tt rs}$ for the \castro\ parameter {\tt castro.rot\_source\_type}.
+Each option for ${\tt rs}$ is implemented in the same way as for
+the gravitational source term, simply swapping out the gravitational acceleration
+for the rotational acceleration (except for the improvement to the momentum update
+for ${\tt rs} = 4$ described in \autoref{sec:rotation}). 
+The ${\tt rs} = 0$ column means that rotation is turned off and we are 
 in the inertial frame. We see that the choice of rotational coupling is much less important than the choice of gravity coupling. 
 Interestingly, the ``conservative'' ${\tt rs} = 4$ is slightly worse in energy conservation than the non-conservative, 
 cell-centered ${\tt rs} = 2$ algorithm. This may be because the rotational force grows with distance, and so losses at the 
@@ -2056,14 +2056,14 @@ This is especially true because some aspects of our approach to parallelism
 have changed since the first \castro\ paper \citep{castro}, and we have obtained improved 
 performance in certain settings.
 
-The \boxlib\ framework that \castro\ is based on splits each AMR level into a number 
+The \boxlib\ framework that \castro\ is based on domain decomposes each AMR level into a number 
 of boxes that collectively span the level. These boxes are distributed to processors 
 through MPI parallelism; each MPI task in general holds multiple boxes and 
 an update includes a loop over all the boxes an MPI task owns. The distribution 
 obeys a load-balancing algorithm that attempts to equalize the amount of work 
 done by each processor. \boxlib\ contains a number of strategies for distributing 
 work in this way, and by default uses a space-filling curve approach with a 
-Morton ordering. By experiment we have found that the most efficient load-balancing 
+Morton ordering (e.g. \cite{sasidharan:2015,beichl:1998}). By experiment we have found that the most efficient load-balancing 
 strategy for our problem is actually a simple knapsack algorithm. In this approach, 
 the amount of work owned by a processor is proportional to the number of grid cells 
 associated with that processor, and the algorithm attempts to ensure that all 
@@ -2409,7 +2409,7 @@ itself, setting:
 \subsection{Gravity and Rotation Tracing}
 
 We note a few additional differences between the original PPM
-implementation of \citet{ppm} and \castro\.  In the original PPM
+implementation of \citet{ppm} and \castro.  In the original PPM
 implementation, the gravitational acceleration was reconstructed as a parabola, and
 this was traced under to find the forcing that affects the interface
 for each wave.  \castro\ originally followed \citet{ppmunsplit} which instead adds
@@ -2522,6 +2522,53 @@ precision in practice. First, we cannot simulate the domain out to infinity, so 
 and there will be some loss or addition of energy at domain boundaries. Second, \autoref{eq:total_energy_difference} holds in the
 continuum limit by using the Poisson equation, but in practice it is not exactly true that $\rho_i = 4\pi G \nabla^2 \Phi_{i}$ due
 to small errors in the potential at the level of the tolerances used in the Poisson solver.
+
+
+
+\section{Formulation of the Multipole Expansion for the Gravitational Potential}
+\label{app:multipole}
+
+The integral formulation of the gravitational potential, using a series expansion in spherical harmonics, is:
+\begin{equation}
+  \Phi(\mathbf{x}) = -G\sum_{l=0}^{\infty} \sum_{m=-l}^{l} \frac{4\pi}{2l+1} \int \rho(\mathbf{x}^\prime)\, Y_{lm}(\theta,\phi)\, Y_{lm}^*(\theta^\prime,\phi^\prime)\, \frac{r_{<}^{l}}{r_{>}^{l+1}}\, dV^\prime,
+\end{equation}
+where $\theta$ is the polar angle and $\phi$ is the azimuthal angle, $r \equiv |\mathbf{x}|$ is the radial distance, and at any point in the domain $r_{<}$ is the smaller of $r$ and $r^\prime$, and $r_{>}$ is the larger of the two. This immediately suggests writing the potential at any location as the sum of
+two series:
+\begin{equation*}
+  \Phi(\mathbf{x}) = -G\sum_{l=0}^{\infty} \sum_{m=-l}^{l} \frac{4\pi}{2l+1}\left[ q^{L}_{lm}(\mathbf{x})\, r^{-l-1} + q^{U}_{lm}(\mathbf{x})\, r^{-l-1} \right] Y_{lm}(\theta,\phi),
+\end{equation*}
+where we have defined two multipole moments as integrals over the domain:
+\begin{align}
+  q^{L}_{lm}(\mathbf{x}) &= \int dV^\prime\, \rho(\mathbf{x}^\prime)\, Y^*(\theta^\prime,\phi^\prime)\, \Theta(r - r^\prime)\, {r^\prime}^{l} \\
+  q^{U}_{lm}(\mathbf{x}) &= \int dV^\prime\, \rho(\mathbf{x}^\prime)\, Y^*(\theta^\prime,\phi^\prime)\, \Theta(r^\prime - r)\, {r^\prime}^{-l-1}.
+\end{align}
+$\Theta(r)$ is the standard step function, equal to one if the argument is positive and zero if the argument is negative. Geometrically,
+$q^{L}(\mathbf{x})$ is an integral containing only mass interior to $|\mathbf{x}|$, and $q^{U}(\mathbf{x})$ is an integral containing only
+mass exterior to $|\mathbf{x}|$. Provided that one has computed these two integrals for a point $\mathbf{x}$, one can use the series expansion
+to calculate the potential at that point in principle to arbitrary accuracy by including higher order terms.
+  
+We prefer to work with solely real-valued quantities, and so we make use of the addition theorem for spherical harmonics \citep[Section 3.6]{jackson}:
+\begin{align}
+  \frac{4\pi}{2l+1} \sum_{m=-l}^{l} Y^*_{lm}(\theta^\prime,\phi^\prime)\, Y_{lm}(\theta, \phi) &= P_l(\text{cos}\, \theta) P_l(\text{cos}\, \theta^\prime) \notag \\
+   &+ 2 \sum_{m=1}^{l} \frac{(l-m)!}{(l+m)!} P_{l}^{m}(\text{cos}\, \theta)\, P_{l}^{m}(\text{cos}\, \theta^\prime)\, \left[\text{cos}(m\phi)\, \text{cos}(m\phi^\prime) + \text{sin}(m\phi)\, \text{sin}(m\phi^\prime)\right].
+ \end{align}
+The $P_l(x)$ are the Legendre polynomials and the $P_l^m(x)$ are the associated Legendre polynomials. We construct them using a stable recurrence relation given known values for $l = 0$ and $l = 1$. We can then formulate the expansion in a different way:
+\begin{align}
+  \Phi(\mathbf{x}) &= -G\sum_{l=0}^{\infty} \left\{ Q_{l}^{(L,0)}(\mathbf{x})\, P_l(\text{cos}\, \theta)\, r^{-l-1} + Q_{l}^{(U,0)}(\mathbf{x})\, P_l(\text{cos}\, \theta)\, r^{l} \right. \notag \\
+  &\hspace{0.7in} + \sum_{m=1}^{l} \left[ Q_{lm}^{(L,C)}(\mathbf{x})\, \text{cos}(m\phi) + Q_{lm}^{(L,S)}(\mathbf{x})\, \text{sin}(m\phi)\right] P_{l}^{m}(\text{cos}\, \theta)\, r^{-l-1} \notag \\
+  &\hspace{0.7in} + \left. \sum_{m=1}^{l} \left[ Q_{lm}^{(U,C)}(\mathbf{x})\, \text{cos}(m\phi) + Q_{lm}^{(U,S)}(\mathbf{x})\, \text{sin}(m\phi)\right] P_{l}^{m}(\text{cos}\, \theta)\, r^{l} \right\}
+\end{align}
+
+The multipole moments now take the form:
+\begin{align}
+  Q_l^{(L,0)}(\mathbf{x}) &= \int P_l(\text{cos}\, \theta^\prime)\, \Theta(r - r^\prime)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
+  Q_l^{(U,0)}(\mathbf{x}) &= \int P_l(\text{cos}\, \theta^\prime)\, \Theta(r^\prime - r)\, {r^{\prime}}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\  
+  Q_{lm}^{(L,C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, \Theta(r - r^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
+  Q_{lm}^{(U,C)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{cos}(m\phi^\prime)\, \Theta(r^\prime - r)\, {r^\prime}^{-l-1} \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
+  Q_{lm}^{(L,S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, \Theta(r - r^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
+  Q_{lm}^{(U,S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, \Theta(r^\prime - r)\, {r^\prime}^{-l-1} \rho(\mathbf{x}^\prime)\, d^3 x^\prime.  
+\end{align}
+In practice, of course, we select some maximum value $l_{\text{max}}$ at which we terminate the summation, determined either by computational efficiency requirements or by the fact that there is little information at high orders for sufficiently smooth mass distributions. In \castro\ we have the capability to compute any of the above multipole moments, though in this paper we are only using the multipole expansion to calculate the boundary conditions on the potential, and so we neglect calculation of the moments with a $U$ subscript as we are assuming that all of the mass is interior to the boundary. \autoref{eq:multipole_potential} is directly recovered under these conditions.
 
 \clearpage
 
