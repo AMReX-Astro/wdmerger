@@ -109,6 +109,13 @@ function get_last_output {
 
     output=$(find $dir -name "$job_name*" | sort | tail -1)
 
+    # If there are no output files with the job name, try 
+    # looking for jobs that are currently running.
+
+    if [ -z $output ]; then
+	output=$(find $dir -name "*$run_ext" | sort | tail -1)
+    fi
+
     # Extract out the search directory from the result.
 
     output=$(echo ${output#$dir/})
@@ -382,7 +389,12 @@ function is_dir_done {
 
   fi
 
-  if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
+  # If we don't have valid variables for checking against the timestep and max_time
+  # criteria, we assume that we're not done because we just haven't run the job yet.
+
+  if [ -z $time_flag ] || [ -z $step_flag ]; then
+      done_status=0
+  elif [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
       done_status=1
   fi
 
@@ -838,6 +850,10 @@ function create_job_script {
 
       echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
 
+      # Amount of memory allocated to each OpenMP thread.
+
+      echo "export OMP_STACKSIZE=64M" >> $dir/$job_script
+
       # Set the aprun options.
 
       aprun_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
@@ -864,7 +880,7 @@ function create_job_script {
 	echo "if [ \$done_flag -ne 1 ]; then" >> $dir/$job_script
 	echo "  job_number=\`$exec $job_script\`" >> $dir/$job_script
 	echo "  job_number=\${job_number%%.*}" >> $dir/$job_script
-	echo "  echo $job_number >> jobs_submitted.txt" >> $dir/$job_script
+	echo "  echo \$job_number >> jobs_submitted.txt" >> $dir/$job_script
 	echo "fi" >> $dir/$job_script
 	echo "" >> $dir/$job_script
 
