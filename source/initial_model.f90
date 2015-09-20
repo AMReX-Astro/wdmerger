@@ -294,18 +294,22 @@ contains
   ! 3D Cartesian grid space. Optionally does a sub-grid-scale interpolation
   ! if nsub > 1 (set in the probin file).
 
-  subroutine interpolate_3d_from_1d(model, loc, dx, state, nsub_in)
+  subroutine interpolate_3d_from_1d(rho, T, xn, r, npts, loc, dx, state, nsub_in)
 
     implicit none
 
-    type (initial_model), intent(in   ) :: model
-    double precision,     intent(in   ) :: loc(3), dx(3)
-    type (eos_t),         intent(inout) :: state
-    integer, optional,    intent(in   ) :: nsub_in
-
+    double precision,  intent(in   ) :: rho(npts)
+    double precision,  intent(in   ) :: T(npts)
+    double precision,  intent(in   ) :: xn(npts, nspec)
+    double precision,  intent(in   ) :: r(npts)
+    integer,           intent(in   ) :: npts
+    double precision,  intent(in   ) :: loc(3), dx(3)
+    type (eos_t),      intent(inout) :: state
+    integer, optional, intent(in   ) :: nsub_in
+    
     integer :: i, j, k, n
     integer :: nsub
-    double precision :: x, y, z, r
+    double precision :: x, y, z, dist
 
     if (present(nsub_in)) then
        nsub = nsub_in
@@ -335,13 +339,13 @@ contains
           do i = 0, nsub-1
              x = loc(1) + dble(i + HALF * (1 - nsub)) * dx(1) / nsub
 
-             r = (x**2 + y**2 + z**2)**HALF
+             dist = (x**2 + y**2 + z**2)**HALF
 
-             state % rho = state % rho + interpolate(r, model % npts, model % r, model % state(:) % rho)
-             state % T   = state % T   + interpolate(r, model % npts, model % r, model % state(:) % T)
+             state % rho = state % rho + interpolate(dist, npts, r, rho)
+             state % T   = state % T   + interpolate(dist, npts, r, T)
 
              do n = 1, nspec
-                state % xn(n) = state % xn(n) + interpolate(r, model % npts, model % r, model % state(:) % xn(n))
+                state % xn(n) = state % xn(n) + interpolate(dist, npts, r, xn(:,n))
              enddo
 
           enddo
