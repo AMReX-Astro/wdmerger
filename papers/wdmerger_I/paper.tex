@@ -2407,6 +2407,7 @@ itself, setting:
 
 
 \subsection{Gravity and Rotation Tracing}
+\label{sec:gravity_rotation_tracing}
 
 We note a few additional differences between the original PPM
 implementation of \citet{ppm} and \castro.  In the original PPM
@@ -2465,6 +2466,30 @@ Just like the gravity source, the rotation source terms only update the velociti
 the rotation source terms can be included in a manner identical to that of the gravity source
 terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. This is controlled in \castro\
 with the parameter {\tt castro.ppm\_trace\_rot}.
+
+
+
+\subsection{Source Term Predictor for the Hydrodynamics}
+
+In the original release of \castro\ the value of the gravitational and rotation
+source terms used in constructing the edge-states for the hydrodynamics update
+was the time-level $n$ value. While this is formally second-order accurate, there
+is a better choice one can make. We have information about the trend of these
+source terms from previous timesteps, so we can use a predictor method to guess
+at a more accurate value of the gravitational and rotational fields at the
+$n+1/2$ time-level the hydro is evaluated at. Our method uses a lagged linear
+extrapolation. Going into the hydro update, we have both the time-level $n$ and
+time-level $n-1$ data for $g$ and $f_R$ (as defined in \autoref{sec:gravity_rotation_tracing}).
+From this one can construct a simple linear estimator of (say) the gravitational
+acceleration using a backward difference scheme at time-level $n$:
+\begin{equation}
+  \mathbf{g}(t_n + \Delta t) = \mathbf{g}(t_n) + \Delta t \left.\frac{d\mathbf{g}}{dt}\right|_{n} = \frac{3}{2}\mathbf{g}(t_n) - \frac{1}{2}\mathbf{g}(t_{n-1}).
+\end{equation}
+Here we have assumed a constant timestep for simplicity, and constructed the time derivative as
+$d\mathbf{g} / dt = (\mathbf{g}(t_n) - \mathbf{g}(t_{n-1})) / \Delta t$. We perform this
+predictor for the rotation field as well. While both this method and the original
+method have second-order convergence properties, we have seen from testing that
+this new method is slightly more accurate in absolute terms.
 
 
 
