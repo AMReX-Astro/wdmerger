@@ -2487,9 +2487,12 @@ acceleration using a backward difference scheme at time-level $n$:
 \end{equation}
 Here we have assumed a constant timestep for simplicity, and constructed the time derivative as
 $d\mathbf{g} / dt = (\mathbf{g}(t_n) - \mathbf{g}(t_{n-1})) / \Delta t$. We perform this
-predictor for the rotation field as well. While both this method and the original
-method have second-order convergence properties, we have seen from testing that
-this new method is slightly more accurate in absolute terms.
+predictor for the rotation field as well.
+
+While both this method and the original method have second-order convergence properties,
+we have seen from testing that this new method is slightly more accurate in absolute terms.
+Finally, we note that this predictor is not applied in cases where we do not have a suitable
+time-level $n-1$ value of the source term, such as in the first timestep of a simulation.
 
 
 
