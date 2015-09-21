@@ -24,6 +24,7 @@ castro.fixed_dt = -1.0                             # Fixed level 0 timestep; unu
 castro.init_shrink = 0.0001                        # Scale back initial timestep by this factor
 castro.change_max = 1.01                           # Factor by which dt is allowed to change each timestep
 castro.hard_cfl_limit = 0			   # Whether to abort a simulation if the CFL criterion is locally violated
+castro.burning_timestep_factor = 1.0               # Limit timestep based on nuclear burning considerations
 
 ############################################################################################
 # Boundary conditions
@@ -64,6 +65,7 @@ castro.add_ext_src = 1                             # Whether or not to apply ext
 castro.do_rotation = 1                             # Whether or not to include the rotation source term
 castro.rotational_period = 100.0                   # Rotational period of the rotating reference frame
 castro.rotational_period_dot = -0.0                # Time rate of change of the rotational period
+castro.source_term_predictor = 1                   # Use a lagged predictor estimate of the source terms in the hydro
 
 ############################################################################################
 # PPM options
