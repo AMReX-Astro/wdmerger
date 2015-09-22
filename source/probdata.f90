@@ -90,7 +90,8 @@ module probdata_module
   double precision :: max_co_wd_mass, co_wd_he_shell_mass
 
   ! Tagging criteria
-  double precision :: maxTaggingRadius
+  double precision :: max_tagging_radius
+  double precision :: stellar_density_threshold
 
   ! Stores the center of mass location of the stars throughout the run
   double precision :: com_P(3), com_S(3)
@@ -199,7 +200,7 @@ contains
          max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass, &
          max_co_wd_mass, &
          star_axis, initial_motion_dir, &
-         maxTaggingRadius, &
+         max_tagging_radius, stellar_density_threshold, &
          bulk_velx, bulk_vely, bulk_velz, &
          smallx, smallu, &
          center_fracx, center_fracy, center_fracz, &
@@ -250,7 +251,8 @@ contains
     star_axis = 1
     initial_motion_dir = 2
 
-    maxTaggingRadius = 0.75d0
+    max_tagging_radius = 0.75d0
+    stellar_density_threshold = 1.0d0
 
     do_initial_relaxation = .false.
     relaxation_timescale = 0.001

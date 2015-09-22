@@ -1204,10 +1204,12 @@ The computational domain has a total size of $1.024 \times
 10^{10}\ \text{cm}$ in each spatial dimension, and is centered at the
 origin. Our coarse grid has $256^3$ zones, corresponding to a spatial
 resolution of 400 km. For the present study, we choose a simple
-refinement strategy: all zones within twice the Roche radius of each
-star are tagged for maximal refinement. The extra buffer from doubling
+refinement strategy: on the coarse grid, all zones within twice the Roche radius of each
+star are tagged for refinement. The extra buffer from doubling
 the size of this region ensures that the sharp density gradients near
-the edge of the star are within the zone of refinement. We also ensure
+the edge of the star are within the zone of refinement. On higher levels, 
+we tag all zones above a given density threshold (taken to be $1\ \text{g cm}^{-3}$ 
+in this paper) that corresponds to the stars themselves. We also ensure
 that the outer part of the domain is never tagged for refinement. In
 future work we will add criteria that tag for refinement the gas
 between the stars, which is expected to feature nuclear burning.
