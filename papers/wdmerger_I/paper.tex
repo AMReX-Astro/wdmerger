@@ -2142,7 +2142,7 @@ computed every timestep). We computed the median wall time required
 per time step for each simulation, and then normalized this to the
 median time per timestep for the smallest simulation. We find
 excellent weak scaling through 4,096 processors. At the largest run,
-the simulation time required is more than 1.5 times the amount
+the simulation time required is slightly than 1.5 times the amount
 required for the smallest simulation.  This is due entirely to the
 increased cost of the multigrid Poisson solve in each timestep and
 this cannot be mitigated except by improving communication or
@@ -2157,7 +2157,8 @@ improvement over the results presented in the first \castro\ paper.
     NCSA. The vertical axis measures the median time per timestep, and the 
     horizontal axis measures the number of processors in the simulation. Data 
     points are normalized to the time per timestep for the smallest number 
-    of processors. The blue circles show the data for a simulation with two AMR
+    of processors. The green circles show the data for a simulation with one 
+    AMR level (a single uniform grid), the blue diamonds show the data for a simulation with two AMR
     levels (one coarse and one fine), while the red circles show the data 
     for a test with three AMR levels (one coarse and two fine). The fine levels 
     increase the resolution only in the regions around the stars. For each case 
@@ -2165,20 +2166,21 @@ improvement over the results presented in the first \castro\ paper.
 \end{figure}
 
 The strong scaling test we perform uses a grid setup similar to what we 
-use for well-resolved binary simulations. With a single refined level, 
-we have approximately $5 \times 10^7$ zones spread over $\sim 1000$ grids.
-On a second refined level, there are $2 \times 10^9$ zones spread over 
-$\sim 16000$ grids. We run a scaling test for both cases, with the 
+use for well-resolved binary simulations. With only a uniform coarse grid, 
+there are approximately $2 \times 10^7$ zones. With a single refined level, 
+we have approximately $2 \times 10^8$ zones, typically spread over $\sim 2000$ grids.
+On a second refined level, there are a similar number of zones and grids 
+(the volume covered by this level is smaller, which offsets the greater resolution).
+We run a scaling test for all three cases, with the 
 highest processor count in each case chosen so that the number of 
-MPI tasks is similar to the number of grids. There are no relative gains 
+MPI tasks is similar to the number of grids. There are no gains 
 to be achieved from further parallelism. The results are found in 
-\autoref{fig:strong_scaling}. We find excellent scaling for low numbers 
-of processors, though the long wall time per timestep required for the 
-smallest processor counts makes such a simulation infeasible in practice.
-The best tradeoff between reasonable wall time and parallel efficiency 
-seems to be when there are approximately 2--4 grids per processor. The 
+\autoref{fig:strong_scaling}. We find excellent scaling for low to moderate numbers 
+of processors. Parallel efficiency is well maintained when there are 
+at least 2 grids per processor. The 
 scaling behavior worsens at the highest processor counts, but this is 
-an expected consequence of processors becoming work-starved. In general 
+an expected consequence of processors becoming work-starved. At the highest 
+processor count in this test, there is approximately only one grid per processor. In general 
 we find very good strong scaling behavior in the regime we are presently 
 interested in, simulating the early phases of a simulation at moderate 
 resolution. The strong scaling behavior is acceptable, though not perfect, 
