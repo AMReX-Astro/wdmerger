@@ -181,9 +181,10 @@ void Castro::volInBoundary (Real               time,
 //
 
 void
-Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
-		  Real& h_plus_star, Real& h_cross_star,
-		  Real& h_plus_motion, Real& h_cross_motion) {
+Castro::gwstrain (Real time,
+		  Real& h_plus_1, Real& h_cross_1,
+		  Real& h_plus_2, Real& h_cross_2,
+		  Real& h_plus_3, Real& h_cross_3) {
 
     BL_PROFILE("Castro::gwstrain()");
     
@@ -302,9 +303,9 @@ Castro::gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
     // tensor, we can calculate the transverse-trace gauge strain tensor.
 
     BL_FORT_PROC_CALL(GW_STRAIN_TENSOR,gw_strain_tensor)
-        (&h_plus_rot, &h_cross_rot,
-	 &h_plus_star, &h_cross_star,
-	 &h_plus_motion, &h_plus_motion, 
+        (&h_plus_1, &h_cross_1,
+	 &h_plus_2, &h_cross_2,
+	 &h_plus_3, &h_cross_3, 
 	 Qtt.dataPtr(), &time);
 
 }

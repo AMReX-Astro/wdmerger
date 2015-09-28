@@ -480,20 +480,20 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion, Qtt, time)
+subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, Qtt, time)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
-  use probdata_module, only: gw_dist, star_axis, initial_motion_dir
+  use probdata_module, only: gw_dist, axis_1, axis_2, axis_3
   use meth_params_module, only: rot_axis
 
   implicit none
 
-  double precision, intent(inout) :: h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion
+  double precision, intent(inout) :: h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3
   double precision, intent(in   ) :: Qtt(3,3)
   double precision, intent(in   ) :: time
   
-  integer :: i, j, k, l, dir
+  integer          :: i, j, k, l, dir
   double precision :: h(3,3), proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
   
@@ -557,20 +557,20 @@ subroutine gw_strain_tensor(h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, 
 
      ! We are adding here so that this calculation makes sense on multiple levels.
 
-     if (dir .eq. rot_axis) then
+     if (dir .eq. axis_1) then
 
-        h_plus_rot = h_plus_rot + h(star_axis,star_axis)
-        h_cross_rot = h_cross_rot + h(star_axis,initial_motion_dir)
+        h_plus_1  = h_plus_1  + h(axis_1,axis_1)
+        h_cross_1 = h_cross_1 + h(axis_1,axis_2)
 
-     else if (dir .eq. star_axis) then
+     else if (dir .eq. axis_2) then
 
-        h_plus_star = h_plus_star + h(initial_motion_dir,initial_motion_dir)
-        h_cross_star = h_cross_star + h(initial_motion_dir,rot_axis)
+        h_plus_2  = h_plus_2  + h(axis_2,axis_2)
+        h_cross_2 = h_cross_2 + h(axis_2,axis_3)
 
-     else if (dir .eq. initial_motion_dir) then
+     else if (dir .eq. axis_3) then
 
-        h_plus_motion = h_plus_motion + h(rot_axis,rot_axis)
-        h_cross_motion = h_cross_motion + h(rot_axis,star_axis)
+        h_plus_3  = h_plus_3  + h(axis_3,axis_3)
+        h_cross_3 = h_cross_3 + h(axis_3,axis_1)
 
      endif
 
@@ -683,18 +683,17 @@ end subroutine get_omega_vec
 
 ! Returns the CASTRO rotation frequency vector.
 
-subroutine get_axes(star_axis_in, motion_axis_in, rotation_axis_in)
+subroutine get_axes(axis_1_in, axis_2_in, axis_3_in)
 
-  use probdata_module, only: star_axis, initial_motion_dir
-  use meth_params_module, only: rot_axis
+  use probdata_module, only: axis_1, axis_2, axis_3
 
   implicit none
 
-  integer :: star_axis_in, motion_axis_in, rotation_axis_in
+  integer :: axis_1_in, axis_2_in, axis_3_in
 
-  star_axis_in = star_axis
-  motion_axis_in = initial_motion_dir
-  rotation_axis_in = rot_axis
+  axis_1_in = axis_1
+  axis_2_in = axis_2
+  axis_3_in = axis_3
 
 end subroutine get_axes
 

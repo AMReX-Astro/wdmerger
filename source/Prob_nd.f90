@@ -58,7 +58,7 @@
      double precision :: state(state_lo(1):state_hi(1),state_lo(2):state_hi(2),state_lo(3):state_hi(3),NVAR)
 
      double precision :: loc(3), omega(3)
-     double precision :: dist_P(3), dist_S(3)
+     double precision :: dist_P, dist_S
 
      type (eos_t) :: zone_state, ambient_state
 
@@ -102,13 +102,13 @@
            do i = lo(1), hi(1)
               loc(1) = xlo(1) + dx(1) * dble(i + HALF - lo(1))
 
-              dist_P = loc - center_P_initial
-              dist_S = loc - center_S_initial
+              dist_P = sum((loc - center_P_initial)**2)**HALF
+              dist_S = sum((loc - center_S_initial)**2)**HALF
 
-              if (sum(dist_P**2) < model_P % radius**2) then
-                 call interpolate_3d_from_1d(rho_P, T_P, xn_P, r_P, model_P % npts, dist_P, dx, zone_state, nsub)
-              else if (sum(dist_S**2) < model_S % radius**2) then
-                 call interpolate_3d_from_1d(rho_S, T_S, xn_S, r_S, model_S % npts, dist_S, dx, zone_state, nsub)
+              if (dist_P < model_P % radius) then
+                 call interpolate_3d_from_1d(rho_P, T_P, xn_P, r_P, model_P % npts, loc - center_P_initial, dx, zone_state, nsub)
+              else if (dist_S < model_S % radius) then
+                 call interpolate_3d_from_1d(rho_S, T_S, xn_S, r_S, model_S % npts, loc - center_S_initial, dx, zone_state, nsub)
               else
                  zone_state = ambient_state
               endif
@@ -145,27 +145,24 @@
            do i = lo(1), hi(1)
               loc(1) = xlo(1) + dble(i - lo(1) + HALF)*dx(1) - center(1)
 
-              ! If we want a collision calculation, set the stars in 
-              ! motion with the respective free-fall velocities.
+              ! Add any additional velocity imparted to the stars, usually
+              ! from an eccentric orbit or from a collision calculation.
+              
+              dist_P = sum((loc - center_P_initial)**2)**HALF
+              dist_S = sum((loc - center_S_initial)**2)**HALF              
+              
+              if (dist_P < model_P % radius) then
+                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
+              else if (dist_S < model_S % radius) then
+                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
+              endif
 
-              if (collision) then
-
-                 dist_P = loc - center_P_initial
-                 dist_S = loc - center_S_initial
-
-                 if (sum(dist_P**2) < model_P % radius**2) then
-                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
-                 else if (sum(dist_S**2) < model_S % radius**2) then
-                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
-                 endif
-
-              ! If we're in the inertial reference frame, and we want to provide an
-              ! initial orbital kick, use rigid body rotation with velocity omega x r.
+              ! If we're in the inertial reference frame, use rigid body rotation with velocity omega x r.
               ! In 2D we have to be careful, though: the third coordinate is an angular
               ! coordinate, whose unit vector is tangent to the unit circle, so we should
               ! have the same velocity everywhere along that coordinate to begin with.
 
-              else if ((do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. single_star)) then
+              if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
                  state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
                  if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))

@@ -37,11 +37,11 @@ subroutine scf_setup_relaxation(dx, problo, probhi)
     do n = 1, 3
        scf_d_vector(:,n) = center
        if (n .eq. 1) then
-          scf_d_vector(star_axis,n) = scf_d_vector(star_axis,n) - scf_d_A
+          scf_d_vector(axis_1,n) = scf_d_vector(axis_1,n) - scf_d_A
        else if (n .eq. 2) then
-          scf_d_vector(star_axis,n) = scf_d_vector(star_axis,n) + scf_d_B
+          scf_d_vector(axis_1,n) = scf_d_vector(axis_1,n) + scf_d_B
        else if (n .eq. 3) then
-          scf_d_vector(star_axis,n) = scf_d_vector(star_axis,n) + scf_d_C
+          scf_d_vector(axis_1,n) = scf_d_vector(axis_1,n) + scf_d_C
        endif
     enddo
 
@@ -317,7 +317,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
           do i = lo(1), hi(1)
              r(1) = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
 
-             if (r(star_axis) < ZERO .and. sum(r**2) .lt. max_dist**2) then
+             if (r(axis_1) < ZERO .and. sum(r**2) .lt. max_dist**2) then
 
                 enthalpy(i,j,k) = bernoulli_1 - phi(i,j,k) + HALF * sum(cross_product(omega, r)**2)
 
@@ -325,7 +325,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
                    h_max_1 = enthalpy(i,j,k)
                 endif
 
-             else if (r(star_axis) > ZERO .and. sum(r**2) .lt. max_dist**2) then
+             else if (r(axis_1) > ZERO .and. sum(r**2) .lt. max_dist**2) then
 
                 enthalpy(i,j,k) = bernoulli_2 - phi(i,j,k) + HALF * sum(cross_product(omega, r)**2)
 
@@ -359,7 +359,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS
     use network, only: nspec
     use prob_params_module, only: center
-    use probdata_module, only: star_axis, get_ambient, scf_h_max_P, scf_h_max_S, scf_enthalpy_min
+    use probdata_module, only: axis_1, get_ambient, scf_h_max_P, scf_h_max_S, scf_enthalpy_min
     use eos_module
     use rotation_module, only: get_omega, cross_product
 
@@ -408,7 +408,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
 
              ! Rescale the enthalpy by the maximum value.
 
-             if (r(star_axis) .lt. ZERO) then
+             if (r(axis_1) .lt. ZERO) then
                 enthalpy(i,j,k) = scf_h_max_P * (enthalpy(i,j,k) / h_max_1)
              else
                 enthalpy(i,j,k) = scf_h_max_S * (enthalpy(i,j,k) / h_max_2)
@@ -458,7 +458,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
 
              int_eng = int_eng + eos_state % p * dV
 
-             if (r(star_axis) < ZERO) then
+             if (r(axis_1) < ZERO) then
                left_mass = left_mass + state(i,j,k,URHO) * dV
              else
                right_mass = right_mass + state(i,j,k,URHO) * dV
