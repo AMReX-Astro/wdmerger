@@ -19,9 +19,10 @@ void volInBoundary (Real               time,
 
 // Calculate gravitational wave signal.
 
-void gwstrain (Real time, Real& h_plus_rot, Real& h_cross_rot,
-	       Real& h_plus_star, Real& h_cross_star,
-	       Real& h_plus_motion, Real& h_cross_motion);
+void gwstrain (Real time,
+	       Real& h_plus_1, Real& h_cross_1,
+	       Real& h_plus_2, Real& h_cross_2,
+	       Real& h_plus_3, Real& h_cross_3);
 
 // Computes standard dot product of two three-vectors.
 

@@ -5,9 +5,10 @@ subroutine set_problem_tags(tag,tag_lo,tag_hi, &
                             dx,problo,time,level)
 
   use bl_constants_module, only: ZERO, HALF, TWO
-  use meth_params_module, only: NVAR
+  use meth_params_module, only: NVAR, URHO
   use prob_params_module, only: center, probhi
-  use probdata_module, only: maxTaggingRadius, com_P, com_S, roche_rad_P, roche_rad_S  
+  use probdata_module, only: max_tagging_radius, stellar_density_threshold, &
+                             com_P, com_S, roche_rad_P, roche_rad_S  
   
   implicit none
   
@@ -33,27 +34,41 @@ subroutine set_problem_tags(tag,tag_lo,tag_hi, &
         do i = lo(1), hi(1)
            x = problo(1) + (dble(i) + HALF)*dx(1)
 
-           ! Tag all regions within the Roche radii of each star.
-           ! We'll add a buffer around each star to double the Roche
-           ! radius to ensure there aren't any sharp gradients.
+           if (level == 0) then
 
-           r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
-           r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
+              ! On the coarse grid, tag all regions within the Roche radii of each star.
+              ! We'll add a buffer around each star to double the Roche
+              ! radius to ensure there aren't any sharp gradients in regions of 
+              ! greater than ambient density.
 
-           if (r_P <= TWO * roche_rad_P) then
-              tag(i,j,k) = set
-           endif
+              r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
+              r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
+
+              if (r_P <= TWO * roche_rad_P) then
+                 tag(i,j,k) = set
+              endif
            
-           if (r_S <= TWO * roche_rad_S) then
-              tag(i,j,k) = set
+              if (r_S <= TWO * roche_rad_S) then
+                 tag(i,j,k) = set
+              endif
+
+           else if (level >= 1) then
+
+              ! On more refined levels, tag all regions within the stars themselves (defined as 
+              ! areas where the density is greater than some threshold).
+
+              if (state(i,j,k,URHO) > stellar_density_threshold) then
+                 tag(i,j,k) = set
+              endif
+
            endif
 
-           ! Clear all tagging that occurs outside the radius set by maxTaggingRadius.
+           ! Clear all tagging that occurs outside the radius set by max_tagging_radius.
 
            r = ((x-center(1))**2 + (y-center(2))**2 + (z-center(3))**2)**HALF
 
-           if (r .gt. maxTaggingRadius * maxval(abs(problo-center)) .or. &
-               r .gt. maxTaggingRadius * maxval(abs(probhi-center)) ) then
+           if (r .gt. max_tagging_radius * maxval(abs(problo-center)) .or. &
+               r .gt. max_tagging_radius * maxval(abs(probhi-center)) ) then
 
               tag(i,j,k) = clear
 

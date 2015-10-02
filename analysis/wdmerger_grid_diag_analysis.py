@@ -148,8 +148,8 @@ def plot_gw_signal(diag_filename, output_filename, n_orbits = -1, do_analytical 
     diag_file = open(diag_filename, 'r')
 
     time   = get_column("TIME", diag_filename)
-    hplus  = get_column("h_+ (rotation axis)", diag_filename)
-    hcross = get_column("h_x (rotation axis)", diag_filename)
+    hplus  = get_column("h_+ (axis 3)", diag_filename)
+    hcross = get_column("h_x (axis 3)", diag_filename)
 
     # Normalize time by rotational period.
 

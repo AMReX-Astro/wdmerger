@@ -7,8 +7,7 @@
 
 amr.probin_file = probin                           # Name of the probin file
 
-max_step = 10000000                                # Maximum coarse timestep
-stop_time = 100.0                                  # Simulation time to stop at
+max_step = 10                                      # Maximum coarse timestep
 
 geometry.is_periodic = 0 0 0                       # Non-periodic boundary conditions
 
@@ -20,11 +19,9 @@ castro.center =      0.0e0   0.0e0   0.0e0         # System center of mass
 
 castro.dt_cutoff = 1.e-8                           # Level 0 timestep below which we halt
 castro.cfl = 0.5                                   # CFL number for hyperbolic system
-castro.fixed_dt = -1.0                             # Fixed level 0 timestep; unused if < 0
-castro.init_shrink = 0.0001                        # Scale back initial timestep by this factor
-castro.change_max = 1.01                           # Factor by which dt is allowed to change each timestep
+castro.init_shrink = 0.1                           # Scale back initial timestep by this factor
+castro.change_max = 1.1                            # Factor by which dt is allowed to change each timestep
 castro.hard_cfl_limit = 0			   # Whether to abort a simulation if the CFL criterion is locally violated
-castro.burning_timestep_factor = 1.0               # Limit timestep based on nuclear burning considerations
 
 ############################################################################################
 # Boundary conditions
@@ -40,15 +37,11 @@ castro.hi_bc = 2 2 2                               # Boundary conditions on hi x
 # Resolution, gridding and AMR
 ############################################################################################
 
-amr.n_cell = 256 256 256                           # Number of cells on the coarse grid
+amr.n_cell = 128 128 128                           # Number of cells on the coarse grid
 
 amr.max_level = 0                                  # Maximum level number allowed
 
-amr.ref_ratio = 4 4 4 4 4                          # Refinement ratio
-amr.regrid_int = 2                                 # How many coarse timesteps between regridding
-amr.n_error_buf = 0 0 0 0 0                        # Number of buffer cells in error estimation
-
-amr.max_grid_size = 32 48 64                       # Maximum grid size at each level
+amr.max_grid_size = 32                             # Maximum grid size at each level
 amr.blocking_factor = 16                           # Grid sizes must be a multiple of this
 
 amr.grid_eff = 0.9                                 # What constitutes an efficient grid
@@ -62,10 +55,9 @@ castro.do_grav = 1                                 # Whether or not to do gravit
 castro.do_react = 1                                # Whether or not to do reactions
 castro.do_sponge = 1                               # Whether or not to apply the sponge
 castro.add_ext_src = 1                             # Whether or not to apply external source terms
-castro.do_rotation = 1                             # Whether or not to include the rotation source term
+castro.do_rotation = 0                             # Whether or not to include the rotation source term
 castro.rotational_period = 100.0                   # Rotational period of the rotating reference frame
 castro.rotational_period_dot = -0.0                # Time rate of change of the rotational period
-castro.source_term_predictor = 1                   # Use a lagged predictor estimate of the source terms in the hydro
 
 ############################################################################################
 # PPM options
@@ -101,42 +93,25 @@ castro.dual_energy_eta2 = 1.0e-1                   # Threshold for when to use (
 
 gravity.gravity_type = PoissonGrav                 # Full self-gravity with the Poisson equation
 gravity.max_multipole_order = 6                    # Multipole expansion includes terms up to r**(-max_multipole_order)
-gravity.direct_sum_bcs = 0                         # Exact calculation of gravity boundary conditions (for analysis purposes only)
 gravity.ml_tol = 1.e-10                            # Relative tolerance for multigrid solver (multiple level)
 gravity.sl_tol = 1.e-10                            # Relative tolerance for multigrid solver (single level)
 gravity.no_sync = 1                                # Turn off sync solve for gravity after refluxing
 
 ############################################################################################
-# Load balancing
-############################################################################################
-
-DistributionMapping.strategy = KNAPSACK            # Choice of load balancing strategy to use
-DistributionMapping.efficiency = 0.9               # Efficiency demanded from the knapsack algorithm
-
-############################################################################################
 # Diagnostics and I/O
 ############################################################################################
-
-castro.show_center_of_mass = 1                     # Calculate and print the center of mass at each time step
-castro.print_energy_diagnostics = 1                # Diagnostics on how much energy and momentum is lost off the grid
-castro.sum_interval = 1                            # Timesteps between computing and printing volume averaged diagnostic quantities
 
 amr.plot_files_output = 1                          # Whether or not to output plotfiles
 amr.checkpoint_files_output = 1                    # Whether or not to output checkpoints
 
 amr.check_file = chk                               # Root name of checkpoint file
-amr.check_per = 10.0                               # Simulation time between checkpoints
-amr.check_int = -1                                 # Number of timesteps between checkpoints
+amr.check_int = 10                                 # Number of timesteps between checkpoints
 amr.plot_file = plt                                # Root name of plot file
-amr.plot_per = 10.0                                # Simulation time between plotfiles
-amr.plot_int = -1                                  # Number of timesteps between plotfiles
-amr.message_int = 1                                # How often to check whether the run script asked for a checkpoint dump
+amr.plot_int = 10                                  # Number of timesteps between plotfiles
 
 amr.v = 1                                          # Control verbosity in Amr.cpp
 castro.v = 1                                       # Control verbosity in Castro.cpp
 gravity.v = 1                                      # Control verbosity in Gravity.cpp
-mg.v = 0                                           # Control verbosity in the multigrid solver
+mg.v = 2                                           # Control verbosity in the multigrid solver
 
 amr.derive_plot_vars = ALL                         # Calculate all variables for plotfiles, including derived variables
-
-amr.data_log = grid_diag.out star_diag.out species_diag.out   # Name of the diagnostic sum output files

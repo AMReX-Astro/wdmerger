@@ -2,6 +2,8 @@
 
 #include <iomanip>
 
+#include <vector>
+
 #include <Castro.H>
 #include <Castro_F.H>
 #include <Geometry.H>
@@ -115,8 +117,8 @@ Castro::sum_integrated_quantities ()
 
     Real M_solar = 1.9884e33;
     
-    Real species_mass[NumSpec] = { 0.0 };
-    std::string species_names[NumSpec];
+    Real species_mass[NumSpec];
+    std::vector<std::string> species_names(NumSpec);
     
     std::string name1; 
     std::string name2;

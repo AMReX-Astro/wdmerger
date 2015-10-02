@@ -275,8 +275,11 @@ with the default settings, though usually we will build the software from a diff
 The \texttt{analysis} directory contains the Python analysis scripts used for analyzing output
 data (both in \texttt{BoxLib} and plain-text format). 
 
-The \texttt{tests} directory includes problem setups that are used for testing 
-the hydrodynamics code \texttt{CASTRO} and exercises a wide range of its capabilities.
+The \texttt{science} directory includes problem setups that are or have been used in the papers
+that have been or will be submitted based on this software.
+
+The \texttt{tests} directory is designed to hold small versions of problems that can be run in a
+nightly test suite that regularly checks for code errors.
 
 The \texttt{job\_scripts} directory contains utilities that are used for running
 problem setups on various machine architectures.
@@ -638,13 +641,13 @@ If you want to build your own problem setup, you can do that too. The job submis
 requirements are the same as in Section \ref{sec:standard_problems}, but you will need to provide 
 your own source files and makefile. They can go in the \texttt{compile/} subdirectory in your problem location.
 At minimum, you'll need a \texttt{Prob\_3d.f90} file (or the equivalent for lower dimensions) and
-corresponding inputs and probin files. The problems in \texttt{tests/castro} are similar to this;
+corresponding inputs and probin files. The problems in \texttt{science/wdmerger_I/castro} are similar to this;
 they are ultimately building using the source code in the CASTRO test suite, but using a
 \texttt{run\_test.sh} that is very similar to the one used for merger problems.
 
 \chapter{Test Problems}
 
-The \texttt{tests} directory contains a number of example problems that we use
+The \texttt{science/wdmerger_I/} directory contains a number of example problems that we use
 to assess the reliability of \texttt{CASTRO} in performing hydrodynamics simulations 
 with self-gravity. This section includes a list of the existing problems 
 as well as the instructions for building and running a problem.

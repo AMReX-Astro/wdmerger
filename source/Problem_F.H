@@ -52,9 +52,9 @@ BL_FORT_PROC_DECL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
     Real* Qtt);
 
 BL_FORT_PROC_DECL(GW_STRAIN_TENSOR,gw_strain_tensor)
-   (Real* h_plus_rot, Real* h_cross_rot, 
-    Real* h_plus_star, Real* h_cross_star,
-    Real* h_plus_motion, Real* h_cross_motion,
+   (Real* h_plus_1, Real* h_cross_1, 
+    Real* h_plus_2, Real* h_cross_2,
+    Real* h_plus_3, Real* h_cross_3,
     Real* Qtt, const Real* time);
 
 BL_FORT_PROC_DECL(SET_PERIOD,set_period)
@@ -67,7 +67,7 @@ BL_FORT_PROC_DECL(GET_OMEGA_VEC,get_omega_vec)
    (const Real omega[], const Real& time);
 
 BL_FORT_PROC_DECL(GET_AXES,get_axes)
-   (int& star_axis, int& motion_axis, int& rotation_axis);
+   (int& axis_1, int& axis_2, int& axis_3);
 
 BL_FORT_PROC_DECL(GET_DO_SCF_INITIAL_MODELS,get_do_scf_initial_models)
    (int& do_scf_initial_models);

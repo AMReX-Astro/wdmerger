@@ -58,11 +58,16 @@
      double precision :: state(state_lo(1):state_hi(1),state_lo(2):state_hi(2),state_lo(3):state_hi(3),NVAR)
 
      double precision :: loc(3), omega(3)
-     double precision :: dist_P(3), dist_S(3)
+     double precision :: dist_P, dist_S
 
      type (eos_t) :: zone_state, ambient_state
 
-     integer :: i,j,k
+     integer :: i, j, k, n
+
+     double precision :: rho_P(model_P % npts), rho_S(model_S % npts)
+     double precision :: T_P(model_P % npts), T_S(model_S % npts)
+     double precision :: xn_P(model_P % npts, nspec), xn_S(model_S % npts, nspec)
+     double precision :: r_P(model_P % npts), r_S(model_S % npts)
 
      ! Loop through the zones and set the zone state depending on whether we are
      ! inside the primary or secondary (in which case interpolate from the respective model)
@@ -72,6 +77,20 @@
 
      omega = get_omega(time)
 
+     rho_P = model_P % state(:) % rho
+     rho_S = model_S % state(:) % rho
+
+     T_P = model_P % state(:) % T
+     T_S = model_S % state(:) % T
+
+     do n = 1, nspec
+        xn_P(:,n) = model_P % state(:) % xn(n)
+        xn_S(:,n) = model_S % state(:) % xn(n)
+     enddo
+
+     r_P = model_P % r
+     r_S = model_S % r
+     
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)
      do k = lo(3), hi(3)
@@ -83,13 +102,13 @@
            do i = lo(1), hi(1)
               loc(1) = xlo(1) + dx(1) * dble(i + HALF - lo(1))
 
-              dist_P = loc - center_P_initial
-              dist_S = loc - center_S_initial
+              dist_P = sum((loc - center_P_initial)**2)**HALF
+              dist_S = sum((loc - center_S_initial)**2)**HALF
 
-              if (sum(dist_P**2) < model_P % radius**2) then
-                 call interpolate_3d_from_1d(model_P, dist_P, dx, zone_state, nsub)
-              else if (sum(dist_S**2) < model_S % radius**2) then
-                 call interpolate_3d_from_1d(model_S, dist_S, dx, zone_state, nsub)
+              if (dist_P < model_P % radius) then
+                 call interpolate_3d_from_1d(rho_P, T_P, xn_P, r_P, model_P % npts, loc - center_P_initial, dx, zone_state, nsub)
+              else if (dist_S < model_S % radius) then
+                 call interpolate_3d_from_1d(rho_S, T_S, xn_S, r_S, model_S % npts, loc - center_S_initial, dx, zone_state, nsub)
               else
                  zone_state = ambient_state
               endif
@@ -118,47 +137,44 @@
         enddo
      enddo
 
-    !$OMP PARALLEL DO PRIVATE(i, j, k, loc, dist_P, dist_S)
-    do k = lo(3), hi(3)
-       loc(3) = xlo(3) + dble(k - lo(3) + HALF)*dx(3) - center(3)
-       do j = lo(2), hi(2)
-          loc(2) = xlo(2) + dble(j - lo(2) + HALF)*dx(2) - center(2)
-          do i = lo(1), hi(1)
-             loc(1) = xlo(1) + dble(i - lo(1) + HALF)*dx(1) - center(1)
+     !$OMP PARALLEL DO PRIVATE(i, j, k, loc, dist_P, dist_S)
+     do k = lo(3), hi(3)
+        loc(3) = xlo(3) + dble(k - lo(3) + HALF)*dx(3) - center(3)
+        do j = lo(2), hi(2)
+           loc(2) = xlo(2) + dble(j - lo(2) + HALF)*dx(2) - center(2)
+           do i = lo(1), hi(1)
+              loc(1) = xlo(1) + dble(i - lo(1) + HALF)*dx(1) - center(1)
 
-             ! If we want a collision calculation, set the stars in 
-             ! motion with the respective free-fall velocities.
+              ! Add any additional velocity imparted to the stars, usually
+              ! from an eccentric orbit or from a collision calculation.
+              
+              dist_P = sum((loc - center_P_initial)**2)**HALF
+              dist_S = sum((loc - center_S_initial)**2)**HALF              
+              
+              if (dist_P < model_P % radius) then
+                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
+              else if (dist_S < model_S % radius) then
+                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
+              endif
 
-             if (collision) then
+              ! If we're in the inertial reference frame, use rigid body rotation with velocity omega x r.
+              ! In 2D we have to be careful, though: the third coordinate is an angular
+              ! coordinate, whose unit vector is tangent to the unit circle, so we should
+              ! have the same velocity everywhere along that coordinate to begin with.
 
-                dist_P = loc - center_P_initial
-                dist_S = loc - center_S_initial
+              if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
 
-                if (sum(dist_P**2) < model_P % radius**2) then
-                   state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
-                else if (sum(dist_S**2) < model_S % radius**2) then
-                   state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
-                endif
+                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
+                 if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))
 
-             ! If we're in the inertial reference frame, and we want to provide an
-             ! initial orbital kick, use rigid body rotation with velocity omega x r.
-             ! In 2D we have to be careful, though: the third coordinate is an angular
-             ! coordinate, whose unit vector is tangent to the unit circle, so we should
-             ! have the same velocity everywhere along that coordinate to begin with.
+              endif
 
-             else if ((do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. single_star)) then
-
-                state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
-                if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))
-
-             endif
-
+           enddo
         enddo
-      enddo
-    enddo
-    !$OMP END PARALLEL DO
+     enddo
+     !$OMP END PARALLEL DO
 
-     ! Add corresponding kinetic energy from the system motion
+     ! Add corresponding kinetic energy from the velocity on the grid.
 
      do k = lo(3), hi(3)
         do j = lo(2), hi(2)

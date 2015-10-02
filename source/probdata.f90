@@ -13,11 +13,10 @@ module probdata_module
   ! For determining if we are the I/O processor.
   integer :: ioproc
   
-  ! Initial binary orbit characteristics
+  ! Initial binary star characteristics
   ! Note that the envelope mass is included within the total mass of the star
   double precision :: mass_P, mass_S
   double precision :: central_density_P, central_density_S
-  double precision :: orbital_speed_P, orbital_speed_S
   double precision :: stellar_temp
   double precision :: primary_envelope_mass, secondary_envelope_mass
   double precision :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
@@ -48,13 +47,18 @@ module probdata_module
   ! separate the WDs by.
   double precision :: collision_separation
 
+  ! For a collision, the impact parameter measured in
+  ! units of the primary's initial radius.
+  double precision :: collision_impact_parameter
+  
   ! Binary properties
-  double precision :: a_P_initial, a_S_initial, a  
+  double precision :: r_P_initial, r_S_initial, a_P_initial, a_S_initial, a  
+  double precision :: v_P_r, v_S_r, v_P_phi, v_S_phi
   double precision :: center_P_initial(3), center_S_initial(3)
-
-  integer :: star_axis
-  integer :: initial_motion_dir
-
+  double precision :: orbital_eccentricity, orbital_angle
+  
+  integer :: axis_1, axis_2, axis_3
+  
   ! Location of the physical center of the problem, as a fraction of domain size
   double precision :: center_fracx, center_fracy, center_fracz
 
@@ -86,7 +90,8 @@ module probdata_module
   double precision :: max_co_wd_mass, co_wd_he_shell_mass
 
   ! Tagging criteria
-  double precision :: maxTaggingRadius
+  double precision :: max_tagging_radius
+  double precision :: stellar_density_threshold
 
   ! Stores the center of mass location of the stars throughout the run
   double precision :: com_P(3), com_S(3)
@@ -182,6 +187,7 @@ contains
          no_orbital_kick, &
          collision, &
          collision_separation, &
+         collision_impact_parameter, &
          interp_temp, &
          do_initial_relaxation, &
          relaxation_timescale, &
@@ -193,8 +199,9 @@ contains
          max_he_wd_mass, &
          max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass, &
          max_co_wd_mass, &
-         star_axis, initial_motion_dir, &
-         maxTaggingRadius, &
+         orbital_eccentricity, orbital_angle, &
+         axis_1, axis_2, axis_3, &
+         max_tagging_radius, stellar_density_threshold, &
          bulk_velx, bulk_vely, bulk_velz, &
          smallx, smallu, &
          center_fracx, center_fracy, center_fracz, &
@@ -238,13 +245,19 @@ contains
 
     collision = .false.
     collision_separation = 4.0
+    collision_impact_parameter = 0.0
 
     interp_temp = .false.
 
-    star_axis = 1
-    initial_motion_dir = 2
-
-    maxTaggingRadius = 0.75d0
+    orbital_eccentricity = 0.0d0
+    orbital_angle = 0.0d0
+    
+    axis_1 = 1 ! Axis is in orbital plane; we measure angle with respect to this axis. Normally the x axis.
+    axis_2 = 2 ! Perpendicular axis in the orbital plane. Normally the y axis.
+    axis_3 = 3 ! Perpendicular to both other axies. Normally the z axis and also the rotation axis.
+    
+    max_tagging_radius = 0.75d0
+    stellar_density_threshold = 1.0d0
 
     do_initial_relaxation = .false.
     relaxation_timescale = 0.001
@@ -316,7 +329,8 @@ contains
 
     call ensure_primary_mass_larger
 
-    ! We enforce star_axis = 2 (the z-axis) for two-dimensional problems.
+    ! We enforce that the orbital plane is (z, phi) for two-dimensional problems,
+    ! with rotation about z = 0 along the radial axis.
 
     if (dim .eq. 2) then
 
@@ -324,10 +338,37 @@ contains
           call bl_error("We only support cylindrical coordinates in two dimensions. Set coord_type == 1.")
        endif
        
-       star_axis = 2
+       axis_1 = 2
+       axis_2 = 3
        rot_axis = 1
        
     endif
+
+    ! Make sure we have a sensible collision impact parameter.
+
+    if (collision_impact_parameter > 1.0) then
+       call bl_error("Impact parameter must be less than one in our specified units.")
+    endif
+
+    ! Don't do a collision in a rotating reference frame.
+    
+    if (collision .and. do_rotation .eq. 1) then
+       call bl_error("The collision problem does not make sense in a rotating reference frame.")
+    endif
+    
+    ! Make sure we have a sensible eccentricity.
+
+    if (orbital_eccentricity >= 1.0) then
+       call bl_error("Orbital eccentricity cannot be larger than one.")
+    endif
+
+    ! Make sure we have a sensible angle. Then convert it to radians.
+
+    if (orbital_angle < 0.0 .or. orbital_angle > 360.0) then
+       call bl_error("Orbital angle must be between 0 and 360 degrees.")
+    endif
+
+    orbital_angle = orbital_angle * M_PI / 180.0
     
   end subroutine read_namelist
 
@@ -400,11 +441,16 @@ contains
     use initial_model_module, only: initialize_model, establish_hse
     use prob_params_module, only: center, problo, probhi, dim
     use meth_params_module, only: rot_axis
+    use rotation_module, only: get_omega, cross_product
 
     implicit none
 
-    double precision :: v_ff
+    double precision :: v_ff, collision_offset
+    double precision :: mu
+    double precision :: omega(3)
 
+    omega = get_omega(ZERO)
+    
     ! Set up the center variable. We want it to be at 
     ! problo + center_frac * domain_width in each direction.
     ! center_frac is 1/2 by default, so the problem
@@ -562,84 +608,75 @@ contains
 
        if (collision) then
 
-           initial_motion_dir = star_axis
+          axis_2 = axis_1
 
-           collision_separation = collision_separation * model_S % radius
+          collision_separation = collision_separation * model_S % radius
 
-           call freefall_velocity(mass_P + mass_S, collision_separation, v_ff)
+          call freefall_velocity(mass_P + mass_S, collision_separation, v_ff)
 
-           vel_P(star_axis) =  (mass_P / (mass_S + mass_P)) * v_ff
-           vel_S(star_axis) = -(mass_S / (mass_S + mass_P)) * v_ff
+          vel_P(axis_1) =  (mass_P / (mass_S + mass_P)) * v_ff
+          vel_S(axis_1) = -(mass_S / (mass_S + mass_P)) * v_ff
 
-           a_P_initial = (mass_P / (mass_S + mass_P)) * collision_separation
-           a_S_initial = (mass_S / (mass_S + mass_P)) * collision_separation
+          r_P_initial = -(mass_P / (mass_S + mass_P)) * collision_separation
+          r_S_initial =  (mass_S / (mass_S + mass_P)) * collision_separation
 
-           a = a_P_initial + a_S_initial
+          a = r_S_initial - r_P_initial
 
+          center_P_initial(axis_1) = center_P_initial(axis_1) + r_P_initial
+          center_S_initial(axis_1) = center_S_initial(axis_1) + r_S_initial
+           
+          ! We also permit a non-zero impact parameter b in the direction perpendicular
+          ! to the motion of the stars. This is measured in units of the radius of the
+          ! primary, so that b > 1 doesn't make any sense as the stars won't collide.
+          ! Since the secondary's radius is greater than the primary's, measuring in the
+          ! units of the primary's radius will guarantee contact.
+
+          collision_offset = collision_impact_parameter * model_P % radius
+          
+          center_P_initial(axis_2) = center_P_initial(axis_2) - collision_offset
+          center_S_initial(axis_2) = center_S_initial(axis_2) + collision_offset                  
+           
        else
 
-           ! Now, if we're not doing a relaxation step, then we want to put the WDs 
-           ! where they ought to be by Kepler's third law. But if we are, then we 
-           ! need a better first guess. The central location for each WD should be
-           ! equal to their inner distance plus their radius.
+          call kepler_third_law(model_P % radius, model_P % mass, model_S % radius, model_S % mass, &
+                                rot_period, orbital_eccentricity, orbital_angle, &
+                                a, r_P_initial, r_S_initial, v_P_r, v_S_r, v_P_phi, v_S_phi)
 
-           if (do_scf_initial_models) then
+          if (ioproc == 1 .and. init == 1) then
+             write (*,1003) a, a / AU
+             write (*,1004) r_P_initial, r_P_initial / AU
+             write (*,1005) r_S_initial, r_S_initial / AU
+1003         format ("Generated binary orbit of distance ", ES8.2, " cm = ", ES8.2, " AU.")
+1004         format ("The primary orbits the center of mass at distance ", ES9.2, " cm = ", ES9.2, " AU.")
+1005         format ("The secondary orbits the center of mass at distance ", ES9.2, " cm = ", ES9.2, " AU.")
+          endif
 
-              a_P_initial = scf_d_A + model_P % radius
-              a_S_initial = scf_d_B + model_S % radius
+          ! Star center positions -- we'll put them in the midplane, with the center of mass at the center of the domain.
 
-              a = a_P_initial + a_S_initial
+          center_P_initial(axis_1) = center_P_initial(axis_1) + r_P_initial * cos(orbital_angle)
+          center_P_initial(axis_2) = center_P_initial(axis_2) + r_P_initial * sin(orbital_angle)
+          
+          center_S_initial(axis_1) = center_S_initial(axis_1) + r_S_initial * cos(orbital_angle)
+          center_S_initial(axis_2) = center_S_initial(axis_2) + r_S_initial * sin(orbital_angle)           
+           
+          ! Star velocities, from Kepler's third law.
+          
+          vel_P(axis_1) = v_P_r   * cos(orbital_angle) - v_P_phi * sin(orbital_angle)
+          vel_P(axis_2) = v_P_phi * cos(orbital_angle) + v_P_r   * sin(orbital_angle)
 
-           else
+          vel_S(axis_1) = v_S_r   * cos(orbital_angle) - v_S_phi * sin(orbital_angle)
+          vel_S(axis_2) = v_S_phi * cos(orbital_angle) + v_S_r   * sin(orbital_angle)
 
-              call kepler_third_law(model_P % radius, model_P % mass, model_S % radius, model_S % mass, &
-                                    rot_period, a_P_initial, a_S_initial, a, &
-                                    orbital_speed_P, orbital_speed_S)
+          ! Subtract off the rigid rotation rate. Note that this is also OK
+          ! for the inertial frame because there we're going to give everything
+          ! a kick of rigid body rotation in ca_initdata.
 
-           endif
-
-           if (ioproc == 1 .and. init == 1) then
-              write (*,1003) a, a / AU
-              write (*,1004) a_P_initial, a_P_initial / AU
-              write (*,1005) a_S_initial, a_S_initial / AU
-              1003 format ("Generated binary orbit of distance ", ES8.2, " cm = ", ES8.2, " AU.")
-              1004 format ("The primary orbits the center of mass at distance ", ES8.2, " cm = ", ES8.2, " AU.")
-              1005 format ("The secondary orbits the center of mass at distance ", ES8.2, " cm = ", ES8.2, " AU.")
-           endif      
-
-           ! Direction of initial motion -- in 3D it is the position axis
-           ! that is not star axis and that is also not the rotation axis.
-           ! In 2D we require it to be the (un-simulated) phi coordinate.
-
-           if (dim .eq. 3) then
-              if (rot_axis .eq. 3) then
-                 if (star_axis .eq. 1) initial_motion_dir = 2
-                 if (star_axis .eq. 2) initial_motion_dir = 1
-              else if (rot_axis .eq. 2) then
-                 if (star_axis .eq. 1) initial_motion_dir = 3
-                 if (star_axis .eq. 3) initial_motion_dir = 1
-              else if (rot_axis .eq. 1) then
-                 if (star_axis .eq. 2) initial_motion_dir = 3
-                 if (star_axis .eq. 3) initial_motion_dir = 2
-              else
-                 call bl_error("Error: probdata module: invalid choice for rot_axis.")              
-              endif
-           else
-              initial_motion_dir = 3
-           endif
-
-           if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
-              vel_P(initial_motion_dir) = - orbital_speed_P
-              vel_S(initial_motion_dir) =   orbital_speed_S
-           endif
-
+          if ( .not. no_orbital_kick ) then
+             vel_P = vel_P - cross_product(omega, center_P_initial)
+             vel_S = vel_S - cross_product(omega, center_S_initial)
+          endif                      
+          
        endif
-
-       ! Star center positions -- we'll put them in the midplane on the
-       ! axis specified by star_axis, with the center of mass at the center of the domain.
-
-       center_P_initial(star_axis) = center_P_initial(star_axis) - a_P_initial
-       center_S_initial(star_axis) = center_S_initial(star_axis) + a_S_initial
 
        ! Compute initial Roche radii
 
@@ -765,36 +802,60 @@ contains
   ! and returns the semimajor axis of the orbit (in cm),
   ! as well as the distances a_1 and a_2 from the center of mass.
 
-  subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, a_1, a_2, a, v_1, v_2)
+  subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, eccentricity, phi, a, r_1, r_2, v_1r, v_2r, v_1p, v_2p)
 
     use prob_params_module, only: problo, probhi
 
     implicit none
 
-    double precision, intent(in   ) :: mass_1, mass_2, period, radius_1, radius_2
-    double precision, intent(inout) :: a, a_1, a_2
-    double precision, intent(inout) :: v_1, v_2
+    double precision, intent(in   ) :: mass_1, mass_2, period, eccentricity, phi, radius_1, radius_2
+    double precision, intent(inout) :: a, r_1, r_2, v_1r, v_2r, v_1p, v_2p
 
     double precision :: length
 
-    ! Evaluate Kepler's third law
+    double precision :: mu, M ! Reduced mass, total mass
+    double precision :: r     ! Position
+    double precision :: v_r, v_phi ! Radial and azimuthal velocity
+    
+    ! Definitions of total and reduced mass
+    
+    M  = mass_1 + mass_2
+    mu = mass_1 * mass_2 / M    
+    
+    ! First, solve for the orbit in the reduced one-body problem, where
+    ! an object of mass mu orbits an object with mass M located at r = 0.
+    ! For this we follow Carroll and Ostlie, Chapter 2, but many texts discuss this.
+    ! Note that we use the convention that phi measures angle from aphelion,
+    ! which is opposite to the convention they use.
+    
+    a = (Gconst * M * period**2 / (FOUR * M_PI**2))**THIRD ! C + O, Equation 2.37
 
-    a = (Gconst*(mass_1 + mass_2)*period**2/(FOUR*M_PI**2))**THIRD
+    r = a * (ONE - eccentricity**2) / (ONE - eccentricity * cos(phi)) ! C + O, Equation 2.3
 
-    a_2 = a/(ONE + mass_2/mass_1)
-    a_1 = (mass_2/mass_1)*a_2
+    ! To get the radial and azimuthal velocity, we take the appropriate derivatives of the above.
+    ! v_r = dr / dt = dr / d(phi) * d(phi) / dt, with d(phi) / dt being derived from
+    ! C + O, Equation 2.30 for the angular momentum, and the fact that L = mu * r**2 * d(phi) / dt.
+    
+    v_r   = -TWO * M_PI * a * eccentricity * sin(phi) / (period * (ONE - eccentricity**2)**HALF)
+    v_phi =  TWO * M_PI * a * (ONE - eccentricity * cos(phi)) / (period * (ONE - eccentricity**2)**HALF)
 
-    ! Calculate the orbital speeds. This is simply equal to
-    ! orbital circumference over the orbital period.
+    ! Now convert everything back to the binary frame, using C+O, Equation 2.23 and 2.24. This applies
+    ! to the velocities as well as the positions because the factor in front of r_1 and r_2 is constant.
 
-    v_1 = TWO * M_PI * a_1 / period
-    v_2 = TWO * M_PI * a_2 / period
+    r_1  = -(mu / mass_1) * r
+    r_2  =  (mu / mass_2) * r
+    
+    v_1r = -(mu / mass_1) * v_r
+    v_2r =  (mu / mass_2) * v_r
 
+    v_1p = -(mu / mass_1) * v_phi
+    v_2p =  (mu / mass_2) * v_phi    
+    
     ! Make sure the domain is big enough to hold stars in an orbit this size
 
-    length = a + radius_1 + radius_2
+    length = (r_2 - r_1) + radius_1 + radius_2
 
-    if (length > (probhi(star_axis)-problo(star_axis))) then
+    if (length > (probhi(axis_1)-problo(axis_1))) then
         call bl_error("ERROR: The domain width is too small to include the binary orbit.")
     endif
 
