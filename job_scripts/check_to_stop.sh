@@ -20,7 +20,7 @@ cycle_time=1
 # Safety factor: end the run if we're within
 # this many timesteps of the total walltime.
 
-safety=20
+safety=30
 
 # Get the name of the output file. There should only be one running.
 
