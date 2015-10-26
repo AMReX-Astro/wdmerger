@@ -256,7 +256,7 @@ void Castro::scf_relaxation() {
      //	for (int k = finest_level-1; k >= 0; k--)
      //	  getLevel(k).avgDown();
 
-    gravity->multilevel_solve_for_phi(level,finest_level);
+    gravity->multilevel_solve_for_new_phi(level,finest_level);
 
     if (is_relaxed == 1) break;
 
