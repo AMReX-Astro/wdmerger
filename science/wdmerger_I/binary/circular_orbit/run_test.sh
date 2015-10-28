@@ -21,7 +21,25 @@ function set_run_opts {
 	  nprocs=4096
 	  walltime=24:00:00
       fi
+  elif [ $MACHINE == "TITAN" ]; then
+      if   [ $ncell == 128 ]; then
+	  nprocs=64
+	  walltime=2:00:00
+      elif [ $ncell == 256 ]; then
+	  nprocs=512
+	  walltime=2:00:00
+      elif [ $ncell == 512 ]; then
+	  nprocs=512
+	  walltime=2:00:00
+      elif [ $ncell == 1024 ]; then
+	  nprocs=1024
+	  walltime=2:00:00
+      elif [ $ncell == 2048 ]; then
+	  nprocs=2048
+	  walltime=6:00:00
+      fi
   fi
+
 
   if [ ! -z $ncell ]; then
 
@@ -86,7 +104,7 @@ do
     dir=$results_dir/$ratio/rot$castro_do_rotation
 
     set_run_opts
-    chain
+    run
 
   done
 done
