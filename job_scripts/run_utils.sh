@@ -873,7 +873,7 @@ function create_job_script {
 
       # Check to make sure we are done, and if not, re-submit the job.
 
-      if [ -z $do_chain ] && [ -z $no_continue ]; then
+      if [ -z $no_continue ]; then
 
 	echo "" >> $dir/$job_script
 	echo "dir=." >> $dir/$job_script
@@ -896,101 +896,6 @@ function create_job_script {
    # Restore the number of processors per node in case we changed it.
 
    ppn=$old_ppn
-
-}
-
-
-
-# Wrapper script for run. The first argument is an integer N that
-# causes us to divide $stop_time into N equal increments.
-
-function chain {
-
-  if [ -z $N_iters ]; then
-      echo "N_iters not set in call to chain; exiting."
-      return
-  fi
-
-  if [ -z $stop_time ]; then
-      echo "stop_time not defined in call to chain; exiting."
-  fi
-
-  if [ -z $dir ]; then
-      echo "No directory given to chain; exiting."
-      return
-  fi
-
-  orig_stop_time=$stop_time
-  orig_inputs=$inputs
-  orig_probin=$probin
-
-  do_chain=1
-
-  # First check to see if we've completed the run yet.
-
-  done_flag=0
-
-  if [ -d $dir ]; then
-      inputs=$(find $dir -maxdepth 1 -name "inputs_*" | sort -n | tail -1)
-
-      # If there are no inputs files in the directory, we know we haven't yet started.
-
-      if [ ! -z $inputs ]; then
-          inputs=$(basename $inputs)
-      fi
-
-      done_flag=$(is_dir_done)
-  else
-      mkdir -p $dir
-  fi
-
-  # It is possible that we are continuing or extending a run.
-  # Check the current time from the last check point, and 
-  # only submit the jobs that are remaining to do.
-
-  checkpoint=$(get_last_checkpoint $dir)
-
-  if [ ! -z $checkpoint ]; then
-      chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
-  else
-      chk_time=0.0
-  fi
-
-  job_running_status=$(is_job_running $dir)
-
-
-  if [ $done_flag -ne 1 ] && [ $job_running_status -ne 1 ]; then
-
-      for N in $(seq 1 $N_iters)
-      do
-	  inputs="inputs_"$N
-	  stop_time=$(echo "$orig_stop_time * $N / $N_iters" | bc -l)
-	  run_test=$(echo "$stop_time > $chk_time" | bc -l)
-	  if [ $run_test -eq 1 ]; then
-	      run
-	      job_dependency=$job_number
-          fi
-      done
-
-  else
-
-      if [ $done_flag -eq 1 ]; then
-
-	  echo "Chain completed in directory "$dir$"."
-
-      elif [ $job_running_status -eq 1 ]; then
-
-	  echo "Chain currently queued or in process in directory "$dir"."
-
-      fi
-
-  fi
-
-  job_dependency=""
-  stop_time=$orig_stop_time
-  inputs=$orig_inputs
-  probin=$orig_probin
-  do_chain=""
 
 }
 
@@ -1039,12 +944,6 @@ function run {
     mkdir -p $dir
 
     do_job=1
-
-  elif [ ! -z $do_chain ]; then
-
-      echo "Continuing chain in directory $dir to time $stop_time."
-
-      do_job=1
 
   else
 
