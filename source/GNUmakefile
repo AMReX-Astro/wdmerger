@@ -8,6 +8,7 @@ PRECISION ?= DOUBLE
 PROFILE ?= FALSE
 
 DEBUG ?= FALSE
+DEBUG = TRUE
 
 USE_MPI ?= TRUE
 USE_OMP ?= TRUE
@@ -49,6 +50,20 @@ EOS_dir ?= helmholtz
 
 # This sets the network directory in $(MICROPHYSICS_DIR)/networks
 Network_dir ?= aprox13
+
+ifeq ($(USE_REACT), FALSE)
+VODE_dir    := $(CASTRO_DIR)/Util/VODE
+include $(VODE_dir)/Make.package
+EXTERN_CORE += $(CASTRO_DIR)/Util/VODE
+INCLUDE_LOCATIONS += $(VODE_dir) 
+VPATH_LOCATIONS   += $(VODE_dir) 
+
+BLAS_dir    := $(CASTRO_DIR)/Util/BLAS
+include $(BLAS_dir)/Make.package
+EXTERN_CORE += $(CASTRO_DIR)/Util/BLAS
+INCLUDE_LOCATIONS += $(BLAS_dir) 
+VPATH_LOCATIONS   += $(BLAS_dir) 
+endif
 
 # Location where our source files are coming from.
 
