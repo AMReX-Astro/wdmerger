@@ -764,7 +764,9 @@ function create_job_script {
       echo "#!/bin/bash" > $dir/$job_script
 
       # Select the project allocation we're charging this job to
-      echo "#PBS -A $allocation" >> $dir/$job_script
+      if [ ! -z $allocation ]; then
+	  echo "#PBS -A $allocation" >> $dir/$job_script
+      fi
 
       # Set the name of the job
       echo "#PBS -N $job_name" >> $dir/$job_script
