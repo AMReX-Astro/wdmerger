@@ -7,6 +7,9 @@ source $WDMERGER_HOME/job_scripts/probin.sh
 # Basic mathematical routines.
 source $WDMERGER_HOME/job_scripts/math.sh
 
+# System information.
+source $WDMERGER_HOME/job_scripts/machines.sh
+
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
 # variable list and prints it out to stdout. It is the last word
@@ -15,45 +18,6 @@ source $WDMERGER_HOME/job_scripts/math.sh
 function get_make_var {
 
     make print-$1 -C $compile_dir | tail -2 | head -1 | awk '{ print $NF }'
-
-}
-
-
-
-# Return the name of the machine we're currently working on.
-
-function get_machine {
-
-  # Get the name of the machine by using uname;
-  # then store it in a file in the wdmerger root.
-  # This storage helps when we're on the compute nodes,
-  # which often don't have the same system name as the login nodes.
-
-  if [ ! -e $WDMERGER_HOME/job_scripts/machine ]; then
-
-      UNAMEN=$(uname -n)
-
-      if   [[ $UNAMEN == *"h2o"*    ]]; then
-	MACHINE=BLUE_WATERS
-      elif [[ $UNAMEN == *"titan"*  ]]; then
-	MACHINE=TITAN
-      elif [[ $UNAMEN == *"hopper"* ]]; then
-	MACHINE=HOPPER
-      else
-	MACHINE=GENERICLINUX
-      fi
-
-      # Store the name 
-
-      echo "$MACHINE" > $WDMERGER_HOME/job_scripts/machine
-
-  else
-
-      MACHINE=$(cat $WDMERGER_HOME/job_scripts/machine)
-
-  fi
-
-  echo $MACHINE
 
 }
 
@@ -1042,6 +1006,8 @@ shell_list=$(compgen -v)
 
 MACHINE=$(get_machine)
 
+set_machine_params
+
 job_name="wdmerger"
 job_script="run_script"
 
@@ -1057,47 +1023,6 @@ threads_per_task="1"
 archive_method="none"
 
 do_storage=1
-
-if [ $MACHINE == "GENERICLINUX" ]; then
-
-    exec="bash"
-    ppn="16"
-    batch_system="batch"
-    run_ext=".OU"
-
-elif [ $MACHINE == "BLUE_WATERS" ]; then
-
-    allocation="jni"
-    exec="qsub"
-    ppn="32"
-    threads_per_task="8"
-    node_type="xe"
-    run_ext=".OU"
-    batch_system="PBS"
-    archive_method="globus"
-    globus_src_endpoint="ncsa#BlueWaters"
-    globus_dst_endpoint="ncsa#Nearline/projects/sciteam/$allocation/$USER"
-
-elif [ $MACHINE == "TITAN" ]; then
-
-    allocation="ast106"
-    exec="qsub"
-    ppn="16"
-    threads_per_task="8"
-    run_ext=".OU"
-    batch_system="PBS"
-    archive_method="htar"
-
-elif [ $MACHINE == "HOPPER" ]; then
-    
-    allocation="m1400"
-    exec="qsub"
-    ppn="24"
-    run_ext=".OU"
-    batch_system="PBS"
-    queue="regular"
-
-fi
 
 # Set parameters for our archiving scripts.
 if   [ $archive_method == "htar" ]; then
