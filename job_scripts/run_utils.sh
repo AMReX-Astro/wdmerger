@@ -686,7 +686,15 @@ function create_job_script {
       return
   fi
 
-  nodes=$(expr $nprocs / $ppn)
+  # The number of nodes is equal to the number of processors divided 
+  # by the number of processors per node. This will not be an integer 
+  # if the number of processors requested is not an integer multiple 
+  # of the number of processors per node. So we want to use a trick 
+  # that guarantees we round upward so that we have enough nodes:
+  # if we want the result of (A / B) to be always rounded upward 
+  # in integer arithmetic, we evaluate (A + B - 1) / B.
+
+  nodes=$(echo "($nprocs + $ppn - 1) / $ppn" | bc)
 
   # Number of threads for OpenMP. This will be equal to 
   # what makes the most sense for the machine architecture 
