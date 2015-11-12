@@ -822,14 +822,20 @@ function create_job_script {
 
       # Set the aprun options.
 
-      aprun_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
+      if [ $launcher == "aprun" ]; then
+	  launcher_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
+	  redirect=""
+      elif [ $launcher == "mpirun" ]; then
+	  launcher_opts="-np $num_mpi_tasks"
+	  redirect="> run.out"
+      fi
 
       echo "restartString=\$(get_restart_string .)" >> $dir/$job_script
 
       # Main job execution.
 
       echo "" >> $dir/$job_script
-      echo "aprun $aprun_opts $CASTRO $inputs \$restartString" >> $dir/$job_script
+      echo "$launcher $launcher_opts $CASTRO $inputs \$restartString $redirect" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Run the archive script at the end of the simulation.
