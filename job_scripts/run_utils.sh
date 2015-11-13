@@ -710,6 +710,10 @@ function create_job_script {
 
   if [ -z $OMP_NUM_THREADS ]; then
 
+      if [ -z $threads_per_task ]; then
+	  threads_per_task=1
+      fi
+
       OMP_NUM_THREADS=$threads_per_task
 
       # First, get the maximum grid size. If this has been
@@ -790,6 +794,8 @@ function create_job_script {
 	  echo "#PBS -l nodes=$nodes:ppn=$ppn:$node_type" >> $dir/$job_script
       elif [ $MACHINE == "HOPPER" ]; then
 	  echo "#PBS -l mppwidth=$nprocs" >> $dir/$job_script
+      elif [ $MACHINE == "LIRED" ]; then
+	  echo "#PBS -l nodes=$nodes:ppn=$ppn" >> $dir/$job_script
       else
 	  echo "#PBS -l nodes=$nodes" >> $dir/$job_script
       fi
@@ -834,7 +840,7 @@ function create_job_script {
 	  launcher_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
 	  redirect=""
       elif [ $launcher == "mpirun" ]; then
-	  launcher_opts="-np $num_mpi_tasks"
+	  launcher_opts="-np $num_mpi_tasks --map-by ppr:$threads_per_task"
 	  redirect="> run.out"
       fi
 
@@ -845,6 +851,15 @@ function create_job_script {
       echo "" >> $dir/$job_script
       echo "$launcher $launcher_opts $CASTRO $inputs \$restartString $redirect" >> $dir/$job_script
       echo "" >> $dir/$job_script
+
+      # With mpirun we redirect the output to a file; let's move that to a file 
+      # named by the job number so that we retain it later.
+
+      if [ $launcher == "mpirun" ]; then
+	  echo "job_number=\$(tail -1 jobs_submitted.txt)" >> $dir/$job_script
+	  echo "mv run.out \$job_number.out" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi      
 
       # Run the archive script at the end of the simulation.
 
@@ -1026,15 +1041,6 @@ set_machine_params
 
 job_name="wdmerger"
 job_script="run_script"
-
-# Determine the number of OpenMP threads per task to run 
-# with, by default. We'll update this for the various machines
-# given their configurations, and then in the run script 
-# depending on the size of the problem, but the user 
-# can overwrite these defaults by setting OMP_NUM_THREADS
-# in the including script.
-
-threads_per_task="1"
 
 archive_method="none"
 
