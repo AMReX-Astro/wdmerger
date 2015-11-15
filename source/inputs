@@ -68,7 +68,7 @@ castro.rotational_period_dot = -0.0                # Time rate of change of the 
 castro.source_term_predictor = 1                   # Use a lagged predictor estimate of the source terms in the hydro
 
 ############################################################################################
-# PPM options
+# PPM/Hydro options
 ############################################################################################
 
 castro.ppm_type = 1                                # Piecewise parabolic with the original limiters (0 is piecewise linear; 2 is new limiters)
@@ -78,9 +78,12 @@ castro.ppm_reference_edge_limit = 1                # Use the wave moving fastest
 castro.use_colglaz = 0                             # Whether or not to use the Colella and Glaz (1985) Riemann solver
 castro.ppm_trace_grav = 1                          # Whether to do PPM tracing for the gravitational source term
 castro.ppm_trace_rot = 1                           # Whether to do PPM tracing for the rotational source term
+castro.ppm_trace_sources = 1                       # Whether to do PPM tracing for the source terms
 castro.ppm_temp_fix = 0                            # Use the EOS in calculation of the edge states going into the Riemann solver
 castro.grav_source_type = 4                        # How to include the gravity source term in the hydro equations
 castro.rot_source_type = 4                         # How to include the rotation source term in the hydro equations
+castro.transverse_reset_rhoe = 1                   # Reset (rho*e) if it goes negative in the transverse terms
+castro.transverse_reset_density = 1                # Reset rho if it goes negative in the transverse terms
 
 ############################################################################################
 # Thermodynamics
