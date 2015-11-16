@@ -17,6 +17,8 @@ function get_machine {
 	MACHINE=TITAN
       elif [[ $UNAMEN == *"hopper"* ]]; then
 	MACHINE=HOPPER
+      elif [[ $UNAMEN == *"lired"*  ]]; then
+	MACHINE=LIRED
       else
 	MACHINE=GENERICLINUX
       fi
@@ -40,12 +42,17 @@ function get_machine {
 
 function set_machine_params {
 
+    # The default choice.
+
     if [ $MACHINE == "GENERICLINUX" ]; then
 
 	exec="bash"
 	ppn="16"
 	batch_system="batch"
+	launcher="aprun"
 	run_ext=".OU"
+
+    # Blue Waters at NCSA
 
     elif [ $MACHINE == "BLUE_WATERS" ]; then
 
@@ -56,9 +63,13 @@ function set_machine_params {
 	node_type="xe"
 	run_ext=".OU"
 	batch_system="PBS"
+	launcher="aprun"
 	archive_method="globus"
 	globus_src_endpoint="ncsa#BlueWaters"
 	globus_dst_endpoint="ncsa#Nearline/projects/sciteam/$allocation/$USER"
+	time_remaining_column="5"
+
+    # Titan at OLCF
 
     elif [ $MACHINE == "TITAN" ]; then
 
@@ -69,6 +80,9 @@ function set_machine_params {
 	run_ext=".OU"
 	batch_system="PBS"
 	archive_method="htar"
+	time_remaining_column="5"
+
+    # Hopper at NERSC
 
     elif [ $MACHINE == "HOPPER" ]; then
 	
@@ -77,7 +91,21 @@ function set_machine_params {
 	ppn="24"
 	run_ext=".OU"
 	batch_system="PBS"
+	launcher="aprun"
 	queue="regular"
+
+    # LIRED at Stony Brook University
+
+    elif [ $MACHINE == "LIRED" ]; then
+
+	exec="qsub"
+	ppn="12"
+	threads_per_task="1"
+	batch_system="PBS"
+	launcher="mpirun"
+	queue="medium"
+	run_ext=".OU"
+	time_remaining_column="5"
 
     fi
 
