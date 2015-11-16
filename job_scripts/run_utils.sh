@@ -210,13 +210,7 @@ function get_remaining_walltime {
 	# showq and then grepping for the line that contains
 	# the relevant job number.
 
-	if [ -z $time_remaining_column ]; then
-	    col=5
-	else
-	    col=$time_remaining_column
-        fi
-
-	total_time=$(showq -u $USER | grep $job_number | awk '{ print $col }')
+	total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
 	
 	total_time=$(hours_to_seconds $total_time)
     fi
