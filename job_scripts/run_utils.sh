@@ -210,7 +210,13 @@ function get_remaining_walltime {
 	# showq and then grepping for the line that contains
 	# the relevant job number.
 
-	total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
+	if [ -z $time_remaining_column ]; then
+	    col=5
+	else
+	    col=$time_remaining_column
+        fi
+
+	total_time=$(showq -u $USER | grep $job_number | awk '{ print $col }')
 	
 	total_time=$(hours_to_seconds $total_time)
     fi
@@ -841,7 +847,7 @@ function create_job_script {
 	  redirect=""
       elif [ $launcher == "mpirun" ]; then
 	  launcher_opts="-np $num_mpi_tasks --map-by ppr:$threads_per_task"
-	  redirect="> run.out"
+	  redirect="> run.OU"
       fi
 
       echo "restartString=\$(get_restart_string .)" >> $dir/$job_script
@@ -857,7 +863,7 @@ function create_job_script {
 
       if [ $launcher == "mpirun" ]; then
 	  echo "job_number=\$(tail -1 jobs_submitted.txt)" >> $dir/$job_script
-	  echo "mv run.out \$job_number.out" >> $dir/$job_script
+	  echo "mv run.OU \$job_number.out" >> $dir/$job_script
 	  echo "" >> $dir/$job_script
       fi      
 

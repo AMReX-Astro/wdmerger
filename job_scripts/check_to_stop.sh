@@ -36,10 +36,14 @@ while true; do
 
 done
 
-# Extract the job number from the filename.
+# Extract the job number from the filename, if it is there.
 
-job_number=${filename#$dir/}
-job_number=${job_number%%.*}
+if [ $launcher == "mpirun" ]; then
+  job_number=$(tail -1 jobs_submitted.txt)
+else
+  job_number=${filename#$dir/}
+  job_number=${job_number%%.*}
+fi
 
 # Store the current wall time, in seconds.
 
