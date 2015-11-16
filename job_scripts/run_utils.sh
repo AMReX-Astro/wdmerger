@@ -861,11 +861,6 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi      
 
-      # Run the archive script at the end of the simulation.
-
-      echo "do_storage=$do_storage" >> $dir/$job_script
-      echo "archive_all ." >> $dir/$job_script
-
       # Check to make sure we are done, and if not, re-submit the job.
 
       if [ -z $no_continue ]; then
@@ -880,7 +875,12 @@ function create_job_script {
 	echo "fi" >> $dir/$job_script
 	echo "" >> $dir/$job_script
 
-     fi
+      fi
+
+      # Run the archive script at the end of the simulation.
+
+      echo "do_storage=$do_storage" >> $dir/$job_script
+      echo "archive_all ." >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 
