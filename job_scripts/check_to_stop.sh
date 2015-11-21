@@ -95,7 +95,7 @@ while true; do
       touch $dir/dump_and_stop
       exit
   else
-      cycle_time=$(echo "$timestep * $safety / 2.0" | bc -l)
+      cycle_time=$(echo "$timestep * $safety / 5.0" | bc -l)
   fi
 
   sleep $cycle_time
