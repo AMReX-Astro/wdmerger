@@ -99,7 +99,7 @@ function set_machine_params {
     elif [ $MACHINE == "LIRED" ]; then
 
 	exec="qsub"
-	ppn="12"
+	ppn="24"
 	threads_per_task="1"
 	batch_system="PBS"
 	launcher="mpirun"
