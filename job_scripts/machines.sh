@@ -79,6 +79,7 @@ function set_machine_params {
 	threads_per_task="8"
 	run_ext=".OU"
 	batch_system="PBS"
+	launcher="aprun"
 	archive_method="htar"
 	time_remaining_column="5"
 
