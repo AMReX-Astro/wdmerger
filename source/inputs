@@ -80,7 +80,7 @@ castro.ppm_temp_fix = 0                            # Use the EOS in calculation 
 castro.riemann_solver = 0                          # Which Riemann solver to use
 castro.grav_source_type = 4                        # How to include the gravity source term in the hydro equations
 castro.rot_source_type = 4                         # How to include the rotation source term in the hydro equations
-castro.transverse_reset_rhoe = 1                   # Reset (rho*e) if it goes negative in the transverse terms
+castro.transverse_reset_rhoe = 0                   # Reset (rho*e) if it goes negative in the transverse terms
 castro.transverse_reset_density = 1                # Reset rho if it goes negative in the transverse terms
 
 ############################################################################################
