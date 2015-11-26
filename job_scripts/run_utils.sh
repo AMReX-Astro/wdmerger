@@ -819,10 +819,10 @@ function create_job_script {
       echo "source $WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
          
       # Set up the script that periodically checks whether we should
-      # terminate the run. Only do this for jobs with large enough
-      # processor counts. Run the process in the background.
+      # terminate the run. Only do this for multi-node jobs, usually 
+      # we don't need it for single-node runs.
 
-      if [ $nodes -ge 8 ]; then
+      if [ $nodes -ge 2 ]; then
 	  echo "bash $WDMERGER_HOME/job_scripts/check_to_stop.sh . &" >> $dir/$job_script
       fi
 
