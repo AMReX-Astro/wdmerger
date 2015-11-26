@@ -162,7 +162,7 @@
               ! coordinate, whose unit vector is tangent to the unit circle, so we should
               ! have the same velocity everywhere along that coordinate to begin with.
 
-              if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
+              if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. collision) ) then
 
                  state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
                  if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))
