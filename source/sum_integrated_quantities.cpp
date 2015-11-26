@@ -99,14 +99,14 @@ Castro::sum_integrated_quantities ()
 
     // Gravitational wave amplitudes.
     
-    Real h_plus_rot = 0.0;
-    Real h_cross_rot = 0.0;
+    Real h_plus_1  = 0.0;
+    Real h_cross_1 = 0.0;
 
-    Real h_plus_star = 0.0;
-    Real h_cross_star = 0.0;
+    Real h_plus_2  = 0.0;
+    Real h_cross_2 = 0.0;
 
-    Real h_plus_motion = 0.0;
-    Real h_cross_motion = 0.0;
+    Real h_plus_3  = 0.0;
+    Real h_cross_3 = 0.0;
 
     // Number of species.
     
@@ -129,9 +129,9 @@ Castro::sum_integrated_quantities ()
     int datawidth     = 24;
     int dataprecision = 16;
 
-    int star_axis;
-    int motion_axis;
-    int rotation_axis;
+    int axis_1;
+    int axis_2;
+    int axis_3;
     
     // Determine whether we're doing a single star simulation
     BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
@@ -140,9 +140,9 @@ Castro::sum_integrated_quantities ()
     BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
 
     // Determine various coordinate axes
-    BL_FORT_PROC_CALL(GET_AXES,get_axes)(star_axis, motion_axis, rotation_axis);
+    BL_FORT_PROC_CALL(GET_AXES,get_axes)(axis_1, axis_2, axis_3);
 
-    wd_dist_init[star_axis - 1] = 1.0;
+    wd_dist_init[axis_1 - 1] = 1.0;
     
     // Determine the names of the species in the simulation.    
 
@@ -191,7 +191,7 @@ Castro::sum_integrated_quantities ()
 #endif            
       
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
-      ca_lev.gwstrain(time, h_plus_rot, h_cross_rot, h_plus_star, h_cross_star, h_plus_motion, h_cross_motion);
+      ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3);
 
       // Integrated mass of all species on the domain.      
       for (int i = 0; i < NumSpec; i++)
@@ -387,12 +387,12 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datawidth) << " X COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Y COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Z COM VEL             ";
-	     grid_log << std::setw(datawidth) << " h_+ (rotation axis)   ";
-	     grid_log << std::setw(datawidth) << " h_x (rotation axis)   ";
-	     grid_log << std::setw(datawidth) << " h_+ (star axis)       ";
-	     grid_log << std::setw(datawidth) << " h_x (star axis)       ";
-	     grid_log << std::setw(datawidth) << " h_+ (motion axis)     ";
-	     grid_log << std::setw(datawidth) << " h_x (motion axis)     ";
+	     grid_log << std::setw(datawidth) << " h_+ (axis 1)          ";
+	     grid_log << std::setw(datawidth) << " h_x (axis 1)          ";
+	     grid_log << std::setw(datawidth) << " h_+ (axis 2)          ";
+	     grid_log << std::setw(datawidth) << " h_x (axis 2)          ";
+	     grid_log << std::setw(datawidth) << " h_+ (axis 3)          ";
+	     grid_log << std::setw(datawidth) << " h_x (axis 3)          ";
 
 	     grid_log << std::endl;
 	   }
@@ -427,12 +427,12 @@ Castro::sum_integrated_quantities ()
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_rot;
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_rot;
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_star;
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_star;
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_motion;
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_motion;
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_1;
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_1;
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_2;
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_2;
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_3;
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_3;
 
 	   grid_log << std::endl;
 	 }
