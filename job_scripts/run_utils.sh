@@ -206,6 +206,7 @@ function get_remaining_walltime {
     # use the relevant batch submission system.
 
     if [ $batch_system == "PBS" ]; then
+
 	# For PBS we can get the remaining time by doing 
 	# showq and then grepping for the line that contains
 	# the relevant job number.
@@ -213,6 +214,7 @@ function get_remaining_walltime {
 	total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
 	
 	total_time=$(hours_to_seconds $total_time)
+
     fi
 
     echo $total_time
@@ -594,6 +596,36 @@ function archive_all {
 }
 
 
+function check_to_stop {
+
+    # Assumes we have defined job_number in the calling function.
+
+    if [ -z $job_number ]; then
+	return
+    fi
+
+    # Determine how much time the job has, in seconds.
+    
+    total_time=$(get_remaining_walltime $job_number)
+
+    # This factor determines the amount of time we want to 
+    # use as a safety factor.
+
+    safety_factor=0.1
+
+    # Now we'll plan to stop when (1 - safety_factor) of the time has been used up.
+
+    time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
+
+    sleep $time_remaining
+
+    # BoxLib's framework requires a particular file name to exist in the local directory, 
+    # to trigger a checkpoint and quit.
+
+    touch "dump_and_stop"
+
+}
+
 
 # Copies all relevant files needed for a CASTRO run into the target directory,
 # and updates the inputs and probin according to any shell variables we set.
@@ -811,20 +843,25 @@ function create_job_script {
       # work in, so cd to that directory.
 
       echo "cd \$PBS_O_WORKDIR" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
       # Tell the script where the root wdmerger directory is, since 
       # environment variables are generally not loaded onto compute nodes.
 
       echo "export WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$job_script
       echo "source $WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
-         
-      # Set up the script that periodically checks whether we should
-      # terminate the run. Only do this for multi-node jobs, usually 
-      # we don't need it for single-node runs.
+      echo "" >> $dir/$job_script
 
-      if [ $nodes -ge 2 ]; then
-	  echo "bash $WDMERGER_HOME/job_scripts/check_to_stop.sh . &" >> $dir/$job_script
-      fi
+      # Get the job number of the currently running job.
+
+      echo "job_number=\$(tail -1 jobs_submitted.txt)" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
+
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
       # Number of OpenMP threads
 
@@ -833,6 +870,7 @@ function create_job_script {
       # Amount of memory allocated to each OpenMP thread.
 
       echo "export OMP_STACKSIZE=64M" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
       # Set the aprun options.
 
@@ -845,10 +883,10 @@ function create_job_script {
       fi
 
       echo "restartString=\$(get_restart_string .)" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
       # Main job execution.
 
-      echo "" >> $dir/$job_script
       echo "$launcher $launcher_opts $CASTRO $inputs \$restartString $redirect" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
@@ -856,16 +894,14 @@ function create_job_script {
       # named by the job number so that we retain it later.
 
       if [ $launcher == "mpirun" ]; then
-	  echo "job_number=\$(tail -1 jobs_submitted.txt)" >> $dir/$job_script
-	  echo "mv run.OU \$job_number.out" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
+	echo "mv run.OU \$job_number.out" >> $dir/$job_script
+	echo "" >> $dir/$job_script
       fi      
 
       # Check to make sure we are done, and if not, re-submit the job.
 
       if [ -z $no_continue ]; then
 
-	echo "" >> $dir/$job_script
 	echo "dir=." >> $dir/$job_script
 	echo "done_flag=\$(is_dir_done)" >> $dir/$job_script
 	echo "if [ \$done_flag -ne 1 ]; then" >> $dir/$job_script
@@ -881,6 +917,7 @@ function create_job_script {
 
       echo "do_storage=$do_storage" >> $dir/$job_script
       echo "archive_all ." >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
 
@@ -1097,10 +1134,6 @@ if [ -d $compile_dir ]; then
     # Directory for executing and storing results
 
     results_dir="results"
-
-    if [ ! -d $results_dir ]; then
-      mkdir $results_dir
-    fi
 
     # Directory for placing plots from analysis routines
 
