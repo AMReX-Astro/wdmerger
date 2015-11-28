@@ -299,24 +299,26 @@ function is_job_running {
 function is_dir_done {
 
   if [ -z $dir ]; then
-      return
+      directory="./"
+  else
+      directory=$dir
   fi
 
   # If the directory already exists, check to see if we've reached the desired stopping point.
   # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
 
-  checkpoint=$(get_last_checkpoint $dir)
-  last_output=$(get_last_output $dir)
+  checkpoint=$(get_last_checkpoint $directory)
+  last_output=$(get_last_output $directory)
 
   # Get the desired stopping time and max step from the inputs file in the directory.
   # Alternatively, we may have set this from the calling script, so prefer that.
 
   if [ -z $stop_time ]; then
-      stop_time=$(get_inputs_var "stop_time" $dir)
+      stop_time=$(get_inputs_var "stop_time" $directory)
   fi
 
   if [ -z $max_step ]; then
-      max_step=$(get_inputs_var "max_step" $dir)
+      max_step=$(get_inputs_var "max_step" $directory)
   fi
 
   # Assume we're done, by default.
@@ -326,11 +328,11 @@ function is_dir_done {
 
   done_status=0
 
-  if [ -e $dir/$checkpoint/Header ]; then
+  if [ -e $directory/$checkpoint/Header ]; then
 
       # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
-      chk_time=$(awk 'NR==3' $dir/$checkpoint/Header)
+      chk_time=$(awk 'NR==3' $directory/$checkpoint/Header)
 
       # Extract the current timestep. We can get it from the 
       # name of the checkpoint file. cut will do the trick;
@@ -341,10 +343,10 @@ function is_dir_done {
       time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
       step_flag=$(echo "$chk_step >= $max_step" | bc)
 
-  elif [ -e $dir/$last_output ]; then
+  elif [ -e $directory/$last_output ]; then
 
-      output_time=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $6}')
-      output_step=$(grep "STEP =" $dir/$last_output | tail -1 | awk '{print $3}')
+      output_time=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $6}')
+      output_step=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $3}')
 
       # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
 
@@ -443,8 +445,7 @@ function archive_all {
   if [ ! -z $1 ]; then
       directory=$1
   else
-      echo "No directory passed to function archive_all; exiting."
-      return
+      directory="./"
   fi
 
   if [ ! -d $directory/output/ ]; then
@@ -906,12 +907,9 @@ function create_job_script {
 	  redirect="> run.OU"
       fi
 
-      echo "restartString=\$(get_restart_string .)" >> $dir/$job_script
-      echo "" >> $dir/$job_script
-
       # Main job execution.
 
-      echo "$launcher $launcher_opts $CASTRO $inputs \$restartString $redirect" >> $dir/$job_script
+      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # With mpirun we redirect the output to a file; let's move that to a file 
@@ -919,8 +917,7 @@ function create_job_script {
 
       if [ $launcher == "mpirun" ]; then
 
-	echo "job_number=\$(get_last_submitted_job)" >> $dir/$job_script
-	echo "mv run.OU \$job_number.out" >> $dir/$job_script
+	echo "mv run.OU \$(get_last_submitted_job).out" >> $dir/$job_script
 	echo "" >> $dir/$job_script
 
       fi
@@ -929,9 +926,7 @@ function create_job_script {
 
       if [ -z $no_continue ]; then
 
-	echo "dir=." >> $dir/$job_script
-	echo "done_flag=\$(is_dir_done)" >> $dir/$job_script
-	echo "if [ \$done_flag -ne 1 ]; then" >> $dir/$job_script
+	echo "if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
 	echo "  submit_job" >> $dir/$job_script
 	echo "fi" >> $dir/$job_script
 	echo "" >> $dir/$job_script
@@ -940,8 +935,10 @@ function create_job_script {
 
       # Run the archive script at the end of the simulation.
 
-      echo "do_storage=$do_storage" >> $dir/$job_script
-      echo "archive_all ." >> $dir/$job_script
+      if [ $do_storage -ne 1 ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+      fi
+      echo "archive_all" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
