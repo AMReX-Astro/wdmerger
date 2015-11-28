@@ -596,13 +596,10 @@ function archive_all {
 }
 
 
+
 function check_to_stop {
 
-    # Assumes we have defined job_number in the calling function.
-
-    if [ -z $job_number ]; then
-	return
-    fi
+    job_number=$(get_last_submitted_job)
 
     # Determine how much time the job has, in seconds.
     
@@ -625,6 +622,7 @@ function check_to_stop {
     touch "dump_and_stop"
 
 }
+
 
 
 # Copies all relevant files needed for a CASTRO run into the target directory,
@@ -688,6 +686,37 @@ function copy_files {
 	replace_probin_var $var
 
     done
+
+}
+
+
+
+# Submits a job from the job script, then captures the 
+# job number output. This function is designed to be run 
+# while we live in the job directory itself.
+
+function submit_job {
+
+    job_number=`$exec $job_script`
+
+    # Some systems like Blue Waters include the system name
+    # at the end of the number, so remove any appended text.
+
+    job_number=${job_number%%.*}
+
+    echo "$job_number" >> jobs_submitted.txt
+
+}
+
+
+
+# Get the last job number submitted by examining the jobs_submitted file.
+
+function get_last_submitted_job {
+
+    job_number=$(tail -1 jobs_submitted.txt)
+
+    echo $job_number
 
 }
 
@@ -852,11 +881,6 @@ function create_job_script {
       echo "source $WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
-      # Get the job number of the currently running job.
-
-      echo "job_number=\$(tail -1 jobs_submitted.txt)" >> $dir/$job_script
-      echo "" >> $dir/$job_script
-
       # Call the function that determines when we're going to stop the run.
       # It should run in the background, to allow the main job to execute.
 
@@ -894,9 +918,12 @@ function create_job_script {
       # named by the job number so that we retain it later.
 
       if [ $launcher == "mpirun" ]; then
+
+	echo "job_number=\$(get_last_submitted_job)" >> $dir/$job_script
 	echo "mv run.OU \$job_number.out" >> $dir/$job_script
 	echo "" >> $dir/$job_script
-      fi      
+
+      fi
 
       # Check to make sure we are done, and if not, re-submit the job.
 
@@ -905,9 +932,7 @@ function create_job_script {
 	echo "dir=." >> $dir/$job_script
 	echo "done_flag=\$(is_dir_done)" >> $dir/$job_script
 	echo "if [ \$done_flag -ne 1 ]; then" >> $dir/$job_script
-	echo "  job_number=\`$exec $job_script\`" >> $dir/$job_script
-	echo "  job_number=\${job_number%%.*}" >> $dir/$job_script
-	echo "  echo \$job_number >> jobs_submitted.txt" >> $dir/$job_script
+	echo "  submit_job" >> $dir/$job_script
 	echo "fi" >> $dir/$job_script
 	echo "" >> $dir/$job_script
 
@@ -1029,26 +1054,13 @@ function run {
 
     cd $dir
 
-    exec_command=$exec
+    # Run the job, and capture the job number for output.
 
-    if [ ! -z $job_dependency ]; then
-	if [ $batch_system == "PBS" ]; then
-	    exec_command="$exec -W depend=afterok:$job_dependency"
-	fi
-    fi
+    submit_job
 
-    # Capture the job number output.
-
-    job_number=`$exec_command $job_script`
-
-    # Some systems like Blue Waters include the system name
-    # at the end of the number, so remove it.
-
-    job_number=${job_number%%.*}
+    job_number=$(get_last_submitted_job)
 
     echo "The job number is $job_number."
-
-    echo "$job_number" >> jobs_submitted.txt
 
     cd - > /dev/null
 
