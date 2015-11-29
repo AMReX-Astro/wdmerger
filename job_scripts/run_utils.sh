@@ -83,13 +83,14 @@ function get_last_output {
 	dir=$1
     fi
 
-    output=$(find $dir -name "$job_name*" | sort | tail -1)
+    # First try looking for jobs that are currently running.
 
-    # If there are no output files with the job name, try 
-    # looking for jobs that are currently running.
+    output=$(find $dir -name "*$run_ext" | sort | tail -1)
+
+    # If that fails, look through completed jobs.
 
     if [ -z $output ]; then
-	output=$(find $dir -name "*$run_ext" | sort | tail -1)
+	output=$(find $dir -name "$job_name*" | sort | tail -1)
     fi
 
     # Extract out the search directory from the result.
@@ -325,11 +326,11 @@ function is_dir_done {
   # Get the desired stopping time and max step from the inputs file in the directory.
   # Alternatively, we may have set this from the calling script, so prefer that.
 
-  if [ -z $stop_time ]; then
+  if [ -z $stop_time ] && [ -e $directory/$inputs ]; then
       stop_time=$(get_inputs_var "stop_time" $directory)
   fi
 
-  if [ -z $max_step ]; then
+  if [ -z $max_step ] && [ -e $directory/$inputs ]; then
       max_step=$(get_inputs_var "max_step" $directory)
   fi
 
@@ -676,8 +677,8 @@ function copy_files {
     # Copy over all the helper scripts, so that these are 
     # fixed in time for this run and don't change if we update the repository.
 
-    if [ ! -d "$dir/job_scripts" ]; then
-	mkdir "$dir/job_scripts"
+    if [ ! -e "$dir/job_scripts/run_utils.sh" ]; then
+	mkdir -p "$dir/job_scripts"
 	cp -r $WDMERGER_HOME/job_scripts/*.sh $dir/job_scripts/
     fi
 
@@ -924,7 +925,7 @@ function create_job_script {
 	  redirect=""
       elif [ $launcher == "mpirun" ]; then
 	  launcher_opts="-np $num_mpi_tasks --map-by ppr:$threads_per_task"
-	  redirect="> run.OU"
+	  redirect="> $job_name.OU"
       fi
 
       # Main job execution.
@@ -1001,14 +1002,6 @@ function run {
 
   if [ -z $walltime ]; then
       walltime=1:00:00
-  fi
-
-  if [ -z $inputs ]; then
-      inputs=inputs
-  fi
-
-  if [ -z $probin ]; then
-      probin=probin
   fi
 
   do_job=0
@@ -1165,6 +1158,14 @@ results_dir="results"
 # Directory for placing plots from analysis routines
 
 plots_dir="plots"
+
+if [ -z $inputs ]; then
+    inputs=inputs
+fi
+
+if [ -z $probin ]; then
+    probin=probin
+fi
 
 # Set parameters for our archiving scripts.
 if   [ $archive_method == "htar" ]; then
