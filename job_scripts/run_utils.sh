@@ -1,14 +1,26 @@
 # run_utils.sh: helper functions for job submission scripts.
 
-# Bring in scripts for working with inputs and probin files.
-source $WDMERGER_HOME/job_scripts/inputs.sh
-source $WDMERGER_HOME/job_scripts/probin.sh
+# There are several scripts that this file relies upon. The 
+# home location for these is in $WDMERGER_HOME/job_scripts.
+# However, we make local copies of these files for run 
+# directories, so test first if we have a local job_scripts 
+# subdirectory, and check there first.
+
+if [ -d "job_scripts" ]; then
+  script_dir="job_scripts"
+else
+  script_dir="$WDMERGER_HOME/job_scripts"
+fi
+
+# Functions for working with inputs and probin files.
+source $script_dir/inputs.sh
+source $script_dir/probin.sh
 
 # Basic mathematical routines.
-source $WDMERGER_HOME/job_scripts/math.sh
+source $script_dir/math.sh
 
 # System information.
-source $WDMERGER_HOME/job_scripts/machines.sh
+source $script_dir/machines.sh
 
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
@@ -661,6 +673,16 @@ function copy_files {
 	fi
     fi
 
+    # Copy over all the helper scripts, so that these are 
+    # fixed in time for this run and don't change if we update the repository.
+
+    if [ ! -d "$dir/job_scripts" ]; then
+	mkdir "$dir/job_scripts"
+	cp -r $WDMERGER_HOME/job_scripts/*.sh $dir/job_scripts/
+    fi
+
+    touch "$dir/jobs_submitted.txt"
+
     # Now determine all the variables that have been added
     # since we started; then search for them in the inputs
     # file and do a replace as needed. This relies on the 
@@ -875,11 +897,9 @@ function create_job_script {
       echo "cd \$PBS_O_WORKDIR" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
-      # Tell the script where the root wdmerger directory is, since 
-      # environment variables are generally not loaded onto compute nodes.
+      # Load up our helper functions.
 
-      echo "export WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$job_script
-      echo "source $WDMERGER_HOME/job_scripts/run_utils.sh" >> $dir/$job_script
+      echo "source job_scripts/run_utils.sh" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Call the function that determines when we're going to stop the run.
