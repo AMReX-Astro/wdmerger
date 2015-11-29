@@ -29,7 +29,7 @@ source $script_dir/machines.sh
 
 function get_make_var {
 
-    make print-$1 -C $compile_dir | tail -2 | head -1 | awk '{ print $NF }'
+  make print-$1 -C $compile_dir | tail -2 | head -1 | awk '{ print $NF }'
 
 }
 
@@ -42,27 +42,29 @@ function get_submitted_jobs {
 
   if [ $batch_system == "PBS" ]; then
 
-    # Store the result of showq
-    job_file=$WDMERGER_HOME/job_scripts/jobs.txt
-    showq -u $USER > $job_file.temp
+      # Store the result of showq
 
-    # Remove the lines that don't store jobs.
-    # A useful heuristic is that lines containing our username
-    # are going to have jobs printed on that line.
+      job_file=$WDMERGER_HOME/job_scripts/jobs.txt
+      showq -u $USER > $job_file.temp
 
-    grep $USER $job_file.temp > $job_file
-    rm -f $job_file.temp
+      # Remove the lines that don't store jobs.
+      # A useful heuristic is that lines containing our username
+      # are going to have jobs printed on that line.
 
-    # Store as arrays the status of all jobs.
-    num_jobs=$(cat $job_file | wc -l)
+      grep $USER $job_file.temp > $job_file
+      rm -f $job_file.temp
 
-    for i in $(seq 0 $(($num_jobs-1)))
-    do
-      line=$(awk "NR == $i+1" $job_file)
-      job_arr[$i]=$(echo $line | awk '{ print $1 }')
-      state_arr[$i]=$(echo $line | awk '{ print $3 }')
-      walltime_arr[$i]=$(echo $line | awk '{ print $5 }')
-    done
+      # Store as arrays the status of all jobs.
+
+      num_jobs=$(cat $job_file | wc -l)
+      
+      for i in $(seq 0 $(($num_jobs-1)))
+      do
+	  line=$(awk "NR == $i+1" $job_file)
+	  job_arr[$i]=$(echo $line | awk '{ print $1 }')
+	  state_arr[$i]=$(echo $line | awk '{ print $3 }')
+	  walltime_arr[$i]=$(echo $line | awk '{ print $5 }')
+      done
 
   fi
 
@@ -76,29 +78,29 @@ function get_submitted_jobs {
 
 function get_last_output {
 
-    if [ -z $1 ]; then
-	echo "No directory passed to get_last_output; exiting."
-	return
-    else
-	dir=$1
-    fi
+  if [ -z $1 ]; then
+      echo "No directory passed to get_last_output; exiting."
+      return
+  else
+      dir=$1
+  fi
 
-    # First try looking for jobs that are currently running.
+  # First try looking for jobs that are currently running.
 
-    output=$(find $dir -name "*$run_ext" | sort | tail -1)
+  output=$(find $dir -name "*$run_ext" | sort | tail -1)
 
-    # If that fails, look through completed jobs.
+  # If that fails, look through completed jobs.
 
-    if [ -z $output ]; then
-	output=$(find $dir -name "$job_name*" | sort | tail -1)
-    fi
+  if [ -z $output ]; then
+      output=$(find $dir -name "$job_name*" | sort | tail -1)
+  fi
 
-    # Extract out the search directory from the result.
+  # Extract out the search directory from the result.
 
-    output=$(echo ${output#$dir/})
-    output=$(echo ${output#$dir})
+  output=$(echo ${output#$dir/})
+  output=$(echo ${output#$dir})
 
-    echo $output
+  echo $output
 
 }
 
@@ -108,55 +110,56 @@ function get_last_output {
 
 function get_last_checkpoint {
 
-    if [ -z $1 ]; then
-	echo "No directory passed to get_last_checkpoint; exiting."
-	return
-    else
-	dir=$1
-    fi
+  if [ -z $1 ]; then
+      echo "No directory passed to get_last_checkpoint; exiting."
+      return
+  else
+      dir=$1
+  fi
 
-    # Doing a search this way will treat first any checkpoint files 
-    # with seven digits, and then will fall back to ones with six and then five digits.
-    # On recent versions of GNU sort, one can simplify this with sort -V.
+  # Doing a search this way will treat first any checkpoint files 
+  # with seven digits, and then will fall back to ones with six and then five digits.
+  # On recent versions of GNU sort, one can simplify this with sort -V.
 
-    checkpoint=$(find $dir -type d -name "*chk???????" | sort | tail -1)
+  checkpoint=$(find $dir -type d -name "*chk???????" | sort | tail -1)
 
-    if [ -z $checkpoint ]; then
+  if [ -z $checkpoint ]; then
 
-	checkpoint=$(find $dir -type d -name "*chk??????" | sort | tail -1)
+      checkpoint=$(find $dir -type d -name "*chk??????" | sort | tail -1)
 
-	if [ -z $checkpoint ]; then
+      if [ -z $checkpoint ]; then
 
-            checkpoint=$(find $dir -type d -name "*chk?????"  | sort | tail -1)
+          checkpoint=$(find $dir -type d -name "*chk?????"  | sort | tail -1)
 
-	fi
+      fi
 
-    fi
+  fi
 
-    # The Header is the last thing written -- check if it's there, otherwise,
-    # fall back to the second-to-last check file written, because it means 
-    # the latest checkpoint file is still being written.
+  # The Header is the last thing written -- check if it's there, otherwise,
+  # fall back to the second-to-last check file written, because it means 
+  # the latest checkpoint file is still being written.
 
-    if [ ! -f ${checkpoint}/Header ]; then
+  if [ ! -f ${checkpoint}/Header ]; then
 
-	# How many *chk?????? files are there? if only one, then skip,
-	# as there are no valid and complete checkpoint files.
+      # How many *chk?????? files are there? if only one, then skip,
+      # as there are no valid and complete checkpoint files.
 
-	nl=$(find $dir -type d -name "*chk??????" -print | sort | wc -l)
-	if [ $nl -gt 1 ]; then
-	    checkpoint=$(find $dir -type d -name "*chk??????" -print | sort | tail -2 | head -1)    
-	else
-	    checkpoint=""
-	fi
+      nl=$(find $dir -type d -name "*chk??????" -print | sort | wc -l)
 
-    fi
+      if [ $nl -gt 1 ]; then
+	  checkpoint=$(find $dir -type d -name "*chk??????" -print | sort | tail -2 | head -1)    
+      else
+	  checkpoint=""
+      fi
+      
+  fi
 
-    # Extract out the search directory from the result.
+  # Extract out the search directory from the result.
 
-    checkpoint=$(echo ${checkpoint#$dir/})
-    checkpoint=$(echo ${checkpoint#$dir})
+  checkpoint=$(echo ${checkpoint#$dir/})
+  checkpoint=$(echo ${checkpoint#$dir})
 
-    echo $checkpoint
+  echo $checkpoint
 
 }
 
@@ -166,38 +169,38 @@ function get_last_checkpoint {
 
 function get_median_timestep {
 
-    # First argument is the name of the file.
+  # First argument is the name of the file.
 
-    if [ -z $1 ]; then
-	# No file was passed to the function, so exit.
-	return
-    else
-	file=$1
-    fi
+  if [ -z $1 ]; then
+      # No file was passed to the function, so exit.
+      return
+  else
+      file=$1
+  fi
 
-    # Second argument is the number of most recent timesteps to use.
-    # If it doesn't exist, default to using all timesteps.
+  # Second argument is the number of most recent timesteps to use.
+  # If it doesn't exist, default to using all timesteps.
 
-    if [ -z $2 ]; then
-	nsteps=-1
-    else
-	nsteps=$2
-    fi
+  if [ -z $2 ]; then
+      nsteps=-1
+  else
+      nsteps=$2
+  fi
 
-    # Use grep to get all lines containing the coarse timestep time;
-    # then, use awk to extract the actual times.
+  # Use grep to get all lines containing the coarse timestep time;
+  # then, use awk to extract the actual times.
 
-    if [ $nsteps -gt 0 ]; then
-	timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }' | tail -$nsteps)
-    else
-	timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }')
-    fi
+  if [ $nsteps -gt 0 ]; then
+      timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }' | tail -$nsteps)
+  else
+      timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }')
+  fi
 
-    # Calculate the median.
+  # Calculate the median.
     
-    median_timestep=$(median "$timesteps")
+  median_timestep=$(median "$timesteps")
 
-    echo $median_timestep
+  echo $median_timestep
 
 }
 
@@ -207,30 +210,30 @@ function get_median_timestep {
 
 function get_remaining_walltime {
 
-    if [ ! -z $1 ]; then
-	job_number=$1
-    else
-	return
-    fi
+  if [ ! -z $1 ]; then
+      job_number=$1
+  else
+      return
+  fi
 
-    total_time=0.0
+  total_time=0.0
 
-    # Extract the job number from the filename, then
-    # use the relevant batch submission system.
+  # Extract the job number from the filename, then
+  # use the relevant batch submission system.
 
-    if [ $batch_system == "PBS" ]; then
+  if [ $batch_system == "PBS" ]; then
 
-	# For PBS we can get the remaining time by doing 
-	# showq and then grepping for the line that contains
-	# the relevant job number.
+      # For PBS we can get the remaining time by doing 
+      # showq and then grepping for the line that contains
+      # the relevant job number.
 
-	total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
+      total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
 	
-	total_time=$(hours_to_seconds $total_time)
+      total_time=$(hours_to_seconds $total_time)
 
-    fi
+  fi
 
-    echo $total_time
+  echo $total_time
 
 }
 
@@ -242,23 +245,23 @@ function get_remaining_walltime {
 
 function get_restart_string {
 
-    if [ -z $1 ]; then
-	dir="./"
-    else
-	dir=$1
-    fi
+  if [ -z $1 ]; then
+      dir="./"
+  else
+      dir=$1
+  fi
 
-    checkpoint=$(get_last_checkpoint $dir)
+  checkpoint=$(get_last_checkpoint $dir)
 
-    # restartString will be empty if no chk files are found -- i.e. this is a new run.
+  # restartString will be empty if no chk files are found -- i.e. this is a new run.
 
-    if [ ! -n "$checkpoint" ]; then
-	restartString=""
-    else
-	restartString="amr.restart="$checkpoint
-    fi
+  if [ ! -n "$checkpoint" ]; then
+      restartString=""
+  else
+      restartString="amr.restart="$checkpoint
+  fi
 
-    echo $restartString
+  echo $restartString
 
 }
 
@@ -268,40 +271,40 @@ function get_restart_string {
 
 function is_job_running {
 
-    if [ -z $1 ]; then
-	return 0;
-    else
-	dir=$1
-    fi
+  if [ -z $1 ]; then
+      return 0;
+  else
+      dir=$1
+  fi
 
-    job_status=0
+  job_status=0
 
-    # Check if a file with the appropriate run extension exists in that directory.
-    # If not, check if there is an active job yet to be completed or started 
-    # in the directory using the results of showq.
+  # Check if a file with the appropriate run extension exists in that directory.
+  # If not, check if there is an active job yet to be completed or started 
+  # in the directory using the results of showq.
 
-    if [ -e $dir/*$run_ext ]; then
+  if [ -e $dir/*$run_ext ]; then
 
-	job_status=1
+      job_status=1
 
-    elif [ -e $dir/jobs_submitted.txt ] && [ ! -z $num_jobs ]; then
+  elif [ -e $dir/jobs_submitted.txt ] && [ ! -z $num_jobs ]; then
 
-        num_jobs_in_dir=$(cat $dir/jobs_submitted.txt | wc -l)
-	jobs_in_directory=$(cat $dir/jobs_submitted.txt)
+      num_jobs_in_dir=$(cat $dir/jobs_submitted.txt | wc -l)
+      jobs_in_directory=$(cat $dir/jobs_submitted.txt)
 
-	for job1 in ${job_arr[@]}
-	do
-	    for job2 in $jobs_in_directory
-	    do
-		if [ $job1 == $job2 ]; then
-		    job_status=1
-		fi
-            done
-        done
+      for job1 in ${job_arr[@]}
+      do
+	  for job2 in $jobs_in_directory
+	  do
+	      if [ $job1 == $job2 ]; then
+		  job_status=1
+	      fi
+          done
+      done
 
-    fi
+  fi
 
-    echo $job_status
+  echo $job_status
 
 }
 
@@ -613,27 +616,27 @@ function archive_all {
 
 function check_to_stop {
 
-    job_number=$(get_last_submitted_job)
+  job_number=$(get_last_submitted_job)
 
-    # Determine how much time the job has, in seconds.
+  # Determine how much time the job has, in seconds.
     
-    total_time=$(get_remaining_walltime $job_number)
+  total_time=$(get_remaining_walltime $job_number)
 
-    # This factor determines the amount of time we want to 
-    # use as a safety factor.
+  # This factor determines the amount of time we want to 
+  # use as a safety factor.
 
-    safety_factor=0.1
+  safety_factor=0.1
 
-    # Now we'll plan to stop when (1 - safety_factor) of the time has been used up.
+  # Now we'll plan to stop when (1 - safety_factor) of the time has been used up.
 
-    time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
+  time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
 
-    sleep $time_remaining
+  sleep $time_remaining
 
-    # BoxLib's framework requires a particular file name to exist in the local directory, 
-    # to trigger a checkpoint and quit.
+  # BoxLib's framework requires a particular file name to exist in the local directory, 
+  # to trigger a checkpoint and quit.
 
-    touch "dump_and_stop"
+  touch "dump_and_stop"
 
 }
 
@@ -644,72 +647,72 @@ function check_to_stop {
 
 function copy_files {
 
-    if [ -z $dir ]; then
-	echo "No directory passed to copy_files; exiting."
-    fi
+  if [ -z $dir ]; then
+      echo "No directory passed to copy_files; exiting."
+  fi
+  
+  if [ ! -e $dir/$CASTRO ]; then
+      cp $compile_dir/$CASTRO $dir
+  fi
+  
+  if [ ! -e "$dir/helm_table.dat" ]; then
+      if [ -e "$compile_dir/helm_table.dat" ]; then
+	  cp $compile_dir/helm_table.dat $dir
+      fi
+  fi
+  
+  if [ ! -e "$dir/$inputs" ]; then
+      if [ -e "$compile_dir/$inputs" ]; then
+          cp $compile_dir/inputs $dir/$inputs
+      else
+          cp $WDMERGER_HOME/source/inputs $dir/$inputs
+      fi
+  fi
 
-    if [ ! -e $dir/$CASTRO ]; then
-        cp $compile_dir/$CASTRO $dir
-    fi
+  if [ ! -e "$dir/$probin" ]; then
+      if [ -e "$compile_dir/$probin" ]; then
+	  cp $compile_dir/probin $dir/$probin
+      else
+	  cp $WDMERGER_HOME/source/probin $dir/$probin
+      fi
+  fi
 
-    if [ ! -e "$dir/helm_table.dat" ]; then
-	if [ -e "$compile_dir/helm_table.dat" ]; then
-	    cp $compile_dir/helm_table.dat $dir
-	fi
-    fi
+  # Copy over all the helper scripts, so that these are 
+  # fixed in time for this run and don't change if we update the repository.
 
-    if [ ! -e "$dir/$inputs" ]; then
-        if [ -e "$compile_dir/$inputs" ]; then
-            cp $compile_dir/inputs $dir/$inputs
-        else
-            cp $WDMERGER_HOME/source/inputs $dir/$inputs
-	fi
-    fi
+  if [ ! -e "$dir/job_scripts/run_utils.sh" ]; then
+      mkdir -p "$dir/job_scripts"
+      cp -r $WDMERGER_HOME/job_scripts/*.sh $dir/job_scripts/
+  fi
 
-    if [ ! -e "$dir/$probin" ]; then
-	if [ -e "$compile_dir/$probin" ]; then
-	    cp $compile_dir/probin $dir/$probin
-	else
-	    cp $WDMERGER_HOME/source/probin $dir/$probin
-	fi
-    fi
+  touch "$dir/jobs_submitted.txt"
 
-    # Copy over all the helper scripts, so that these are 
-    # fixed in time for this run and don't change if we update the repository.
+  # Now determine all the variables that have been added
+  # since we started; then search for them in the inputs
+  # file and do a replace as needed. This relies on the 
+  # comm function, which when run with the -3 option 
+  # returns only the strings that aren't common to 
+  # both of two files. To get our variable list to 
+  # play nice with it, we use tr to replace spaces
+  # with newlines, so that comm thinks it's being 
+  # handled a file in the same format as if you did ls.
 
-    if [ ! -e "$dir/job_scripts/run_utils.sh" ]; then
-	mkdir -p "$dir/job_scripts"
-	cp -r $WDMERGER_HOME/job_scripts/*.sh $dir/job_scripts/
-    fi
+  shell_list_new=$(compgen -v)
 
-    touch "$dir/jobs_submitted.txt"
+  input_vars=$(comm -3 <( echo $shell_list | tr " " "\n" | sort) <( echo $shell_list_new | tr " " "\n" | sort))
 
-    # Now determine all the variables that have been added
-    # since we started; then search for them in the inputs
-    # file and do a replace as needed. This relies on the 
-    # comm function, which when run with the -3 option 
-    # returns only the strings that aren't common to 
-    # both of two files. To get our variable list to 
-    # play nice with it, we use tr to replace spaces
-    # with newlines, so that comm thinks it's being 
-    # handled a file in the same format as if you did ls.
+  # Loop through all new variables and call both replace_inputs_var and 
+  # replace_probin_var. These will only take action if the variable exists
+  # in the respective files, and there should not be any common variables,
+  # so there is no harm in the redundancy.
 
-    shell_list_new=$(compgen -v)
+  for var in $input_vars
+  do
 
-    input_vars=$(comm -3 <( echo $shell_list | tr " " "\n" | sort) <( echo $shell_list_new | tr " " "\n" | sort))
+      replace_inputs_var $var
+      replace_probin_var $var
 
-    # Loop through all new variables and call both replace_inputs_var and 
-    # replace_probin_var. These will only take action if the variable exists
-    # in the respective files, and there should not be any common variables,
-    # so there is no harm in the redundancy.
-
-    for var in $input_vars
-    do
-
-	replace_inputs_var $var
-	replace_probin_var $var
-
-    done
+  done
 
 }
 
@@ -721,14 +724,14 @@ function copy_files {
 
 function submit_job {
 
-    job_number=`$exec $job_script`
+  job_number=`$exec $job_script`
 
-    # Some systems like Blue Waters include the system name
-    # at the end of the number, so remove any appended text.
+  # Some systems like Blue Waters include the system name
+  # at the end of the number, so remove any appended text.
 
-    job_number=${job_number%%.*}
+  job_number=${job_number%%.*}
 
-    echo "$job_number" >> jobs_submitted.txt
+  echo "$job_number" >> jobs_submitted.txt
 
 }
 
@@ -738,9 +741,9 @@ function submit_job {
 
 function get_last_submitted_job {
 
-    job_number=$(tail -1 jobs_submitted.txt)
+  job_number=$(tail -1 jobs_submitted.txt)
 
-    echo $job_number
+  echo $job_number
 
 }
 
