@@ -333,10 +333,10 @@ function is_dir_done {
       max_step=$(get_inputs_var "max_step" $directory)
   fi
 
-  # Assume we're done, by default.
+  # Assume we're not done, by default.
 
-  time_flag=1
-  step_flag=1
+  time_flag=0
+  step_flag=0
 
   done_status=0
 
@@ -355,7 +355,7 @@ function is_dir_done {
       time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
       step_flag=$(echo "$chk_step >= $max_step" | bc)
 
-  elif [ -e $directory/$last_output ]; then
+  elif [ ! -z $last_output ] && [ -e $directory/$last_output ]; then
 
       output_time=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $6}')
       output_step=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $3}')
@@ -1071,17 +1071,23 @@ function run {
     copy_files $dir
     create_job_script $dir $nprocs $walltime
 
-    cd $dir
+    # Sometimes we'll want to set up the run directories but not submit them,
+    # e.g. for testing purposes, so if the user creates a no_submit variable,
+    # we won't actually submit this job.
 
-    # Run the job, and capture the job number for output.
+    if [ -z $no_submit ]; then
 
-    #submit_job
+	cd $dir
 
-    job_number=$(get_last_submitted_job)
+        # Run the job, and capture the job number for output.
 
-    echo "The job number is $job_number."
+	submit_job
 
-    cd - > /dev/null
+	echo "The job number is $(get_last_submitted_job)."
+
+	cd - > /dev/null
+
+    fi
 
   fi
 
