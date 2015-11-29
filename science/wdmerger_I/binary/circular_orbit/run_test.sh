@@ -38,6 +38,17 @@ function set_run_opts {
 	  nprocs=2048
 	  walltime=6:00:00
       fi
+  elif [ $MACHINE == "LIRED" ]; then
+      if   [ $ncell == 256 ]; then
+	  nprocs=144
+	  walltime=12:00:00
+      elif [ $ncell == 512 ]; then
+	  nprocs=288
+	  walltime=12:00:00
+      elif [ $ncell == 1024 ]; then
+	  nprocs=576
+	  walltime=12:00:00
+      fi
   fi
 
 
@@ -73,8 +84,8 @@ function set_run_opts {
 
 castro_rotational_period=100.0
 
-amr_check_per=20.0
-amr_plot_per=20.0
+amr_check_per=100.0
+amr_plot_per=100.0
 
 # Main test of equal and unequal mass binaries for multiple orders.
 
@@ -84,6 +95,10 @@ stop_time=$(echo "$num_periods * $castro_rotational_period" | bc -l)
 
 castro_grav_source_type=4
 castro_rot_source_type=4
+
+castro_do_react=0
+
+amr_derive_plot_vars="NONE"
 
 N_iters=$num_periods
 
@@ -95,7 +110,7 @@ do
       mass_S=0.90
   elif [ $ratio == "unequal" ]; then
       mass_P=0.90
-      mass_S=0.60
+      mass_S=0.75
   fi
 
   for castro_do_rotation in 0 1
@@ -109,10 +124,11 @@ do
   done
 done
 
-# Fixed parameters for the remainder of the tests
+# # Fixed parameters for the remainder of the tests
 
 mass_S=0.90
-mass_P=0.60
+mass_P=0.75
+
 ncell=256
 
 stop_time=$castro_rotational_period
@@ -164,24 +180,6 @@ do
   do
 
     dir=$results_dir/spatial_convergence/rot$castro_do_rotation/n$ncell
-
-    set_run_opts
-    run
-
-  done
-done
-
-# Do a time resolution test
-
-ncell=256
-castro_init_shrink=1.0
-
-for castro_do_rotation in 0 1
-do
-  for castro_fixed_dt in 0.01 0.005 0.0025 0.00125
-  do
-
-    dir=$results_dir/time_convergence/rot$castro_do_rotation/dt$castro_fixed_dt
 
     set_run_opts
     run
