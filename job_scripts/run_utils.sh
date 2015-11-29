@@ -993,6 +993,8 @@ function run {
       return
   fi
 
+  set_up_problem_dir
+
   if [ -z $nprocs ]; then
       nprocs=$ppn
   fi
@@ -1073,7 +1075,7 @@ function run {
 
     # Run the job, and capture the job number for output.
 
-    submit_job
+    #submit_job
 
     job_number=$(get_last_submitted_job)
 
@@ -1085,6 +1087,40 @@ function run {
 
 }
 
+
+
+function set_up_problem_dir {
+
+    # Upon initialization, store some variables and create results directory.
+    # We only want to initialize these variables if we're currently in a root problem directory.
+
+    if [ -d $compile_dir ]; then
+
+        # Some variables we need for storing job information.
+
+	num_jobs=
+	job_arr=()
+	state_arr=()
+	walltime_arr=()
+
+        # Fill these arrays.
+
+	get_submitted_jobs
+
+	if [ -e $compile_dir/GNUmakefile ]; then
+
+	    CASTRO=$(get_make_var executable)
+
+	fi
+	
+	if [ ! -d $plots_dir ]; then
+	    mkdir $plots_dir
+	fi
+
+
+    fi
+
+}
 
 
 ########################################################################
@@ -1112,6 +1148,18 @@ archive_method="none"
 
 do_storage=1
 
+# Directory to compile the executable in
+
+compile_dir="compile"
+
+# Directory for executing and storing results
+
+results_dir="results"
+
+# Directory for placing plots from analysis routines
+
+plots_dir="plots"
+
 # Set parameters for our archiving scripts.
 if   [ $archive_method == "htar" ]; then
     copies=2
@@ -1131,45 +1179,4 @@ elif [ $archive_method == "globus" ]; then
     # Main archiving command
 
     globus_archive="ssh $globus_username@$globus_hostname transfer -d $time_limit -s $sync_level"
-fi
-
-
-# Directory to compile the executable in
-
-compile_dir="compile"
-
-# Some variables we need for storing job information.
-
-num_jobs=
-job_arr=()
-state_arr=()
-walltime_arr=()
-
-# Fill these arrays.
-
-get_submitted_jobs
-
-# Upon initialization, store some variables and create results directory.
-# We only want to initialize these variables if we're currently in a root problem directory.
-
-if [ -d $compile_dir ]; then
-
-    if [ -e $compile_dir/GNUmakefile ]; then
-
-	CASTRO=$(get_make_var executable)
-
-    fi
-
-    # Directory for executing and storing results
-
-    results_dir="results"
-
-    # Directory for placing plots from analysis routines
-
-    plots_dir="plots"
-
-    if [ ! -d $plots_dir ]; then
-	mkdir $plots_dir
-    fi
-
 fi
