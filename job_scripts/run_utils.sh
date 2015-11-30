@@ -941,7 +941,7 @@ function create_job_script {
 
       if [ $launcher == "mpirun" ]; then
 
-	echo "mv run.OU \$(get_last_submitted_job).out" >> $dir/$job_script
+	echo "mv $job_name.OU \$(get_last_submitted_job).out" >> $dir/$job_script
 	echo "" >> $dir/$job_script
 
       fi
