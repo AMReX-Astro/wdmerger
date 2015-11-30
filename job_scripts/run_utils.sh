@@ -593,7 +593,6 @@ function archive_all {
 
 	for file in $archivelist
 	do
-	    echo $directory/output/$file
 	    archive $directory/output/$file
 	done
 
