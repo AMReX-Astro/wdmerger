@@ -276,27 +276,42 @@ Castro::sum_integrated_quantities ()
 	   wd_dist[i] = com_s[i] - com_p[i];
 	 }
 
-	 // Calculate the distance between the primary and secondary.
-
-	 separation = norm(wd_dist);
-
-	 // Calculate the angle between the initial stellar axis and
-	 // the line currently joining the two stars.
-	 // We can use the atan2 function to calculate the angle of a line 
-	 // specified by two points with respect to the initial axis.
-
-	 Real wd_cross[3] = { 0.0 };
-	 
-	 cross_product(wd_dist, wd_dist_init, wd_cross);
-
-	 Real wd_dot = dot_product(wd_dist, wd_dist_init);
-
-	 angle = atan2( norm(wd_cross), wd_dot ) * 180.0 / M_PI;
-	 if (angle < 0.0) angle += 360.0;
-
       }
 
-    } 
+    }
+
+    if (single_star != 1) {
+      
+      // Calculate the distance between the primary and secondary.
+
+      separation = norm(wd_dist);
+
+      // Calculate the angle between the initial stellar axis and
+      // the line currently joining the two stars.
+      // We can use the atan2 function to calculate the angle of a line 
+      // specified by two points with respect to the initial axis.
+
+      // Source: http://www.mathworks.com/matlabcentral/answers/16243-angle-between-two-vectors-in-3d
+      // Apparently this is numerically safer than the more usual arccos( a . b / |a| |b| ).
+      
+      Real wd_cross[3] = { 0.0 };
+      
+      cross_product(wd_dist_init, wd_dist, wd_cross);
+      
+      Real wd_dot = dot_product(wd_dist_init, wd_dist);
+      
+      angle = atan2( norm(wd_cross), wd_dot ) * 180.0 / M_PI;
+
+      // Unfortunately it doesn't give us the sign of the angle, so we'll figure it out
+      // by checking if the dot product is negative and negating the sign if so.
+      
+      if (dot_product(wd_dist, wd_dist_init) < 0.0) angle = -angle;
+
+      // Now let's transform from [-180, 180] to [0, 360].
+      
+      if (angle < 0.0) angle += 360.0;
+      
+    }
 
     // Compute effective radii of stars at various density cutoffs
 
