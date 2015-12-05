@@ -2418,9 +2418,38 @@ itself, setting:
 \right .
 \end{equation}
 
+\subsection{Source Term Predictor for the Hydrodynamics}
+\label{sec:source_term_predictor}
 
+In the original release of \castro\ we used the time-level $n$ value of the 
+gravitational and rotation source terms in constructing the edge-states for 
+the hydrodynamics update. While this is formally second-order accurate, there
+is a better choice one can make. We have information about the trend of these
+source terms from previous timesteps, so we can use a predictor method to guess
+at a more accurate value of the gravitational and rotational fields at the
+$n+1/2$ time-level the hydro is evaluated at. Our method uses a lagged linear
+extrapolation. Going into the hydro update, we have both the time-level $n$ and
+time-level $n-1$ data for $g$ (as well as the acceleration due to rotation).
+From this one can construct a simple linear estimator of (say) the gravitational
+acceleration using a backward difference scheme at time-level $n$:
+\begin{equation}
+  \mathbf{g}^{n+1/2} \approx \mathbf{g}^n + \frac{\Delta t_n}{2} \frac{d\mathbf{g}^n}{dt} \approx \mathbf{g}^n + \frac{\Delta t_n}{2}\left(\frac{\mathbf{g}^n - \mathbf{g}^{n-1}}{\Delta t_{n-1}}\right).
+\end{equation}
 
-\subsection{Gravity and Rotation Tracing}
+While both this method and the original method have second-order convergence properties,
+we have seen from testing that this new method is slightly more accurate in absolute terms.
+Finally, we note that this predictor is not applied in cases where we do not have a suitable
+time-level $n-1$ value of the source term, such as in the first timestep of a simulation.
+
+We note also that we have changed slightly how we use source terms in \castro's 
+hydrodynamics. In the original release we would explicitly handle gravity, rotation, 
+and user-defined external source terms separately in constructing the edge states. 
+At present, we sum all of these source terms prior to starting the hydrodynamics 
+update, and use a single source array with data for all components of the state. 
+Consequently, we actually do the source-term predictor shown here on this source 
+term array, rather than individually on each component of the forcing.
+
+\subsection{Source Term Tracing}
 \label{sec:gravity_rotation_tracing}
 
 We note a few additional differences between the original PPM
@@ -2429,10 +2458,15 @@ implementation, the gravitational acceleration was reconstructed as a parabola, 
 this was traced under to find the forcing that affects the interface
 for each wave.  \castro\ originally followed \citet{ppmunsplit} which instead adds
 $(\Delta t/2)g$ to the interface states for velocity at the end of the
-reconstruction.  In the current implementation, we do the original
-parabolic reconstruction and characteristic tracing of the gravitation
-source. This can be controlled in \castro\ with the parameter 
-{\tt castro.ppm\_trace\_grav}. Our system with the source appears as:
+reconstruction.  In the current implementation, we return to the original
+parabolic reconstruction and characteristic tracing. In fact, as described 
+in \autoref{sec:source_term_predictor}, since we send to the hydro a single 
+source term array that holds the sum of all the source terms (including gravity 
+and rotation), we do the parabolic reconstruction on the full source term data. 
+This can be controlled in \castro\ with the parameter {\tt castro.ppm\_trace\_sources}. 
+
+For the following explanation of how the tracing works, we consider only gravity.
+Our system with the source appears as:
 \begin{equation}
 q_t + A(q) q_x = G
 \end{equation}
@@ -2472,41 +2506,6 @@ There is one additional effect of this change---now the gravitational
 source is seen by all Riemann solves (including the transverse solves)
 whereas previously it was only added to the final unsplit interface
 states.  Both methods are second-order accurate.
-
-Similarly, we also trace under the centrifugal and Coriolis forces to capture
-the effects of rotation on the edge states. For the primitive variables, the rotation
-source term is $F_R = (0, f_R, 0)^T$, where $f_R = -2\, {\bm{\omega}} \times \mathbf{u} - {\bm\omega}\times \left({\bm\omega} \times \mathbf{r}\right).$
-Just like the gravity source, the rotation source terms only update the velocities. Therefore 
-the rotation source terms can be included in a manner identical to that of the gravity source
-terms, with the replacement of $G$ with $F_R$ and $g$ with $f_R$ in the above. This is controlled in \castro\
-with the parameter {\tt castro.ppm\_trace\_rot}.
-
-
-
-\subsection{Source Term Predictor for the Hydrodynamics}
-
-In the original release of \castro\ the value of the gravitational and rotation
-source terms used in constructing the edge-states for the hydrodynamics update
-was the time-level $n$ value. While this is formally second-order accurate, there
-is a better choice one can make. We have information about the trend of these
-source terms from previous timesteps, so we can use a predictor method to guess
-at a more accurate value of the gravitational and rotational fields at the
-$n+1/2$ time-level the hydro is evaluated at. Our method uses a lagged linear
-extrapolation. Going into the hydro update, we have both the time-level $n$ and
-time-level $n-1$ data for $g$ and $f_R$ (as defined in \autoref{sec:gravity_rotation_tracing}).
-From this one can construct a simple linear estimator of (say) the gravitational
-acceleration using a backward difference scheme at time-level $n$:
-\begin{equation}
-  \mathbf{g}(t_n + \Delta t) = \mathbf{g}(t_n) + \Delta t \left.\frac{d\mathbf{g}}{dt}\right|_{n} = \frac{3}{2}\mathbf{g}(t_n) - \frac{1}{2}\mathbf{g}(t_{n-1}).
-\end{equation}
-Here we have assumed a constant timestep for simplicity, and constructed the time derivative as
-$d\mathbf{g} / dt = (\mathbf{g}(t_n) - \mathbf{g}(t_{n-1})) / \Delta t$. We perform this
-predictor for the rotation field as well.
-
-While both this method and the original method have second-order convergence properties,
-we have seen from testing that this new method is slightly more accurate in absolute terms.
-Finally, we note that this predictor is not applied in cases where we do not have a suitable
-time-level $n-1$ value of the source term, such as in the first timestep of a simulation.
 
 
 
