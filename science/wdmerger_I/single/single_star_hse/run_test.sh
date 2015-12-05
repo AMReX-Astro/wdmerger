@@ -1,46 +1,10 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-# Problem-specific variables
-
-mass_P=" 0.90"
-mass_S="-1.00"
-
-stop_time=200.0
-castro_do_rotation=0
-
-amr_check_per=20.0
-amr_plot_per=20.0
-
-# Loop over the resolutions for the stationary case
-
-for ncell in 256 512 1024
-do
-  dir=$results_dir/static/n$ncell
-
-  if [ $ncell -eq 512 ]; then
-      amr_n_cell="256 256 256"
-      amr_ref_ratio="2"
-      amr_max_level="1"
-  elif [ $ncell -eq 1024 ]; then
-      amr_n_cell="256 256 256"
-      amr_ref_ratio="4"
-      amr_max_level="1"
-      amr_max_grid_size="32"
-  elif [ $ncell -eq 2048 ]; then
-      amr_n_cell="256 256 256"
-      amr_ref_ratio="4 2"
-      amr_max_level="2"
-      amr_max_grid_size="32 32 48"
-  else
-      amr_n_cell="$ncell $ncell $ncell"
-  fi
+function set_run_opts {
 
   if [ $MACHINE == "BLUE_WATERS" ]; then
 
-      if   [ $ncell -eq 128 ]; then
-	  nprocs=64
-	  walltime=12:00:00
-      elif [ $ncell -eq 256 ]; then
+      if   [ $ncell -eq 256 ]; then
 	  nprocs=512
 	  walltime=24:00:00
       elif [ $ncell -eq 512 ]; then
@@ -50,13 +14,89 @@ do
 	  nprocs=512
 	  walltime=24:00:00
       elif [ $ncell -eq 2048 ]; then
-	  nprocs=256
+	  nprocs=512
 	  walltime=24:00:00
+      elif [ $ncell -eq 4096 ]; then
+	  nprocs=512
+	  walltime=24:00:00
+      fi
+
+  elif [ $MACHINE == "LIRED" ]; then
+
+      if   [ $ncell -eq 256 ]; then
+	  nprocs=144
+	  walltime=12:00:00
+      elif [ $ncell -eq 512 ]; then
+	  nprocs=288
+	  walltime=12:00:00
+      elif [ $ncell -eq 1024 ]; then
+	  nprocs=576
+	  walltime=12:00:00
+      elif [ $ncell -eq 2048 ]; then
+	  nprocs=576
+	  walltime=12:00:00
+      elif [ $ncell -eq 4096 ]; then
+	  nprocs=576
+	  walltime=12:00:00
       fi
 
   fi
 
-  run $dir $nprocs $walltime
+  if [ -z $ncell ]; then
+
+      if   [ $ncell -eq 512 ]; then
+	  amr_n_cell="256 256 256"
+	  amr_ref_ratio="2"
+	  amr_max_level="1"
+      elif [ $ncell -eq 1024 ]; then
+	  amr_n_cell="256 256 256"
+	  amr_ref_ratio="4"
+	  amr_max_level="1"
+	  amr_max_grid_size="32 32"
+      elif [ $ncell -eq 2048 ]; then
+	  amr_n_cell="256 256 256"
+	  amr_ref_ratio="4 2"
+	  amr_max_level="2"
+	  amr_max_grid_size="32 32 32"
+      elif [ $ncell -eq 4096 ]; then
+	  amr_n_cell="256 256 256"
+	  amr_ref_ratio="4 4"
+	  amr_max_level="2"
+	  amr_max_grid_size="32 32 48"
+      else
+	  amr_n_cell="$ncell $ncell $ncell"
+      fi
+
+  fi
+
+
+
+}
+
+
+
+# Problem-specific variables
+
+mass_P=" 0.90"
+mass_S="-1.00"
+
+stop_time=200.0
+castro_do_react=0
+castro_do_rotation=0
+
+amr_check_per=20.0
+amr_plot_per=20.0
+
+# Loop over the resolutions for the stationary case
+
+for ncell in 256 512 1024
+do
+
+  dir=$results_dir/static/n$ncell
+
+  set_run_opts
+  run
+
 done
 
 
@@ -87,40 +127,9 @@ bulk_velz=$(echo "$bulk_velocity / sqrt(3)" | bc -l)
 for ncell in 1024 2048 4096
 do
 
-  if [ $ncell -eq 1024 ]; then
-    amr_n_cell="256 256 256"
-    amr_ref_ratio="4"
-    amr_max_level="1"
-    amr_max_grid_size="32 32"
-  elif [ $ncell -eq 2048 ]; then
-      amr_n_cell="256 256 256"
-      amr_ref_ratio="4 2"
-      amr_max_level="2"
-      amr_max_grid_size="32 32 32"
-  elif [ $ncell -eq 4096 ]; then
-      amr_n_cell="256 256 256"
-      amr_ref_ratio="4 4"
-      amr_max_level="2"
-      amr_max_grid_size="32 32 48"
-  fi
-
   dir=$results_dir/motion/n$ncell
 
-  if [ $MACHINE == "BLUE_WATERS" ]; then
-
-      if [ $ncell -eq 1024 ]; then
-	  nprocs=512
-	  walltime=24:00:00
-      elif [ $ncell -eq 2048 ]; then
-	  nprocs=512
-	  walltime=24:00:00
-      elif [ $ncell -eq 4096 ]; then
-	  nprocs=512
-	  walltime=24:00:00
-      fi
-
-  fi
-
-  run $dir $nprocs $walltime
+  set_run_opts
+  run
 
 done
