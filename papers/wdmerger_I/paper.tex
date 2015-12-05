@@ -1235,7 +1235,7 @@ to that described by \citet{maestro3} for the outer regions of the computational
 After the hydrodynamics update, we apply a damping force to the momentum
 equation as follows:
 \begin{equation}
-  (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u}^{n+1})}{1 + (\Delta t / \Delta t_S) f_S},
+  (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u})^{n+1}}{1 + (\Delta t / \Delta t_S) f_S},
 \end{equation} 
 where $\Delta t_S$ is a timescale for the sponge to operate on, and
 $f_S$ is the damping factor.  We choose it so that that the sponge is
