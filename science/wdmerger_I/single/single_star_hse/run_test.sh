@@ -42,7 +42,7 @@ function set_run_opts {
 
   fi
 
-  if [ -z $ncell ]; then
+  if [ ! -z $ncell ]; then
 
       if   [ $ncell -eq 512 ]; then
 	  amr_n_cell="256 256 256"
