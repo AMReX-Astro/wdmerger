@@ -11,6 +11,8 @@ castro_do_react=0
 
 max_step=0
 
+fab_format="NATIVE"
+
 # Now set up the runs
 
 minell=0
