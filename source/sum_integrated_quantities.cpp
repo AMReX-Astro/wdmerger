@@ -56,23 +56,15 @@ Castro::sum_integrated_quantities ()
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
 
-    Real lev_mass_p   = 0.0;
-    Real lev_mass_s   = 0.0;
-
     Real wd_dist[3] = { 0.0 };
     Real wd_dist_init[3] = { 0.0 };
     
     Real com_p[3]     = { 0.0 };
     Real com_s[3]     = { 0.0 };
-    Real lev_com_p[3] = { 0.0 };
-    Real lev_com_s[3] = { 0.0 };
  
     Real vel_p[3] = { 0.0 };
     Real vel_s[3] = { 0.0 };
     
-    Real lev_vel_p[3] = { 0.0 };
-    Real lev_vel_s[3] = { 0.0 };
-
     Real separation = 0.0;
     Real angle = 0.0;
 
@@ -132,13 +124,10 @@ Castro::sum_integrated_quantities ()
     int axis_1;
     int axis_2;
     int axis_3;
-    
+
     // Determine whether we're doing a single star simulation
     BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
-
-    // Update the problem center using the system bulk velocity
-    BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
-
+    
     // Determine various coordinate axes
     BL_FORT_PROC_CALL(GET_AXES,get_axes)(axis_1, axis_2, axis_3);
 
@@ -209,52 +198,6 @@ Castro::sum_integrated_quantities ()
     total_E_grid = gravitational_energy + rho_E;
     total_energy = total_E_grid + rotational_energy;
     
-    // Compute the center of mass locations and velocities for the primary and secondary.
-    // We'll start by predicting the current locations of their centers by taking the 
-    // old locations and updating them using the old velocities and the time passed 
-    // since the last update. Send it back to Fortran, then clear it out so we can update
-    // using the full calculation.
-
-    BL_FORT_PROC_CALL(GET_STAR_DATA,get_star_data)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
-
-    for ( int i = 0; i < 3; i++ ) {
-      com_p[i] += vel_p[i] * dt * sum_interval;
-      com_s[i] += vel_s[i] * dt * sum_interval;
-    }
-
-    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_s, &t_ff_s);
-
-    for ( int i = 0; i < 3; i++ ) {
-      com_p[i] = 0.0;
-      com_s[i] = 0.0;
-      vel_p[i] = 0.0;
-      vel_s[i] = 0.0;
-    }
-
-    mass_p = 0.0;
-    mass_s = 0.0;
-    t_ff_p = 0.0;
-    t_ff_s = 0.0;
-
-    for (int lev = 0; lev <= finest_level; lev++)
-    {
-
-      getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
-
-      mass_p += lev_mass_p;
-      mass_s += lev_mass_s;
-
-      for ( int i = 0; i < 3; i++ ) {
-	com_p[i] += lev_com_p[i];
-	com_s[i] += lev_com_s[i];
-	vel_p[i] += lev_vel_p[i];
-	vel_s[i] += lev_vel_s[i];
-      }
-
-    }
-
     // Complete calculations for center of mass quantities
 
     for ( int i = 0; i < 3; i++ ) {
@@ -262,28 +205,19 @@ Castro::sum_integrated_quantities ()
       com[i]       = com[i] / mass;
       com_vel[i]   = momentum[i] / mass;
 
-      if ( mass_p > 0.0 ) {
-	com_p[i] = com_p[i] / mass_p;
-        vel_p[i] = vel_p[i] / mass_p;
-      }
-
-      if (single_star != 1) {
-
-	 if ( mass_s > 0.0 ) {
-	   com_s[i] = com_s[i] / mass_s;
-	   vel_s[i] = vel_s[i] / mass_s;
-
-	   wd_dist[i] = com_s[i] - com_p[i];
-	 }
-
-      }
-
     }
+
+    BL_FORT_PROC_CALL(GET_STAR_DATA,get_star_data)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
     if (single_star != 1) {
       
       // Calculate the distance between the primary and secondary.
 
+      if (mass_s > 0.0)
+	for ( int i = 0; i < 3; i++ ) 
+	  wd_dist[i] = com_s[i] - com_p[i];
+    
       separation = norm(wd_dist);
 
       // Calculate the angle between the initial stellar axis and
@@ -343,14 +277,8 @@ Castro::sum_integrated_quantities ()
       t_ff_s = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_s));
     }
 
-    // Send this information back to the Fortran probdata module
 
-    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
-    
-
-    
     // Write data out to the log.
 
     if ( ParallelDescriptor::IOProcessor() )

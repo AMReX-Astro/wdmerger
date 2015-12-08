@@ -5,6 +5,110 @@
 
 #include "ParmParse.H"
 
+#ifdef do_problem_post_timestep
+void
+Castro::problem_post_timestep()
+{
+
+    if (level != 0) return;
+    std::cout << "hello\n";
+    int finest_level = parent->finestLevel();
+    Real time = state[State_Type].curTime();
+    Real dt = parent->dtLevel(0);
+
+    if (time == 0.0) dt = 0.0; // dtLevel returns the next timestep for t = 0, so overwrite    
+    
+    Real mass_p       = 0.0;
+    Real mass_s       = 0.0;
+
+    Real lev_mass_p   = 0.0;
+    Real lev_mass_s   = 0.0;
+
+    Real com_p[3]     = { 0.0 };
+    Real com_s[3]     = { 0.0 };
+
+    Real lev_com_p[3] = { 0.0 };
+    Real lev_com_s[3] = { 0.0 };
+
+    Real vel_p[3]     = { 0.0 };
+    Real vel_s[3]     = { 0.0 };
+
+    Real lev_vel_p[3] = { 0.0 };
+    Real lev_vel_s[3] = { 0.0 };
+
+
+
+    // Get the current stellar data
+    BL_FORT_PROC_CALL(GET_STAR_DATA,get_star_data)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    
+    // Update the problem center using the system bulk velocity
+    BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
+
+    for ( int i = 0; i < 3; i++ ) {
+      com_p[i] += vel_p[i] * dt;
+      com_s[i] += vel_s[i] * dt;
+    }
+
+    // Now send this first estimate of the COM to Fortran, and then re-calculate
+    // a more accurate result using it as a starting point.
+    
+    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+
+    mass_p = 0.0;
+    mass_s = 0.0;
+    
+    for ( int i = 0; i < 3; i++ ) {
+      com_p[i] = 0.0;
+      com_s[i] = 0.0;
+      vel_p[i] = 0.0;
+      vel_s[i] = 0.0;
+    }
+
+    for (int lev = 0; lev <= finest_level; lev++)
+    {
+
+      getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
+
+      mass_p += lev_mass_p;
+      mass_s += lev_mass_s;
+
+      for ( int i = 0; i < 3; i++ ) {
+	com_p[i] += lev_com_p[i];
+	com_s[i] += lev_com_s[i];
+	vel_p[i] += lev_vel_p[i];
+	vel_s[i] += lev_vel_s[i];
+      }
+
+    }
+
+    // Complete calculations for center of mass quantities
+
+    for ( int i = 0; i < 3; i++ ) {
+
+      if ( mass_p > 0.0 ) {
+	com_p[i] = com_p[i] / mass_p;
+        vel_p[i] = vel_p[i] / mass_p;
+      }
+
+      if ( mass_s > 0.0 ) {
+	com_s[i] = com_s[i] / mass_s;
+	vel_s[i] = vel_s[i] / mass_s;
+      }
+
+    }
+
+    // Send this updated information back to the Fortran probdata module
+
+    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
+      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+
+}
+#endif
+
+
+
 //
 // This function computes the center-of-mass locations (and velocities of the center of masses)
 // of the primary and secondary white dwarfs.

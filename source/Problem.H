@@ -6,6 +6,10 @@
 #endif
 #endif
 
+#ifndef do_problem_post_timestep
+#define do_problem_post_timestep
+#endif
+
 // Routine for determining white dwarf masses, centers of mass and velocities.
 
 void wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, Real* vel_p, Real* vel_s);
@@ -43,3 +47,7 @@ void problem_post_init();
 // Self-consistent field relaxation routine.
 
 void scf_relaxation();
+
+// End of timestep analytics on the white dwarf properties.
+
+void problem_post_timestep();
