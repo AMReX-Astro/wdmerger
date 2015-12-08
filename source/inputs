@@ -141,3 +141,5 @@ mg.v = 0                                           # Control verbosity in the mu
 amr.derive_plot_vars = ALL                         # Calculate all variables for plotfiles, including derived variables
 
 amr.data_log = grid_diag.out star_diag.out species_diag.out   # Name of the diagnostic sum output files
+
+fab.format = NATIVE_32                             # Write out plotfile data in single precision
