@@ -11,7 +11,7 @@ Castro::problem_post_timestep()
 {
 
     if (level != 0) return;
-    std::cout << "hello\n";
+
     int finest_level = parent->finestLevel();
     Real time = state[State_Type].curTime();
     Real dt = parent->dtLevel(0);
