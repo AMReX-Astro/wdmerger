@@ -7,7 +7,7 @@
 
 amr.probin_file = probin                           # Name of the probin file
 
-max_step = 10                                      # Maximum coarse timestep
+stop_time = 1.0                                    # Maximum simulation time
 
 geometry.is_periodic = 0 0 0                       # Non-periodic boundary conditions
 
@@ -37,7 +37,7 @@ castro.hi_bc = 2 2 2                               # Boundary conditions on hi x
 # Resolution, gridding and AMR
 ############################################################################################
 
-amr.n_cell = 128 128 128                           # Number of cells on the coarse grid
+amr.n_cell = 64 64 64                              # Number of cells on the coarse grid
 
 amr.max_level = 0                                  # Maximum level number allowed
 
