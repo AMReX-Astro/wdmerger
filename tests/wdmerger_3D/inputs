@@ -39,7 +39,8 @@ castro.hi_bc = 2 2 2                               # Boundary conditions on hi x
 
 amr.n_cell = 128 128 128                           # Number of cells on the coarse grid
 
-amr.max_level = 0                                  # Maximum level number allowed
+amr.max_level = 1                                  # Maximum level number allowed
+amr.ref_ratio = 2
 
 amr.max_grid_size = 32                             # Maximum grid size at each level
 amr.blocking_factor = 16                           # Grid sizes must be a multiple of this
