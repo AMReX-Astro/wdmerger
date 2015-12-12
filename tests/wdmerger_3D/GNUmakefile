@@ -1,3 +1,5 @@
 # Pull in the main make targets
 
-include ../../source/GNUmakefile
+WDMERGER_HOME=../../
+
+include $(WDMERGER_HOME)/source/GNUmakefile
