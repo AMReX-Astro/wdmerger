@@ -2,4 +2,4 @@
 
 DIM = 2
 
-include ../source/GNUmakefile
+include ../../source/GNUmakefile
