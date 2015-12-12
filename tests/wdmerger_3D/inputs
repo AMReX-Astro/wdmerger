@@ -37,7 +37,7 @@ castro.hi_bc = 2 2 2                               # Boundary conditions on hi x
 # Resolution, gridding and AMR
 ############################################################################################
 
-amr.n_cell = 128 128 128                           # Number of cells on the coarse grid
+amr.n_cell = 64 64 64                              # Number of cells on the coarse grid
 
 amr.max_level = 1                                  # Maximum level number allowed
 amr.ref_ratio = 2
