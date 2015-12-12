@@ -220,7 +220,8 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
     use probdata_module, only: scf_c, scf_d_vector, scf_rloc
-    use rotation_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega
+    use math_module, only: cross_product
 
     implicit none
     
@@ -280,7 +281,8 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
     use meth_params_module, only: NVAR
     use prob_params_module, only: center
     use probdata_module
-    use rotation_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega
+    use math_module, only: cross_product
 
     implicit none
     
@@ -361,7 +363,8 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
     use prob_params_module, only: center
     use probdata_module, only: axis_1, get_ambient, scf_h_max_P, scf_h_max_S, scf_enthalpy_min
     use eos_module
-    use rotation_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega
+    use math_module, only: cross_product
 
     implicit none
     

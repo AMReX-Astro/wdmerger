@@ -440,7 +440,8 @@ contains
     use initial_model_module, only: initialize_model, establish_hse
     use prob_params_module, only: center, problo, probhi, dim
     use meth_params_module, only: rot_axis
-    use rotation_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega
+    use math_module, only: cross_product
 
     implicit none
 
@@ -920,7 +921,8 @@ contains
     use bl_constants_module, only: ZERO
     use meth_params_module, only: NVAR, URHO, UMX, UMZ, UTEMP, UEINT, UEDEN, UFS, do_rotation
     use network, only: nspec
-    use rotation_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega
+    use math_module, only: cross_product
 
     implicit none
 
@@ -1038,7 +1040,8 @@ contains
 
   function inertial_velocity(loc, vel, time) result (vel_i)
     
-    use rotation_module, only: get_omega, cross_product
+    use rotation_module, only: get_omega
+    use math_module, only: cross_product
     
     implicit none
 

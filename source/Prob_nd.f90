@@ -47,7 +47,9 @@
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
      use initial_model_module, only: interpolate_3d_from_1d
-     use rotation_module, only: cross_product, get_omega
+     use math_module, only: cross_product
+     use castro_util_module, only: position
+     use rotation_module, only: get_omega
 
      implicit none
 
@@ -57,7 +59,7 @@
      double precision :: xlo(3), xhi(3), time, dx(3)
      double precision :: state(state_lo(1):state_hi(1),state_lo(2):state_hi(2),state_lo(3):state_hi(3),NVAR)
 
-     double precision :: loc(3), omega(3)
+     double precision :: loc(3), omega(3), vel(3)
      double precision :: dist_P, dist_S
 
      type (eos_t) :: zone_state, ambient_state
@@ -94,13 +96,9 @@
      !$OMP PARALLEL DO PRIVATE(i, j, k, loc) &
      !$OMP PRIVATE(dist_P, dist_S, zone_state)
      do k = lo(3), hi(3)
-        loc(3) = xlo(3) + dx(3) * dble(k + HALF - lo(3)) 
-
         do j = lo(2), hi(2)
-           loc(2) = xlo(2) + dx(2) * dble(j + HALF - lo(2))
-
            do i = lo(1), hi(1)
-              loc(1) = xlo(1) + dx(1) * dble(i + HALF - lo(1))
+              loc = position(i,j,k)
 
               dist_P = sum((loc - center_P_initial)**2)**HALF
               dist_S = sum((loc - center_S_initial)**2)**HALF
@@ -137,13 +135,12 @@
         enddo
      enddo
 
-     !$OMP PARALLEL DO PRIVATE(i, j, k, loc, dist_P, dist_S)
+     !$OMP PARALLEL DO PRIVATE(i, j, k, loc, vel, dist_P, dist_S)
      do k = lo(3), hi(3)
-        loc(3) = xlo(3) + dble(k - lo(3) + HALF)*dx(3) - center(3)
         do j = lo(2), hi(2)
-           loc(2) = xlo(2) + dble(j - lo(2) + HALF)*dx(2) - center(2)
            do i = lo(1), hi(1)
-              loc(1) = xlo(1) + dble(i - lo(1) + HALF)*dx(1) - center(1)
+
+              loc = position(i,j,k) - center
 
               ! Add any additional velocity imparted to the stars, usually
               ! from an eccentric orbit or from a collision calculation.
@@ -164,7 +161,10 @@
 
               if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. collision) ) then
 
-                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * cross_product(omega, loc)
+                 vel = cross_product(omega, loc)
+
+                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * vel(:)
+                 
                  if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))
 
               endif

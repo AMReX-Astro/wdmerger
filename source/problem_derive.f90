@@ -7,7 +7,6 @@ subroutine ca_dermomentumx(p,p_lo,p_hi,ncomp_p, &
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
-  use rotation_module, only: cross_product, get_omega
   use probdata_module, only: inertial_velocity
   
   implicit none
@@ -52,7 +51,6 @@ subroutine ca_dermomentumy(p,p_lo,p_hi,ncomp_p, &
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
-  use rotation_module, only: cross_product, get_omega
   use probdata_module, only: inertial_velocity
   
   implicit none
@@ -97,7 +95,6 @@ subroutine ca_dermomentumz(p,p_lo,p_hi,ncomp_p, &
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
-  use rotation_module, only: cross_product, get_omega
   use probdata_module, only: inertial_velocity
   
   implicit none
@@ -142,7 +139,7 @@ subroutine ca_derangmomx(L,L_lo,L_hi,ncomp_L, &
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
-  use rotation_module, only: cross_product, get_omega
+  use math_module, only: cross_product
   use probdata_module, only: inertial_velocity
   
   implicit none
@@ -186,7 +183,7 @@ subroutine ca_derangmomy(L,L_lo,L_hi,ncomp_L, &
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
-  use rotation_module, only: cross_product
+  use math_module, only: cross_product
   use probdata_module, only: inertial_velocity
   
   implicit none
@@ -230,7 +227,7 @@ subroutine ca_derangmomz(L,L_lo,L_hi,ncomp_L, &
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
-  use rotation_module, only: cross_product
+  use math_module, only: cross_product
   use probdata_module, only: inertial_velocity
   
   implicit none
