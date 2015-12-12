@@ -2,4 +2,4 @@
 
 DIM = 2
 
-include $(WDMERGER_HOME)/source/GNUmakefile
+include ../source/GNUmakefile
