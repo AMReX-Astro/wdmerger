@@ -275,7 +275,7 @@ def plot_wd_location(diag_filenames, output_filename):
         curr_ax.xaxis.set_ticks([-0.50, 0.0, 0.50])
         curr_ax.yaxis.set_ticks([-0.50, 0.0, 0.50])
 
-        curr_ax.set_aspect('auto')
+        curr_ax.set_aspect('equal')
 
         # The padding ensures that the lower-left ticks on the x- and y-axes don't overlap.
 
