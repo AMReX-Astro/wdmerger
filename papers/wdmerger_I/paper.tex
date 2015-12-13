@@ -1849,7 +1849,8 @@ We now consider the phase of the binary system where the stars are orbiting each
 at distances great enough that the initial orbits should be approximately Keplerian. 
 There are a number of effects worth looking into here. For simplicity, we choose two 
 cases to demonstrate the simulation behavior: an equal mass case of two $0.9\ \msolar$ 
-white dwarfs, and an unequal mass case of $0.9\ \msolar$ and $0.6\ \msolar$ white dwarfs.
+white dwarfs, and an unequal mass case of $0.9\ \msolar$ and $0.75\ \msolar$ white dwarfs.
+In both systems, the secondary should be stable against mass loss.
 In each case, the initial orbital period is 100 seconds.
 
 For some of the algorithms described earlier in this work, a single orbit of these 
@@ -1924,30 +1925,32 @@ evolve them for 25 orbital periods. In
 \autoref{fig:circular_orbit_comparison} we illustrate the evolution of
 these systems by plotting the center of mass locations of the white
 dwarfs on the orbital ($xy$) plane. For the equal mass case in the
-inertial reference frame, the curves essentially fall on top of each
-other, indicating that the stars are indeed orbiting at the initial
-distance without substantial deviation. In the unequal mass case, the
-stars now orbit at different distances but do not much deviate from
-their initial distance. We do observe a secular decline in the center
-of mass of these stars, indicating that eventually the stellar orbits
-will degrade due to numerical error even without intervention. The
-co-rotating frame is different.  For clarity of visualization, we
+inertial reference frame, the curves fall nearly on top of each
+other for most of the run, indicating that the stars are indeed 
+orbiting at the initial distance, at least for a while. Towards the end 
+of the run, however, the orbit starts to decay significantly, and the center-of-mass
+distance of the two stars has decreased by about 10\% after 25 orbits.
+We attribute this to non-conservation of angular momentum, which occurs 
+because our code only explicitly conserves linear momentum. This orbital 
+decay resembles the effect seen by \citet{swc:2000} for the case of neutron stars. 
+In the unequal mass case, the magnitude of the orbital decay is smaller but 
+at the end of the run the secular decline in distance is also visible. In 
+both cases the stars would likely merge due to numerical error 
+after a long enough timescale.
+
+The co-rotating frame is different.  For clarity of visualization, we
 rotate these results back into the inertial frame before displaying
-their orbits.  The stellar orbit in the equal mass case does not show
-the same secular decline, and the system appears to be
-stable. The cost is that the oscillations about this
-equilibrium are slightly larger than in the inertial frame. The
-unequal mass case displays this effect starkly, to the point where the system 
-becomes unstable: while the average distance is not substantially declining, 
-there are huge oscillations about this
-average. In addition, the stars move substantially within the rotating
-frame itself, yielding the chaotic-looking orbits in the figure. The
-oscillations grow with time and will eventually cause the stars to
-merge; however, the stars would eventually merge even in the inertial
-frame case, and at a faster rate than the equal mass case. This
-suggests that this mass ratio is too large to ignore tidal effects,
-and that the tidal effects play out much differently in the rotating
-frame.
+their orbits.  In both the equal and unequal mass cases, the centrifugal force 
+pushes the stars outward toward a new equilibrium distance that is a few 
+percent larger than its initial distance. At the end of the run, the system is 
+relatively stable, with oscillations about the new equilibrium distance. In fact 
+these oscillations occur too in the inertial frame, but they are much more pronounced 
+here. In the unequal mass case this is coupled with severe precession of the orbit, 
+which results in chatoic-looking orbits when viewed from the rotating reference frame. 
+These result from the explicit numerical consideration of the Coriolis and centrifugal 
+terms, which do not appear in the inertial frame. So while the rotating frame 
+is clearly more stable than the inertial frame, the cost is that the specific 
+dynamics may be more suspect.
 
 \begin{figure*}
   \centering
@@ -1970,7 +1973,7 @@ fairly typical cases the equal mass system in the inertial frame for
 energy conservation (\autoref{fig:energy_conservation_equal}), and the
 unequal mass system in the rotating frame for angular momentum
 conservation (\autoref{fig:angular_momentum_conservation_unequal}).
-Angular momentum is conserved to within a few percent over the 25
+Angular momentum is conserved to within 10 percent over the 25
 orbits, while energy conservation is about an order of magnitude
 better. We note that while this is already a fairly good level of
 energy conservation, it is not nearly as good as the results of
@@ -1981,7 +1984,7 @@ internal energy if it is negative. The resets impose an artificial
 floor on our ability to conserve energy, but they only happen in
 low-density regions and do not much affect the large-scale dynamics.
 Meanwhile, relative angular momentum conservation is not quite as good 
-as relative energy conservation.  This is
+as relative energy conservation.  This is 
 linked to the decline (or increase) in the size of the orbit. This
 implies that we ought to be careful in concluding that at these
 moderate resolutions we can safely evolve systems for many dozens of
@@ -1999,14 +2002,14 @@ and merger is physically (not numerically) motivated.
 \begin{figure}
   \centering
   \includegraphics[scale=0.45]{plots/unequal_angular_momentum_rot1.eps}
-  \caption{Absolute magnitude of the relative change in angular momentum of two equal mass white dwarfs after 25 orbital periods, 
+  \caption{Absolute magnitude of the relative change in angular momentum of two unequal mass white dwarfs after 25 orbital periods, 
            evolved in a co-rotating reference frame. We consider only the component of the angular moment along the rotational 
-           axis. The decline and recovery is a change in sign of the angular momentum difference.
+           axis.
            \label{fig:angular_momentum_conservation_unequal}}
 \end{figure}
 
 As a simple verification test to ensure our gravitational wave calculations are correct, we plot the 
-gravitational wave strain along the rotation axis for the first two periods of the unequal mass system. 
+gravitational wave strain along the rotation axis for the first two periods of an unequal mass system. 
 At this early time the orbit is circular and so to a good approximation we expect that the gravitational 
 wave signal should be that of two point masses, whose positions are:
 \begin{align}
@@ -2029,7 +2032,7 @@ level of agreement holds in the rotating frame as well.
 \begin{figure}
   \centering
   \includegraphics[scale=0.45]{plots/unequal_gw_rot0.eps}
-  \caption{Gravitational wave strain polarizations for the first two orbital periods of the 
+  \caption{Gravitational wave strain polarizations for the first two orbital periods of an 
            unequal mass system. The curves with markers are the numerical data, while the 
            curves without markers are the analytical results for two point masses.\label{fig:gw_strain}}
 \end{figure}
@@ -2041,7 +2044,8 @@ resolution of $256^3$ zones, as well as a single level of refinement with a jump
 two (effective resolution $512^3$) or a jump by a factor of four (effective resolution $1024^3$). 
 It is clear that at the latter resolution (corresponding to physical resolution of 100 km), 
 we have achieved convergent behavior. In the rotating frame (not shown here), the results are 
-not quite the same but for these resolutions the results do tend toward convergence.
+not quite the same but for these resolutions the results do tend toward convergence. These 
+results suggest a minimum resolution of 200 km for getting the dynamics right.
 
 \begin{figure}
   \centering
@@ -2240,11 +2244,12 @@ minimize bulk motions on static grids. A comparison of orbit
 simulations in both rotating and inertial reference frames 
 demonstrates that in practice this is not so simple, and that 
 a rotating reference frame has its own numerical issues for 
-the type of simulation we desire to perform here. Based on 
-the tests performed here, in some cases the stars may be 
-\textit{more} stable in an inertial frame despite 
-constantly being in motion on the grid. It 
-is not easy to predict the correct behavior of such systems, 
+the type of simulation we desire to perform here. While decay 
+of the stellar orbit is a commonplace feature in the inertial frame 
+but easier to avoid in the rotating frame, the rotation forces 
+can result in likely unphysical oscillations of the stars. It 
+is not easy to predict the correct behavior of such systems,
+and therefore determine which frame is closer to being correct, 
 though one recourse for assessing confidence in a model from a 
 verification standpoint is to see whether the observed 
 behavior converges with resolution. It is not clear 

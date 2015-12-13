@@ -7,10 +7,13 @@
               \colhead{ rs = 3 } & 
               \colhead{ rs = 4 } } 
   \startdata
-    gs = 1 & $ 4.8 \times 10^{-2} $ & $ 4.7 \times 10^{-2} $ & $ 4.7 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 5.4 \times 10^{-2} $ \\
-    gs = 2 & $ 4.9 \times 10^{-2} $ & $ 4.7 \times 10^{-2} $ & $ 4.7 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 5.4 \times 10^{-2} $ \\
-    gs = 3 & $ 1.0 \times 10^{ 0} $ & $ 2.7 \times 10^{ 0} $ & $ 2.7 \times 10^{ 0} $ & $ 2.7 \times 10^{ 0} $ & $ 2.6 \times 10^{ 0} $ \\
-    gs = 4 & $ 3.2 \times 10^{-4} $ & $ 1.6 \times 10^{-4} $ & $ 1.6 \times 10^{-4} $ & $ 7.5 \times 10^{-4} $ & $ 8.1 \times 10^{-4} $
+    gs = 1 & $ 4.8 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 5.7 \times 10^{-2} $ \\
+    gs = 2 & $ 4.9 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 4.6 \times 10^{-2} $ & $ 5.7 \times 10^{-2} $ \\
+    gs = 3 & $ 1.1 \times 10^{ 0} $ & $ 2.8 \times 10^{ 0} $ & $ 2.8 \times 10^{ 0} $ & $ 2.8 \times 10^{ 0} $ & $ 2.8 \times 10^{ 0} $ \\
+    gs = 4 & $ 4.4 \times 10^{-4} $ & $ 1.3 \times 10^{-3} $ & $ 1.3 \times 10^{-3} $ & $ 3.1 \times 10^{-4} $ & $ 1.0 \times 10^{-3} $
   \enddata
   \label{table:sources}
+  % Castro git hash: 806b5c927e8116bd780bdff60164afef29acbf62
+  % BoxLib git hash: e5d0548bbdfdca1aabd729f786b154f9c6340ce8
+  % wdmerger git hash: 278a688171ee92ca04ce645a86518aabaf2391dd
 \end{deluxetable*}
