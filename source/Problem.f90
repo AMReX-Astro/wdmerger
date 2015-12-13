@@ -552,18 +552,18 @@ subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, 
 
      if (dir .eq. axis_1) then
 
-        h_plus_1  = h_plus_1  + h(axis_1,axis_1)
-        h_cross_1 = h_cross_1 + h(axis_1,axis_2)
+        h_plus_1  = h_plus_1  + h(axis_2,axis_2)
+        h_cross_1 = h_cross_1 + h(axis_2,axis_3)
 
      else if (dir .eq. axis_2) then
 
-        h_plus_2  = h_plus_2  + h(axis_2,axis_2)
-        h_cross_2 = h_cross_2 + h(axis_2,axis_3)
+        h_plus_2  = h_plus_2  + h(axis_3,axis_3)
+        h_cross_2 = h_cross_2 + h(axis_3,axis_1)
 
      else if (dir .eq. axis_3) then
 
-        h_plus_3  = h_plus_3  + h(axis_3,axis_3)
-        h_cross_3 = h_cross_3 + h(axis_3,axis_1)
+        h_plus_3  = h_plus_3  + h(axis_1,axis_1)
+        h_cross_3 = h_cross_3 + h(axis_1,axis_2)
 
      endif
 
