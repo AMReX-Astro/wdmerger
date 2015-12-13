@@ -949,14 +949,18 @@ wish to emphasize that although it is commonly stated in the
 literature that fixed-mesh codes poorly conserve angular momentum,
 it is only generally true that mesh-based codes do not exactly conserve 
 angular momentum when the equations are written in conservative form
-for linear momentum. (See \cite{motl:2002} and \cite{byerly:2014} for examples of how 
-to evolve the hydrodynamics equations for angular momentum.) 
-The extent to which angular momentum conservation is violated
+for linear momentum. Indeed, \cite{motl:2002} and \cite{byerly:2014} 
+have evolved binary systems using the hydrodynamics equations written 
+in a form that explicitly conserves angular momentum, and it is 
+straightforward to convert an existing grid-based code to solve 
+the system of equations that \citeauthor{byerly:2014} present.
+Additionally, the extent to which angular momentum conservation is violated in our code
 is a function of the resolution. When the resolution is sufficiently high, 
-excellent conservation properties can result, as demonstrated in \autoref{sec:kepler}. 
-In particular, at reasonable resolution for a binary orbit our code 
-conserves angular momentum well enough that this no longer becomes 
-a strong argument in favor of using a Lagrangian method.
+excellent conservation properties can result. At reasonable resolution 
+for a binary orbit our code conserves angular momentum well enough 
+to keep the stars stable for a large number of orbits; however, at moderate 
+resolution in an inertial frame, there is a secular loss of angular 
+momentum that eventually will result in a spurious merger.
 We note that as the stars begin to coalesce, the rotating reference frame
 will no longer provide a good approximation to the spatial motion of
 the stars and then they will begin to significantly move around the
