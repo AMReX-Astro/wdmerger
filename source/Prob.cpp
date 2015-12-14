@@ -39,11 +39,10 @@ Castro::problem_post_timestep()
 
 
     // Get the current stellar data
-    BL_FORT_PROC_CALL(GET_STAR_DATA,get_star_data)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
     
     // Update the problem center using the system bulk velocity
-    BL_FORT_PROC_CALL(UPDATE_CENTER,update_center)(&time);
+    update_center(&time);
 
     for ( int i = 0; i < 3; i++ ) {
       com_p[i] += vel_p[i] * dt;
@@ -53,8 +52,7 @@ Castro::problem_post_timestep()
     // Now send this first estimate of the COM to Fortran, and then re-calculate
     // a more accurate result using it as a starting point.
     
-    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
     mass_p = 0.0;
     mass_s = 0.0;
@@ -101,8 +99,7 @@ Castro::problem_post_timestep()
 
     // Send this updated information back to the Fortran probdata module
 
-    BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
 }
 #endif
@@ -176,18 +173,17 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
         const int* lo   = box.loVect();
         const int* hi   = box.hiVect();
 
-	BL_FORT_PROC_CALL(WDCOM,wdcom)
-            (BL_TO_FORTRAN_3D(fabrho),
-	     BL_TO_FORTRAN_3D(fabxmom),
-	     BL_TO_FORTRAN_3D(fabymom),
-	     BL_TO_FORTRAN_3D(fabzmom),
-	     BL_TO_FORTRAN_3D(volume[mfi]),
-	     ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
-	     &com_p_x, &com_p_y, &com_p_z,
-	     &com_s_x, &com_s_y, &com_s_z,
-	     &vel_p_x, &vel_p_y, &vel_p_z,
-	     &vel_s_x, &vel_s_y, &vel_s_z,
-	     &mp, &ms);
+	wdcom(BL_TO_FORTRAN_3D(fabrho),
+	      BL_TO_FORTRAN_3D(fabxmom),
+	      BL_TO_FORTRAN_3D(fabymom),
+	      BL_TO_FORTRAN_3D(fabzmom),
+	      BL_TO_FORTRAN_3D(volume[mfi]),
+	      ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
+	      &com_p_x, &com_p_y, &com_p_z,
+	      &com_s_x, &com_s_y, &com_s_z,
+	      &vel_p_x, &vel_p_y, &vel_p_z,
+	      &vel_s_x, &vel_s_y, &vel_s_z,
+	      &mp, &ms);
     }
 
     delete mfrho;
@@ -262,8 +258,10 @@ void Castro::volInBoundary (Real               time,
         const int* lo   = box.loVect();
         const int* hi   = box.hiVect();
 
-	BL_FORT_PROC_CALL(CA_VOLUMEINDENSITYBOUNDARY,ca_volumeindensityboundary)
-	  (BL_TO_FORTRAN_3D(fab),BL_TO_FORTRAN_3D(volume[mfi]),ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&sp,&ss,&rho_cutoff);
+	ca_volumeindensityboundary(BL_TO_FORTRAN_3D(fab),
+				   BL_TO_FORTRAN_3D(volume[mfi]),
+				   ARLIM_3D(lo),ARLIM_3D(hi),
+				   ZFILL(dx),&sp,&ss,&rho_cutoff);
         vp += sp;
 	vs += ss;
     }
@@ -357,16 +355,15 @@ Castro::gwstrain (Real time,
 	    const int* lo   = box.loVect();
 	    const int* hi   = box.hiVect();
 
-	    BL_FORT_PROC_CALL(QUADRUPOLE_TENSOR_DOUBLE_DOT,quadrupole_tensor_double_dot)
-	        (BL_TO_FORTRAN_3D((*mfrho)[mfi]),
-		 BL_TO_FORTRAN_3D((*mfxmom)[mfi]),
-		 BL_TO_FORTRAN_3D((*mfymom)[mfi]),
-		 BL_TO_FORTRAN_3D((*mfzmom)[mfi]),
-		 BL_TO_FORTRAN_3D((*mfgravx)[mfi]),
-		 BL_TO_FORTRAN_3D((*mfgravy)[mfi]),
-		 BL_TO_FORTRAN_3D((*mfgravz)[mfi]),
-		 BL_TO_FORTRAN_3D(volume[mfi]),
-		 ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
+	    quadrupole_tensor_double_dot(BL_TO_FORTRAN_3D((*mfrho)[mfi]),
+					 BL_TO_FORTRAN_3D((*mfxmom)[mfi]),
+					 BL_TO_FORTRAN_3D((*mfymom)[mfi]),
+					 BL_TO_FORTRAN_3D((*mfzmom)[mfi]),
+					 BL_TO_FORTRAN_3D((*mfgravx)[mfi]),
+					 BL_TO_FORTRAN_3D((*mfgravy)[mfi]),
+					 BL_TO_FORTRAN_3D((*mfgravz)[mfi]),
+					 BL_TO_FORTRAN_3D(volume[mfi]),
+					 ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
 #ifdef _OPENMP
 		 priv_Qtt[tid].dataPtr());
 #else
@@ -406,11 +403,10 @@ Castro::gwstrain (Real time,
     // Now that we have the second time derivative of the quadrupole 
     // tensor, we can calculate the transverse-trace gauge strain tensor.
 
-    BL_FORT_PROC_CALL(GW_STRAIN_TENSOR,gw_strain_tensor)
-        (&h_plus_1, &h_cross_1,
-	 &h_plus_2, &h_cross_2,
-	 &h_plus_3, &h_cross_3, 
-	 Qtt.dataPtr(), &time);
+    gw_strain_tensor(&h_plus_1, &h_cross_1,
+		     &h_plus_2, &h_cross_2,
+		     &h_plus_3, &h_cross_3, 
+		     Qtt.dataPtr(), &time);
 
 }
 
@@ -468,7 +464,7 @@ void Castro::problem_post_init() {
 
     int do_scf_initial_models = 0;
 
-    BL_FORT_PROC_CALL(GET_DO_SCF_INITIAL_MODELS,get_do_scf_initial_models)(do_scf_initial_models);
+    get_do_scf_initial_models(do_scf_initial_models);
 
     if (do_scf_initial_models) {
 

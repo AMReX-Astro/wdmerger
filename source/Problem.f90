@@ -1,6 +1,6 @@
 ! Problem-specific Fortran routines that are designed to interact with C++
 
-subroutine problem_checkpoint(int_dir_name, len)
+subroutine problem_checkpoint(int_dir_name, len) bind(C)
 
   ! called by the IO processor during checkpoint
 
@@ -42,7 +42,7 @@ end subroutine problem_checkpoint
 
 
 
-subroutine problem_restart(int_dir_name, len)
+subroutine problem_restart(int_dir_name, len) bind(C)
 
   ! called by ALL processors during restart 
 
@@ -86,7 +86,7 @@ end subroutine problem_restart
 
 ! Return whether we're doing a single star simulation or not.
 
-subroutine get_single_star(flag)
+subroutine get_single_star(flag) bind(C)
 
  use probdata_module, only: single_star
 
@@ -120,7 +120,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
                  com_s_x, com_s_y, com_s_z, &
                  vel_p_x, vel_p_y, vel_p_z, &
                  vel_s_x, vel_s_y, vel_s_z, &
-                 m_p, m_s)
+                 m_p, m_s) bind(C)
 
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo
@@ -226,7 +226,7 @@ end subroutine wdcom
 ! We also impose a distance requirement so that we only look 
 ! at zones within the Roche lobe of the white dwarf.
 
-subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,vols,rho_cutoff)
+subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,vols,rho_cutoff) bind(C)
 
   use bl_constants_module
   use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
@@ -284,7 +284,7 @@ end subroutine ca_volumeindensityboundary
 
 ! Return the locations of the stellar centers of mass
 
-subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
+subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
 
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
 
@@ -309,10 +309,10 @@ end subroutine get_star_data
 
 ! Set the locations of the stellar centers of mass
 
-subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
+subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
 
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, &
-                             roche_rad_P, roche_rad_S, single_star
+                             roche_rad_P, roche_rad_S, single_star, get_roche_radii
   use prob_params_module, only: center
   use bl_constants_module, only: TENTH, ZERO
 
@@ -368,7 +368,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
                                         xmom, px_lo, px_hi, ymom, py_lo, py_hi, zmom, pz_lo, pz_hi, &
                                         gravx, gx_lo, gx_hi, gravy, gy_lo, gy_hi, gravz, gz_lo, gz_hi, &
                                         vol, vo_lo, vo_hi, &
-                                        lo, hi, dx, time, Qtt)
+                                        lo, hi, dx, time, Qtt) bind(C)
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
@@ -473,7 +473,7 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, Qtt, time)
+subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, Qtt, time) bind(C)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
@@ -573,39 +573,7 @@ end subroutine gw_strain_tensor
 
 
 
-! Given the mass ratio q of two stars (assumed to be q = M_1 / M_2), 
-! compute the effective Roche radii of the stars, normalized to unity, 
-! using the approximate formula of Eggleton (1983). We then 
-! scale them appropriately using the current orbital distance.
-
-subroutine get_roche_radii(mass_ratio, r_1, r_2, a)
-
-  use bl_constants_module, only: ONE, TWO3RD, THIRD
-
-  implicit none
-
-  double precision, intent(in   ) :: mass_ratio, a
-  double precision, intent(inout) :: r_1, r_2
-
-  double precision :: q
-  double precision :: c1, c2
-
-  c1 = 0.49d0
-  c2 = 0.60d0
-
-  q = mass_ratio
-
-  r_1 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
-
-  q = ONE / q
-
-  r_2 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
-
-end subroutine get_roche_radii
-
-
-
-subroutine update_center(time)
+subroutine update_center(time) bind(C)
 
   use bl_constants_module, only: ZERO  
   use probdata_module, only: bulk_velx, bulk_vely, bulk_velz, &
@@ -644,7 +612,7 @@ end subroutine update_center
 
 ! Updates the CASTRO rotational period.
 
-subroutine set_period(period)
+subroutine set_period(period) bind(C)
 
   use meth_params_module, only: rot_period
 
@@ -660,7 +628,7 @@ end subroutine set_period
 
 ! Returns the CASTRO rotation frequency vector.
 
-subroutine get_omega_vec(omega_in, time)
+subroutine get_omega_vec(omega_in, time) bind(C)
 
   use rotation_module, only: get_omega
 
@@ -676,7 +644,7 @@ end subroutine get_omega_vec
 
 ! Returns the CASTRO rotation frequency vector.
 
-subroutine get_axes(axis_1_in, axis_2_in, axis_3_in)
+subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C)
 
   use probdata_module, only: axis_1, axis_2, axis_3
 
@@ -694,7 +662,7 @@ end subroutine get_axes
 
 ! Returns whether we are doing a relaxation step.
 
-subroutine get_do_scf_initial_models(do_scf_initial_models_out)
+subroutine get_do_scf_initial_models(do_scf_initial_models_out) bind(C)
 
   use probdata_module, only: do_scf_initial_models
 

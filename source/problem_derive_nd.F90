@@ -3,7 +3,7 @@
 subroutine ca_dermomentumx(p,p_lo,p_hi,ncomp_p, &
                            u,u_lo,u_hi,ncomp_u, &
                            lo,hi,domlo,domhi, &
-                           dx,xlo,time,dt,bc,level,grid_no)
+                           dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -47,7 +47,7 @@ end subroutine ca_dermomentumx
 subroutine ca_dermomentumy(p,p_lo,p_hi,ncomp_p, &
                            u,u_lo,u_hi,ncomp_u, &
                            lo,hi,domlo,domhi, &
-                           dx,xlo,time,dt,bc,level,grid_no)
+                           dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -91,7 +91,7 @@ end subroutine ca_dermomentumy
 subroutine ca_dermomentumz(p,p_lo,p_hi,ncomp_p, &
                            u,u_lo,u_hi,ncomp_u, &
                            lo,hi,domlo,domhi, &
-                           dx,xlo,time,dt,bc,level,grid_no)
+                           dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -135,7 +135,7 @@ end subroutine ca_dermomentumz
 subroutine ca_derangmomx(L,L_lo,L_hi,ncomp_L, &
                          u,u_lo,u_hi,ncomp_u, &
                          lo,hi,domlo,domhi, &
-                         dx,xlo,time,dt,bc,level,grid_no)
+                         dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -179,7 +179,7 @@ end subroutine ca_derangmomx
 subroutine ca_derangmomy(L,L_lo,L_hi,ncomp_L, &
                          u,u_lo,u_hi,ncomp_u, &
                          lo,hi,domlo,domhi, &
-                         dx,xlo,time,dt,bc,level,grid_no)
+                         dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -223,7 +223,7 @@ end subroutine ca_derangmomy
 subroutine ca_derangmomz(L,L_lo,L_hi,ncomp_L, &
                          u,u_lo,u_hi,ncomp_u, &
                          lo,hi,domlo,domhi, &
-                         dx,xlo,time,dt,bc,level,grid_no)
+                         dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
   use bl_constants_module, only: HALF
   use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT

@@ -1,5 +1,7 @@
+extern "C"
+{
 
-BL_FORT_PROC_DECL(CA_DERMOMENTUMX,ca_dermomentumx)
+  void ca_dermomentumx
     (BL_FORT_FAB_ARG_3D(der),const int* nvar,
      const BL_FORT_FAB_ARG_3D(data),const int* ncomp,
      const int* lo, const int* hi,
@@ -8,7 +10,7 @@ BL_FORT_PROC_DECL(CA_DERMOMENTUMX,ca_dermomentumx)
      const Real* time, const Real* dt, const int* bcrec, 
      const int* level, const int* grid_no);
 
-BL_FORT_PROC_DECL(CA_DERMOMENTUMY,ca_dermomentumy)
+  void ca_dermomentumy
     (BL_FORT_FAB_ARG_3D(der),const int* nvar,
      const BL_FORT_FAB_ARG_3D(data),const int* ncomp,
      const int* lo, const int* hi,
@@ -17,7 +19,7 @@ BL_FORT_PROC_DECL(CA_DERMOMENTUMY,ca_dermomentumy)
      const Real* time, const Real* dt, const int* bcrec, 
      const int* level, const int* grid_no);
 
-BL_FORT_PROC_DECL(CA_DERMOMENTUMZ,ca_dermomentumz)
+  void ca_dermomentumz
     (BL_FORT_FAB_ARG_3D(der),const int* nvar,
      const BL_FORT_FAB_ARG_3D(data),const int* ncomp,
      const int* lo, const int* hi,
@@ -26,7 +28,7 @@ BL_FORT_PROC_DECL(CA_DERMOMENTUMZ,ca_dermomentumz)
      const Real* time, const Real* dt, const int* bcrec, 
      const int* level, const int* grid_no);
 
-BL_FORT_PROC_DECL(CA_DERANGMOMX,ca_derangmomx)
+  void ca_derangmomx
     (BL_FORT_FAB_ARG_3D(der),const int* nvar,
      const BL_FORT_FAB_ARG_3D(data),const int* ncomp,
      const int* lo, const int* hi,
@@ -35,7 +37,7 @@ BL_FORT_PROC_DECL(CA_DERANGMOMX,ca_derangmomx)
      const Real* time, const Real* dt, const int* bcrec, 
      const int* level, const int* grid_no);
 
-BL_FORT_PROC_DECL(CA_DERANGMOMY,ca_derangmomy)
+  void ca_derangmomy
     (BL_FORT_FAB_ARG_3D(der),const int* nvar,
      const BL_FORT_FAB_ARG_3D(data),const int* ncomp,
      const int* lo, const int* hi,
@@ -44,7 +46,7 @@ BL_FORT_PROC_DECL(CA_DERANGMOMY,ca_derangmomy)
      const Real* time, const Real* dt, const int* bcrec, 
      const int* level, const int* grid_no);
 
-BL_FORT_PROC_DECL(CA_DERANGMOMZ,ca_derangmomz)
+  void ca_derangmomz
     (BL_FORT_FAB_ARG_3D(der),const int* nvar,
      const BL_FORT_FAB_ARG_3D(data),const int* ncomp,
      const int* lo, const int* hi,
@@ -53,3 +55,4 @@ BL_FORT_PROC_DECL(CA_DERANGMOMZ,ca_derangmomz)
      const Real* time, const Real* dt, const int* bcrec, 
      const int* level, const int* grid_no);
 
+}

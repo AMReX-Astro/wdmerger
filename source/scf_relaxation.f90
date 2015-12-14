@@ -1,4 +1,4 @@
-subroutine scf_setup_relaxation(dx, problo, probhi)
+subroutine scf_setup_relaxation(dx, problo, probhi) bind(C)
 
     use bl_constants_module, only: HALF, ONE, TWO
     use prob_params_module, only: center
@@ -118,7 +118,7 @@ end subroutine scf_setup_relaxation
 
 
 
-subroutine scf_get_coeff_info(loc_A,loc_B,loc_C,c_A,c_B,c_C)
+subroutine scf_get_coeff_info(loc_A,loc_B,loc_C,c_A,c_B,c_C) bind(C)
 
   use probdata_module, only: scf_rloc, scf_c
 
@@ -142,7 +142,7 @@ end subroutine scf_get_coeff_info
 subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
                            state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
                            phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                           dx,problo,probhi,time,omegasq)
+                           dx,problo,probhi,time,omegasq) bind(C)
 
     use bl_constants_module, only: ONE, TWO
     use meth_params_module, only: NVAR
@@ -215,7 +215,7 @@ end subroutine scf_get_omegasq
 subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
                                    state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
                                    phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                                   dx,problo,probhi,time,bernoulli_1,bernoulli_2)
+                                   dx,problo,probhi,time,bernoulli_1,bernoulli_2) bind(C)
 
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
@@ -275,7 +275,7 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
                                   phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
                                   enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
                                   dx,problo,probhi,time, &
-                                  bernoulli_1,bernoulli_2,h_max_1,h_max_2)
+                                  bernoulli_1,bernoulli_2,h_max_1,h_max_2) bind(C)
 
     use bl_constants_module, only: ZERO, HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
@@ -355,7 +355,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
                               h_max_1,h_max_2, &
                               kin_eng, pot_eng, int_eng, &
                               left_mass, right_mass, &
-                              delta_rho, l2_norm_resid, l2_norm_source)
+                              delta_rho, l2_norm_resid, l2_norm_source) bind(C)
 
     use bl_constants_module, only: ZERO, ONE, TWO, M_PI
     use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS
@@ -480,7 +480,7 @@ end subroutine scf_update_density
 subroutine scf_check_convergence(kin_eng, pot_eng, int_eng, &
                                  left_mass, right_mass, &
                                  delta_rho, l2_norm, &
-                                 is_relaxed, num_iterations)
+                                 is_relaxed, num_iterations) bind(C)
 
   use probdata_module, only: scf_relax_tol, ioproc
   use meth_params_module, only: rot_period

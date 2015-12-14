@@ -1,4 +1,4 @@
-   subroutine PROBINIT (init,name,namlen,problo,probhi)
+   subroutine PROBINIT (init,name,namlen,problo,probhi) bind(C)
      
      use probdata_module, only: initialize
 
@@ -36,7 +36,7 @@
    ! ::: -----------------------------------------------------------
    subroutine ca_initdata(level,time,lo,hi,nscal, &
                           state,state_lo,state_hi, &
-                          dx,xlo,xhi)
+                          dx,xlo,xhi) bind(C)
 
      use probdata_module
      use prob_params_module, only: center, dim

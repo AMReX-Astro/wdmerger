@@ -1055,6 +1055,38 @@ contains
     vel_i = vel + cross_product(omega, loc)
 
   end function inertial_velocity
+
+
+  
+  ! Given the mass ratio q of two stars (assumed to be q = M_1 / M_2), 
+  ! compute the effective Roche radii of the stars, normalized to unity, 
+  ! using the approximate formula of Eggleton (1983). We then 
+  ! scale them appropriately using the current orbital distance.
+  
+  subroutine get_roche_radii(mass_ratio, r_1, r_2, a) bind(C)
+
+    use bl_constants_module, only: ONE, TWO3RD, THIRD
+
+    implicit none
+
+    double precision, intent(in   ) :: mass_ratio, a
+    double precision, intent(inout) :: r_1, r_2
+
+    double precision :: q
+    double precision :: c1, c2
+
+    c1 = 0.49d0
+    c2 = 0.60d0
+
+    q = mass_ratio
+
+    r_1 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
+
+    q = ONE / q
+
+    r_2 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
+
+  end subroutine get_roche_radii
   
   
 end module probdata_module

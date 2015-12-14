@@ -42,11 +42,9 @@ void Castro::scf_relaxation() {
   int loc_B[3] = {0};
   int loc_C[3] = {0};
 
-  BL_FORT_PROC_CALL(SCF_SETUP_RELAXATION,scf_setup_relaxation)
-    (dx, problo, probhi);
+  scf_setup_relaxation(dx, problo, probhi);
 
-  BL_FORT_PROC_CALL(SCF_GET_COEFF_INFO,scf_get_coeff_info)
-    (loc_A, loc_B, loc_C, cA.dataPtr(), cB.dataPtr(), cC.dataPtr());
+  scf_get_coeff_info(loc_A, loc_B, loc_C, cA.dataPtr(), cB.dataPtr(), cC.dataPtr());
 
   // Get the phi MultiFab.
 
@@ -76,11 +74,10 @@ void Castro::scf_relaxation() {
 
        Real osq = 0.0;
 
-       BL_FORT_PROC_CALL(SCF_GET_OMEGASQ,scf_get_omegasq)
-	 (lo, hi, domlo, domhi,
-	  BL_TO_FORTRAN(S_new[mfi]),
-	  BL_TO_FORTRAN(phi[mfi]),
-	  dx, problo, probhi, &time, &osq);
+       scf_get_omegasq(lo, hi, domlo, domhi,
+		       BL_TO_FORTRAN(S_new[mfi]),
+		       BL_TO_FORTRAN(phi[mfi]),
+		       dx, problo, probhi, &time, &osq);
 
        omegasq += osq;
 
@@ -99,7 +96,7 @@ void Castro::scf_relaxation() {
 
      // Now save the updated rotational frequency in the Fortran module.
 
-     BL_FORT_PROC_CALL(SET_PERIOD, set_period)(&rotational_period);
+     set_period(&rotational_period);
 
 
 
@@ -120,11 +117,10 @@ void Castro::scf_relaxation() {
        Real b1 = 0.0;
        Real b2 = 0.0;
 
-       BL_FORT_PROC_CALL(SCF_GET_BERNOULLI_CONST,scf_get_bernoulli_const)
-	 (lo, hi, domlo, domhi,
-	  BL_TO_FORTRAN(S_new[mfi]),
-	  BL_TO_FORTRAN(phi[mfi]),
-	  dx, problo, probhi, &time, &b1, &b2);
+       scf_get_bernoulli_const(lo, hi, domlo, domhi,
+			       BL_TO_FORTRAN(S_new[mfi]),
+			       BL_TO_FORTRAN(phi[mfi]),
+			       dx, problo, probhi, &time, &b1, &b2);
 
        bernoulli_1 += b1;
        bernoulli_2 += b2;
@@ -159,13 +155,12 @@ void Castro::scf_relaxation() {
        Real h1 = 0.0;
        Real h2 = 0.0;
 
-       BL_FORT_PROC_CALL(SCF_CONSTRUCT_ENTHALPY,scf_construct_enthalpy)
-	 (lo, hi, domlo, domhi,
-	  BL_TO_FORTRAN(S_new[mfi]),
-	  BL_TO_FORTRAN(phi[mfi]),
-	  BL_TO_FORTRAN(enthalpy[mfi]),
-	  dx, problo, probhi, &time,  
-	  &bernoulli_1, &bernoulli_2, &h1, &h2);
+       scf_construct_enthalpy(lo, hi, domlo, domhi,
+			      BL_TO_FORTRAN(S_new[mfi]),
+			      BL_TO_FORTRAN(phi[mfi]),
+			      BL_TO_FORTRAN(enthalpy[mfi]),
+			      dx, problo, probhi, &time,  
+			      &bernoulli_1, &bernoulli_2, &h1, &h2);
 
        if (h1 > h_max_1) h_max_1 = h1;
        if (h2 > h_max_2) h_max_2 = h2;
@@ -207,16 +202,15 @@ void Castro::scf_relaxation() {
        Real nr = 0.0;
        Real ns = 0.0;
 
-       BL_FORT_PROC_CALL(SCF_UPDATE_DENSITY,scf_update_density)
-	 (lo, hi, domlo, domhi,
-	  BL_TO_FORTRAN(S_new[mfi]),
-	  BL_TO_FORTRAN(phi[mfi]),
-	  BL_TO_FORTRAN(enthalpy[mfi]),
-	  dx, problo, probhi, &time, 
-	  &h_max_1, &h_max_2,
-	  &ke, &pe, &ie,
-	  &lm, &rm,
-	  &dr, &nr, &ns);
+       scf_update_density(lo, hi, domlo, domhi,
+			  BL_TO_FORTRAN(S_new[mfi]),
+			  BL_TO_FORTRAN(phi[mfi]),
+			  BL_TO_FORTRAN(enthalpy[mfi]),
+			  dx, problo, probhi, &time, 
+			  &h_max_1, &h_max_2,
+			  &ke, &pe, &ie,
+			  &lm, &rm,
+			  &dr, &nr, &ns);
 
        kin_eng += ke;
        pot_eng += pe;
@@ -247,11 +241,10 @@ void Castro::scf_relaxation() {
 
      // Now check to see if we're converged.
 
-     BL_FORT_PROC_CALL(SCF_CHECK_CONVERGENCE,scf_check_convergence)
-       (&kin_eng, &pot_eng, &int_eng, 
-	&left_mass, &right_mass,
-	&delta_rho, &l2_norm, 
-	&is_relaxed, &j);
+     scf_check_convergence(&kin_eng, &pot_eng, &int_eng, 
+			   &left_mass, &right_mass,
+			   &delta_rho, &l2_norm, 
+			   &is_relaxed, &j);
 
      //	for (int k = finest_level-1; k >= 0; k--)
      //	  getLevel(k).avgDown();
