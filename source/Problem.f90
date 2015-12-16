@@ -642,6 +642,153 @@ end subroutine update_center
 
 
 
+! Calculate Lagrange points. In each case we give the zone index
+! closest to it (assuming we're on the coarse grid).
+
+subroutine lagrange_points
+
+  use bl_constants_module
+  use probdata_module, only: mass_P, mass_S, com_P, com_S, L1_idx
+  use prob_params_module, only: dx_level
+  use amrinfo_module, only: amr_level
+  
+  implicit none
+
+  double precision :: r2 ! Distance from L1 to secondary
+  double precision :: R  ! Distance between secondary and primary
+
+  double precision :: L1, dL1dr ! Bring in external function declarations
+  
+  double precision :: r2_old ! For the root find
+  double precision :: tolerance = 1.0d-6
+  integer          :: max_iters = 100
+  
+  integer          :: i
+
+  ! Don't try to calculate the Lagrange point if the secondary
+  ! is already gone.
+  
+  if (mass_S < ZERO) return
+  
+  R = sqrt(sum((com_P - com_S)**2))
+
+  ! Do a root-find over the quintic equation for L1. The initial
+  ! guess will be the case of equal mass, i.e. that the Lagrange point
+  ! is midway in between the stars.
+
+  r2 = HALF * R
+
+  do i = 1, max_iters
+
+     r2_old = r2
+
+     r2 = r2_old - L1(mass_P, mass_S, r2_old, R) / dL1dr(mass_P, mass_S, r2_old, R)
+
+     if (abs( (r2 - r2_old) / r2_old ) < tolerance) then
+        exit
+     endif     
+
+  enddo
+  
+  if (i > max_iters) then
+     call bl_error("L1 Lagrange point root find unable to converge.")
+  endif
+
+  ! Now convert this radial distance between the two stars
+  ! into a zone index. Remember that it has to be along the
+  ! line joining the two stars.
+
+  L1_idx(:) = (com_P(:) + r2 * abs(com_S(:) - com_P(:)) / R) / dx_level(:,amr_level)
+
+end subroutine
+
+
+
+function L1(M1, M2, r2, R) result(func)
+
+  use bl_constants_module
+
+  implicit none
+
+  double precision :: M1, M2, r2, R
+  double precision :: func
+
+  func = M1 * r2**2 * R**5 - M2 * (R - r2)**2 * R**5 &
+       - M1 * (R - r2)**2 * r2**2 * R**3 + (M1 + M2) * r2**3  * R**2 * (R - r2)**2
+
+end function L1
+
+
+
+function dL1dr(M1, M2, r2, R) result(func)
+
+  use bl_constants_module
+
+  implicit none
+
+  double precision :: M1, M2, r2, R
+  double precision :: func
+
+  func = TWO * M1 * r2 * R**5 + TWO * M2 * (R - r2) * R**5 &
+       + TWO * M1 * (R - r2) * r2**2 * R**3 - TWO * M1 * (R - r2) * r2 * R**3 &
+       + THREE * (M1 + M2) * r2**2  * R**2 * (R - r2)**2 - TWO * (M1 + M2) * r2**3 * R**2 * (R - r2)
+
+end function dL1dr
+
+
+
+! Check whether we should stop the initial relaxation.
+! If so, set do_initial_relaxation to false, which will effectively
+! turn off the external source terms.
+
+subroutine check_relaxation(state, s_lo, s_hi, lo, hi, is_done)
+
+  use meth_params_module, only: URHO, NVAR
+  use probdata_module, only: do_initial_relaxation, relaxation_density_cutoff, L1_idx
+  
+  implicit none
+
+  integer :: lo(3), hi(3)
+  integer :: s_lo(3), s_hi(3)
+  integer :: is_done
+  double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+
+  ! Check if the Lagrange point is in this box.
+  
+  if ( lo(1) .le. L1_idx(1) .and. hi(1) .ge. L1_idx(1) .and. &
+       lo(2) .le. L1_idx(2) .and. hi(2) .ge. L1_idx(2) .and. &
+       lo(3) .le. L1_idx(3) .and. hi(3) .ge. L1_idx(3) ) then
+
+     ! If so, check if the density in that zone is above the cutoff.
+
+     if (state(L1_idx(1),L1_idx(2),L1_idx(3),URHO) > relaxation_density_cutoff) then
+
+        is_done = 1
+        
+     endif
+
+  endif
+  
+end subroutine check_relaxation
+
+
+
+subroutine turn_off_relaxation
+
+  use probdata_module, only: do_initial_relaxation, ioproc
+  
+  implicit none
+
+  do_initial_relaxation = .false.
+
+  if (ioproc .eq. 1) then
+     print *, "Initial relaxation phase terminated."
+  endif
+  
+end subroutine turn_off_relaxation
+
+
+
 ! Updates the CASTRO rotational period.
 
 subroutine set_period(period)

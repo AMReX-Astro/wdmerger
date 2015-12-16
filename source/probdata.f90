@@ -99,9 +99,13 @@ module probdata_module
   ! Stores the effective Roche radii
   double precision :: roche_rad_P, roche_rad_S
 
+  ! Lagrange point zone indices
+  integer          :: L1_idx(3)
+
   ! Relaxation parameters
   logical          :: do_initial_relaxation
   double precision :: relaxation_timescale
+  double precision :: relaxation_density_cutoff
 
   ! Input parameters for SCF relaxation
   logical          :: do_scf_initial_models
@@ -190,6 +194,7 @@ contains
          interp_temp, &
          do_initial_relaxation, &
          relaxation_timescale, &
+         relaxation_density_cutoff, &
          do_scf_initial_models, &
          scf_d_A, scf_d_B, scf_d_C, &
          scf_relax_tol, &
@@ -260,6 +265,7 @@ contains
 
     do_initial_relaxation = .false.
     relaxation_timescale = 0.001
+    relaxation_density_cutoff = 1.0d0
 
     do_scf_initial_models = .false.
     scf_d_A = 1.0d9

@@ -64,6 +64,14 @@ BL_FORT_PROC_DECL(UPDATE_CENTER,update_center)
 BL_FORT_PROC_DECL(GET_OMEGA_VEC,get_omega_vec)
    (const Real omega[], const Real& time);
 
+BL_FORT_PROC_DECL(LAGRANGE_POINTS,lagrange_points)();
+
+BL_FORT_PROC_DECL(CHECK_RELAXATION,check_relaxation)
+   (BL_FORT_FAB_ARG_3D(state),
+    const int* lo, const int* hi, int& is_done);
+
+BL_FORT_PROC_DECL(TURN_OFF_RELAXATION,turn_off_relaxation)();
+
 BL_FORT_PROC_DECL(GET_AXES,get_axes)
    (int& axis_1, int& axis_2, int& axis_3);
 

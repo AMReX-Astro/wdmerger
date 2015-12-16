@@ -104,6 +104,43 @@ Castro::problem_post_timestep()
     BL_FORT_PROC_CALL(SET_STAR_DATA,set_star_data)
       (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
+    // If we are doing an initial relaxation step, determine whether the 
+    // criterion for terminating the relaxation has been satisfied.
+
+    // First, calculate the location of the L1 Lagrange point.
+
+    BL_FORT_PROC_CALL(LAGRANGE_POINTS,lagrange_points)();
+
+    // Now cycle through the grids and determine if the L1
+    // point has reached the density threshold.
+    
+    int relaxation_is_done = 0;
+
+    MultiFab& S_new = get_new_data(State_Type);
+    
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:relaxation_is_done)
+#endif    
+    for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
+    {
+        const Box& box  = mfi.tilebox();
+
+        const int* lo   = box.loVect();
+        const int* hi   = box.hiVect();
+
+	BL_FORT_PROC_CALL(CHECK_RELAXATION,check_relaxation)
+            (BL_TO_FORTRAN_3D(S_new[mfi]),
+	     ARLIM_3D(lo),ARLIM_3D(hi),
+	     relaxation_is_done);
+	
+    }
+
+    // If any of the grids returned that it has the L1 point and
+    // the density has passed the cutoff, then disable the initial relaxation.
+    
+    if (relaxation_is_done > 0)
+      BL_FORT_PROC_CALL(TURN_OFF_RELAXATION,turn_off_relaxation);
+    
 }
 #endif
 
