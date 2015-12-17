@@ -8,121 +8,121 @@ module probdata_module
   use initial_model_module, only: initial_model
 
   ! Probin file
-  character (len=:), allocatable :: probin
+  character (len=:), allocatable, save :: probin
 
   ! For determining if we are the I/O processor.
-  integer :: ioproc
+  integer, save :: ioproc
   
   ! Initial binary star characteristics
   ! Note that the envelope mass is included within the total mass of the star
-  double precision :: mass_P, mass_S
-  double precision :: central_density_P, central_density_S
-  double precision :: stellar_temp
-  double precision :: primary_envelope_mass, secondary_envelope_mass
-  double precision :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
+  double precision, save :: mass_P, mass_S
+  double precision, save :: central_density_P, central_density_S
+  double precision, save :: stellar_temp
+  double precision, save :: primary_envelope_mass, secondary_envelope_mass
+  double precision, save :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
 
   ! Ambient medium
-  double precision :: ambient_density, ambient_temp, ambient_comp(nspec)
+  double precision, save :: ambient_density, ambient_temp, ambient_comp(nspec)
 
   ! Smallest allowed mass fraction
-  double precision :: smallx
+  double precision, save :: smallx
 
   ! Smallest allowed velocity on the grid
-  double precision :: smallu
+  double precision, save :: smallu
   
   ! Controls interpolation from 1D model to 3D model
-  integer :: nsub
-  logical :: interp_temp
+  integer, save :: nsub
+  logical, save :: interp_temp
 
   ! Whether or not to give stars an initial orbital velocity
   ! consistent with their Keplerian orbit speed.
-  logical :: no_orbital_kick
+  logical, save :: no_orbital_kick
 
   ! Whether or not to give the stars an initial velocity
   ! consistent with the free-fall speed.
-  logical :: collision
+  logical, save :: collision
 
   ! For a collision, number of (secondary) WD radii to 
   ! separate the WDs by.
-  double precision :: collision_separation
+  double precision, save :: collision_separation
 
   ! For a collision, the impact parameter measured in
   ! units of the primary's initial radius.
-  double precision :: collision_impact_parameter
+  double precision, save :: collision_impact_parameter
   
   ! Binary properties
-  double precision :: r_P_initial, r_S_initial, a_P_initial, a_S_initial, a  
-  double precision :: v_P_r, v_S_r, v_P_phi, v_S_phi
-  double precision :: center_P_initial(3), center_S_initial(3)
-  double precision :: orbital_eccentricity, orbital_angle
+  double precision, save :: r_P_initial, r_S_initial, a_P_initial, a_S_initial, a  
+  double precision, save :: v_P_r, v_S_r, v_P_phi, v_S_phi
+  double precision, save :: center_P_initial(3), center_S_initial(3)
+  double precision, save :: orbital_eccentricity, orbital_angle
   
-  integer :: axis_1, axis_2, axis_3
+  integer, save :: axis_1, axis_2, axis_3
   
   ! Location of the physical center of the problem, as a fraction of domain size
-  double precision :: center_fracx, center_fracy, center_fracz
+  double precision, save :: center_fracx, center_fracy, center_fracz
 
   ! Bulk system motion
-  double precision :: bulk_velx, bulk_vely, bulk_velz
+  double precision, save :: bulk_velx, bulk_vely, bulk_velz
 
   ! Whether we're doing an initialization or a restart
-  integer :: init
+  integer, save :: init
 
   ! Are we doing a single star simulation?
-  logical :: single_star
+  logical, save :: single_star
 
   ! Should we override the domain boundary conditions with
   ! ambient material?
-  logical :: fill_ambient_bc
+  logical, save :: fill_ambient_bc
   
   ! 1D initial models
 
   type (initial_model) :: model_P, model_S
 
-  double precision :: initial_model_dx
-  integer          :: initial_model_npts
-  double precision :: initial_model_mass_tol
-  double precision :: initial_model_hse_tol
+  double precision, save :: initial_model_dx
+  integer, save          :: initial_model_npts
+  double precision, save :: initial_model_mass_tol
+  double precision, save :: initial_model_hse_tol
 
   ! Composition properties of initial models
-  double precision :: max_he_wd_mass
-  double precision :: max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass
-  double precision :: max_co_wd_mass, co_wd_he_shell_mass
+  double precision, save :: max_he_wd_mass
+  double precision, save :: max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass
+  double precision, save :: max_co_wd_mass, co_wd_he_shell_mass
 
   ! Tagging criteria
-  double precision :: max_tagging_radius
-  double precision :: stellar_density_threshold
+  double precision, save :: max_tagging_radius
+  double precision, save :: stellar_density_threshold
 
   ! Stores the center of mass location of the stars throughout the run
-  double precision :: com_P(3), com_S(3)
-  double precision :: vel_P(3), vel_S(3)
+  double precision, save :: com_P(3), com_S(3)
+  double precision, save :: vel_P(3), vel_S(3)
 
   ! Stores the effective Roche radii
-  double precision :: roche_rad_P, roche_rad_S
+  double precision, save :: roche_rad_P, roche_rad_S
 
   ! Lagrange point zone indices
-  integer          :: L1_idx(3)
+  integer, save          :: L1_idx(3)
 
   ! Relaxation parameters
-  logical          :: do_initial_relaxation
-  double precision :: relaxation_timescale
-  double precision :: relaxation_density_cutoff
+  logical, save          :: do_initial_relaxation
+  double precision, save :: relaxation_timescale
+  double precision, save :: relaxation_density_cutoff
 
   ! Input parameters for SCF relaxation
-  logical          :: do_scf_initial_models
-  double precision :: scf_d_A, scf_d_B, scf_d_C
-  double precision :: scf_relax_tol
+  logical, save          :: do_scf_initial_models
+  double precision, save :: scf_d_A, scf_d_B, scf_d_C
+  double precision, save :: scf_relax_tol
   
   ! Internal data for SCF relaxation
-  double precision :: scf_h_max_P, scf_h_max_S
-  double precision :: scf_enthalpy_min
-  double precision :: scf_rpos(3,3)         ! Relative position of points A, B, and C
-  double precision :: scf_d_vector(3,3)     ! Positions of points relative to system center
-  double precision :: scf_c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
-  integer          :: scf_rloc(3,3)         ! Indices of zones nearby to these points
+  double precision, save :: scf_h_max_P, scf_h_max_S
+  double precision, save :: scf_enthalpy_min
+  double precision, save :: scf_rpos(3,3)         ! Relative position of points A, B, and C
+  double precision, save :: scf_d_vector(3,3)     ! Positions of points relative to system center
+  double precision, save :: scf_c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
+  integer, save          :: scf_rloc(3,3)         ! Indices of zones nearby to these points
 
   ! Distance (in kpc) used for calculation of the gravitational wave amplitude
   ! (this wil be calculated along all three coordinate axes).
-  double precision :: gw_dist
+  double precision, save :: gw_dist
 
 contains
 
