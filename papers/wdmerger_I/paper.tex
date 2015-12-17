@@ -881,6 +881,14 @@ and $\text{Error}_{\text{high}}$ is the $L^2$ error at the higher resolution.
 We expect the error to converge at $p = 2$ given the discretization we choose. 
 For all simulations in this section and for all our main science simulations,
 we choose a relative error tolerance of $10^{-10}$ to be satisfied in the multigrid solve.
+The results of this test are plotted in \autoref{fig:gravity_convergence}. 
+
+We find that at low resolution convergence is actually substantially better 
+than second-order. The explanation for this is that we are attempting to 
+model a spherical object on a rectangular grid. This results in two sources of error.
+First, at very low resolution, the object does not look very spherical due to the rectangular 
+grid representation, so the potential it produces is not quite that of a sphere. 
+As the resolution is increased, the distribution of the mass on the grid will change.
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.45]{plots/phi_comparison}
@@ -890,14 +898,6 @@ we choose a relative error tolerance of $10^{-10}$ to be satisfied in the multig
     cube of uniform density. Plotted also is a notional curve whose slope represents
     perfect second order convergence.\label{fig:gravity_convergence}}
 \end{figure}
-The results of this test are plotted in \autoref{fig:gravity_convergence}. 
-
-We find that at low resolution convergence is actually substantially better 
-than second-order. The explanation for this is that we are attempting to 
-model a spherical object on a rectangular grid. This results in two sources of error.
-First, at very low resolution, the object does not look very spherical due to the rectangular 
-grid representation, so the potential it produces is not quite that of a sphere. 
-As the resolution is increased, the distribution of the mass on the grid will change.
 Second, the total amount of mass on the grid will change as the sphere fills out. 
 So we are combining the true accuracy bonus from increased resolution 
 with the artificial accuracy bonus from getting closer to solving the problem 
@@ -906,7 +906,6 @@ as the representation of the sphere is not significantly different in
 our two highest resolutions shown. For example, at $128$ zones per dimension 
 the amount of mass on the grid happens to be slightly closer to the true spherical 
 mass than at $256$ zones per dimension.
-
 We can eliminate the second source of error by changing the density on  
 the grid so that the total mass $M$ is actually what we intend it to be.
 The resolution study for this case (the ``normalized sphere'') is also
