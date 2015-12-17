@@ -144,6 +144,10 @@ Castro::sum_integrated_quantities ()
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
+      // Update the local level we're on.
+      
+      BL_FORT_PROC_CALL(SET_AMR_INFO,set_amr_info)(lev, -1, -1, -1.0, -1.0);
+      
       // Get the current level from Castro
 
       Castro& ca_lev = getLevel(lev);
@@ -188,6 +192,10 @@ Castro::sum_integrated_quantities ()
       
     }
 
+    // Return to the original level.
+    
+    BL_FORT_PROC_CALL(SET_AMR_INFO,set_amr_info)(level, -1, -1, -1.0, -1.0);    
+    
     // Complete calculations for energy and momenta
 
     gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
