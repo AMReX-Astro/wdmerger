@@ -39,15 +39,18 @@ contains
   ! Calculate Lagrange points. In each case we give the zone index
   ! closest to it (assuming we're on the coarse grid).
 
-  subroutine lagrange_points() bind(C)
+  subroutine get_lagrange_points(mass_1, mass_2, com_1, com_2, L1_idx) bind(C)
 
     use bl_constants_module
-    use probdata_module, only: mass_P, mass_S, com_P, com_S, L1_idx
     use prob_params_module, only: dx_level
     use amrinfo_module, only: amr_level
 
     implicit none
 
+    double precision :: mass_1, mass_2
+    double precision :: com_1(3), com_2(3)
+    integer          :: L1_idx(3)
+    
     double precision :: r2 ! Distance from L1 to secondary
     double precision :: R  ! Distance between secondary and primary
 
@@ -60,9 +63,9 @@ contains
     ! Don't try to calculate the Lagrange point if the secondary
     ! is already gone.
 
-    if (mass_S < ZERO) return
+    if (mass_2 < ZERO) return
 
-    R = sqrt(sum((com_P - com_S)**2))
+    R = sqrt(sum((com_2 - com_1)**2))
 
     ! Do a root-find over the quintic equation for L1. The initial
     ! guess will be the case of equal mass, i.e. that the Lagrange point
@@ -74,7 +77,7 @@ contains
 
        r2_old = r2
 
-       r2 = r2_old - L1(mass_P, mass_S, r2_old, R) / dL1dr(mass_P, mass_S, r2_old, R)
+       r2 = r2_old - L1(mass_1, mass_2, r2_old, R) / dL1dr(mass_1, mass_2, r2_old, R)
 
        if (abs( (r2 - r2_old) / r2_old ) < tolerance) then
           exit
@@ -90,9 +93,9 @@ contains
     ! into a zone index. Remember that it has to be along the
     ! line joining the two stars.
 
-    L1_idx(:) = (com_P(:) + r2 * abs(com_S(:) - com_P(:)) / R) / dx_level(:,amr_level)
+    L1_idx(:) = (com_1(:) + r2 * abs(com_2(:) - com_1(:)) / R) / dx_level(:,amr_level)
 
-  end subroutine lagrange_points
+  end subroutine get_lagrange_points
 
 
 

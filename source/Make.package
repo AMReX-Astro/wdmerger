@@ -1,5 +1,7 @@
-f90EXE_sources += probdata.f90 initial_model.f90 scf_relaxation.f90 problem_derive.f90
-F90EXE_sources += binary.F90
+f90EXE_sources += binary.f90
+f90EXE_sources += probdata.f90
+f90EXE_sources += initial_model.f90
+f90EXE_sources += scf_relaxation.f90
+f90EXE_sources += problem_derive.f90
 CEXE_sources += scf_relax.cpp
 FEXE_headers += scf_relax_F.H
-

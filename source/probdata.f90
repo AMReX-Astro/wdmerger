@@ -195,9 +195,7 @@ module probdata_module
   
   double precision, save :: roche_rad_P, roche_rad_S
 
-  ! Lagrange point zone indices
-  
-  integer, save          :: L1_idx(3)
+
 
   ! Relaxation parameters
   
@@ -1072,6 +1070,5 @@ contains
     vel_i = vel + cross_product(omega, loc)
 
   end function inertial_velocity
-  
   
 end module probdata_module

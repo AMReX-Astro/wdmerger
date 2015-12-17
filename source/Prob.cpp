@@ -106,8 +106,10 @@ Castro::problem_post_timestep()
 
     // First, calculate the location of the L1 Lagrange point.
 
-    lagrange_points();
-
+    int L1_idx[3] = { -1 };
+    
+    get_lagrange_points(mass_p, mass_s, com_p, com_s, L1_idx);
+    
     // Now cycle through the grids and determine if the L1
     // point has reached the density threshold.
     
@@ -127,6 +129,7 @@ Castro::problem_post_timestep()
 
 	check_relaxation(BL_TO_FORTRAN_3D(S_new[mfi]),
 			 ARLIM_3D(lo),ARLIM_3D(hi),
+			 L1_idx,
 			 relaxation_is_done);
 	
     }

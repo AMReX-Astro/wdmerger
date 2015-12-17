@@ -59,10 +59,13 @@ extern "C"
 
   void get_omega_vec(const Real omega[], const Real& time);
 
-  void lagrange_points();
+  void get_lagrange_points(const Real& mass_1, const Real& mass_2,
+	                   const Real* com_1, const Real* com_2,
+			   int* L1_idx);
 
   void check_relaxation(BL_FORT_FAB_ARG_3D(state),
-			const int* lo, const int* hi, int& is_done);
+			const int* lo, const int* hi,
+			const int* L1_idx, int& is_done);
 
   void turn_off_relaxation();
 
