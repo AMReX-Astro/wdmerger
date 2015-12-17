@@ -54,16 +54,16 @@ contains
 
   
   
-  subroutine scf_setup_relaxation(dx, problo, probhi) bind(C)
+  subroutine scf_setup_relaxation(dx) bind(C)
 
     use bl_constants_module, only: HALF, ONE, TWO
-    use prob_params_module, only: center
+    use prob_params_module, only: problo, center, probhi
     use eos_module
     use probdata_module
 
     implicit none
 
-    double precision :: dx(3), problo(3), probhi(3)
+    double precision :: dx(3)
 
     double precision :: x, y, z
     integer          :: n
@@ -194,22 +194,23 @@ contains
 
 
   subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
-       state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-       phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-       dx,problo,probhi,time,omegasq) bind(C)
+                             state,s_lo,s_hi, &
+                             phi,p_lo,p_hi, &
+                             dx,time,omegasq) bind(C)
 
     use bl_constants_module, only: ONE, TWO
     use meth_params_module, only: NVAR
     use rotation_module, only: get_omega
+    use prob_params_module, only: problo, probhi
 
     implicit none
 
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
-    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    integer          :: s_lo(3), s_hi(3)
+    integer          :: p_lo(3), p_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
     double precision :: omegasq
 
     integer          :: i, j, k
@@ -266,9 +267,9 @@ contains
 
 
   subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
-       state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-       phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-       dx,problo,probhi,time,bernoulli_1,bernoulli_2) bind(C)
+                                     state,s_lo,s_hi, &
+                                     phi,p_lo,p_hi, &
+                                     dx,time,bernoulli_1,bernoulli_2) bind(C)
 
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
@@ -278,11 +279,11 @@ contains
     implicit none
 
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
-    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    integer          :: s_lo(3), s_hi(3)
+    integer          :: p_lo(3), p_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
     double precision :: bernoulli_1, bernoulli_2
 
     integer          :: i, j, k
@@ -323,15 +324,15 @@ contains
 
 
   subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
-       state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-       phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-       enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
-       dx,problo,probhi,time, &
-       bernoulli_1,bernoulli_2,h_max_1,h_max_2) bind(C)
+                                    state,s_lo,s_hi, &
+                                    phi,p_lo,p_hi, &
+                                    enthalpy,h_lo,h_hi, &
+                                    dx,time, &
+                                    bernoulli_1,bernoulli_2,h_max_1,h_max_2) bind(C)
 
     use bl_constants_module, only: ZERO, HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
-    use prob_params_module, only: center
+    use prob_params_module, only: problo, center, probhi
     use probdata_module
     use rotation_module, only: get_omega
     use math_module, only: cross_product
@@ -339,13 +340,13 @@ contains
     implicit none
 
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
-    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    integer          :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
-    double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
+    integer          :: s_lo(3), s_hi(3)
+    integer          :: p_lo(3), p_hi(3)
+    integer          :: h_lo(3), h_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
+    double precision :: enthalpy(h_lo(1):h_hi(1),h_lo(2):h_hi(2),h_lo(3):h_hi(3))
     double precision :: bernoulli_1, bernoulli_2, h_max_1,h_max_2
 
     integer          :: i, j, k
@@ -400,19 +401,19 @@ contains
 
 
   subroutine scf_update_density(lo,hi,domlo,domhi, &
-       state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-       phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-       enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
-       dx,problo,probhi,time, &
-       h_max_1,h_max_2, &
-       kin_eng, pot_eng, int_eng, &
-       left_mass, right_mass, &
-       delta_rho, l2_norm_resid, l2_norm_source) bind(C)
+                                state,s_lo,s_hi, &
+                                phi,p_lo,p_hi, &
+                                enthalpy,h_lo,h_hi, &
+                                dx,time, &
+                                h_max_1,h_max_2, &
+                                kin_eng, pot_eng, int_eng, &
+                                left_mass, right_mass, &
+                                delta_rho, l2_norm_resid, l2_norm_source) bind(C)
 
     use bl_constants_module, only: ZERO, ONE, TWO, M_PI
     use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS
     use network, only: nspec
-    use prob_params_module, only: center
+    use prob_params_module, only: problo, center, probhi
     use probdata_module, only: axis_1, get_ambient
     use eos_module
     use rotation_module, only: get_omega
@@ -421,13 +422,13 @@ contains
     implicit none
 
     integer :: lo(3), hi(3), domlo(3), domhi(3)
-    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    integer :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
-    double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
+    integer :: s_lo(3), s_hi(3)
+    integer :: p_lo(3), p_hi(3)
+    integer :: h_lo(3), h_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
+    double precision :: enthalpy(h_lo(1):h_hi(1),h_lo(2):h_hi(2),h_lo(3):h_hi(3))
     double precision :: h_max_1,h_max_2
     double precision :: kin_eng, pot_eng, int_eng
     double precision :: left_mass, right_mass
@@ -530,9 +531,9 @@ contains
 
 
   subroutine scf_check_convergence(kin_eng, pot_eng, int_eng, &
-       left_mass, right_mass, &
-       delta_rho, l2_norm, &
-       is_relaxed, num_iterations) bind(C)
+                                   left_mass, right_mass, &
+                                   delta_rho, l2_norm, &
+                                   is_relaxed, num_iterations) bind(C)
 
     use problem_io_module, only: ioproc
     use meth_params_module, only: rot_period
