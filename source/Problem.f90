@@ -657,7 +657,8 @@ end subroutine check_relaxation
 
 subroutine turn_off_relaxation() bind(C)
 
-  use probdata_module, only: do_initial_relaxation, ioproc
+  use probdata_module, only: do_initial_relaxation
+  use problem_io_module, only: ioproc
   
   implicit none
 

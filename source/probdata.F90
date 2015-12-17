@@ -7,14 +7,6 @@ module probdata_module
   use fundamental_constants_module, only: Gconst, M_solar, AU
   use initial_model_module, only: initial_model
 
-  ! Probin file
-
-  character (len=:), allocatable, save :: probin
-
-  ! For determining if we are the I/O processor.
-  
-  integer, save :: ioproc
-  
   ! Initial stellar properties
   ! Note that the envelope mass is included within the total mass of the star
   
@@ -213,15 +205,14 @@ contains
   ! This routine calls all of the other subroutines at the beginning
   ! of a simulation to fill in the basic problem data.
 
-  subroutine initialize(name, namlen, init_in)
+  subroutine initialize_problem(init_in)
 
     use bl_error_module, only: bl_error
     use prob_params_module, only: dim
     
     implicit none
 
-    integer :: namlen, i, init_in
-    integer :: name(namlen)
+    integer :: init_in
  
     ! Safety check: we can't run this problem in one dimension.       
     if (dim .eq. 1) then
@@ -230,20 +221,10 @@ contains
     
     init = init_in
 
-    ! Build "probin" filename -- the name of the file containing the fortin namelist.
-    allocate(character(len=namlen) :: probin)
-    do i = 1, namlen
-       probin(i:i) = char(name(i))
-    enddo
-
     ! Read in the namelist to set problem parameters.
 
     call read_namelist
     
-    ! Determine if we are the I/O processor, and save it to the ioproc variable.
-
-    call get_ioproc
-
     ! Establish binary parameters and create initial models.
 
     call binary_setup
@@ -252,7 +233,7 @@ contains
 
     call set_small
 
-  end subroutine
+  end subroutine initialize_problem
 
 
 
@@ -262,6 +243,7 @@ contains
 
     use meth_params_module
     use prob_params_module, only: dim, coord_type
+    use problem_io_module, only: probin
     
     implicit none
 
@@ -367,18 +349,6 @@ contains
 
 
 
-  ! Determine if we are the I/O processor, and save it to the ioproc variable
-
-  subroutine get_ioproc
-
-    implicit none
-
-    call bl_pd_is_ioproc(ioproc)
-
-  end subroutine get_ioproc
-
-
-
   ! Calculate small_pres and small_ener
 
   subroutine set_small
@@ -437,7 +407,8 @@ contains
     use rotation_module, only: get_omega
     use math_module, only: cross_product
     use binary_module, only: get_roche_radii
-
+    use problem_io_module, only: ioproc
+    
     implicit none
 
     double precision :: v_ff, collision_offset
@@ -886,6 +857,8 @@ contains
 
   subroutine ensure_primary_mass_larger
 
+    use problem_io_module, only: ioproc
+    
     implicit none
 
     double precision :: temp_mass

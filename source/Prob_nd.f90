@@ -1,7 +1,8 @@
    subroutine PROBINIT (init,name,namlen,problo,probhi)
-     
-     use probdata_module, only: initialize
-     use scf_relaxation_module, only: scf_initialize
+
+     use problem_io_module, only: initialize_io
+     use probdata_module, only: initialize_problem
+     use scf_relaxation_module, only: initialize_scf
 
      implicit none
 
@@ -9,8 +10,9 @@
      integer :: name(namlen)
      double precision :: problo(3), probhi(3)
 
-     call initialize(name, namlen, init)
-     call scf_initialize(name, namlen, init)
+     call initialize_io(name, namlen)
+     call initialize_problem(init)
+     call initialize_scf()
 
    end subroutine PROBINIT
 

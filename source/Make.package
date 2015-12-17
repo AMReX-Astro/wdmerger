@@ -1,5 +1,6 @@
 F90EXE_sources += binary.F90
 F90EXE_sources += probdata.F90
+F90EXE_sources += problem_io.F90
 F90EXE_sources += initial_model.F90
 F90EXE_sources += scf_relaxation.F90
 F90EXE_sources += problem_derive.F90

@@ -2,10 +2,6 @@ module scf_relaxation_module
 
   implicit none
 
-  ! Probin file
-
-  character (len=:), allocatable, save :: probin  
-  
   ! Input parameters for SCF relaxation
   
   logical         , save :: do_scf_initial_models = .false.
@@ -25,27 +21,20 @@ module scf_relaxation_module
 
 contains
 
-  subroutine scf_initialize(name, namlen, init_in)
+  subroutine initialize_scf()
 
     implicit none
 
-    integer :: namlen, i, init_in
-    integer :: name(namlen)
- 
-    ! Build "probin" filename -- the name of the file containing the fortin namelist.
-    allocate(character(len=namlen) :: probin)
-    do i = 1, namlen
-       probin(i:i) = char(name(i))
-    enddo    
-    
     call scf_read_namelist()
 
-  end subroutine scf_initialize
+  end subroutine initialize_scf
 
 
   
   subroutine scf_read_namelist()
 
+    use problem_io_module, only: probin
+    
     implicit none
 
     namelist /scf/ do_scf_initial_models, &
@@ -545,7 +534,7 @@ contains
        delta_rho, l2_norm, &
        is_relaxed, num_iterations) bind(C)
 
-    use probdata_module, only: ioproc
+    use problem_io_module, only: ioproc
     use meth_params_module, only: rot_period
     use multifab_module
     use bl_constants_module, only: THREE
