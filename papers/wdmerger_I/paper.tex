@@ -128,12 +128,12 @@ in recent years, including the discovery of the accelerated expansion
 of the universe \citep{perlmutter1999,riess1998}. Their origin, though,
 is shrouded in mystery. It has long been expected that these
 events arise from the thermonuclear explosions of white dwarfs
-\citep{hoyle_fowler:1960}, but the cause of these explosions is
+\citep{hoyle-fowler:1960}, but the cause of these explosions is
 uncertain. In particular, it is not clear what process causes the
 temperatures in these white dwarfs (WDs) to become hot enough for explosive
 burning of their constituent nuclei. The model favored initially by the
 community was the single-degenerate (SD) model
-\citep{whelan_iben:1973}. Accretion of material from a companion star
+\citep{whelan-iben:1973}. Accretion of material from a companion star
 such as a red giant would cause the star to approach the Chandrasekhar
 mass, and in doing so the temperature and density in the center would
 become sufficient for thermonuclear fusion to proceed. In
@@ -180,7 +180,7 @@ observational properties compared to a SN Ia. This scenario, termed
 accretion-induced collapse, would be avoided only if the accretion
 rate were well below the Eddington rate (see, e.g., \cite{fryer:1999}
 for a discussion of the possible implications of the accretion-induced 
-collapse scenario). \cite{tutukov_yungelson:1979}
+collapse scenario). \cite{tutukov-yungelson:1979}
 observed that the collapse could be avoided if the mass loss from the secondary
 was higher than the Eddington rate and thus the accreted material
 formed an accretion disc, which might rain down on the primary more
@@ -191,7 +191,7 @@ Three-dimensional simulations of merging double degenerate systems were
 first performed by \citet{benz:1990}, who used the smoothed particle
 hydrodynamics (SPH) method to simulate the merger process. This was 
 followed later by a number of authors 
-\citep{rasio_shapiro:1995,segretain:1997,guerrero:2004,yoon:2007,loren-aguilar:2009,raskin:2012}.
+\citep{rasio-shapiro:1995,segretain:1997,guerrero:2004,yoon:2007,loren-aguilar:2009,raskin:2012}.
 The main finding of these early 3D SPH simulations was that if the 
 lower-mass star (generally called the ``secondary'') was
 close enough to the more massive star (the ``primary'') to begin mass
@@ -199,11 +199,11 @@ transfer on a dynamical time scale, the secondary completely disrupted
 and formed a hot envelope around the primary, with a
 centrifugally-supported accretion disk surrounding the core and
 envelope. Carbon fusion might commence in the disk, but not at a 
-high enough rate to generate a nuclear detonation. \cite{mochkovitch_livio:1990} 
+high enough rate to generate a nuclear detonation. \cite{mochkovitch-livio:1990} 
 and \cite{livio:2000}  also observed that turbulent viscosity in this disk 
 would be sufficiently large for angular momentum to be removed from the 
 disk at a rate high enough to generate the troublesome accretion 
-timescales discussed by \cite{tutukov_yungelson:1979} and mentioned above. Based on this
+timescales discussed by \cite{tutukov-yungelson:1979} and mentioned above. Based on this
 evidence, the review of \cite{hillebrandtniemeyer2000} argued that the
 model was only viable if the accretion-induced collapse problem could
 be avoided. Later work by \cite{shen:2012} and \cite{schwab:2012} used
@@ -318,7 +318,7 @@ with adaptive mesh refinement can zoom in on the regions where
 hotspots will develop, while also maintaining high enough resolution
 in the high-density regions to adequately capture the large-scale mass
 transfer dynamics. There are also outstanding questions of
-convergence in SPH (e.g.\ \citealt{zhu_SPH:2014}) and whether the method
+convergence in SPH (e.g.\ \citealt{zhu-SPH:2014}) and whether the method
 correctly captures fluid instabilities. This is an important question
 for white dwarf mergers because of the likely importance small-scale
 instabilities will have on the evolution of the low-density gas at the
@@ -403,7 +403,7 @@ number of changes were made to the solver, which are detailed in \autoref{app:hy
 These changes bring the algorithm more in line with that of
 \cite{ppm}. \castro\ as originally released featured a slightly modified
 version of the higher resolution limiters of
-\cite{colella_sekora:2008}, which can be used in the code by setting 
+\cite{colella-sekora:2008}, which can be used in the code by setting 
 \texttt{castro.ppm\_type = 2} in the inputs file (the inputs file is
 a set of code parameters accessed at runtime to determine the algorithms
 used in the simulation). The advantage of this limiter is that
@@ -482,7 +482,7 @@ restriction that refined grids cannot reach the domain boundary.
 \subsection{Microphysics}
 
 The equation of state (EOS) for our simulations is the Helmholtz EOS
-\citep{timmes_swesty:2000}. This models an electron-positron gas of
+\citep{timmes-swesty:2000}. This models an electron-positron gas of
 arbitrary relativity and degeneracy over a wide range of temperatures
 and densities. Thermodynamic quantities are calculated as derivatives
 of the Helmholtz free energy, and the values are interpolated from a
@@ -2029,7 +2029,7 @@ and merger is physically (not numerically) motivated.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/equal_energy_rot0.eps}
+  \includegraphics[scale=0.45]{plots/equal_energy_rot0}
   \caption{Absolute magnitude of the relative change in energy of two equal mass white dwarfs through 25 orbital periods,
            evolved in an inertial reference frame. The decline and recovery is a change in sign of the energy difference.
            \label{fig:energy_conservation_equal}}
@@ -2037,7 +2037,7 @@ and merger is physically (not numerically) motivated.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/unequal_angular_momentum_rot1.eps}
+  \includegraphics[scale=0.45]{plots/unequal_angular_momentum_rot1}
   \caption{Absolute magnitude of the relative change in angular momentum of two unequal mass white dwarfs after 25 orbital periods, 
            evolved in a co-rotating reference frame. We consider only the component of the angular moment along the rotational 
            axis.
@@ -2067,7 +2067,7 @@ level of agreement holds in the rotating frame as well.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/unequal_gw_rot0.eps}
+  \includegraphics[scale=0.45]{plots/unequal_gw_rot0}
   \caption{Gravitational wave strain polarizations for the first two orbital periods of an 
            unequal mass system. The curves with markers are the numerical data, while the 
            curves without markers are the analytical results for two point masses.\label{fig:gw_strain}}
@@ -2085,7 +2085,7 @@ results suggest a minimum resolution of 200 km for getting the dynamics right.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/spatial_convergence_rot0.eps}
+  \includegraphics[scale=0.45]{plots/spatial_convergence_rot0}
   \caption{Distance between the two white dwarfs in the unequal mass system, for the first 
            10 seconds of their orbit. The distance is scaled by the initial orbital distance. 
            We plot at three different resolutions, corresponding to the number of 
