@@ -1023,5 +1023,167 @@ contains
     vel_i = vel + cross_product(omega, loc)
 
   end function inertial_velocity
+
+
+
+  ! Return the locations of the stellar centers of mass
   
+  subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
+
+    implicit none
+
+    double precision, intent(inout) :: P_com(3), S_com(3)
+    double precision, intent(inout) :: P_vel(3), S_vel(3)
+    double precision, intent(inout) :: P_mass, S_mass
+
+    P_com = com_P
+    S_com = com_S
+
+    P_vel = vel_P
+    S_vel = vel_S
+
+    P_mass = mass_P
+    S_mass = mass_S
+
+  end subroutine get_star_data
+
+
+
+  ! Set the locations of the stellar centers of mass
+
+  subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
+
+    use bl_constants_module, only: TENTH, ZERO
+    use prob_params_module, only: center
+    use binary_module, only: get_roche_radii
+
+    implicit none
+
+    double precision, intent(in) :: P_com(3), S_com(3)
+    double precision, intent(in) :: P_vel(3), S_vel(3)
+    double precision, intent(in) :: P_mass, S_mass
+
+    double precision :: r
+
+    com_P = P_com
+    vel_P = P_vel
+    mass_P = P_mass
+
+    r = ZERO
+
+    if (.not. single_star) then
+
+       com_S = S_com
+       vel_S = S_vel
+       mass_S = S_mass
+
+       r = sum((com_P-com_S)**2)**(0.5)
+
+       call get_roche_radii(mass_S/mass_P, roche_rad_S, roche_rad_P, r)
+
+       ! Beyond a certain point, it doesn't make sense to track the stars separately
+       ! anymore. We'll set the secondary to a fixed constant and keep it there
+       ! if its Roche radius becomes smaller than 10% of the primary's.
+
+       if (roche_rad_S .lt. TENTH * roche_rad_P) then
+          com_S = center
+          vel_S = ZERO
+          mass_S = ZERO
+          roche_rad_S = ZERO
+          single_star = .true.
+       endif
+
+    endif
+
+  end subroutine set_star_data
+
+
+
+  ! Check whether we should stop the initial relaxation.
+  ! If so, set do_initial_relaxation to false, which will effectively
+  ! turn off the external source terms.
+  
+  subroutine check_relaxation(state, s_lo, s_hi, lo, hi, L1, is_done) bind(C)
+
+    use meth_params_module, only: URHO, NVAR
+    use castro_util_module, only: position_to_index
+
+    implicit none
+
+    integer :: lo(3), hi(3)
+    integer :: s_lo(3), s_hi(3)
+    integer :: is_done
+    double precision :: L1(3)
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+
+    integer :: L1_idx(3)
+
+    ! Convert the Lagrange point into a grid index.
+
+    L1_idx = position_to_index(L1)
+
+    ! Check if the Lagrange point is in this box.
+
+    if ( lo(1) .le. L1_idx(1) .and. hi(1) .ge. L1_idx(1) .and. &
+         lo(2) .le. L1_idx(2) .and. hi(2) .ge. L1_idx(2) .and. &
+         lo(3) .le. L1_idx(3) .and. hi(3) .ge. L1_idx(3) ) then
+
+       ! If so, check if the density in that zone is above the cutoff.
+
+       if (state(L1_idx(1),L1_idx(2),L1_idx(3),URHO) > relaxation_density_cutoff) then
+
+          is_done = 1
+
+       endif
+
+    endif
+
+  end subroutine check_relaxation
+
+
+
+  subroutine turn_off_relaxation() bind(C)
+
+    use problem_io_module, only: ioproc
+
+    implicit none
+
+    do_initial_relaxation = .false.
+
+    if (ioproc) then
+       print *, "Initial relaxation phase terminated."
+    endif
+
+  end subroutine turn_off_relaxation
+
+
+  
+  subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C)
+
+    implicit none
+
+    integer :: axis_1_in, axis_2_in, axis_3_in
+
+    axis_1_in = axis_1
+    axis_2_in = axis_2
+    axis_3_in = axis_3
+
+  end subroutine get_axes
+
+
+
+  ! Return whether we're doing a single star simulation or not.
+  
+  subroutine get_single_star(flag) bind(C)
+
+    implicit none
+
+    integer :: flag
+
+    flag = 0
+
+    if (single_star) flag = 1
+
+  end subroutine get_single_star
+
 end module probdata_module

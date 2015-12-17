@@ -579,4 +579,22 @@ contains
 
   end subroutine scf_check_convergence
 
+
+
+  ! Returns whether we are doing a relaxation step.
+  
+  subroutine get_do_scf_initial_models(do_scf_initial_models_out) bind(C)
+
+    implicit none
+
+    integer :: do_scf_initial_models_out
+
+    if (do_scf_initial_models) then
+       do_scf_initial_models_out = 1
+    else
+       do_scf_initial_models_out = 0
+    endif
+
+  end subroutine get_do_scf_initial_models  
+  
 end module scf_relaxation_module
