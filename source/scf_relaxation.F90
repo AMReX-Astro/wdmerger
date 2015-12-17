@@ -558,7 +558,7 @@ contains
        is_relaxed = 1
     endif
 
-    if (ioproc == 1) then
+    if (ioproc) then
        write(*,*) ""
        write(*,*) ""
        write(*,'(A,I2)')      "   Relaxation iterations completed: ", num_iterations

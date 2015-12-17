@@ -539,7 +539,7 @@ contains
 
     call establish_hse(model_P)
 
-    if (ioproc == 1 .and. init == 1) then
+    if (ioproc .and. init == 1) then
        
        ! Set the color to bold green for printing to terminal in this section. See:
        ! http://stackoverflow.com/questions/6402700/coloured-terminal-output-from-fortran
@@ -559,7 +559,7 @@ contains
 
        call establish_hse(model_S)
 
-       if (ioproc == 1 .and. init == 1) then
+       if (ioproc .and. init == 1) then
           write (*,1002) model_S % mass / M_solar, model_S % central_density, model_S % radius
           1002 format ("Generated initial model for secondary WD of mass ", f4.2, &
                        " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
@@ -608,7 +608,7 @@ contains
                                 rot_period, orbital_eccentricity, orbital_angle, &
                                 a, r_P_initial, r_S_initial, v_P_r, v_S_r, v_P_phi, v_S_phi)
 
-          if (ioproc == 1 .and. init == 1) then
+          if (ioproc .and. init == 1) then
              write (*,1003) a, a / AU
              write (*,1004) r_P_initial, r_P_initial / AU
              write (*,1005) r_S_initial, r_S_initial / AU
@@ -653,7 +653,7 @@ contains
 
     ! Reset the terminal color to its previous state.
 
-    if (ioproc == 1 .and. init == 1) then
+    if (ioproc .and. init == 1) then
        print *, ''//achar(27)//'[0m'
     endif
 
@@ -868,7 +868,7 @@ contains
 
     if ( mass_P < mass_S ) then
 
-      if (ioproc == 1) then
+      if (ioproc) then
         print *, "Primary mass is less than secondary mass; switching the stars so that the primary is more massive."
       endif
 

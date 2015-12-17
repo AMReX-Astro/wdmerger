@@ -664,7 +664,7 @@ subroutine turn_off_relaxation() bind(C)
 
   do_initial_relaxation = .false.
 
-  if (ioproc .eq. 1) then
+  if (ioproc) then
      print *, "Initial relaxation phase terminated."
   endif
   

@@ -4,7 +4,7 @@ module problem_io_module
 
   ! For determining if we are the I/O processor.
   
-  integer, save :: ioproc
+  logical, save :: ioproc
 
   ! Probin file
 
@@ -18,6 +18,8 @@ contains
 
     integer :: namlen, i
     integer :: name(namlen)
+
+    integer :: is_ioprocessor
     
     ! Build "probin" filename -- the name of the file containing the fortin namelist.
     
@@ -28,7 +30,9 @@ contains
 
     ! Determine whether we are the I/O procoessor.
     
-    call bl_pd_is_ioproc(ioproc)
+    call bl_pd_is_ioproc(is_ioprocessor)
+
+    ioproc = is_ioprocessor .ne. 0
     
   end subroutine initialize_io
   
