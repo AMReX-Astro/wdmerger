@@ -458,6 +458,7 @@ contains
     use meth_params_module, only: rot_axis
     use rotation_module, only: get_omega
     use math_module, only: cross_product
+    use binary_module, only: get_roche_radii
 
     implicit none
 

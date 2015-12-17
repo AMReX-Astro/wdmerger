@@ -86,7 +86,7 @@ end subroutine problem_restart
 
 ! Return whether we're doing a single star simulation or not.
 
-subroutine get_single_star(flag)
+subroutine get_single_star(flag) bind(C)
 
  use probdata_module, only: single_star
 
@@ -120,7 +120,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
                  com_s_x, com_s_y, com_s_z, &
                  vel_p_x, vel_p_y, vel_p_z, &
                  vel_s_x, vel_s_y, vel_s_z, &
-                 m_p, m_s)
+                 m_p, m_s) bind(C)
 
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo
@@ -226,7 +226,7 @@ end subroutine wdcom
 ! We also impose a distance requirement so that we only look 
 ! at zones within the Roche lobe of the white dwarf.
 
-subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,vols,rho_cutoff)
+subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,vols,rho_cutoff) bind(C)
 
   use bl_constants_module
   use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
@@ -284,7 +284,7 @@ end subroutine ca_volumeindensityboundary
 
 ! Return the locations of the stellar centers of mass
 
-subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
+subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
 
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
 
@@ -309,12 +309,13 @@ end subroutine get_star_data
 
 ! Set the locations of the stellar centers of mass
 
-subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass)
+subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
 
+  use bl_constants_module, only: TENTH, ZERO
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, &
                              roche_rad_P, roche_rad_S, single_star
   use prob_params_module, only: center
-  use bl_constants_module, only: TENTH, ZERO
+  use binary_module, only: get_roche_radii
 
   implicit none
 
@@ -368,7 +369,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
                                         xmom, px_lo, px_hi, ymom, py_lo, py_hi, zmom, pz_lo, pz_hi, &
                                         gravx, gx_lo, gx_hi, gravy, gy_lo, gy_hi, gravz, gz_lo, gz_hi, &
                                         vol, vo_lo, vo_hi, &
-                                        lo, hi, dx, time, Qtt)
+                                        lo, hi, dx, time, Qtt) bind(C)
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo
@@ -473,7 +474,7 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, Qtt, time)
+subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, Qtt, time) bind(C)
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
@@ -573,39 +574,7 @@ end subroutine gw_strain_tensor
 
 
 
-! Given the mass ratio q of two stars (assumed to be q = M_1 / M_2), 
-! compute the effective Roche radii of the stars, normalized to unity, 
-! using the approximate formula of Eggleton (1983). We then 
-! scale them appropriately using the current orbital distance.
-
-subroutine get_roche_radii(mass_ratio, r_1, r_2, a)
-
-  use bl_constants_module, only: ONE, TWO3RD, THIRD
-
-  implicit none
-
-  double precision, intent(in   ) :: mass_ratio, a
-  double precision, intent(inout) :: r_1, r_2
-
-  double precision :: q
-  double precision :: c1, c2
-
-  c1 = 0.49d0
-  c2 = 0.60d0
-
-  q = mass_ratio
-
-  r_1 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
-
-  q = ONE / q
-
-  r_2 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
-
-end subroutine get_roche_radii
-
-
-
-subroutine update_center(time)
+subroutine update_center(time) bind(C)
 
   use bl_constants_module, only: ZERO  
   use probdata_module, only: bulk_velx, bulk_vely, bulk_velz, &
@@ -642,106 +611,11 @@ end subroutine update_center
 
 
 
-! Calculate Lagrange points. In each case we give the zone index
-! closest to it (assuming we're on the coarse grid).
-
-subroutine lagrange_points
-
-  use bl_constants_module
-  use probdata_module, only: mass_P, mass_S, com_P, com_S, L1_idx
-  use prob_params_module, only: dx_level
-  use amrinfo_module, only: amr_level
-  
-  implicit none
-
-  double precision :: r2 ! Distance from L1 to secondary
-  double precision :: R  ! Distance between secondary and primary
-
-  double precision :: L1, dL1dr ! Bring in external function declarations
-  
-  double precision :: r2_old ! For the root find
-  double precision :: tolerance = 1.0d-6
-  integer          :: max_iters = 100
-  
-  integer          :: i
-
-  ! Don't try to calculate the Lagrange point if the secondary
-  ! is already gone.
-  
-  if (mass_S < ZERO) return
-  
-  R = sqrt(sum((com_P - com_S)**2))
-
-  ! Do a root-find over the quintic equation for L1. The initial
-  ! guess will be the case of equal mass, i.e. that the Lagrange point
-  ! is midway in between the stars.
-
-  r2 = HALF * R
-
-  do i = 1, max_iters
-
-     r2_old = r2
-
-     r2 = r2_old - L1(mass_P, mass_S, r2_old, R) / dL1dr(mass_P, mass_S, r2_old, R)
-
-     if (abs( (r2 - r2_old) / r2_old ) < tolerance) then
-        exit
-     endif     
-
-  enddo
-  
-  if (i > max_iters) then
-     call bl_error("L1 Lagrange point root find unable to converge.")
-  endif
-
-  ! Now convert this radial distance between the two stars
-  ! into a zone index. Remember that it has to be along the
-  ! line joining the two stars.
-
-  L1_idx(:) = (com_P(:) + r2 * abs(com_S(:) - com_P(:)) / R) / dx_level(:,amr_level)
-
-end subroutine
-
-
-
-function L1(M1, M2, r2, R) result(func)
-
-  use bl_constants_module
-
-  implicit none
-
-  double precision :: M1, M2, r2, R
-  double precision :: func
-
-  func = M1 * r2**2 * R**5 - M2 * (R - r2)**2 * R**5 &
-       - M1 * (R - r2)**2 * r2**2 * R**3 + (M1 + M2) * r2**3  * R**2 * (R - r2)**2
-
-end function L1
-
-
-
-function dL1dr(M1, M2, r2, R) result(func)
-
-  use bl_constants_module
-
-  implicit none
-
-  double precision :: M1, M2, r2, R
-  double precision :: func
-
-  func = TWO * M1 * r2 * R**5 + TWO * M2 * (R - r2) * R**5 &
-       + TWO * M1 * (R - r2) * r2**2 * R**3 - TWO * M1 * (R - r2) * r2 * R**3 &
-       + THREE * (M1 + M2) * r2**2  * R**2 * (R - r2)**2 - TWO * (M1 + M2) * r2**3 * R**2 * (R - r2)
-
-end function dL1dr
-
-
-
 ! Check whether we should stop the initial relaxation.
 ! If so, set do_initial_relaxation to false, which will effectively
 ! turn off the external source terms.
 
-subroutine check_relaxation(state, s_lo, s_hi, lo, hi, is_done)
+subroutine check_relaxation(state, s_lo, s_hi, lo, hi, is_done) bind(C)
 
   use meth_params_module, only: URHO, NVAR
   use probdata_module, only: do_initial_relaxation, relaxation_density_cutoff, L1_idx
@@ -773,7 +647,7 @@ end subroutine check_relaxation
 
 
 
-subroutine turn_off_relaxation
+subroutine turn_off_relaxation() bind(C)
 
   use probdata_module, only: do_initial_relaxation, ioproc
   
@@ -791,7 +665,7 @@ end subroutine turn_off_relaxation
 
 ! Updates the CASTRO rotational period.
 
-subroutine set_period(period)
+subroutine set_period(period) bind(C)
 
   use meth_params_module, only: rot_period
 
@@ -807,7 +681,7 @@ end subroutine set_period
 
 ! Returns the CASTRO rotation frequency vector.
 
-subroutine get_omega_vec(omega_in, time)
+subroutine get_omega_vec(omega_in, time) bind(C)
 
   use rotation_module, only: get_omega
 
@@ -823,7 +697,7 @@ end subroutine get_omega_vec
 
 ! Returns the CASTRO rotation frequency vector.
 
-subroutine get_axes(axis_1_in, axis_2_in, axis_3_in)
+subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C)
 
   use probdata_module, only: axis_1, axis_2, axis_3
 
@@ -841,7 +715,7 @@ end subroutine get_axes
 
 ! Returns whether we are doing a relaxation step.
 
-subroutine get_do_scf_initial_models(do_scf_initial_models_out)
+subroutine get_do_scf_initial_models(do_scf_initial_models_out) bind(C)
 
   use probdata_module, only: do_scf_initial_models
 

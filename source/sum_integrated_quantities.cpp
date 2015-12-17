@@ -45,7 +45,7 @@ Castro::sum_integrated_quantities ()
 
     Real omega[3] = { 0.0 };
 
-    BL_FORT_PROC_CALL(GET_OMEGA_VEC,get_omega_vec)(omega, time);
+    get_omega_vec(omega, time);
     
     Real total_E_grid = 0.0;
 
@@ -126,10 +126,10 @@ Castro::sum_integrated_quantities ()
     int axis_3;
 
     // Determine whether we're doing a single star simulation
-    BL_FORT_PROC_CALL(GET_SINGLE_STAR,get_single_star)(single_star);
+    get_single_star(single_star);
     
     // Determine various coordinate axes
-    BL_FORT_PROC_CALL(GET_AXES,get_axes)(axis_1, axis_2, axis_3);
+    get_axes(axis_1, axis_2, axis_3);
 
     wd_dist_init[axis_1 - 1] = 1.0;
     
@@ -207,8 +207,7 @@ Castro::sum_integrated_quantities ()
 
     }
 
-    BL_FORT_PROC_CALL(GET_STAR_DATA,get_star_data)
-      (com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
     if (single_star != 1) {
       
