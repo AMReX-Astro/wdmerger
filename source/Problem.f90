@@ -725,7 +725,7 @@ end subroutine get_axes
 
 subroutine get_do_scf_initial_models(do_scf_initial_models_out) bind(C)
 
-  use probdata_module, only: do_scf_initial_models
+  use scf_relaxation_module, only: do_scf_initial_models
 
   implicit none
 

@@ -19,12 +19,6 @@
   relaxation_timescale = 1.0d-3
   relaxation_density_cutoff = 1.0d0
 
-  do_scf_initial_models = F
-  scf_d_A = 1.0d9
-  scf_d_B = 1.0d9
-  scf_d_C = 1.8d9
-  scf_relax_tol = 1.0d-3
-
   ambient_density = 1.0d-4
 
   stellar_temp = 1.0d7
@@ -58,6 +52,16 @@
   gw_dist = 10.0
 
   fill_ambient_bc = F
+/
+
+&scf
+
+  do_scf_initial_models = F
+  scf_d_A = 1.0d9
+  scf_d_B = 1.0d9
+  scf_d_C = 1.8d9
+  scf_relax_tol = 1.0d-3
+
 /
 
 &tagging 

@@ -203,23 +203,6 @@ module probdata_module
   double precision, save :: relaxation_timescale = 0.001
   double precision, save :: relaxation_density_cutoff = 1.0d0
 
-  ! Input parameters for SCF relaxation
-  
-  logical, save          :: do_scf_initial_models = .false.
-  double precision, save :: scf_d_A = 1.0d9
-  double precision, save :: scf_d_B = 1.0d9
-  double precision, save :: scf_d_C = 1.8d9
-  double precision, save :: scf_relax_tol = 1.d-3
-  
-  ! Internal data for SCF relaxation
-  
-  double precision, save :: scf_h_max_P, scf_h_max_S
-  double precision, save :: scf_enthalpy_min
-  double precision, save :: scf_rpos(3,3)         ! Relative position of points A, B, and C
-  double precision, save :: scf_d_vector(3,3)     ! Positions of points relative to system center
-  double precision, save :: scf_c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
-  integer, save          :: scf_rloc(3,3)         ! Indices of zones nearby to these points
-
   ! Distance (in kpc) used for calculation of the gravitational wave amplitude
   ! (this wil be calculated along all three coordinate axes).
   
@@ -256,7 +239,7 @@ contains
     ! Read in the namelist to set problem parameters.
 
     call read_namelist
-
+    
     ! Determine if we are the I/O processor, and save it to the ioproc variable.
 
     call get_ioproc
@@ -279,7 +262,7 @@ contains
 
     use meth_params_module
     use prob_params_module, only: dim, coord_type
-
+    
     implicit none
 
     integer :: untin
@@ -296,9 +279,6 @@ contains
          do_initial_relaxation, &
          relaxation_timescale, &
          relaxation_density_cutoff, &
-         do_scf_initial_models, &
-         scf_d_A, scf_d_B, scf_d_C, &
-         scf_relax_tol, &
          ambient_density, &
          stellar_temp, ambient_temp, &
          max_he_wd_mass, &

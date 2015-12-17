@@ -1,6 +1,7 @@
    subroutine PROBINIT (init,name,namlen,problo,probhi)
      
      use probdata_module, only: initialize
+     use scf_relaxation_module, only: scf_initialize
 
      implicit none
 
@@ -9,6 +10,7 @@
      double precision :: problo(3), probhi(3)
 
      call initialize(name, namlen, init)
+     call scf_initialize(name, namlen, init)
 
    end subroutine PROBINIT
 
