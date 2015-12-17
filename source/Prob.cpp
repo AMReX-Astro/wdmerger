@@ -67,6 +67,8 @@ Castro::problem_post_timestep()
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
+      BL_FORT_PROC_CALL(SET_AMR_INFO,set_amr_info)(lev, -1, -1, -1.0, -1.0);
+      
       getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
 
       mass_p += lev_mass_p;
@@ -81,6 +83,8 @@ Castro::problem_post_timestep()
 
     }
 
+    BL_FORT_PROC_CALL(SET_AMR_INFO,set_amr_info)(level, -1, -1, -1.0, -1.0);    
+    
     // Complete calculations for center of mass quantities
 
     for ( int i = 0; i < 3; i++ ) {
