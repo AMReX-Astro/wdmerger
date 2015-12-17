@@ -615,9 +615,10 @@ end subroutine update_center
 ! If so, set do_initial_relaxation to false, which will effectively
 ! turn off the external source terms.
 
-subroutine check_relaxation(state, s_lo, s_hi, lo, hi, L1_idx, is_done) bind(C)
+subroutine check_relaxation(state, s_lo, s_hi, lo, hi, L1, is_done) bind(C)
 
   use meth_params_module, only: URHO, NVAR
+  use castro_util_module, only: position_to_index
   use probdata_module, only: do_initial_relaxation, relaxation_density_cutoff
   
   implicit none
@@ -625,8 +626,14 @@ subroutine check_relaxation(state, s_lo, s_hi, lo, hi, L1_idx, is_done) bind(C)
   integer :: lo(3), hi(3)
   integer :: s_lo(3), s_hi(3)
   integer :: is_done
-  integer :: L1_idx(3)
+  double precision :: L1(3)
   double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+
+  integer :: L1_idx(3)
+  
+  ! Convert the Lagrange point into a grid index.
+
+  L1_idx = position_to_index(L1)
 
   ! Check if the Lagrange point is in this box.
   

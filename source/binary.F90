@@ -39,7 +39,7 @@ contains
   ! Calculate Lagrange points. In each case we give the zone index
   ! closest to it (assuming we're on the coarse grid).
 
-  subroutine get_lagrange_points(mass_1, mass_2, com_1, com_2, L1_idx) bind(C)
+  subroutine get_lagrange_points(mass_1, mass_2, com_1, com_2, L1) bind(C)
 
     use bl_constants_module
     use prob_params_module, only: dx_level
@@ -49,7 +49,7 @@ contains
 
     double precision :: mass_1, mass_2
     double precision :: com_1(3), com_2(3)
-    integer          :: L1_idx(3)
+    double precision :: L1(3)
     
     double precision :: r2 ! Distance from L1 to secondary
     double precision :: R  ! Distance between secondary and primary
@@ -77,7 +77,7 @@ contains
 
        r2_old = r2
 
-       r2 = r2_old - L1(mass_1, mass_2, r2_old, R) / dL1dr(mass_1, mass_2, r2_old, R)
+       r2 = r2_old - fL1(mass_1, mass_2, r2_old, R) / fdL1dr(mass_1, mass_2, r2_old, R)
 
        if (abs( (r2 - r2_old) / r2_old ) < tolerance) then
           exit
@@ -89,45 +89,43 @@ contains
        call bl_error("L1 Lagrange point root find unable to converge.")
     endif
 
-    ! Now convert this radial distance between the two stars
-    ! into a zone index. Remember that it has to be along the
-    ! line joining the two stars.
+    ! Now turn this radial distance into a grid coordinate.
 
-    L1_idx(:) = (com_1(:) + r2 * abs(com_2(:) - com_1(:)) / R) / dx_level(:,amr_level)
+    L1 = com_1 + (r2 / R) * (com_2 - com_1)
 
   end subroutine get_lagrange_points
 
 
 
-  function L1(M1, M2, r2, R) result(func)
+  function fL1(M1, M2, r2, R)
 
     use bl_constants_module
 
     implicit none
 
     double precision :: M1, M2, r2, R
-    double precision :: func
+    double precision :: fL1
 
-    func = M1 * r2**2 * R**5 - M2 * (R - r2)**2 * R**5 &
-         - M1 * (R - r2)**2 * r2**2 * R**3 + (M1 + M2) * r2**3  * R**2 * (R - r2)**2
+    fL1 = M1 * r2**2 * R**5 - M2 * (R - r2)**2 * R**5 &
+        - M1 * (R - r2)**2 * r2**2 * R**3 + (M1 + M2) * r2**3  * R**2 * (R - r2)**2
 
-  end function L1
+  end function fL1
 
 
 
-  function dL1dr(M1, M2, r2, R) result(func)
+  function fdL1dr(M1, M2, r2, R)
 
     use bl_constants_module
 
     implicit none
 
     double precision :: M1, M2, r2, R
-    double precision :: func
+    double precision :: fdL1dr
 
-    func = TWO * M1 * r2 * R**5 + TWO * M2 * (R - r2) * R**5 &
-         + TWO * M1 * (R - r2) * r2**2 * R**3 - TWO * M1 * (R - r2) * r2 * R**3 &
-         + THREE * (M1 + M2) * r2**2  * R**2 * (R - r2)**2 - TWO * (M1 + M2) * r2**3 * R**2 * (R - r2)
+    fdL1dr = TWO * M1 * r2 * R**5 + TWO * M2 * (R - r2) * R**5 &
+           + TWO * M1 * (R - r2) * r2**2 * R**3 - TWO * M1 * (R - r2) * r2 * R**3 &
+           + THREE * (M1 + M2) * r2**2  * R**2 * (R - r2)**2 - TWO * (M1 + M2) * r2**3 * R**2 * (R - r2)
 
-  end function dL1dr
+  end function fdL1dr
 
 end module binary_module
