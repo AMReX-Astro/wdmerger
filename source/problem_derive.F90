@@ -8,10 +8,10 @@ contains
 
   ! Derive momentum, given input vector of the grid momenta.
   
-  subroutine ca_dermomentumx(p,p_lo,p_hi,ncomp_p, &
-                             u,u_lo,u_hi,ncomp_u, &
-                             lo,hi,domlo,domhi, &
-                             dx,xlo,time,dt,bc,level,grid_no) bind(C)
+  subroutine ca_derinertialmomentumx(p,p_lo,p_hi,ncomp_p, &
+                                     u,u_lo,u_hi,ncomp_u, &
+                                     lo,hi,domlo,domhi, &
+                                     dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
     use bl_constants_module, only: HALF
     use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -46,16 +46,16 @@ contains
        enddo
     enddo
 
-  end subroutine ca_dermomentumx
+  end subroutine ca_derinertialmomentumx
 
 
 
   ! Derive momentum, given input vector of the grid momenta.
 
-  subroutine ca_dermomentumy(p,p_lo,p_hi,ncomp_p, &
-                             u,u_lo,u_hi,ncomp_u, &
-                             lo,hi,domlo,domhi, &
-                             dx,xlo,time,dt,bc,level,grid_no) bind(C)
+  subroutine ca_derinertialmomentumy(p,p_lo,p_hi,ncomp_p, &
+                                     u,u_lo,u_hi,ncomp_u, &
+                                     lo,hi,domlo,domhi, &
+                                     dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
     use bl_constants_module, only: HALF
     use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -90,16 +90,16 @@ contains
        enddo
     enddo
 
-  end subroutine ca_dermomentumy
+  end subroutine ca_derinertialmomentumy
 
 
 
   ! Derive momentum, given input vector of the grid momenta.
 
-  subroutine ca_dermomentumz(p,p_lo,p_hi,ncomp_p, &
-                             u,u_lo,u_hi,ncomp_u, &
-                             lo,hi,domlo,domhi, &
-                             dx,xlo,time,dt,bc,level,grid_no) bind(C)
+  subroutine ca_derinertialmomentumz(p,p_lo,p_hi,ncomp_p, &
+                                     u,u_lo,u_hi,ncomp_u, &
+                                     lo,hi,domlo,domhi, &
+                                     dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
     use bl_constants_module, only: HALF
     use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -134,16 +134,16 @@ contains
        enddo
     enddo
 
-  end subroutine ca_dermomentumz
+  end subroutine ca_derinertialmomentumz
 
 
 
   ! Derive angular momentum, given input vector of the grid momenta.
 
-  subroutine ca_derangmomx(L,L_lo,L_hi,ncomp_L, &
-                           u,u_lo,u_hi,ncomp_u, &
-                           lo,hi,domlo,domhi, &
-                           dx,xlo,time,dt,bc,level,grid_no) bind(C)
+  subroutine ca_derinertialangmomx(L,L_lo,L_hi,ncomp_L, &
+                                   u,u_lo,u_hi,ncomp_u, &
+                                   lo,hi,domlo,domhi, &
+                                   dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
     use bl_constants_module, only: HALF
     use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -180,14 +180,14 @@ contains
        enddo
     enddo
 
-  end subroutine ca_derangmomx
+  end subroutine ca_derinertialangmomx
 
 
 
-  subroutine ca_derangmomy(L,L_lo,L_hi,ncomp_L, &
-                           u,u_lo,u_hi,ncomp_u, &
-                           lo,hi,domlo,domhi, &
-                           dx,xlo,time,dt,bc,level,grid_no) bind(C)
+  subroutine ca_derinertialangmomy(L,L_lo,L_hi,ncomp_L, &
+                                   u,u_lo,u_hi,ncomp_u, &
+                                   lo,hi,domlo,domhi, &
+                                   dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
     use bl_constants_module, only: HALF
     use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -224,14 +224,14 @@ contains
        enddo
     enddo
 
-  end subroutine ca_derangmomy
+  end subroutine ca_derinertialangmomy
 
 
 
-  subroutine ca_derangmomz(L,L_lo,L_hi,ncomp_L, &
-                           u,u_lo,u_hi,ncomp_u, &
-                           lo,hi,domlo,domhi, &
-                           dx,xlo,time,dt,bc,level,grid_no) bind(C)
+  subroutine ca_derinertialangmomz(L,L_lo,L_hi,ncomp_L, &
+                                   u,u_lo,u_hi,ncomp_u, &
+                                   lo,hi,domlo,domhi, &
+                                   dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
     use bl_constants_module, only: HALF
     use meth_params_module, only : URHO, UMX, UMY, UMZ, UEINT
@@ -268,6 +268,6 @@ contains
        enddo
     enddo
 
-  end subroutine ca_derangmomz
+  end subroutine ca_derinertialangmomz
 
 end module problem_derive_module

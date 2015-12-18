@@ -161,13 +161,13 @@ Castro::sum_integrated_quantities ()
 
       mass += ca_lev.volWgtSum("density", time);
 
-      momentum[0] += ca_lev.volWgtSum("momentum_x", time);
-      momentum[1] += ca_lev.volWgtSum("momentum_y", time);
-      momentum[2] += ca_lev.volWgtSum("momentum_z", time);
+      momentum[0] += ca_lev.volWgtSum("inertial_momentum_x", time);
+      momentum[1] += ca_lev.volWgtSum("inertial_momentum_y", time);
+      momentum[2] += ca_lev.volWgtSum("inertial_momentum_z", time);
 
-      angular_momentum[0] += ca_lev.volWgtSum("angular_momentum_x", time);
-      angular_momentum[1] += ca_lev.volWgtSum("angular_momentum_y", time);
-      angular_momentum[2] += ca_lev.volWgtSum("angular_momentum_z", time);
+      angular_momentum[0] += ca_lev.volWgtSum("inertial_angular_momentum_x", time);
+      angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time);
+      angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time);
       
       rho_E += ca_lev.volWgtSum("rho_E", time);
       rho_K += ca_lev.volWgtSum("kineng",time);
