@@ -111,8 +111,10 @@ Castro::problem_post_timestep()
     // First, calculate the location of the L1 Lagrange point.
 
     Real L1[3] = { -1.0e200 };
+    Real L2[3] = { -1.0e200 };
+    Real L3[3] = { -1.0e200 };
     
-    get_lagrange_points(mass_p, mass_s, com_p, com_s, L1);
+    get_lagrange_points(mass_p, mass_s, com_p, com_s, L1, L2, L3);
     
     // Now cycle through the grids and determine if the L1
     // point has reached the density threshold.

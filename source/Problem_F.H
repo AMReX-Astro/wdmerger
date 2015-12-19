@@ -61,7 +61,7 @@ extern "C"
 
   void get_lagrange_points(const Real& mass_1, const Real& mass_2,
 	                   const Real* com_1, const Real* com_2,
-			   Real* L1);
+			   Real* L1, Real* L2, Real* L3);
 
   void check_relaxation(BL_FORT_FAB_ARG_3D(state),
 			const int* lo, const int* hi,
