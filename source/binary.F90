@@ -74,6 +74,7 @@ contains
 
     r = ZERO
 
+    print *, r, mass_1, mass_2, r1, r2, a
     call lagrange_iterate(r, mass_1, mass_2, r1, r2, a, r_min = r1, r_max = r2)
     
     ! Now turn this radial distance into a grid coordinate.
@@ -96,6 +97,8 @@ contains
     
     L3 = r * (com_2 - com_1) / a
 
+    print *, L1 / a, L2 / a, L3 / a
+    
   end subroutine get_lagrange_points
 
 
@@ -107,7 +110,7 @@ contains
   
   subroutine lagrange_iterate(r, mass_1, mass_2, r1, r2, a, r_min, r_max)
 
-    use bl_constants_module, only: HALF
+    use bl_constants_module, only: ZERO, HALF
     
     implicit none
 
@@ -120,41 +123,66 @@ contains
     ! Root-find parameters
     
     double precision :: tolerance = 1.0d-8
-    integer          :: max_iters = 100    
+    integer          :: max_iters = 200
 
     ! Local variables
     
-    double precision :: r_old    
+    double precision :: rm, rp, rc, width, fm, fp, fc
     integer :: i
 
+    if (.not. (present(r_min) .or. present(r_max))) then
+       call bl_error("Lagrange point iteration must have at least one bound provided.")
+    else if (present(r_min) .and. present(r_max)) then
+       rm = r_min
+       rp = r_max
+    else if (present(r_min) .and. (.not. present(r_max))) then
+       rm = r_min
+       rp = abs(r_min) * 1000.0d0
+    else if (present(r_max) .and. (.not. present(r_min))) then
+       rm = -abs(r_max) * 1000.0d0
+       rp = r_max
+    endif
+
+    width = (rp - rm)
+    
+    rm = rm + width / 1000.0d0
+    rp = rp - width / 1000.0d0
+
+    ! Use a bisection search to find the root of the force-balance equation.
+    ! The reason we don't use something faster like Newton-Raphson is that
+    ! the force terms have terms like 1/r^2, so evaluating the derivative and
+    ! then dividing it can be numerically dangerous. Since we only call this routine
+    ! once per timestep and the force evaluation is cheap, it shouldn't matter
+    ! that the method itself converges slowly.
+    
     do i = 1, max_iters
 
-       r_old = r
-
-       r = r_old - fL(mass_1, mass_2, r1, r2, r_old, a) / fdLdr(mass_1, mass_2, r1, r2, r_old, a)
-
-       ! Force this to stay > r_max and < r_max.
-
-       if (present(r_max)) then
-          if (r > r_max) then
-             r = r_old + HALF * (r_max - r_old)
-          endif
+       fm = fL(mass_1, mass_2, r1, r2, rm, a)
+       fp = fL(mass_1, mass_2, r1, r2, rp, a)       
+       
+       if (fm * fp > ZERO) then
+          call bl_error("No root exists within the provided interval to the Lagrange root find.")
        endif
 
-       if (present(r_min)) then
-          if (r < r_min) then
-             r = r_old + HALF * (r_min - r_old)
-          endif
+       rc = HALF * (rm + rp)
+       fc = fL(mass_1, mass_2, r1, r2, rc, a)              
+
+       if (fm * fc < ZERO) then
+          rp = rc
+       else
+          rm = rc
        endif
 
        ! Check to see if we've convernged.
 
-       if (abs( (r - r_old) / r_old ) < tolerance) then
+       if (abs( (rp - rm) / a ) < tolerance) then
           exit
        endif
 
     enddo
 
+    r = rc
+    
     if (i > max_iters) then
        call bl_error("Lagrange point root find unable to converge.")
     endif    
