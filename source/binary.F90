@@ -74,7 +74,6 @@ contains
 
     r = ZERO
 
-    print *, r, mass_1, mass_2, r1, r2, a
     call lagrange_iterate(r, mass_1, mass_2, r1, r2, a, r_min = r1, r_max = r2)
     
     ! Now turn this radial distance into a grid coordinate.
@@ -96,8 +95,6 @@ contains
     call lagrange_iterate(r, mass_1, mass_2, r1, r2, a, r_max = r1)
     
     L3 = r * (com_2 - com_1) / a
-
-    print *, L1 / a, L2 / a, L3 / a
     
   end subroutine get_lagrange_points
 
