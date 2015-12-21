@@ -748,6 +748,68 @@ function get_last_submitted_job {
 
 
 
+# Convert some inputs variables from 3D into their 2D equivalents.
+
+function convert_to_2D {
+
+    # Cylindrical (R-Z) coordinate system.
+
+    geometry_coord_sys=1
+
+    if [ -z "$geometry_is_periodic" ]; then
+	geometry_is_periodic=$(get_inputs_var "geometry_is_periodic")
+    fi
+
+    geometry_is_periodic=$(echo $geometry_is_periodic | awk '{print $1, $2}')
+
+    # Set the radial coordinate to have lower boundary value = 0.
+
+    if [ -z "$geometry_prob_lo" ]; then
+	geometry_prob_lo=$(get_inputs_var "geometry_prob_lo")
+    fi
+
+    if [ -z "$geometry_prob_hi" ]; then
+	geometry_prob_hi=$(get_inputs_var "geometry_prob_hi")
+    fi
+
+    if [ -z "$castro_center" ]; then
+	castro_center=$(get_inputs_var "castro_center")
+    fi
+
+    geometry_prob_lo=$(echo $geometry_prob_lo | awk '{print "0.0e0", $2}')
+    geometry_prob_hi=$(echo $geometry_prob_hi | awk '{print      $1, $2}')
+    castro_center=$(echo $castro_center | awk '{print $1, $2}')
+
+    # Use half as many radial points to keep dr = dz.
+
+    if [ -z "$amr_n_cell" ]; then
+	amr_n_cell=$(get_inputs_var "amr_n_cell")
+    fi
+
+    nr=$(echo $amr_n_cell | awk '{print $1}')
+    nz=$(echo $amr_n_cell | awk '{print $2}')
+
+    nr=$(echo "$nz / 2" | bc)	
+
+    amr_n_cell="$nr $nz"
+
+    # Use a symmetric lower boundary condition for radial coordinate.
+
+    if [ -z "$castro_lo_bc" ]; then
+	castro_lo_bc=$(get_inputs_var "castro_lo_bc")
+    fi
+
+    if [ -z "$castro_hi_bc" ]; then
+	castro_hi_bc=$(get_inputs_var "castro_hi_bc")
+    fi
+
+    castro_lo_bc=$(echo $castro_lo_bc | awk '{print  3, $2}')
+    castro_hi_bc=$(echo $castro_hi_bc | awk '{print $1, $2}')
+
+}
+
+
+
 # Generate a run script in the given directory.
 
 function create_job_script {
@@ -1007,6 +1069,14 @@ function run {
   fi
 
   do_job=0
+
+  if [ -z $DIM ]; then
+      DIM="3"
+  fi
+
+  if [ $DIM -eq "2" ]; then
+      convert_to_2D
+  fi
 
   if [ ! -d $dir ]; then
 
