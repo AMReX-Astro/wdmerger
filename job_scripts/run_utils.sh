@@ -29,7 +29,7 @@ source $script_dir/machines.sh
 
 function get_make_var {
 
-  make print-$1 -C $compile_dir | tail -2 | head -1 | awk '{ print $NF }'
+  make print-$1 -C $compile_dir DIM=$DIM | tail -2 | head -1 | awk '{ print $NF }'
 
 }
 
@@ -1058,6 +1058,14 @@ function run {
       return
   fi
 
+  if [ -z $DIM ]; then
+      DIM="3"
+  fi
+
+  if [ $DIM -eq "2" ]; then
+      convert_to_2D
+  fi
+
   set_up_problem_dir
 
   if [ -z $nprocs ]; then
@@ -1069,14 +1077,6 @@ function run {
   fi
 
   do_job=0
-
-  if [ -z $DIM ]; then
-      DIM="3"
-  fi
-
-  if [ $DIM -eq "2" ]; then
-      convert_to_2D
-  fi
 
   if [ ! -d $dir ]; then
 
@@ -1174,6 +1174,20 @@ function set_up_problem_dir {
 	state_arr=()
 	walltime_arr=()
 
+        # Build the executable if we haven't yet.
+
+	if [ ! -e $compile_dir/*"$DIM"d*.ex ]; then
+
+	    echo "Detected that the executable doesn't exist yet; building executable now."
+
+	    cd $compile_dir
+	    make -j8 DIM=$DIM > compile.txt
+	    cd - > /dev/null
+
+	    echo "Done building executable."
+
+	fi       
+
         # Fill these arrays.
 
 	get_submitted_jobs
@@ -1183,7 +1197,7 @@ function set_up_problem_dir {
 	    CASTRO=$(get_make_var executable)
 
 	fi
-	
+
 	if [ ! -d $plots_dir ]; then
 	    mkdir $plots_dir
 	fi
