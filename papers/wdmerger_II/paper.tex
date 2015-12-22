@@ -1,8 +1,8 @@
 \documentclass[iop,numberedappendix]{../emulateapj}
-% for \sout
-\usepackage{ulem}
-% makes sure \em{} is italic rather than underlined (corrects ulem from line above)
-\normalem
+
+% these lines seem necessary for pdflatex to get the paper size right
+\pdfpagewidth 8.5in
+\pdfpageheight 11.0in
 
 % for the red MarginPars
 \usepackage{color}
@@ -10,21 +10,38 @@
 % some extra math symbols
 \usepackage{mathtools}
 
-\newcommand{\gcc}{\mathrm{g~cm^{-3} }}
+% allows Greek symbols to be bold
+\usepackage{bm}
+
+% allows us to force the location of a figure
+\usepackage{float}
+
+% allows comment sections
+\usepackage{verbatim}
+
+% allows in-document links; see http://www.astrobetter.com/blog/2014/09/29/latex-hyperref-and-emulateapj/
+\usepackage[backref,breaklinks,colorlinks,citecolor=blue]{hyperref} 
+\usepackage[all]{hypcap} %Links go to figures;breaks on deluxetables       
+\renewcommand*{\backref}[1]{[#1]}
+
+% Override choices in \autoref
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
+\def\subsubsectionautorefname{Section}
 
 % MarginPars
 \setlength{\marginparwidth}{0.75in}
 \newcommand{\MarginPar}[1]{\marginpar{\vskip-\baselineskip\raggedright\tiny\sffamily\hrule\smallskip{\color{red}#1}\par\smallskip\hrule}}
 
-
-\newcommand{\evm}{{(-)}}
-\newcommand{\evz}{{(\circ)}}
-\newcommand{\evp}{{(+)}}
-\newcommand{\enu}{{(\nu)}}
-
-
-
 \newcommand{\msolar}{\mathrm{M}_\odot}
+
+% Software names
+\newcommand{\boxlib}{\texttt{BoxLib}}
+\newcommand{\castro}{\texttt{CASTRO}}
+\newcommand{\wdmerger}{\texttt{wdmerger}}
+\newcommand{\python}{\texttt{Python}}
+\newcommand{\matplotlib}{\texttt{matplotlib}}
+\newcommand{\yt}{\texttt{yt}}
 
 \begin{document}
 
@@ -34,9 +51,33 @@
 \title{White Dwarf Mergers on Adaptive Meshes\\ II. Collisions}
 
 \shorttitle{WD Mergers. II. Collisions}
-\shortauthors{Katz et al. (2015)}
+\shortauthors{Katz et al. (2016)}
 
-\author{TBD}
+\author{Max P. Katz\altaffilmark{1}}
+\author{Michael Zingale\altaffilmark{1}}
+\author{Alan C. Calder\altaffilmark{1,2}}
+\author{F. Douglas Swesty\altaffilmark{1}}
+\author{Ann S. Almgren\altaffilmark{3}}
+\author{Weiqun Zhang\altaffilmark{3}}
+
+\altaffiltext{1}
+{
+  Department of Physics and Astronomy,
+  Stony Brook University, Stony Brook, NY, 11794-3800, USA
+}
+
+\altaffiltext{2}
+{
+  Institute for Advanced Computational Sciences,
+  Stony Brook University, Stony Brook, NY, 11794-5250, USA
+}
+
+\altaffiltext{3}
+{
+  Center for Computational Sciences and Engineering,
+  Lawrence Berkeley National Laboratory, Berkeley, CA 94720
+}
+
 %==========================================================================
 % Abstract
 %==========================================================================
@@ -52,7 +93,8 @@ supernovae.
 %==========================================================================
 \section{Introduction}
 
-\cite{castro}
+We consider the collisions of white dwarfs as possible progenitors of Type Ia 
+supernovae, using the code \castro\ \cite{castro}.
 
 
 %==========================================================================
@@ -63,16 +105,24 @@ supernovae.
 
 \acknowledgments
 
-This research was supported by NSF award AST-1211563.  This research
-used resources of the National Energy Research Scientific Computing
-Center, which is supported by the Office of Science of the
-U.S. Department of Energy under Contract No. DE-AC02-05CH11231.  An
+This research was supported by NSF award AST-1211563. An
 award of computer time was provided by the Innovative and Novel
 Computational Impact on Theory and Experiment (INCITE) program.  This
 research used resources of the Oak Ridge Leadership Computing Facility
 located in the Oak Ridge National Laboratory, which is supported by
 the Office of Science of the Department of Energy under Contract
-DE-AC05-00OR22725.
+DE-AC05-00OR22725. Project AST106 supported use of the ORNL/Titan resource. 
+This research used resources of the National Energy Research Scientific Computing
+Center, which is supported by the Office of Science of the
+U.S. Department of Energy under Contract No. DE-AC02-05CH11231.
+Results in this paper were obtained using the high-performance
+LIred computing system at the Institute for Advanced Computational
+Science at Stony Brook University, which was obtained through
+the Empire State Development grant NYS \#28451. 
+
+This research has made use of NASA's Astrophysics Data System 
+Bibliographic Services. In addition, this research has made use
+of the AstroBetter blog and wiki.
 
 \clearpage
 
