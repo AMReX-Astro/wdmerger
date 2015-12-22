@@ -9,7 +9,7 @@ amr.probin_file = probin                           # Name of the probin file
 max_step = 10000000                                # Maximum coarse timestep
 stop_time = 100.0                                  # Simulation time to stop at
 
-geometry.is_periodic = 0 0 0                       # Non-periodic boundary conditions
+geometry.is_periodic = 0 0                         # Non-periodic boundary conditions
 
 geometry.coord_sys = 1                             # Cylindrical (R-Z) coordinate system
 
@@ -23,6 +23,7 @@ castro.fixed_dt = -1.0                             # Fixed level 0 timestep; unu
 castro.init_shrink = 0.0001                        # Scale back initial timestep by this factor
 castro.change_max = 1.01                           # Factor by which dt is allowed to change each timestep
 castro.hard_cfl_limit = 0			   # Whether to abort a simulation if the CFL criterion is locally violated
+castro.burning_timestep_factor = 1.0               # Limit timestep based on nuclear burning considerations
 
 ############################################################################################
 # Boundary conditions
@@ -58,7 +59,7 @@ amr.grid_eff = 0.9                                 # What constitutes an efficie
 castro.do_hydro = 1                                # Whether or not to do hydrodynamics
 castro.do_grav = 1                                 # Whether or not to do gravity
 castro.do_react = 0                                # Whether or not to do reactions
-castro.do_sponge = 0                               # Whether or not to apply the sponge
+castro.do_sponge = 1                               # Whether or not to apply the sponge
 castro.add_ext_src = 1                             # Whether or not to apply external source terms
 castro.do_rotation = 1                             # Whether or not to include the rotation source term
 castro.rotational_period = 100.0                   # Rotational period of the rotating reference frame
@@ -66,7 +67,7 @@ castro.rotational_dPdt = -0.0                      # Time rate of change of the 
 castro.source_term_predictor = 1                   # Use a lagged predictor estimate of the source terms in the hydro
 
 ############################################################################################
-# PPM options
+# PPM/Hydro options
 ############################################################################################
 
 castro.ppm_type = 1                                # Piecewise parabolic with the original limiters (0 is piecewise linear; 2 is new limiters)
@@ -78,7 +79,7 @@ castro.ppm_temp_fix = 0                            # Use the EOS in calculation 
 castro.riemann_solver = 0                          # Which Riemann solver to use
 castro.grav_source_type = 4                        # How to include the gravity source term in the hydro equations
 castro.rot_source_type = 4                         # How to include the rotation source term in the hydro equations
-castro.transverse_reset_rhoe = 1                   # Reset (rho*e) if it goes negative in the transverse terms
+castro.transverse_reset_rhoe = 0                   # Reset (rho*e) if it goes negative in the transverse terms
 castro.transverse_reset_density = 1                # Reset rho if it goes negative in the transverse terms
 
 ############################################################################################
@@ -129,6 +130,9 @@ amr.check_int = -1                                 # Number of timesteps between
 amr.plot_file = plt                                # Root name of plot file
 amr.plot_per = 10.0                                # Simulation time between plotfiles
 amr.plot_int = -1                                  # Number of timesteps between plotfiles
+amr.small_plot_file = smallplt                     # Root name of small plot files
+amr.small_plot_per = 1.0                           # Simulation time between small plotfiles
+amr.small_plot_int = -1                            # Number of timesteps between small plotfiles
 amr.message_int = 1                                # How often to check whether the run script asked for a checkpoint dump
 
 amr.v = 1                                          # Control verbosity in Amr.cpp
@@ -136,6 +140,11 @@ castro.v = 1                                       # Control verbosity in Castro
 gravity.v = 1                                      # Control verbosity in Gravity.cpp
 mg.v = 0                                           # Control verbosity in the multigrid solver
 
-amr.derive_plot_vars = ALL                         # Calculate all variables for plotfiles, including derived variables
+amr.plot_vars = ALL                                # State variables to add to plot files
+amr.derive_plot_vars = NONE                        # Derived variables to add to plot files
+
+amr.small_plot_vars = density                      # State variables to add to small plot files
 
 amr.data_log = grid_diag.out star_diag.out species_diag.out   # Name of the diagnostic sum output files
+
+fab.format = NATIVE_32                             # Write out plotfile data in single precision
