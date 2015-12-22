@@ -740,7 +740,15 @@ function submit_job {
 
 function get_last_submitted_job {
 
-  job_number=$(tail -1 jobs_submitted.txt)
+  if [ -e jobs_submitted.txt ]; then
+
+      job_number=$(tail -1 jobs_submitted.txt)
+
+  else
+
+      job_number=-1
+
+  fi
 
   echo $job_number
 
@@ -1035,6 +1043,35 @@ function create_job_script {
    # Restore the number of processors per node in case we changed it.
 
    ppn=$old_ppn
+
+}
+
+
+
+# Delete the last submitted job in the directory.
+
+function cancel {
+
+  if [ -z $dir ]; then
+      echo "No directory given to cancel; exiting."
+      return
+  fi
+
+  if [ -d $dir ]; then
+
+      cd $dir
+
+      job_number=$(get_last_submitted_job)
+
+      if [ $job_number -gt 0 ]; then
+
+	  $cancel_job $job_number
+
+      fi
+
+      cd - > /dev/null
+
+  fi
 
 }
 

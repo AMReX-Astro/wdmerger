@@ -58,6 +58,7 @@ function set_machine_params {
 
 	allocation="jni"
 	exec="qsub"
+	cancel_job="qdel"
 	ppn="32"
 	threads_per_task="8"
 	node_type="xe"
@@ -75,6 +76,7 @@ function set_machine_params {
 
 	allocation="ast106"
 	exec="qsub"
+	cancel_job="qdel"
 	ppn="16"
 	threads_per_task="8"
 	run_ext=".OU"
@@ -89,6 +91,7 @@ function set_machine_params {
 	
 	allocation="m1400"
 	exec="qsub"
+	cancel_job="qdel"
 	ppn="24"
 	run_ext=".OU"
 	batch_system="PBS"
@@ -100,6 +103,7 @@ function set_machine_params {
     elif [ $MACHINE == "LIRED" ]; then
 
 	exec="qsub"
+	cancel_job="qdel"
 	ppn="24"
 	threads_per_task="1"
 	batch_system="PBS"
