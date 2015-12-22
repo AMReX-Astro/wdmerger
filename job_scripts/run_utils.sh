@@ -1218,7 +1218,7 @@ function set_up_problem_dir {
 	    echo "Detected that the executable doesn't exist yet; building executable now."
 
 	    cd $compile_dir
-	    make -j8 DIM=$DIM > compile.txt
+	    make -j8 DIM=$DIM &> compile_"$DIM"d.out
 	    cd - > /dev/null
 
 	    echo "Done building executable."
