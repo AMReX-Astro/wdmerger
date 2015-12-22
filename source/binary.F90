@@ -157,10 +157,6 @@ contains
        fm = fL(mass_1, mass_2, r1, r2, rm, a)
        fp = fL(mass_1, mass_2, r1, r2, rp, a)       
        
-       if (fm * fp > ZERO) then
-          call bl_error("No root exists within the provided interval to the Lagrange root find.")
-       endif
-
        rc = HALF * (rm + rp)
        fc = fL(mass_1, mass_2, r1, r2, rc, a)              
 
@@ -179,9 +175,11 @@ contains
     enddo
 
     r = rc
+
+    ! If we didn't converge, set the value to zero.
     
     if (i > max_iters) then
-       call bl_error("Lagrange point root find unable to converge.")
+       r = ZERO
     endif    
     
   end subroutine lagrange_iterate
