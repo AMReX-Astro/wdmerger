@@ -274,12 +274,12 @@ Castro::sum_integrated_quantities ()
 
     BL_FORT_PROC_CALL(GET_GRAV_CONST, get_grav_const)(&Gconst);
 
-    if (mass_p > 0.0 && vol_p[0] > 0.0) {
+    if (mass_p > 0.0 && vol_p[2] > 0.0) {
       rho_avg_p = mass_p / vol_p[2];
       t_ff_p = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_p));
     }
 
-    if (mass_s > 0.0 && vol_s[0] > 0.0) {
+    if (mass_s > 0.0 && vol_s[2] > 0.0) {
       rho_avg_s = mass_s / vol_s[2];
       t_ff_s = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_s));
     }
