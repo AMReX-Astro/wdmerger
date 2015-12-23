@@ -290,7 +290,7 @@ function is_job_running {
   elif [ -e $dir/jobs_submitted.txt ] && [ ! -z $num_jobs ]; then
 
       num_jobs_in_dir=$(cat $dir/jobs_submitted.txt | wc -l)
-      jobs_in_directory=$(cat $dir/jobs_submitted.txt)
+      jobs_in_directory=$(cat $dir/jobs_submitted.txt | awk '{print $1}')
 
       for job1 in ${job_arr[@]}
       do
@@ -730,7 +730,13 @@ function submit_job {
 
   job_number=${job_number%%.*}
 
-  echo "$job_number" >> jobs_submitted.txt
+  # Get the current date and print it to file so we know 
+  # when we submitted. Since we only one want to add one column,
+  # we'll use the +%s option, which is seconds since January 1, 1970.
+
+  current_date=$(date +%s)
+
+  echo "$job_number $current_date" >> jobs_submitted.txt
 
 }
 
@@ -742,7 +748,7 @@ function get_last_submitted_job {
 
   if [ -e jobs_submitted.txt ]; then
 
-      job_number=$(tail -1 jobs_submitted.txt)
+      job_number=$(tail -1 jobs_submitted.txt | awk '{print $1}')
 
   else
 
