@@ -621,11 +621,6 @@ function check_to_stop {
     
   total_time=$(get_remaining_walltime $job_number)
 
-  # This factor determines the amount of time we want to 
-  # use as a safety factor.
-
-  safety_factor=0.1
-
   # Now we'll plan to stop when (1 - safety_factor) of the time has been used up.
 
   time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
@@ -723,6 +718,39 @@ function copy_files {
 
 function submit_job {
 
+  # Get the current date for printing to file so we know 
+  # when we submitted. Since we only one want to add one column,
+  # we'll use the +%s option, which is seconds since January 1, 1970.
+
+  current_date=$(date +%s)
+
+  # Sometimes the code crashes and we get into an endless cycle of 
+  # resubmitting the job and then crashing again soon after,
+  # which is liable to make system administrators mad at us.
+  # Let's protect against this by putting in a safeguard.
+  # Normally the job should never end before (1.0 - safety_factor) 
+  # of the walltime, so if it has, we know that the job exited 
+  # abnormally (or, say, it completed) and so we don't want to
+  # submit a new job.
+
+  old_date=$(tail -1 jobs_submitted.txt | awk '{print $2}')
+  old_walltime=$(tail -1 jobs_submitted.txt | awk '{print $3}')
+
+  if [ ! -z $old_date ] && [ ! -z $old_walltime ]; then
+
+      date_diff=$(( $current_date - $old_date ))
+
+      submit_flag=$( echo "$date_diff > (1.0 - $safety_factor) * $old_walltime" | bc -l )
+
+      if [ $submit_flag -eq 0 ]; then
+	  echo "Refusing to submit job because the last job ended too soon."
+	  return
+      fi
+
+  fi
+
+  # If we made it to this point, now actually submit the job.
+
   job_number=`$exec $job_script`
 
   # Some systems like Blue Waters include the system name
@@ -730,13 +758,16 @@ function submit_job {
 
   job_number=${job_number%%.*}
 
-  # Get the current date and print it to file so we know 
-  # when we submitted. Since we only one want to add one column,
-  # we'll use the +%s option, which is seconds since January 1, 1970.
+  # Store the requested walltime, in seconds.
 
-  current_date=$(date +%s)
-
-  # Store the recorded walltime, in seconds.
+  if [ -z $walltime ]; then
+      if [ ! -z $old_walltime ]; then
+	  walltime=$old_walltime
+      else
+	  echo "Don't know what the walltime request is in submit_job; aborting."
+	  return
+      fi
+  fi
 
   walltime_in_seconds=$(hours_to_seconds $walltime)
 
@@ -1291,6 +1322,11 @@ results_dir="results"
 # Directory for placing plots from analysis routines
 
 plots_dir="plots"
+
+# This factor determines the amount of time we want to 
+# use as a safety factor in ending jobs.
+
+safety_factor=0.1
 
 if [ -z $inputs ]; then
     inputs=inputs
