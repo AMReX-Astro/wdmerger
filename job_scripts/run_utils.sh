@@ -736,7 +736,11 @@ function submit_job {
 
   current_date=$(date +%s)
 
-  echo "$job_number $current_date" >> jobs_submitted.txt
+  # Store the recorded walltime, in seconds.
+
+  walltime_in_seconds=$(hours_to_seconds $walltime)
+
+  echo "$job_number $current_date $walltime_in_seconds" >> jobs_submitted.txt
 
 }
 
