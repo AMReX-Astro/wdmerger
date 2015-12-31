@@ -356,8 +356,13 @@ function is_dir_done {
 
       chk_step=$(echo $checkpoint | cut -d"k" -f2)
 
-      time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
-      step_flag=$(echo "$chk_step >= $max_step" | bc)
+      if [ ! -z $stop_time ]; then
+	  time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
+      fi
+
+      if [ ! -z $max_step ]; then
+	  step_flag=$(echo "$chk_step >= $max_step" | bc)
+      fi
 
   elif [ ! -z $last_output ] && [ -e $directory/$last_output ]; then
 
@@ -547,7 +552,7 @@ function archive_all {
 
   # Same strategy for the inputs and probin files.
 
-  inputs_list=$(find $directory -maxdepth 1 -name "*inputs*")
+  inputs_list=$(find $directory -maxdepth 1 -name "$inputs")
 
   for file in $inputs_list
   do
@@ -659,7 +664,11 @@ function copy_files {
       if [ -e "$compile_dir/$inputs" ]; then
           cp $compile_dir/inputs $dir/$inputs
       else
-          cp $WDMERGER_HOME/source/inputs $dir/$inputs
+	  if [ ! -z $problem_dir ]; then
+	      cp $problem_dir/$inputs $dir/$inputs
+	  else
+              cp $WDMERGER_HOME/source/inputs $dir/$inputs
+	  fi
       fi
   fi
 
@@ -667,7 +676,11 @@ function copy_files {
       if [ -e "$compile_dir/$probin" ]; then
 	  cp $compile_dir/probin $dir/$probin
       else
-	  cp $WDMERGER_HOME/source/probin $dir/$probin
+	  if [ ! -z $problem_dir ]; then
+	      cp $problem_dir/$probin $dir/$probin
+	  else
+	      cp $WDMERGER_HOME/source/probin $dir/$probin
+	  fi
       fi
   fi
 
@@ -1005,6 +1018,26 @@ function create_job_script {
 
       echo "" >> $dir/$job_script
 
+      # Set name of problem directory, if applicable.
+
+      if [ ! -z $problem_dir ]; then
+	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Set the name of the inputs and probin files, in case they are 
+      # unique for this problem.
+
+      if [ $inputs != "inputs" ]; then
+	  echo "inputs=$inputs" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      if [ $probin != "probin" ]; then
+	  echo "probin=$probin" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
       # We assume that the directory we submitted from is eligible to 
       # work in, so cd to that directory.
 
@@ -1140,7 +1173,7 @@ function run {
       DIM="3"
   fi
 
-  if [ $DIM -eq "2" ]; then
+  if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
       convert_to_2D
   fi
 
