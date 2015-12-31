@@ -27,7 +27,7 @@ function get_inputs_var {
 	inputs=inputs
     fi
 
-    if [ ! -e $dir/$inputs ]; then
+    if [ ! -e $directory/$inputs ]; then
 	echo "No inputs file exists in directory "$dir"; exiting."
 	return
     fi
