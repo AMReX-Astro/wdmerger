@@ -653,7 +653,7 @@ function copy_files {
   if [ ! -e $dir/$CASTRO ]; then
       cp $compile_dir/$CASTRO $dir
   fi
-  
+
   if [ ! -e "$dir/helm_table.dat" ]; then
       if [ -e "$compile_dir/helm_table.dat" ]; then
 	  cp $compile_dir/helm_table.dat $dir
@@ -693,6 +693,10 @@ function copy_files {
   fi
 
   touch "$dir/jobs_submitted.txt"
+
+  if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
+      convert_to_2D
+  fi
 
   # Now determine all the variables that have been added
   # since we started; then search for them in the inputs
@@ -819,7 +823,7 @@ function convert_to_2D {
     geometry_coord_sys=1
 
     if [ -z "$geometry_is_periodic" ]; then
-	geometry_is_periodic=$(get_inputs_var "geometry_is_periodic")
+	geometry_is_periodic=$(get_inputs_var "geometry_is_periodic" $dir)
     fi
 
     geometry_is_periodic=$(echo $geometry_is_periodic | awk '{print $1, $2}')
@@ -827,15 +831,15 @@ function convert_to_2D {
     # Set the radial coordinate to have lower boundary value = 0.
 
     if [ -z "$geometry_prob_lo" ]; then
-	geometry_prob_lo=$(get_inputs_var "geometry_prob_lo")
+	geometry_prob_lo=$(get_inputs_var "geometry_prob_lo" $dir)
     fi
 
     if [ -z "$geometry_prob_hi" ]; then
-	geometry_prob_hi=$(get_inputs_var "geometry_prob_hi")
+	geometry_prob_hi=$(get_inputs_var "geometry_prob_hi" $dir)
     fi
 
     if [ -z "$castro_center" ]; then
-	castro_center=$(get_inputs_var "castro_center")
+	castro_center=$(get_inputs_var "castro_center" $dir)
     fi
 
     geometry_prob_lo=$(echo $geometry_prob_lo | awk '{print "0.0e0", $2}')
@@ -845,7 +849,7 @@ function convert_to_2D {
     # Use half as many radial points to keep dr = dz.
 
     if [ -z "$amr_n_cell" ]; then
-	amr_n_cell=$(get_inputs_var "amr_n_cell")
+	amr_n_cell=$(get_inputs_var "amr_n_cell" $dir)
     fi
 
     nr=$(echo $amr_n_cell | awk '{print $1}')
@@ -858,11 +862,11 @@ function convert_to_2D {
     # Use a symmetric lower boundary condition for radial coordinate.
 
     if [ -z "$castro_lo_bc" ]; then
-	castro_lo_bc=$(get_inputs_var "castro_lo_bc")
+	castro_lo_bc=$(get_inputs_var "castro_lo_bc" $dir)
     fi
 
     if [ -z "$castro_hi_bc" ]; then
-	castro_hi_bc=$(get_inputs_var "castro_hi_bc")
+	castro_hi_bc=$(get_inputs_var "castro_hi_bc" $dir)
     fi
 
     castro_lo_bc=$(echo $castro_lo_bc | awk '{print  3, $2}')
@@ -932,7 +936,7 @@ function create_job_script {
       # we read in the value from the main inputs file.
 
       if [ -z "$amr_max_grid_size" ]; then
-	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size")
+	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size" $dir)
       fi
 
       max_level_grid_size=0
@@ -1171,10 +1175,6 @@ function run {
 
   if [ -z $DIM ]; then
       DIM="3"
-  fi
-
-  if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
-      convert_to_2D
   fi
 
   set_up_problem_dir
