@@ -1287,7 +1287,7 @@ function set_up_problem_dir {
 
         # Build the executable if we haven't yet.
 
-	if [ ! -e $compile_dir/*"$DIM"d*.ex ]; then
+	if [ ls $compile_dir/*"$DIM"d*.ex 1> /dev/null 2>&1 ]; then
 
 	    echo "Detected that the executable doesn't exist yet; building executable now."
 
