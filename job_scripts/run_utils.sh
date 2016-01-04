@@ -29,7 +29,9 @@ source $script_dir/machines.sh
 
 function get_make_var {
 
-  make print-$1 -C $compile_dir DIM=$DIM | tail -2 | head -1 | awk '{ print $NF }'
+  make print-$1 -C $compile_dir DIM=$DIM &> temp_make.out 
+  cat temp_make.out | tail -2 | head -1 | awk '{ print $NF }'
+  rm -f temp_make.out
 
 }
 
