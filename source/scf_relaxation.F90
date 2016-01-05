@@ -1,13 +1,69 @@
-subroutine scf_setup_relaxation(dx, problo, probhi) bind(C)
+module scf_relaxation_module
+
+  implicit none
+
+  ! Input parameters for SCF relaxation
+  
+  logical         , save :: do_scf_initial_models = .false.
+  double precision, save :: scf_d_A = 1.0d9
+  double precision, save :: scf_d_B = 1.0d9
+  double precision, save :: scf_d_C = 1.8d9
+  double precision, save :: scf_relax_tol = 1.d-3
+  
+  ! Internal data for SCF relaxation
+  
+  double precision, save :: scf_h_max_P, scf_h_max_S
+  double precision, save :: scf_enthalpy_min
+  double precision, save :: scf_rpos(3,3)         ! Relative position of points A, B, and C
+  double precision, save :: scf_d_vector(3,3)     ! Positions of points relative to system center
+  double precision, save :: scf_c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
+  integer         , save :: scf_rloc(3,3)         ! Indices of zones nearby to these points
+
+contains
+
+  subroutine initialize_scf()
+
+    implicit none
+
+    call scf_read_namelist()
+
+  end subroutine initialize_scf
+
+
+  
+  subroutine scf_read_namelist()
+
+    use problem_io_module, only: probin
+    
+    implicit none
+
+    namelist /scf/ do_scf_initial_models, &
+                   scf_d_A, scf_d_B, scf_d_C, &
+                   scf_relax_tol
+
+    integer :: untin
+    
+    ! Read namelist to override the module defaults.
+
+    untin = 9 
+    open(untin,file=probin,form='formatted',status='old')
+    read(untin,scf)
+    close(unit=untin)    
+
+  end subroutine scf_read_namelist
+
+  
+  
+  subroutine scf_setup_relaxation(dx) bind(C)
 
     use bl_constants_module, only: HALF, ONE, TWO
-    use prob_params_module, only: center
+    use prob_params_module, only: problo, center, probhi
     use eos_module
     use probdata_module
 
     implicit none
 
-    double precision :: dx(3), problo(3), probhi(3)
+    double precision :: dx(3)
 
     double precision :: x, y, z
     integer          :: n
@@ -92,7 +148,7 @@ subroutine scf_setup_relaxation(dx, problo, probhi) bind(C)
     eos_state % xn  = model_S % core_comp
 
     call eos(eos_input_rt, eos_state)
-    
+
     scf_h_max_S = eos_state % h
 
     ! Determine the lowest possible enthalpy that can be 
@@ -106,57 +162,55 @@ subroutine scf_setup_relaxation(dx, problo, probhi) bind(C)
 
     do while (eos_state % rho < 1.d11)
 
-      eos_state % rho = eos_state % rho * 1.1
+       eos_state % rho = eos_state % rho * 1.1
 
-      call eos(eos_input_rt, eos_state)
+       call eos(eos_input_rt, eos_state)
 
-      if (eos_state % h < scf_enthalpy_min) scf_enthalpy_min = eos_state % h
+       if (eos_state % h < scf_enthalpy_min) scf_enthalpy_min = eos_state % h
 
     enddo
 
-end subroutine scf_setup_relaxation
+  end subroutine scf_setup_relaxation
 
 
 
-subroutine scf_get_coeff_info(loc_A,loc_B,loc_C,c_A,c_B,c_C) bind(C)
+  subroutine scf_get_coeff_info(loc_A,loc_B,loc_C,c_A,c_B,c_C) bind(C)
 
-  use probdata_module, only: scf_rloc, scf_c
+    implicit none
 
-  implicit none
+    integer,          intent(inout) :: loc_A(3), loc_B(3), loc_C(3)
+    double precision, intent(inout) :: c_A(2,2,2), c_B(2,2,2), c_C(2,2,2)
 
-  integer,          intent(inout) :: loc_A(3), loc_B(3), loc_C(3)
-  double precision, intent(inout) :: c_A(2,2,2), c_B(2,2,2), c_C(2,2,2)
-  
-  loc_A(:) = scf_rloc(:,1)
-  loc_B(:) = scf_rloc(:,2)
-  loc_C(:) = scf_rloc(:,3)
+    loc_A(:) = scf_rloc(:,1)
+    loc_B(:) = scf_rloc(:,2)
+    loc_C(:) = scf_rloc(:,3)
 
-  c_A(:,:,:) = scf_c(:,:,:,1)
-  c_B(:,:,:) = scf_c(:,:,:,2)
-  c_C(:,:,:) = scf_c(:,:,:,3)
+    c_A(:,:,:) = scf_c(:,:,:,1)
+    c_B(:,:,:) = scf_c(:,:,:,2)
+    c_C(:,:,:) = scf_c(:,:,:,3)
 
-end subroutine scf_get_coeff_info
+  end subroutine scf_get_coeff_info
 
 
 
-subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
-                           state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-                           phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                           dx,problo,probhi,time,omegasq) bind(C)
+  subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
+                             state,s_lo,s_hi, &
+                             phi,p_lo,p_hi, &
+                             dx,time,omegasq) bind(C)
 
     use bl_constants_module, only: ONE, TWO
     use meth_params_module, only: NVAR
-    use probdata_module, only: scf_c, scf_d_vector, scf_rloc
     use rotation_module, only: get_omega
+    use prob_params_module, only: problo, probhi
 
     implicit none
-    
+
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
-    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    integer          :: s_lo(3), s_hi(3)
+    integer          :: p_lo(3), p_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
     double precision :: omegasq
 
     integer          :: i, j, k
@@ -181,11 +235,11 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
        do j = scf_rloc(2,2), scf_rloc(2,2) + 1
           do i = scf_rloc(1,2), scf_rloc(1,2) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
-                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
 
                 omegasq = omegasq - scf_c(i-scf_rloc(1,2),j-scf_rloc(2,2),k-scf_rloc(3,2),2) &
-                        * TWO * phi(i,j,k) / &
-                        (sin(theta3)**2 * sum(scf_d_vector(:,3)**2) - sin(theta2)**2 * sum(scf_d_vector(:,2)**2))
+                     * TWO * phi(i,j,k) / &
+                     (sin(theta3)**2 * sum(scf_d_vector(:,3)**2) - sin(theta2)**2 * sum(scf_d_vector(:,2)**2))
              endif
           enddo
        enddo
@@ -195,11 +249,11 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
        do j = scf_rloc(2,3), scf_rloc(2,3) + 1
           do i = scf_rloc(1,3), scf_rloc(1,3) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
-                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
 
                 omegasq = omegasq + scf_c(i-scf_rloc(1,3),j-scf_rloc(2,3),k-scf_rloc(3,3),3) &
-                        * TWO * phi(i,j,k) / &
-                        (sin(theta3)**2 * sum(scf_d_vector(:,3)**2) - sin(theta2)**2 * sum(scf_d_vector(:,2)**2))
+                     * TWO * phi(i,j,k) / &
+                     (sin(theta3)**2 * sum(scf_d_vector(:,3)**2) - sin(theta2)**2 * sum(scf_d_vector(:,2)**2))
 
              endif
           enddo
@@ -208,29 +262,28 @@ subroutine scf_get_omegasq(lo,hi,domlo,domhi, &
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
-end subroutine scf_get_omegasq
+  end subroutine scf_get_omegasq
 
 
 
-subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
-                                   state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-                                   phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                                   dx,problo,probhi,time,bernoulli_1,bernoulli_2) bind(C)
+  subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
+                                     state,s_lo,s_hi, &
+                                     phi,p_lo,p_hi, &
+                                     dx,time,bernoulli_1,bernoulli_2) bind(C)
 
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
-    use probdata_module, only: scf_c, scf_d_vector, scf_rloc
     use rotation_module, only: get_omega
     use math_module, only: cross_product
 
     implicit none
-    
+
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
-    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
+    integer          :: s_lo(3), s_hi(3)
+    integer          :: p_lo(3), p_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
     double precision :: bernoulli_1, bernoulli_2
 
     integer          :: i, j, k
@@ -244,9 +297,9 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
        do j = scf_rloc(2,1), scf_rloc(2,1)+1
           do i = scf_rloc(1,1), scf_rloc(1,1)+1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
-                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
                 bernoulli_1 = bernoulli_1 + scf_c(i-scf_rloc(1,1),j-scf_rloc(2,1),k-scf_rloc(3,1),1) &
-                            * (phi(i,j,k) - HALF * sum(cross_product(omega, scf_d_vector(:,1))**2))
+                     * (phi(i,j,k) - HALF * sum(cross_product(omega, scf_d_vector(:,1))**2))
              endif
           enddo
        enddo
@@ -256,9 +309,9 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
        do j = scf_rloc(2,2), scf_rloc(2,2) + 1
           do i = scf_rloc(1,2), scf_rloc(1,2) + 1
              if (i .ge. lo(1) .and. j .ge. lo(2) .and. k .ge. lo(3) .and. &
-                 i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
+                  i .le. hi(1) .and. j .le. hi(2) .and. k .le. hi(3)) then
                 bernoulli_2 = bernoulli_2 + scf_c(i-scf_rloc(1,2),j-scf_rloc(2,2),k-scf_rloc(3,2),2) &
-                            * (phi(i,j,k) - HALF * sum(cross_product(omega, scf_d_vector(:,2))**2))
+                     * (phi(i,j,k) - HALF * sum(cross_product(omega, scf_d_vector(:,2))**2))
              endif
           enddo
        enddo
@@ -266,34 +319,34 @@ subroutine scf_get_bernoulli_const(lo,hi,domlo,domhi, &
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
-end subroutine scf_get_bernoulli_const
+  end subroutine scf_get_bernoulli_const
 
 
 
-subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
-                                  state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-                                  phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                                  enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
-                                  dx,problo,probhi,time, &
-                                  bernoulli_1,bernoulli_2,h_max_1,h_max_2) bind(C)
+  subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
+                                    state,s_lo,s_hi, &
+                                    phi,p_lo,p_hi, &
+                                    enthalpy,h_lo,h_hi, &
+                                    dx,time, &
+                                    bernoulli_1,bernoulli_2,h_max_1,h_max_2) bind(C)
 
     use bl_constants_module, only: ZERO, HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
-    use prob_params_module, only: center
+    use prob_params_module, only: problo, center, probhi
     use probdata_module
     use rotation_module, only: get_omega
     use math_module, only: cross_product
 
     implicit none
-    
+
     integer          :: lo(3), hi(3), domlo(3), domhi(3)
-    integer          :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer          :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    integer          :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
-    double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
+    integer          :: s_lo(3), s_hi(3)
+    integer          :: p_lo(3), p_hi(3)
+    integer          :: h_lo(3), h_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
+    double precision :: enthalpy(h_lo(1):h_hi(1),h_lo(2):h_hi(2),h_lo(3):h_hi(3))
     double precision :: bernoulli_1, bernoulli_2, h_max_1,h_max_2
 
     integer          :: i, j, k
@@ -343,39 +396,39 @@ subroutine scf_construct_enthalpy(lo,hi,domlo,domhi, &
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
-end subroutine scf_construct_enthalpy
+  end subroutine scf_construct_enthalpy
 
 
 
-subroutine scf_update_density(lo,hi,domlo,domhi, &
-                              state,state_l1,state_l2,state_l3,state_h1,state_h2,state_h3, &
-                              phi,phi_l1,phi_l2,phi_l3,phi_h1,phi_h2,phi_h3, &
-                              enthalpy,h_l1,h_l2,h_l3,h_h1,h_h2,h_h3, &
-                              dx,problo,probhi,time, &
-                              h_max_1,h_max_2, &
-                              kin_eng, pot_eng, int_eng, &
-                              left_mass, right_mass, &
-                              delta_rho, l2_norm_resid, l2_norm_source) bind(C)
+  subroutine scf_update_density(lo,hi,domlo,domhi, &
+                                state,s_lo,s_hi, &
+                                phi,p_lo,p_hi, &
+                                enthalpy,h_lo,h_hi, &
+                                dx,time, &
+                                h_max_1,h_max_2, &
+                                kin_eng, pot_eng, int_eng, &
+                                left_mass, right_mass, &
+                                delta_rho, l2_norm_resid, l2_norm_source) bind(C)
 
     use bl_constants_module, only: ZERO, ONE, TWO, M_PI
     use meth_params_module, only: NVAR, URHO, UTEMP, UMX, UMY, UMZ, UEDEN, UEINT, UFS
     use network, only: nspec
-    use prob_params_module, only: center
-    use probdata_module, only: axis_1, get_ambient, scf_h_max_P, scf_h_max_S, scf_enthalpy_min
+    use prob_params_module, only: problo, center, probhi
+    use probdata_module, only: axis_1, get_ambient
     use eos_module
     use rotation_module, only: get_omega
     use math_module, only: cross_product
 
     implicit none
-    
+
     integer :: lo(3), hi(3), domlo(3), domhi(3)
-    integer :: state_l1,state_h1,state_l2,state_h2,state_l3,state_h3
-    integer :: phi_l1,phi_h1,phi_l2,phi_h2,phi_l3,phi_h3
-    integer :: h_l1,h_h1,h_l2,h_h2,h_l3,h_h3
-    double precision :: problo(3), probhi(3), dx(3), time
-    double precision :: state(state_l1:state_h1,state_l2:state_h2,state_l3:state_h3,NVAR)
-    double precision :: phi(phi_l1:phi_h1,phi_l2:phi_h2,phi_l3:phi_h3)
-    double precision :: enthalpy(h_l1:h_h1,h_l2:h_h2,h_l3:h_h3)
+    integer :: s_lo(3), s_hi(3)
+    integer :: p_lo(3), p_hi(3)
+    integer :: h_lo(3), h_hi(3)
+    double precision :: dx(3), time
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
+    double precision :: enthalpy(h_lo(1):h_hi(1),h_lo(2):h_hi(2),h_lo(3):h_hi(3))
     double precision :: h_max_1,h_max_2
     double precision :: kin_eng, pot_eng, int_eng
     double precision :: left_mass, right_mass
@@ -445,7 +498,7 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
              state(i,j,k,UMX:UMZ) = ZERO
 
              state(i,j,k,UEDEN) = state(i,j,k,UEINT) + HALF * (state(i,j,k,UMX)**2 + &
-                                  state(i,j,k,UMY)**2 + state(i,j,k,UMZ)**2) / state(i,j,k,URHO)
+                  state(i,j,k,UMY)**2 + state(i,j,k,UMZ)**2) / state(i,j,k,URHO)
 
              ! Convergence tests and diagnostic quantities
 
@@ -462,9 +515,9 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
              int_eng = int_eng + eos_state % p * dV
 
              if (r(axis_1) < ZERO) then
-               left_mass = left_mass + state(i,j,k,URHO) * dV
+                left_mass = left_mass + state(i,j,k,URHO) * dV
              else
-               right_mass = right_mass + state(i,j,k,URHO) * dV
+                right_mass = right_mass + state(i,j,k,URHO) * dV
              endif
 
           enddo
@@ -473,55 +526,75 @@ subroutine scf_update_density(lo,hi,domlo,domhi, &
 
     phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)) = -phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3))
 
-end subroutine scf_update_density
+  end subroutine scf_update_density
+
   
 
+  subroutine scf_check_convergence(kin_eng, pot_eng, int_eng, &
+                                   left_mass, right_mass, &
+                                   delta_rho, l2_norm, &
+                                   is_relaxed, num_iterations) bind(C)
 
-subroutine scf_check_convergence(kin_eng, pot_eng, int_eng, &
-                                 left_mass, right_mass, &
-                                 delta_rho, l2_norm, &
-                                 is_relaxed, num_iterations) bind(C)
+    use problem_io_module, only: ioproc
+    use meth_params_module, only: rot_period
+    use multifab_module
+    use bl_constants_module, only: THREE
+    use fundamental_constants_module, only: M_solar
+    use eos_module
 
-  use probdata_module, only: scf_relax_tol, ioproc
-  use meth_params_module, only: rot_period
-  use multifab_module
-  use bl_constants_module, only: THREE
-  use fundamental_constants_module, only: M_solar
-  use eos_module
+    implicit none
 
-  implicit none
+    integer :: is_relaxed
+    integer :: num_iterations
 
-  integer :: is_relaxed
-  integer :: num_iterations
+    double precision :: kin_eng, pot_eng, int_eng
+    double precision :: left_mass, right_mass
+    double precision :: delta_rho, l2_norm
 
-  double precision :: kin_eng, pot_eng, int_eng
-  double precision :: left_mass, right_mass
-  double precision :: delta_rho, l2_norm
+    double precision :: virial_error
 
-  double precision :: virial_error
+    virial_error = abs(TWO * kin_eng + pot_eng + THREE * int_eng) / abs(pot_eng)
 
-  virial_error = abs(TWO * kin_eng + pot_eng + THREE * int_eng) / abs(pot_eng)
+    if (l2_norm .lt. scf_relax_tol) then
+       is_relaxed = 1
+    endif
 
-  if (l2_norm .lt. scf_relax_tol) then
-    is_relaxed = 1
-  endif
+    if (ioproc) then
+       write(*,*) ""
+       write(*,*) ""
+       write(*,'(A,I2)')      "   Relaxation iterations completed: ", num_iterations
+       write(*,'(A,ES8.2)')   "   Maximum change in rho (g cm**-3): ", delta_rho
+       write(*,'(A,ES8.2)')   "   L2 Norm of Residual (relative to old state): ", l2_norm
+       write(*,'(A,f6.2)')    "   Rotational period (s): ", rot_period
+       write(*,'(A,ES8.2)')   "   Kinetic energy: ", kin_eng 
+       write(*,'(A,ES9.2)')   "   Potential energy: ", pot_eng
+       write(*,'(A,ES8.2)')   "   Internal energy: ", int_eng
+       write(*,'(A,ES9.3)')   "   Virial error: ", virial_error
+       write(*,'(A,f5.3,A)')  "   Primary mass: ", left_mass / M_solar, " solar masses"
+       write(*,'(A,f5.3,A)')  "   Secondary mass: ", right_mass / M_solar, " solar masses"
+       if (is_relaxed .eq. 1) write(*,*) "  Relaxation completed!"
+       write(*,*) ""
+       write(*,*) ""
+    endif
 
-  if (ioproc == 1) then
-    write(*,*) ""
-    write(*,*) ""
-    write(*,'(A,I2)')      "   Relaxation iterations completed: ", num_iterations
-    write(*,'(A,ES8.2)')   "   Maximum change in rho (g cm**-3): ", delta_rho
-    write(*,'(A,ES8.2)')   "   L2 Norm of Residual (relative to old state): ", l2_norm
-    write(*,'(A,f6.2)')    "   Rotational period (s): ", rot_period
-    write(*,'(A,ES8.2)')   "   Kinetic energy: ", kin_eng 
-    write(*,'(A,ES9.2)')   "   Potential energy: ", pot_eng
-    write(*,'(A,ES8.2)')   "   Internal energy: ", int_eng
-    write(*,'(A,ES9.3)')   "   Virial error: ", virial_error
-    write(*,'(A,f5.3,A)')  "   Primary mass: ", left_mass / M_solar, " solar masses"
-    write(*,'(A,f5.3,A)')  "   Secondary mass: ", right_mass / M_solar, " solar masses"
-    if (is_relaxed .eq. 1) write(*,*) "  Relaxation completed!"
-    write(*,*) ""
-    write(*,*) ""
-  endif
+  end subroutine scf_check_convergence
 
-end subroutine scf_check_convergence
+
+
+  ! Returns whether we are doing a relaxation step.
+  
+  subroutine get_do_scf_initial_models(do_scf_initial_models_out) bind(C)
+
+    implicit none
+
+    integer :: do_scf_initial_models_out
+
+    if (do_scf_initial_models) then
+       do_scf_initial_models_out = 1
+    else
+       do_scf_initial_models_out = 0
+    endif
+
+  end subroutine get_do_scf_initial_models  
+  
+end module scf_relaxation_module

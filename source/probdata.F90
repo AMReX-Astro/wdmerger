@@ -7,133 +7,212 @@ module probdata_module
   use fundamental_constants_module, only: Gconst, M_solar, AU
   use initial_model_module, only: initial_model
 
-  ! Probin file
-  character (len=:), allocatable :: probin
-
-  ! For determining if we are the I/O processor.
-  integer :: ioproc
-  
-  ! Initial binary star characteristics
+  ! Initial stellar properties
   ! Note that the envelope mass is included within the total mass of the star
-  double precision :: mass_P, mass_S
-  double precision :: central_density_P, central_density_S
-  double precision :: stellar_temp
-  double precision :: primary_envelope_mass, secondary_envelope_mass
-  double precision :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
+  
+  double precision, save :: mass_P = ONE
+  double precision, save :: mass_S = ONE
+  double precision, save :: central_density_P = -ONE
+  double precision, save :: central_density_S = -ONE
+  double precision, save :: stellar_temp = 1.0d7
+  double precision, save :: primary_envelope_mass, secondary_envelope_mass
+  double precision, save :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
 
+
+  
   ! Ambient medium
-  double precision :: ambient_density, ambient_temp, ambient_comp(nspec)
+  
+  double precision, save :: ambient_density = 1.0d-4
+  double precision, save :: ambient_temp = 1.0d7
+  double precision, save :: ambient_comp(nspec)
 
+
+  
   ! Smallest allowed mass fraction
-  double precision :: smallx
+  
+  double precision, save :: smallx = 1.0d-12
 
   ! Smallest allowed velocity on the grid
-  double precision :: smallu
   
-  ! Controls interpolation from 1D model to 3D model
-  integer :: nsub
-  logical :: interp_temp
+  double precision, save :: smallu = 1.0d-12
 
+
+  
+  ! Parameters for nterpolation from 1D model to 3D model:
+
+  ! Number of sub-grid-scale zones to use
+  
+  integer, save :: nsub = 1
+
+  ! Default to interpolation that preserves temperature; otherwise, use pressure
+  
+  logical, save :: interp_temp = .true.
+
+
+  
   ! Whether or not to give stars an initial orbital velocity
   ! consistent with their Keplerian orbit speed.
-  logical :: no_orbital_kick
+  
+  logical, save :: no_orbital_kick = .false.
 
+
+  
+  ! Collision parameters
+  
   ! Whether or not to give the stars an initial velocity
   ! consistent with the free-fall speed.
-  logical :: collision
+  
+  logical, save :: collision = .false.
 
   ! For a collision, number of (secondary) WD radii to 
   ! separate the WDs by.
-  double precision :: collision_separation
+  
+  double precision, save :: collision_separation = 4.0d0
 
   ! For a collision, the impact parameter measured in
   ! units of the primary's initial radius.
-  double precision :: collision_impact_parameter
   
-  ! Binary properties
-  double precision :: r_P_initial, r_S_initial, a_P_initial, a_S_initial, a  
-  double precision :: v_P_r, v_S_r, v_P_phi, v_S_phi
-  double precision :: center_P_initial(3), center_S_initial(3)
-  double precision :: orbital_eccentricity, orbital_angle
+  double precision, save :: collision_impact_parameter = 0.0d0
+
+
   
-  integer :: axis_1, axis_2, axis_3
+  ! Binary orbit properties
+  
+  double precision, save :: r_P_initial, r_S_initial, a_P_initial, a_S_initial, a  
+  double precision, save :: v_P_r, v_S_r, v_P_phi, v_S_phi
+  double precision, save :: center_P_initial(3), center_S_initial(3)
+  double precision, save :: orbital_eccentricity = 0.0d0
+  double precision, save :: orbital_angle = 0.0d0
+    
+
+  
+  ! Axis is in orbital plane; we measure angle with respect to this axis. Normally the x axis.
+  
+  integer, save :: axis_1 = 1
+
+  ! Perpendicular axis in the orbital plane. Normally the y axis.
+  
+  integer, save :: axis_2 = 2
+
+  ! Perpendicular to both other axies. Normally the z axis and also the rotation axis.
+  
+  integer, save :: axis_3 = 3
   
   ! Location of the physical center of the problem, as a fraction of domain size
-  double precision :: center_fracx, center_fracy, center_fracz
+  
+  double precision, save :: center_fracx = HALF
+  double precision, save :: center_fracy = HALF
+  double precision, save :: center_fracz = HALF
 
   ! Bulk system motion
-  double precision :: bulk_velx, bulk_vely, bulk_velz
+  
+  double precision, save :: bulk_velx = ZERO
+  double precision, save :: bulk_vely = ZERO
+  double precision, save :: bulk_velz = ZERO
 
   ! Whether we're doing an initialization or a restart
-  integer :: init
+  
+  integer, save :: init
 
   ! Are we doing a single star simulation?
-  logical :: single_star
+  
+  logical, save :: single_star
 
   ! Should we override the domain boundary conditions with
   ! ambient material?
-  logical :: fill_ambient_bc
   
+  logical, save :: fill_ambient_bc = .false.
+
+
+
   ! 1D initial models
 
   type (initial_model) :: model_P, model_S
 
-  double precision :: initial_model_dx
-  integer          :: initial_model_npts
-  double precision :: initial_model_mass_tol
-  double precision :: initial_model_hse_tol
+  ! For the grid spacing for our model, we'll use 
+  ! 6.25 km. No simulation we do is likely to have a resolution
+  ! higher than that inside the stars (it represents
+  ! three jumps by a factor of four compared to our 
+  ! normal coarse grid resolution). By using 4096
+  ! grid points, the size of the 1D domain will be 2.56e9 cm,
+  ! which is larger than any reasonable mass white dwarf.
 
-  ! Composition properties of initial models
-  double precision :: max_he_wd_mass
-  double precision :: max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass
-  double precision :: max_co_wd_mass, co_wd_he_shell_mass
+  double precision, save :: initial_model_dx = 6.25d5
+  integer, save          :: initial_model_npts = 4096
 
+  ! initial_model_mass_tol is tolerance used for getting the total WD mass 
+  ! equal to the desired mass. It can be reasonably small, since there
+  ! will always be a central density value that can give the desired
+  ! WD mass on the grid we use.
+  
+  double precision, save :: initial_model_mass_tol = 1.d-6
+
+  ! hse_tol is the tolerance used when iterating over a zone to force
+  ! it into HSE by adjusting the current density (and possibly
+  ! temperature).  hse_tol should be very small (~ 1.e-10).
+  
+  double precision, save :: initial_model_hse_tol = 1.d-10
+
+
+  
+  ! Composition properties of initial models.
+  ! We follow the prescription of Dan et al. 2012 for determining
+  ! the composition of the WDs. In this approach, below a certain 
+  ! mass there are pure He WDs; just above that are hybrid WDs
+  ! with pure CO cores and a He mantle; above that are pure CO WDs
+  ! with slightly more oxygen than carbon; and above that are 
+  ! ONeMg WDs. All masses are in solar masses.
+
+  double precision, save :: max_he_wd_mass = 0.45d0
+  double precision, save :: max_hybrid_co_wd_mass = 0.6d0
+  double precision, save :: hybrid_co_wd_he_shell_mass = 0.1d0
+  double precision, save :: max_co_wd_mass = 1.05d0
+  double precision, save :: co_wd_he_shell_mass = 0.0d0
+
+
+  
   ! Tagging criteria
-  double precision :: max_tagging_radius
-  double precision :: stellar_density_threshold
+  
+  double precision, save :: max_tagging_radius = 0.75d0
+  double precision, save :: stellar_density_threshold = 1.0d0
 
+
+  
   ! Stores the center of mass location of the stars throughout the run
-  double precision :: com_P(3), com_S(3)
-  double precision :: vel_P(3), vel_S(3)
+  
+  double precision, save :: com_P(3), com_S(3)
+  double precision, save :: vel_P(3), vel_S(3)
 
   ! Stores the effective Roche radii
-  double precision :: roche_rad_P, roche_rad_S
+  
+  double precision, save :: roche_rad_P, roche_rad_S
+
+
 
   ! Relaxation parameters
-  logical          :: do_initial_relaxation
-  double precision :: relaxation_timescale
-
-  ! Input parameters for SCF relaxation
-  logical          :: do_scf_initial_models
-  double precision :: scf_d_A, scf_d_B, scf_d_C
-  double precision :: scf_relax_tol
   
-  ! Internal data for SCF relaxation
-  double precision :: scf_h_max_P, scf_h_max_S
-  double precision :: scf_enthalpy_min
-  double precision :: scf_rpos(3,3)         ! Relative position of points A, B, and C
-  double precision :: scf_d_vector(3,3)     ! Positions of points relative to system center
-  double precision :: scf_c(0:1,0:1,0:1,3)  ! Interpolation coefficients for points
-  integer          :: scf_rloc(3,3)         ! Indices of zones nearby to these points
+  logical, save          :: do_initial_relaxation = .false.
+  double precision, save :: relaxation_timescale = 0.001
+  double precision, save :: relaxation_density_cutoff = 1.0d0
 
   ! Distance (in kpc) used for calculation of the gravitational wave amplitude
   ! (this wil be calculated along all three coordinate axes).
-  double precision :: gw_dist
+  
+  double precision, save :: gw_dist = 10.0d0
 
 contains
 
   ! This routine calls all of the other subroutines at the beginning
   ! of a simulation to fill in the basic problem data.
 
-  subroutine initialize(name, namlen, init_in)
+  subroutine initialize_problem(init_in)
 
     use bl_error_module, only: bl_error
     use prob_params_module, only: dim
     
     implicit none
 
-    integer :: namlen, i, init_in
-    integer :: name(namlen)
+    integer :: init_in
  
     ! Safety check: we can't run this problem in one dimension.       
     if (dim .eq. 1) then
@@ -142,20 +221,10 @@ contains
     
     init = init_in
 
-    ! Build "probin" filename -- the name of the file containing the fortin namelist.
-    allocate(character(len=namlen) :: probin)
-    do i = 1, namlen
-       probin(i:i) = char(name(i))
-    enddo
-
     ! Read in the namelist to set problem parameters.
 
     call read_namelist
-
-    ! Determine if we are the I/O processor, and save it to the ioproc variable.
-
-    call get_ioproc
-
+    
     ! Establish binary parameters and create initial models.
 
     call binary_setup
@@ -164,7 +233,7 @@ contains
 
     call set_small
 
-  end subroutine
+  end subroutine initialize_problem
 
 
 
@@ -174,7 +243,8 @@ contains
 
     use meth_params_module
     use prob_params_module, only: dim, coord_type
-
+    use problem_io_module, only: probin
+    
     implicit none
 
     integer :: untin
@@ -190,9 +260,7 @@ contains
          interp_temp, &
          do_initial_relaxation, &
          relaxation_timescale, &
-         do_scf_initial_models, &
-         scf_d_A, scf_d_B, scf_d_C, &
-         scf_relax_tol, &
+         relaxation_density_cutoff, &
          ambient_density, &
          stellar_temp, ambient_temp, &
          max_he_wd_mass, &
@@ -211,99 +279,7 @@ contains
          gw_dist, &
          fill_ambient_bc
 
-    nsub = 1
-
-    central_density_P = -ONE
-    central_density_S = -ONE
-
-    mass_P = 1.0d0
-    mass_S = 1.0d0
-
-    stellar_temp = 1.0d7
-    ambient_temp = 1.0d7
-
-    ! We follow the prescription of Dan et al. 2012 for determining
-    ! the composition of the WDs. In this approach, below a certain 
-    ! mass there are pure He WDs; just above that are hybrid WDs
-    ! with pure CO cores and a He mantle; above that are pure CO WDs
-    ! with slightly more oxygen than carbon; and above that are 
-    ! ONeMg WDs. All masses are in solar masses.
-
-    max_he_wd_mass = 0.45d0
-    max_hybrid_co_wd_mass = 0.6d0
-    hybrid_co_wd_he_shell_mass = 0.1d0
-    max_co_wd_mass = 1.05d0
-    co_wd_he_shell_mass = 0.0d0
-
-    smallx = 1.d-12
-    smallu = 1.d-12
-
-    ambient_density = 1.d-4
-
-    no_orbital_kick = .false.
-
-    collision = .false.
-    collision_separation = 4.0
-    collision_impact_parameter = 0.0
-
-    interp_temp = .false.
-
-    orbital_eccentricity = 0.0d0
-    orbital_angle = 0.0d0
-    
-    axis_1 = 1 ! Axis is in orbital plane; we measure angle with respect to this axis. Normally the x axis.
-    axis_2 = 2 ! Perpendicular axis in the orbital plane. Normally the y axis.
-    axis_3 = 3 ! Perpendicular to both other axies. Normally the z axis and also the rotation axis.
-    
-    max_tagging_radius = 0.75d0
-    stellar_density_threshold = 1.0d0
-
-    do_initial_relaxation = .false.
-    relaxation_timescale = 0.001
-
-    do_scf_initial_models = .false.
-    scf_d_A = 1.0d9
-    scf_d_B = 1.0d9
-    scf_d_C = 1.8d9
-    scf_relax_tol = 1.d-3
-
-    bulk_velx = ZERO
-    bulk_vely = ZERO
-    bulk_velz = ZERO
-
-    center_fracx = HALF
-    center_fracy = HALF
-    center_fracz = HALF
-
-    ! For the grid spacing for our model, we'll use 
-    ! 6.25 km. No simulation we do is likely to have a resolution
-    ! higher than that inside the stars (it represents
-    ! three jumps by a factor of four compared to our 
-    ! normal coarse grid resolution). By using 2048
-    ! grid points, the size of the 1D domain will be 2.56e9 cm,
-    ! which is larger than any reasonable mass white dwarf.
-
-    initial_model_dx = 6.25d5
-    initial_model_npts = 4096
-
-    ! initial_model_mass_tol is tolerance used for getting the total WD mass 
-    ! equal to the desired mass. It can be reasonably small, since there
-    ! will always be a central density value that can give the desired
-    ! WD mass on the grid we use.
-
-    initial_model_mass_tol = 1.d-6
-
-    ! hse_tol is the tolerance used when iterating over a zone to force
-    ! it into HSE by adjusting the current density (and possibly
-    ! temperature).  hse_tol should be very small (~ 1.e-10).
-
-    initial_model_hse_tol = 1.d-10
-
-    gw_dist = 10.0 ! kpc
-
-    fill_ambient_bc = .false.
-    
-    ! Read namelist to override the defaults.
+    ! Read namelist to override the module defaults.
 
     untin = 9 
     open(untin,file=probin,form='formatted',status='old')
@@ -373,18 +349,6 @@ contains
 
 
 
-  ! Determine if we are the I/O processor, and save it to the ioproc variable
-
-  subroutine get_ioproc
-
-    implicit none
-
-    call bl_pd_is_ioproc(ioproc)
-
-  end subroutine get_ioproc
-
-
-
   ! Calculate small_pres and small_ener
 
   subroutine set_small
@@ -442,7 +406,9 @@ contains
     use meth_params_module, only: rot_axis
     use rotation_module, only: get_omega
     use math_module, only: cross_product
-
+    use binary_module, only: get_roche_radii
+    use problem_io_module, only: ioproc
+    
     implicit none
 
     double precision :: v_ff, collision_offset
@@ -573,7 +539,7 @@ contains
 
     call establish_hse(model_P)
 
-    if (ioproc == 1 .and. init == 1) then
+    if (ioproc .and. init == 1) then
        
        ! Set the color to bold green for printing to terminal in this section. See:
        ! http://stackoverflow.com/questions/6402700/coloured-terminal-output-from-fortran
@@ -593,7 +559,7 @@ contains
 
        call establish_hse(model_S)
 
-       if (ioproc == 1 .and. init == 1) then
+       if (ioproc .and. init == 1) then
           write (*,1002) model_S % mass / M_solar, model_S % central_density, model_S % radius
           1002 format ("Generated initial model for secondary WD of mass ", f4.2, &
                        " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
@@ -642,7 +608,7 @@ contains
                                 rot_period, orbital_eccentricity, orbital_angle, &
                                 a, r_P_initial, r_S_initial, v_P_r, v_S_r, v_P_phi, v_S_phi)
 
-          if (ioproc == 1 .and. init == 1) then
+          if (ioproc .and. init == 1) then
              write (*,1003) a, a / AU
              write (*,1004) r_P_initial, r_P_initial / AU
              write (*,1005) r_S_initial, r_S_initial / AU
@@ -687,7 +653,7 @@ contains
 
     ! Reset the terminal color to its previous state.
 
-    if (ioproc == 1 .and. init == 1) then
+    if (ioproc .and. init == 1) then
        print *, ''//achar(27)//'[0m'
     endif
 
@@ -891,6 +857,8 @@ contains
 
   subroutine ensure_primary_mass_larger
 
+    use problem_io_module, only: ioproc
+    
     implicit none
 
     double precision :: temp_mass
@@ -900,7 +868,7 @@ contains
 
     if ( mass_P < mass_S ) then
 
-      if (ioproc == 1) then
+      if (ioproc) then
         print *, "Primary mass is less than secondary mass; switching the stars so that the primary is more massive."
       endif
 
@@ -1058,35 +1026,164 @@ contains
 
 
   
-  ! Given the mass ratio q of two stars (assumed to be q = M_1 / M_2), 
-  ! compute the effective Roche radii of the stars, normalized to unity, 
-  ! using the approximate formula of Eggleton (1983). We then 
-  ! scale them appropriately using the current orbital distance.
+  ! Return the locations of the stellar centers of mass
   
-  subroutine get_roche_radii(mass_ratio, r_1, r_2, a) bind(C)
-
-    use bl_constants_module, only: ONE, TWO3RD, THIRD
+  subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
 
     implicit none
 
-    double precision, intent(in   ) :: mass_ratio, a
-    double precision, intent(inout) :: r_1, r_2
+    double precision, intent(inout) :: P_com(3), S_com(3)
+    double precision, intent(inout) :: P_vel(3), S_vel(3)
+    double precision, intent(inout) :: P_mass, S_mass
 
-    double precision :: q
-    double precision :: c1, c2
+    P_com = com_P
+    S_com = com_S
 
-    c1 = 0.49d0
-    c2 = 0.60d0
+    P_vel = vel_P
+    S_vel = vel_S
 
-    q = mass_ratio
+    P_mass = mass_P
+    S_mass = mass_S
 
-    r_1 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
+  end subroutine get_star_data
 
-    q = ONE / q
 
-    r_2 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
 
-  end subroutine get_roche_radii
+  ! Set the locations of the stellar centers of mass
+
+  subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
+
+    use bl_constants_module, only: TENTH, ZERO
+    use prob_params_module, only: center
+    use binary_module, only: get_roche_radii
+
+    implicit none
+
+    double precision, intent(in) :: P_com(3), S_com(3)
+    double precision, intent(in) :: P_vel(3), S_vel(3)
+    double precision, intent(in) :: P_mass, S_mass
+
+    double precision :: r
+
+    com_P = P_com
+    vel_P = P_vel
+    mass_P = P_mass
+
+    r = ZERO
+
+    if (.not. single_star) then
+
+       com_S = S_com
+       vel_S = S_vel
+       mass_S = S_mass
+
+       r = sum((com_P-com_S)**2)**(0.5)
+
+       call get_roche_radii(mass_S/mass_P, roche_rad_S, roche_rad_P, r)
+
+       ! Beyond a certain point, it doesn't make sense to track the stars separately
+       ! anymore. We'll set the secondary to a fixed constant and keep it there
+       ! if its Roche radius becomes smaller than 10% of the primary's.
+
+       if (roche_rad_S .lt. TENTH * roche_rad_P) then
+          com_S = center
+          vel_S = ZERO
+          mass_S = ZERO
+          roche_rad_S = ZERO
+          single_star = .true.
+       endif
+
+    endif
+
+  end subroutine set_star_data
+
+
+
+  ! Check whether we should stop the initial relaxation.
+  ! If so, set do_initial_relaxation to false, which will effectively
+  ! turn off the external source terms.
   
+  subroutine check_relaxation(state, s_lo, s_hi, lo, hi, L1, is_done) bind(C)
+
+    use meth_params_module, only: URHO, NVAR
+    use castro_util_module, only: position_to_index
+
+    implicit none
+
+    integer :: lo(3), hi(3)
+    integer :: s_lo(3), s_hi(3)
+    integer :: is_done
+    double precision :: L1(3)
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+
+    integer :: L1_idx(3)
+
+    ! Convert the Lagrange point into a grid index.
+
+    L1_idx = position_to_index(L1)
+
+    ! Check if the Lagrange point is in this box.
+
+    if ( lo(1) .le. L1_idx(1) .and. hi(1) .ge. L1_idx(1) .and. &
+         lo(2) .le. L1_idx(2) .and. hi(2) .ge. L1_idx(2) .and. &
+         lo(3) .le. L1_idx(3) .and. hi(3) .ge. L1_idx(3) ) then
+
+       ! If so, check if the density in that zone is above the cutoff.
+
+       if (state(L1_idx(1),L1_idx(2),L1_idx(3),URHO) > relaxation_density_cutoff) then
+
+          is_done = 1
+
+       endif
+
+    endif
+
+  end subroutine check_relaxation
+
+
+
+  subroutine turn_off_relaxation() bind(C)
+
+    use problem_io_module, only: ioproc
+
+    implicit none
+
+    do_initial_relaxation = .false.
+
+    if (ioproc) then
+       print *, "Initial relaxation phase terminated."
+    endif
+
+  end subroutine turn_off_relaxation
+
+
   
+  subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C)
+
+    implicit none
+
+    integer :: axis_1_in, axis_2_in, axis_3_in
+
+    axis_1_in = axis_1
+    axis_2_in = axis_2
+    axis_3_in = axis_3
+
+  end subroutine get_axes
+
+
+
+  ! Return whether we're doing a single star simulation or not.
+  
+  subroutine get_single_star(flag) bind(C)
+
+    implicit none
+
+    integer :: flag
+
+    flag = 0
+
+    if (single_star) flag = 1
+
+  end subroutine get_single_star
+
 end module probdata_module

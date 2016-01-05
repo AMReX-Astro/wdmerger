@@ -59,7 +59,7 @@ amr.grid_eff = 0.9                                 # What constitutes an efficie
 
 castro.do_hydro = 1                                # Whether or not to do hydrodynamics
 castro.do_grav = 1                                 # Whether or not to do gravity
-castro.do_react = 1                                # Whether or not to do reactions
+castro.do_react = 0                                # Whether or not to do reactions
 castro.do_sponge = 1                               # Whether or not to apply the sponge
 castro.add_ext_src = 1                             # Whether or not to apply external source terms
 castro.do_rotation = 1                             # Whether or not to include the rotation source term
@@ -131,6 +131,9 @@ amr.check_int = -1                                 # Number of timesteps between
 amr.plot_file = plt                                # Root name of plot file
 amr.plot_per = 10.0                                # Simulation time between plotfiles
 amr.plot_int = -1                                  # Number of timesteps between plotfiles
+amr.small_plot_file = smallplt                     # Root name of small plot files
+amr.small_plot_per = 1.0                           # Simulation time between small plotfiles
+amr.small_plot_int = -1                            # Number of timesteps between small plotfiles
 amr.message_int = 1                                # How often to check whether the run script asked for a checkpoint dump
 
 amr.v = 1                                          # Control verbosity in Amr.cpp
@@ -138,7 +141,10 @@ castro.v = 1                                       # Control verbosity in Castro
 gravity.v = 1                                      # Control verbosity in Gravity.cpp
 mg.v = 0                                           # Control verbosity in the multigrid solver
 
-amr.derive_plot_vars = ALL                         # Calculate all variables for plotfiles, including derived variables
+amr.plot_vars = ALL                                # State variables to add to plot files
+amr.derive_plot_vars = NONE                        # Derived variables to add to plot files
+
+amr.small_plot_vars = density                      # State variables to add to small plot files
 
 amr.data_log = grid_diag.out star_diag.out species_diag.out   # Name of the diagnostic sum output files
 

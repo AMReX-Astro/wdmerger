@@ -11,33 +11,38 @@ markers = ['o', '+', '.', ',', '*']
 # Long orbits
 
 diag_list = []
+rot_list = ['0', '1']
+ratio_list = ['equal', 'unequal']
 
-for rot in ['0', '1']:
-    for ratio in ['equal', 'unequal']:
+results_dir = 'results/'
+plots_dir = 'plots/'
 
-        diag_filename = "results/" + ratio + "/rot" + rot + "/output/grid_diag.out"
+for rot in rot_list:
+    for ratio in ratio_list:
 
-        eps_filename = "plots/" + ratio + "_energy_rot" + rot + ".eps"
+        diag_filename = results_dir + ratio + "/rot" + rot + "/output/grid_diag.out"
+
+        eps_filename = plots_dir + ratio + "_energy_rot" + rot + ".eps"
 
         if (not os.path.isfile(eps_filename)):
 
             grid_diag.plot_energy_error(diag_filename, eps_filename)
 
-        eps_filename = "plots/" + ratio + "_angular_momentum_rot" + rot + ".eps"
+        eps_filename = plots_dir + ratio + "_angular_momentum_rot" + rot + ".eps"
 
         if (not os.path.isfile(eps_filename)):
 
             grid_diag.plot_angular_momentum_error(diag_filename, eps_filename)
 
-        eps_filename = "plots/" + ratio + "_gw_rot" + rot + ".eps"
+        eps_filename = plots_dir + ratio + "_gw_rot" + rot + ".eps"
 
         if (not os.path.isfile(eps_filename)):
 
-            grid_diag.plot_gw_signal(diag_filename, eps_filename, n_orbits=2, do_analytical=1)
+           grid_diag.plot_gw_signal(diag_filename, eps_filename, n_orbits=2, do_analytical=1)
 
-        diag_filename = "results/" + ratio + "/rot" + rot + "/output/star_diag.out"
+        diag_filename = results_dir + ratio + "/rot" + rot + "/output/star_diag.out"
 
-        eps_filename = "plots/" + ratio + "_location_rot" + rot + ".eps"
+        eps_filename = plots_dir + ratio + "_location_rot" + rot + ".eps"
 
         if (not os.path.isfile(eps_filename)):
                 
@@ -197,7 +202,7 @@ if (not os.path.isfile(eps_filename)):
 
 # Plot the WD distance over time, for the various resolutions.
 
-for rot in ['0', '1']:
+for rot in rot_list:
 
     eps_filename = 'plots/spatial_convergence_rot' + rot + '.eps'
 
@@ -220,29 +225,3 @@ for rot in ['0', '1']:
     n_orbits = 0.1
 
     star_diag.plot_wd_distance(diag_list, eps_filename, n_orbits, label_list)
-
-
-
-# Time resolution
-
-# Same as above, for various timesteps.
-
-for rot in ['0', '1']:
-
-    eps_filename = 'plots/time_convergence_rot' + rot + '.eps'
-
-    if (os.path.isfile(eps_filename)):
-        continue
-
-    diag_list = []
-    label_list = []
-
-    for dt in ['0.01', '0.005', '0.0025', '0.00125']:
-    
-        diag_filename = 'results/time_convergence/rot' + rot + '/dt' + dt + '/output/star_diag.out'
-
-        diag_list.append(diag_filename)
-
-        label_list.append('dt = ' + dt)
-
-    star_diag.plot_wd_distance(diag_list, eps_filename, labels=label_list)

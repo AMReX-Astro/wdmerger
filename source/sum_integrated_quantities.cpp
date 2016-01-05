@@ -144,6 +144,10 @@ Castro::sum_integrated_quantities ()
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
+      // Update the local level we're on.
+      
+      set_amr_info(lev, -1, -1, -1.0, -1.0);
+      
       // Get the current level from Castro
 
       Castro& ca_lev = getLevel(lev);
@@ -157,13 +161,13 @@ Castro::sum_integrated_quantities ()
 
       mass += ca_lev.volWgtSum("density", time);
 
-      momentum[0] += ca_lev.volWgtSum("momentum_x", time);
-      momentum[1] += ca_lev.volWgtSum("momentum_y", time);
-      momentum[2] += ca_lev.volWgtSum("momentum_z", time);
+      momentum[0] += ca_lev.volWgtSum("inertial_momentum_x", time);
+      momentum[1] += ca_lev.volWgtSum("inertial_momentum_y", time);
+      momentum[2] += ca_lev.volWgtSum("inertial_momentum_z", time);
 
-      angular_momentum[0] += ca_lev.volWgtSum("angular_momentum_x", time);
-      angular_momentum[1] += ca_lev.volWgtSum("angular_momentum_y", time);
-      angular_momentum[2] += ca_lev.volWgtSum("angular_momentum_z", time);
+      angular_momentum[0] += ca_lev.volWgtSum("inertial_angular_momentum_x", time);
+      angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time);
+      angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time);
       
       rho_E += ca_lev.volWgtSum("rho_E", time);
       rho_K += ca_lev.volWgtSum("kineng",time);
@@ -188,6 +192,10 @@ Castro::sum_integrated_quantities ()
       
     }
 
+    // Return to the original level.
+    
+    set_amr_info(level, -1, -1, -1.0, -1.0);    
+    
     // Complete calculations for energy and momenta
 
     gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
@@ -266,12 +274,12 @@ Castro::sum_integrated_quantities ()
 
     get_grav_const(&Gconst);
 
-    if (mass_p > 0.0 && vol_p[0] > 0.0) {
+    if (mass_p > 0.0 && vol_p[2] > 0.0) {
       rho_avg_p = mass_p / vol_p[2];
       t_ff_p = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_p));
     }
 
-    if (mass_s > 0.0 && vol_s[0] > 0.0) {
+    if (mass_s > 0.0 && vol_s[2] > 0.0) {
       rho_avg_s = mass_s / vol_s[2];
       t_ff_s = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_s));
     }

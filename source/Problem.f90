@@ -1,6 +1,6 @@
 ! Problem-specific Fortran routines that are designed to interact with C++
 
-subroutine problem_checkpoint(int_dir_name, len) bind(C)
+subroutine problem_checkpoint(int_dir_name, len)
 
   ! called by the IO processor during checkpoint
 
@@ -42,7 +42,7 @@ end subroutine problem_checkpoint
 
 
 
-subroutine problem_restart(int_dir_name, len) bind(C)
+subroutine problem_restart(int_dir_name, len)
 
   ! called by ALL processors during restart 
 
@@ -81,24 +81,6 @@ subroutine problem_restart(int_dir_name, len) bind(C)
   close (un)
 
 end subroutine problem_restart
-
-
-
-! Return whether we're doing a single star simulation or not.
-
-subroutine get_single_star(flag) bind(C)
-
- use probdata_module, only: single_star
-
- implicit none
-
- integer :: flag
-
- flag = 0
-
- if (single_star) flag = 1
-
-end subroutine
 
 
 
@@ -279,82 +261,6 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,
   enddo
 
 end subroutine ca_volumeindensityboundary
-
-
-
-! Return the locations of the stellar centers of mass
-
-subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
-
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
-
-  implicit none
-
-  double precision, intent(inout) :: P_com(3), S_com(3)
-  double precision, intent(inout) :: P_vel(3), S_vel(3)
-  double precision, intent(inout) :: P_mass, S_mass
-
-  P_com = com_P
-  S_com = com_S
-
-  P_vel = vel_P
-  S_vel = vel_S
-
-  P_mass = mass_P
-  S_mass = mass_S
-
-end subroutine get_star_data
-
-
-
-! Set the locations of the stellar centers of mass
-
-subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
-
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, &
-                             roche_rad_P, roche_rad_S, single_star, get_roche_radii
-  use prob_params_module, only: center
-  use bl_constants_module, only: TENTH, ZERO
-
-  implicit none
-
-  double precision, intent(in) :: P_com(3), S_com(3)
-  double precision, intent(in) :: P_vel(3), S_vel(3)
-  double precision, intent(in) :: P_mass, S_mass
-
-  double precision :: r
-
-  com_P = P_com
-  vel_P = P_vel
-  mass_P = P_mass
-
-  r = ZERO
-
-  if (.not. single_star) then
-
-     com_S = S_com
-     vel_S = S_vel
-     mass_S = S_mass
-
-     r = sum((com_P-com_S)**2)**(0.5)
-
-     call get_roche_radii(mass_S/mass_P, roche_rad_S, roche_rad_P, r)
-
-     ! Beyond a certain point, it doesn't make sense to track the stars separately
-     ! anymore. We'll set the secondary to a fixed constant and keep it there
-     ! if its Roche radius becomes smaller than 10% of the primary's.
-
-     if (roche_rad_S .lt. TENTH * roche_rad_P) then
-        com_S = center
-        vel_S = ZERO
-        mass_S = ZERO
-        roche_rad_S = ZERO
-        single_star = .true.
-     endif
-
-  endif
-
-end subroutine set_star_data
 
 
 
@@ -639,41 +545,3 @@ subroutine get_omega_vec(omega_in, time) bind(C)
   omega_in = get_omega(time)
 
 end subroutine get_omega_vec
-
-
-
-! Returns the CASTRO rotation frequency vector.
-
-subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C)
-
-  use probdata_module, only: axis_1, axis_2, axis_3
-
-  implicit none
-
-  integer :: axis_1_in, axis_2_in, axis_3_in
-
-  axis_1_in = axis_1
-  axis_2_in = axis_2
-  axis_3_in = axis_3
-
-end subroutine get_axes
-
-
-
-! Returns whether we are doing a relaxation step.
-
-subroutine get_do_scf_initial_models(do_scf_initial_models_out) bind(C)
-
-  use probdata_module, only: do_scf_initial_models
-
-  implicit none
-
-  integer :: do_scf_initial_models_out
-
-  if (do_scf_initial_models) then
-     do_scf_initial_models_out = 1
-  else
-     do_scf_initial_models_out = 0
-  endif
-
-end subroutine get_do_scf_initial_models

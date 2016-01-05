@@ -79,7 +79,6 @@ function set_run_opts {
 
 }
 
-
 # Some global variables we'll need
 
 castro_rotational_period=100.0

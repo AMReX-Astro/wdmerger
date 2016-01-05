@@ -17,12 +17,7 @@
 
   do_initial_relaxation = F
   relaxation_timescale = 1.0d-3
-
-  do_scf_initial_models = F
-  scf_d_A = 1.0d9
-  scf_d_B = 1.0d9
-  scf_d_C = 1.8d9
-  scf_relax_tol = 1.0d-3
+  relaxation_density_cutoff = 1.0d0
 
   ambient_density = 1.0d-4
 
@@ -59,6 +54,16 @@
   fill_ambient_bc = F
 /
 
+&scf
+
+  do_scf_initial_models = F
+  scf_d_A = 1.0d9
+  scf_d_B = 1.0d9
+  scf_d_C = 1.8d9
+  scf_relax_tol = 1.0d-3
+
+/
+
 &tagging 
   max_temperr_lev    = 4
   temperr            = 2.d8
@@ -73,4 +78,9 @@
 &extern
   use_eos_coulomb = F
   eos_input_is_constant = T
+  eos_do_acc = T
+  eos_acc_cutoff = 128
+
+  do_constant_volume_burn = F
+  call_eos_in_rhs = F
 /

@@ -67,6 +67,8 @@ Castro::problem_post_timestep()
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
+      set_amr_info(lev, -1, -1, -1.0, -1.0);
+      
       getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
 
       mass_p += lev_mass_p;
@@ -81,6 +83,8 @@ Castro::problem_post_timestep()
 
     }
 
+    set_amr_info(level, -1, -1, -1.0, -1.0);    
+    
     // Complete calculations for center of mass quantities
 
     for ( int i = 0; i < 3; i++ ) {
@@ -101,6 +105,46 @@ Castro::problem_post_timestep()
 
     set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
+    // If we are doing an initial relaxation step, determine whether the 
+    // criterion for terminating the relaxation has been satisfied.
+
+    // First, calculate the location of the L1 Lagrange point.
+
+    Real L1[3] = { -1.0e200 };
+    Real L2[3] = { -1.0e200 };
+    Real L3[3] = { -1.0e200 };
+    
+    get_lagrange_points(mass_p, mass_s, com_p, com_s, L1, L2, L3);
+    
+    // Now cycle through the grids and determine if the L1
+    // point has reached the density threshold.
+    
+    int relaxation_is_done = 0;
+
+    MultiFab& S_new = get_new_data(State_Type);
+    
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:relaxation_is_done)
+#endif    
+    for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
+    {
+        const Box& box  = mfi.tilebox();
+
+        const int* lo   = box.loVect();
+        const int* hi   = box.hiVect();
+
+	check_relaxation(BL_TO_FORTRAN_3D(S_new[mfi]),
+			 ARLIM_3D(lo),ARLIM_3D(hi),
+			 L1,relaxation_is_done);
+	
+    }
+
+    // If any of the grids returned that it has the L1 point and
+    // the density has passed the cutoff, then disable the initial relaxation.
+    
+    if (relaxation_is_done > 0)
+      turn_off_relaxation();
+    
 }
 #endif
 
@@ -365,9 +409,9 @@ Castro::gwstrain (Real time,
 					 BL_TO_FORTRAN_3D(volume[mfi]),
 					 ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
 #ifdef _OPENMP
-		 priv_Qtt[tid].dataPtr());
+					 priv_Qtt[tid].dataPtr());
 #else
-	         Qtt.dataPtr());
+	                                 Qtt.dataPtr());
 #endif
         }
     }

@@ -15,13 +15,10 @@ void Castro::scf_relaxation() {
   int j = 1;
   int relax_max_iterations = 30;
 
-  const Real* dx  = parent->Geom(level).CellSize();
+  const Real* dx   = parent->Geom(level).CellSize();
   
-  const Real* problo = parent->Geom(level).ProbLo();
-  const Real* probhi = parent->Geom(level).ProbHi();
-
-  const int*  domlo = geom.Domain().loVect();
-  const int*  domhi = geom.Domain().hiVect();
+  const int* domlo = geom.Domain().loVect();
+  const int* domhi = geom.Domain().hiVect();
 
   MultiFab gcoeff(grids,1,0,Fab_allocate);
   gcoeff.setVal(0.0);
@@ -42,7 +39,7 @@ void Castro::scf_relaxation() {
   int loc_B[3] = {0};
   int loc_C[3] = {0};
 
-  scf_setup_relaxation(dx, problo, probhi);
+  scf_setup_relaxation(dx);
 
   scf_get_coeff_info(loc_A, loc_B, loc_C, cA.dataPtr(), cB.dataPtr(), cC.dataPtr());
 
@@ -74,10 +71,11 @@ void Castro::scf_relaxation() {
 
        Real osq = 0.0;
 
-       scf_get_omegasq(lo, hi, domlo, domhi,
-		       BL_TO_FORTRAN(S_new[mfi]),
-		       BL_TO_FORTRAN(phi[mfi]),
-		       dx, problo, probhi, &time, &osq);
+       scf_get_omegasq(ARLIM_3D(lo), ARLIM_3D(hi),
+		       ARLIM_3D(domlo), ARLIM_3D(domhi),
+		       BL_TO_FORTRAN_3D(S_new[mfi]),
+		       BL_TO_FORTRAN_3D(phi[mfi]),
+		       ZFILL(dx), &time, &osq);
 
        omegasq += osq;
 
@@ -117,10 +115,11 @@ void Castro::scf_relaxation() {
        Real b1 = 0.0;
        Real b2 = 0.0;
 
-       scf_get_bernoulli_const(lo, hi, domlo, domhi,
-			       BL_TO_FORTRAN(S_new[mfi]),
-			       BL_TO_FORTRAN(phi[mfi]),
-			       dx, problo, probhi, &time, &b1, &b2);
+       scf_get_bernoulli_const(ARLIM_3D(lo), ARLIM_3D(hi),
+			       ARLIM_3D(domlo), ARLIM_3D(domhi),
+			       BL_TO_FORTRAN_3D(S_new[mfi]),
+			       BL_TO_FORTRAN_3D(phi[mfi]),
+			       ZFILL(dx), &time, &b1, &b2);
 
        bernoulli_1 += b1;
        bernoulli_2 += b2;
@@ -155,11 +154,12 @@ void Castro::scf_relaxation() {
        Real h1 = 0.0;
        Real h2 = 0.0;
 
-       scf_construct_enthalpy(lo, hi, domlo, domhi,
-			      BL_TO_FORTRAN(S_new[mfi]),
-			      BL_TO_FORTRAN(phi[mfi]),
-			      BL_TO_FORTRAN(enthalpy[mfi]),
-			      dx, problo, probhi, &time,  
+       scf_construct_enthalpy(ARLIM_3D(lo), ARLIM_3D(hi),
+			      ARLIM_3D(domlo), ARLIM_3D(domhi),
+			      BL_TO_FORTRAN_3D(S_new[mfi]),
+			      BL_TO_FORTRAN_3D(phi[mfi]),
+			      BL_TO_FORTRAN_3D(enthalpy[mfi]),
+			      ZFILL(dx), &time,
 			      &bernoulli_1, &bernoulli_2, &h1, &h2);
 
        if (h1 > h_max_1) h_max_1 = h1;
@@ -202,11 +202,12 @@ void Castro::scf_relaxation() {
        Real nr = 0.0;
        Real ns = 0.0;
 
-       scf_update_density(lo, hi, domlo, domhi,
-			  BL_TO_FORTRAN(S_new[mfi]),
-			  BL_TO_FORTRAN(phi[mfi]),
-			  BL_TO_FORTRAN(enthalpy[mfi]),
-			  dx, problo, probhi, &time, 
+       scf_update_density(ARLIM_3D(lo), ARLIM_3D(hi),
+			  ARLIM_3D(domlo), ARLIM_3D(domhi),
+			  BL_TO_FORTRAN_3D(S_new[mfi]),
+			  BL_TO_FORTRAN_3D(phi[mfi]),
+			  BL_TO_FORTRAN_3D(enthalpy[mfi]),
+			  ZFILL(dx), &time, 
 			  &h_max_1, &h_max_2,
 			  &ke, &pe, &ie,
 			  &lm, &rm,
@@ -243,7 +244,7 @@ void Castro::scf_relaxation() {
 
      scf_check_convergence(&kin_eng, &pot_eng, &int_eng, 
 			   &left_mass, &right_mass,
-			   &delta_rho, &l2_norm, 
+			   &delta_rho, &l2_norm,
 			   &is_relaxed, &j);
 
      //	for (int k = finest_level-1; k >= 0; k--)

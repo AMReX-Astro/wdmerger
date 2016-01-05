@@ -1,4 +1,4 @@
-\documentclass[iop,numberedappendix]{../emulateapj}
+\documentclass[iop,numberedappendix]{emulateapj}
 
 % these lines seem necessary for pdflatex to get the paper size right
 \pdfpagewidth 8.5in
@@ -837,7 +837,7 @@ domain corners. This can be fixed by using multiple mass shells at diferent radi
 is negligible in practice for the values of $l_{\text{max}}$ that we use.
 \begin{figure}[h]
   \centering
-  \includegraphics[scale=0.45]{plots/bc_comparison}
+  \includegraphics[scale=0.45]{bc_comparison}
   \caption{Error of $\Phi$ on the computational domain for a binary white dwarf simulation 
     whose boundary conditions were computed using various values of the maximum multipole order,
     relative to the exact solution determined by a brute force sum on the boundaries.
@@ -891,7 +891,7 @@ grid representation, so the potential it produces is not quite that of a sphere.
 As the resolution is increased, the distribution of the mass on the grid will change.
 \begin{figure}[h]
   \centering
-  \includegraphics[scale=0.45]{plots/phi_comparison}
+  \includegraphics[scale=0.45]{phi_comparison}
   \caption{Comparison of the \castro\ gravitational potential to the analytical solution for: 
     a sphere of uniform density; the same sphere, but with the potential normalized using the 
     actual amount of mass on the grid instead of the mass of a perfect sphere; and, a 
@@ -1291,7 +1291,7 @@ for typical problem setups. While the sponge is applied we should avoid imputing
 meaning to what is happening in the low-density gas far from the stars.
 \begin{figure}
   \centering
-  \includegraphics[scale=0.4]{plots/sponge}
+  \includegraphics[scale=0.4]{sponge}
   \caption{Radial profile of the hydrodynamical sponge we apply (\autoref{eq:sponge_frac}). 
            We subtract $f_S$ from unity; the value of $1 - f_S$ indicates what happens 
            to the sponged function after the sponge is applied. The sponge has no effect 
@@ -1457,7 +1457,7 @@ increasing resolution.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/single_star_static_1e3_radius}
+  \includegraphics[scale=0.45]{single_star_static_1e3_radius}
   \caption{Time evolution of the effective radius of a $0.9 \msolar$ 
     white dwarf, seeded onto the grid using a one-dimensional hydrostatic
     model and evolved without further relaxation. The lines represent 
@@ -1512,7 +1512,7 @@ merger, to ensure that the merger is due to this applied force and not
 the intrinsic numerical instability of the stars.
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/single_star_static_ke}
+  \includegraphics[scale=0.45]{single_star_static_ke}
   \caption{Time evolution of the kinetic energy of a $0.9\, \msolar$ 
     white dwarf. The lines have the same meaning as in \autoref{fig:single_star_static_radius}.
     \label{fig:single_star_static_ke}}
@@ -1558,7 +1558,7 @@ between the analytical solution and the simulation results.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/freefall}
+  \includegraphics[scale=0.45]{freefall}
   \caption{Time evolution of two initially stationary white dwarfs,
     mutually attracted to each other by the gravitational force. The
     horizontal axis gives the separation of the white dwarfs, scaled
@@ -1617,7 +1617,7 @@ seeded.
   % looking for something with the wrong extension. See:
   % http://tex.stackexchange.com/a/10575
   \centering
-  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p2_low_res_collage}}}
+  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{kh_t2.0_p2_low_res_collage}}}
   \caption{2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
     conditions given by \autoref{eq:kh_ic_b_ramp} and \autoref{eq:kh_ic_b}. 
     The rows each represent a different bulk fluid velocity $v$ and 
@@ -1707,7 +1707,7 @@ the frequency of the perturbation ($n_A = 4$ and $n_B = 2$):
 
 \begin{figure*}[ht]
   \centering
-  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p3_low_res_collage}}}
+  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{kh_t2.0_p3_low_res_collage}}}
   \caption{2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
     conditions given by \autoref{eq:kh_p3_rho} through \autoref{eq:kh_p3_vy}. 
     The meaning of the rows and columns is the same as in \autoref{fig:kh_p2}.
@@ -1748,7 +1748,7 @@ instabilities at the stopping time. This is evident even at low resolutions
 by examining the first row of \autoref{fig:kh_p2}.
 
 \begin{figure*}[ht]
-  \includegraphics[trim = 0in 1.25in 0.25in 1.25in, clip, scale=0.65]{{{plots/kh_p3_high_res_collage}}}
+  \includegraphics[trim = 0in 1.25in 0.25in 1.25in, clip, scale=0.65]{{{kh_p3_high_res_collage}}}
   \caption{Time series of the Kelvin-Helmholtz problem proposed by McNally et al. (2012)
     as the simulation is just starting to go non-linear. The rows represent resolution, 
     where $n$ is the number of grid cells per spatial dimension, and the columns are 
@@ -1853,7 +1853,7 @@ always computed with respect to the current location of the stellar center.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/single_star_compare_1e3_radius}
+  \includegraphics[scale=0.45]{single_star_compare_1e3_radius}
   \caption{A variation on \autoref{fig:single_star_static_radius} where
     we now compare the ``static'' case to ``motion'' simulations where the 
     star moves across the grid at a fixed linear speed. The lines represent 
@@ -1901,7 +1901,7 @@ justifying our typical choice of maintaining terms up to $r^{-7}$.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/gravity_bcs}
+  \includegraphics[scale=0.45]{gravity_bcs}
   \caption{Absolute magnitude of the relative change in the distance of two unequal mass white dwarfs after one orbital period. 
            The stars were evolved in an inertial reference frame. The horizontal axis is the number of terms or multipole moments 
            captured in the series expansion for the potential at the domain boundary.\label{fig:gravity_bcs}}
@@ -1949,7 +1949,7 @@ The ``conservative'' ${\tt rs} = 4$ is slightly better in energy conservation th
 cell-centered ${\tt rs} = 2$ algorithm, but it is a small effect.
 
 \capstartfalse
-\input{plots/sources.table}
+\input{sources.table}
 \capstarttrue
 
 We are most interested in the stability of these systems over long
@@ -1987,7 +1987,7 @@ the cost is that the specific dynamics may be more suspect.
 
 \begin{figure*}
   \centering
-  \includegraphics[scale=0.7]{plots/circular_orbit_comparison}
+  \includegraphics[scale=0.7]{circular_orbit_comparison}
   \caption{Positions of the white dwarfs in the orbital plane for four
     cases evolved over 25 orbital periods.  The $x$ and $y$ axes are
     normalized to the size of the domain, so that $x = -0.5$ is the
@@ -2026,7 +2026,7 @@ and merger is physically (not numerically) motivated.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/equal_energy_rot0}
+  \includegraphics[scale=0.45]{equal_energy_rot0}
   \caption{Absolute magnitude of the relative change in energy of two equal mass white dwarfs through 25 orbital periods,
            evolved in an inertial reference frame. The decline and recovery is a change in sign of the energy difference.
            \label{fig:energy_conservation_equal}}
@@ -2034,7 +2034,7 @@ and merger is physically (not numerically) motivated.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/unequal_angular_momentum_rot1}
+  \includegraphics[scale=0.45]{unequal_angular_momentum_rot1}
   \caption{Absolute magnitude of the relative change in angular momentum of two unequal mass white dwarfs after 25 orbital periods, 
            evolved in a co-rotating reference frame. We consider only the component of the angular moment along the rotational 
            axis.
@@ -2064,7 +2064,7 @@ level of agreement holds in the rotating frame as well.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/unequal_gw_rot0}
+  \includegraphics[scale=0.45]{unequal_gw_rot0}
   \caption{Gravitational wave strain polarizations for the first two orbital periods of an 
            unequal mass system. The curves with markers are the numerical data, while the 
            curves without markers are the analytical results for two point masses.\label{fig:gw_strain}}
@@ -2082,7 +2082,7 @@ results suggest a minimum resolution of 200 km for getting the dynamics right.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.45]{plots/spatial_convergence_rot0}
+  \includegraphics[scale=0.45]{spatial_convergence_rot0}
   \caption{Distance between the two white dwarfs in the unequal mass system, for the first 
            10 seconds of their orbit. The distance is scaled by the initial orbital distance. 
            We plot at three different resolutions, corresponding to the number of 
@@ -2157,7 +2157,7 @@ GPUs on certain systems.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.4]{plots/weak_scaling}
+  \includegraphics[scale=0.4]{weak_scaling}
   \caption{\castro\ weak scaling test, performed on Blue Waters at 
     NCSA. Each processor had a fixed amount of work, and we increased the 
     number of simulation zones in concert with the number of processors. The 
@@ -2199,7 +2199,7 @@ improvement over the results presented in the first \castro\ paper.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.4]{plots/strong_scaling}
+  \includegraphics[scale=0.4]{strong_scaling}
   \caption{\castro\ strong scaling test performed on the Blue Waters machine at
     NCSA. The vertical axis measures the median time per timestep, and the 
     horizontal axis measures the number of processors in the simulation. Data 
@@ -2655,8 +2655,8 @@ In practice, of course, we select some maximum value $l_{\text{max}}$ at which w
 
 \clearpage
 
-\bibliographystyle{../apj}
-\bibliography{../refs}
+\bibliographystyle{apj}
+\input{paper.bbl}
 
 \clearpage
 

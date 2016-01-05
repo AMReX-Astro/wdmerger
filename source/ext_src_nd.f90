@@ -8,7 +8,7 @@
        use prob_params_module,  only: center
        use bl_constants_module, only: ZERO, HALF, ONE, TWO
        use probdata_module,     only: do_initial_relaxation, relaxation_timescale
-
+       
        implicit none
 
        integer          :: lo(3),hi(3)
@@ -23,8 +23,8 @@
        ! Local variables
 
        double precision :: damping_factor
-       double precision :: r(3)
        integer          :: i, j, k
+       double precision :: new_mom(3), old_mom(3), new_ke, old_ke, rhoInv, dtInv
 
        ! Note that this function exists in a tiling region so we should only 
        ! modify the zones between lo and hi. 
@@ -33,29 +33,41 @@
 
        if (do_initial_relaxation) then
 
-          damping_factor = ONE / relaxation_timescale
+          damping_factor = ONE / (ONE + HALF * dt / relaxation_timescale)
 
        else
 
-          damping_factor = ZERO
+          damping_factor = ONE
           
        endif
 
+       dtInv = ONE / dt
+
        do k = lo(3), hi(3)
-          r(3) = problo(3) + (dble(k) + HALF) * dx(3) - center(3)
-
           do j = lo(2), hi(2)
-             r(2) = problo(2) + (dble(j) + HALF) * dx(2) - center(2)
-
              do i = lo(1), hi(1)
-                r(1) = problo(1) + (dble(i) + HALF) * dx(1) - center(1)
+                
+                rhoInv = ONE / new_state(i,j,k,URHO)
 
-                   src(i,j,k,UMX:UMZ) = -new_state(i,j,k,UMX:UMZ) * damping_factor
+                ! The form of the source term is d(rho * v) / dt = - (rho * v) / tau.
+                ! The solution to this is an exponential decline, (rho * v) = (rho * v)_0 * exp(-t / tau).
+                ! However, an explicit discretized update of mom -> -mom * (dt / 2) / tau does not provide
+                ! a good approximation to this if tau << t. So we want to implicitly solve
+                ! that update: (rho * v) -> (rho * v) / (1 + (dt / 2) / tau). Then, since we will be
+                ! multiplying this source term by dt / 2, divide by that here to get the scaling right.
 
-                   ! Kinetic energy source term is v . momentum source term
+                old_mom = new_state(i,j,k,UMX:UMZ)
+                new_mom = new_state(i,j,k,UMX:UMZ) * damping_factor
 
-                   src(i,j,k,UEDEN) = dot_product(new_state(i,j,k,UMX:UMZ) / new_state(i,j,k,URHO), src(i,j,k,UMX:UMZ))
+                src(i,j,k,UMX:UMZ) = (TWO * dtInv) * (new_mom - old_mom)
 
+                ! Do the same thing for the kinetic energy update.
+
+                old_ke = HALF * sum(old_mom**2) * rhoInv
+                new_ke = HALF * sum(new_mom**2) * rhoInv
+
+                src(i,j,k,UEDEN) = (TWO * dtInv) * (new_ke - old_ke)
+                   
              enddo
           enddo
        enddo

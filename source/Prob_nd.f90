@@ -1,6 +1,8 @@
-   subroutine PROBINIT (init,name,namlen,problo,probhi) bind(C)
-     
-     use probdata_module, only: initialize
+   subroutine PROBINIT (init,name,namlen,problo,probhi)
+
+     use problem_io_module, only: initialize_io
+     use probdata_module, only: initialize_problem
+     use scf_relaxation_module, only: initialize_scf
 
      implicit none
 
@@ -8,7 +10,9 @@
      integer :: name(namlen)
      double precision :: problo(3), probhi(3)
 
-     call initialize(name, namlen, init)
+     call initialize_io(name, namlen)
+     call initialize_problem(init)
+     call initialize_scf()
 
    end subroutine PROBINIT
 
@@ -36,7 +40,7 @@
    ! ::: -----------------------------------------------------------
    subroutine ca_initdata(level,time,lo,hi,nscal, &
                           state,state_lo,state_hi, &
-                          dx,xlo,xhi) bind(C)
+                          dx,xlo,xhi)
 
      use probdata_module
      use prob_params_module, only: center, dim

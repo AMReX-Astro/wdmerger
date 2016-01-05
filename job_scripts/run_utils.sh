@@ -29,7 +29,9 @@ source $script_dir/machines.sh
 
 function get_make_var {
 
-  make print-$1 -C $compile_dir | tail -2 | head -1 | awk '{ print $NF }'
+  make print-$1 -C $compile_dir DIM=$DIM &> temp_make.out 
+  cat temp_make.out | tail -2 | head -1 | awk '{ print $NF }'
+  rm -f temp_make.out
 
 }
 
@@ -290,7 +292,7 @@ function is_job_running {
   elif [ -e $dir/jobs_submitted.txt ] && [ ! -z $num_jobs ]; then
 
       num_jobs_in_dir=$(cat $dir/jobs_submitted.txt | wc -l)
-      jobs_in_directory=$(cat $dir/jobs_submitted.txt)
+      jobs_in_directory=$(cat $dir/jobs_submitted.txt | awk '{print $1}')
 
       for job1 in ${job_arr[@]}
       do
@@ -356,8 +358,13 @@ function is_dir_done {
 
       chk_step=$(echo $checkpoint | cut -d"k" -f2)
 
-      time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
-      step_flag=$(echo "$chk_step >= $max_step" | bc)
+      if [ ! -z $stop_time ]; then
+	  time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
+      fi
+
+      if [ ! -z $max_step ]; then
+	  step_flag=$(echo "$chk_step >= $max_step" | bc)
+      fi
 
   elif [ ! -z $last_output ] && [ -e $directory/$last_output ]; then
 
@@ -547,7 +554,7 @@ function archive_all {
 
   # Same strategy for the inputs and probin files.
 
-  inputs_list=$(find $directory -maxdepth 1 -name "*inputs*")
+  inputs_list=$(find $directory -maxdepth 1 -name "$inputs")
 
   for file in $inputs_list
   do
@@ -621,11 +628,6 @@ function check_to_stop {
     
   total_time=$(get_remaining_walltime $job_number)
 
-  # This factor determines the amount of time we want to 
-  # use as a safety factor.
-
-  safety_factor=0.1
-
   # Now we'll plan to stop when (1 - safety_factor) of the time has been used up.
 
   time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
@@ -653,7 +655,7 @@ function copy_files {
   if [ ! -e $dir/$CASTRO ]; then
       cp $compile_dir/$CASTRO $dir
   fi
-  
+
   if [ ! -e "$dir/helm_table.dat" ]; then
       if [ -e "$compile_dir/helm_table.dat" ]; then
 	  cp $compile_dir/helm_table.dat $dir
@@ -664,7 +666,11 @@ function copy_files {
       if [ -e "$compile_dir/$inputs" ]; then
           cp $compile_dir/inputs $dir/$inputs
       else
-          cp $WDMERGER_HOME/source/inputs $dir/$inputs
+	  if [ ! -z $problem_dir ]; then
+	      cp $problem_dir/$inputs $dir/$inputs
+	  else
+              cp $WDMERGER_HOME/source/inputs $dir/$inputs
+	  fi
       fi
   fi
 
@@ -672,7 +678,11 @@ function copy_files {
       if [ -e "$compile_dir/$probin" ]; then
 	  cp $compile_dir/probin $dir/$probin
       else
-	  cp $WDMERGER_HOME/source/probin $dir/$probin
+	  if [ ! -z $problem_dir ]; then
+	      cp $problem_dir/$probin $dir/$probin
+	  else
+	      cp $WDMERGER_HOME/source/probin $dir/$probin
+	  fi
       fi
   fi
 
@@ -685,6 +695,10 @@ function copy_files {
   fi
 
   touch "$dir/jobs_submitted.txt"
+
+  if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
+      convert_to_2D
+  fi
 
   # Now determine all the variables that have been added
   # since we started; then search for them in the inputs
@@ -723,6 +737,39 @@ function copy_files {
 
 function submit_job {
 
+  # Get the current date for printing to file so we know 
+  # when we submitted. Since we only one want to add one column,
+  # we'll use the +%s option, which is seconds since January 1, 1970.
+
+  current_date=$(date +%s)
+
+  # Sometimes the code crashes and we get into an endless cycle of 
+  # resubmitting the job and then crashing again soon after,
+  # which is liable to make system administrators mad at us.
+  # Let's protect against this by putting in a safeguard.
+  # Normally the job should never end before (1.0 - safety_factor) 
+  # of the walltime, so if it has, we know that the job exited 
+  # abnormally (or, say, it completed) and so we don't want to
+  # submit a new job.
+
+  old_date=$(tail -1 jobs_submitted.txt | awk '{print $2}')
+  old_walltime=$(tail -1 jobs_submitted.txt | awk '{print $3}')
+
+  if [ ! -z $old_date ] && [ ! -z $old_walltime ]; then
+
+      date_diff=$(( $current_date - $old_date ))
+
+      submit_flag=$( echo "$date_diff > (1.0 - $safety_factor) * $old_walltime" | bc -l )
+
+      if [ $submit_flag -eq 0 ]; then
+	  echo "Refusing to submit job because the last job ended too soon."
+	  return
+      fi
+
+  fi
+
+  # If we made it to this point, now actually submit the job.
+
   job_number=`$exec $job_script`
 
   # Some systems like Blue Waters include the system name
@@ -730,7 +777,20 @@ function submit_job {
 
   job_number=${job_number%%.*}
 
-  echo "$job_number" >> jobs_submitted.txt
+  # Store the requested walltime, in seconds.
+
+  if [ -z $walltime ]; then
+      if [ ! -z $old_walltime ]; then
+	  walltime=$old_walltime
+      else
+	  echo "Don't know what the walltime request is in submit_job; aborting."
+	  return
+      fi
+  fi
+
+  walltime_in_seconds=$(hours_to_seconds $walltime)
+
+  echo "$job_number $current_date $walltime_in_seconds" >> jobs_submitted.txt
 
 }
 
@@ -740,9 +800,79 @@ function submit_job {
 
 function get_last_submitted_job {
 
-  job_number=$(tail -1 jobs_submitted.txt)
+  if [ -e jobs_submitted.txt ]; then
+
+      job_number=$(tail -1 jobs_submitted.txt | awk '{print $1}')
+
+  else
+
+      job_number=-1
+
+  fi
 
   echo $job_number
+
+}
+
+
+
+# Convert some inputs variables from 3D into their 2D equivalents.
+
+function convert_to_2D {
+
+    # Cylindrical (R-Z) coordinate system.
+
+    geometry_coord_sys=1
+
+    if [ -z "$geometry_is_periodic" ]; then
+	geometry_is_periodic=$(get_inputs_var "geometry_is_periodic" $dir)
+    fi
+
+    geometry_is_periodic=$(echo $geometry_is_periodic | awk '{print $1, $2}')
+
+    # Set the radial coordinate to have lower boundary value = 0.
+
+    if [ -z "$geometry_prob_lo" ]; then
+	geometry_prob_lo=$(get_inputs_var "geometry_prob_lo" $dir)
+    fi
+
+    if [ -z "$geometry_prob_hi" ]; then
+	geometry_prob_hi=$(get_inputs_var "geometry_prob_hi" $dir)
+    fi
+
+    if [ -z "$castro_center" ]; then
+	castro_center=$(get_inputs_var "castro_center" $dir)
+    fi
+
+    geometry_prob_lo=$(echo $geometry_prob_lo | awk '{print "0.0e0", $2}')
+    geometry_prob_hi=$(echo $geometry_prob_hi | awk '{print      $1, $2}')
+    castro_center=$(echo $castro_center | awk '{print $1, $2}')
+
+    # Use half as many radial points to keep dr = dz.
+
+    if [ -z "$amr_n_cell" ]; then
+	amr_n_cell=$(get_inputs_var "amr_n_cell" $dir)
+    fi
+
+    nr=$(echo $amr_n_cell | awk '{print $1}')
+    nz=$(echo $amr_n_cell | awk '{print $2}')
+
+    nr=$(echo "$nz / 2" | bc)	
+
+    amr_n_cell="$nr $nz"
+
+    # Use a symmetric lower boundary condition for radial coordinate.
+
+    if [ -z "$castro_lo_bc" ]; then
+	castro_lo_bc=$(get_inputs_var "castro_lo_bc" $dir)
+    fi
+
+    if [ -z "$castro_hi_bc" ]; then
+	castro_hi_bc=$(get_inputs_var "castro_hi_bc" $dir)
+    fi
+
+    castro_lo_bc=$(echo $castro_lo_bc | awk '{print  3, $2}')
+    castro_hi_bc=$(echo $castro_hi_bc | awk '{print $1, $2}')
 
 }
 
@@ -808,7 +938,7 @@ function create_job_script {
       # we read in the value from the main inputs file.
 
       if [ -z "$amr_max_grid_size" ]; then
-	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size")
+	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size" $dir)
       fi
 
       max_level_grid_size=0
@@ -894,6 +1024,26 @@ function create_job_script {
 
       echo "" >> $dir/$job_script
 
+      # Set name of problem directory, if applicable.
+
+      if [ ! -z $problem_dir ]; then
+	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Set the name of the inputs and probin files, in case they are 
+      # unique for this problem.
+
+      if [ $inputs != "inputs" ]; then
+	  echo "inputs=$inputs" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      if [ $probin != "probin" ]; then
+	  echo "probin=$probin" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
       # We assume that the directory we submitted from is eligible to 
       # work in, so cd to that directory.
 
@@ -978,6 +1128,35 @@ function create_job_script {
 
 
 
+# Delete the last submitted job in the directory.
+
+function cancel {
+
+  if [ -z $dir ]; then
+      echo "No directory given to cancel; exiting."
+      return
+  fi
+
+  if [ -d $dir ]; then
+
+      cd $dir
+
+      job_number=$(get_last_submitted_job)
+
+      if [ $job_number -gt 0 ]; then
+
+	  $cancel_job $job_number
+
+      fi
+
+      cd - > /dev/null
+
+  fi
+
+}
+
+
+
 # Main submission function. Checks which Linux variant we're on,
 # and uses the relevant batch submission script. If you want to
 # use a different machine, you'll need to include a run script
@@ -994,6 +1173,10 @@ function run {
   if [ -z $dir ]; then
       echo "No directory given to run; exiting."
       return
+  fi
+
+  if [ -z $DIM ]; then
+      DIM="3"
   fi
 
   set_up_problem_dir
@@ -1104,6 +1287,20 @@ function set_up_problem_dir {
 	state_arr=()
 	walltime_arr=()
 
+        # Build the executable if we haven't yet.
+
+	if [ ls $compile_dir/*"$DIM"d*.ex 1> /dev/null 2>&1 ]; then
+
+	    echo "Detected that the executable doesn't exist yet; building executable now."
+
+	    cd $compile_dir
+	    make -j8 DIM=$DIM &> compile_"$DIM"d.out
+	    cd - > /dev/null
+
+	    echo "Done building executable."
+
+	fi       
+
         # Fill these arrays.
 
 	get_submitted_jobs
@@ -1113,7 +1310,7 @@ function set_up_problem_dir {
 	    CASTRO=$(get_make_var executable)
 
 	fi
-	
+
 	if [ ! -d $plots_dir ]; then
 	    mkdir $plots_dir
 	fi
@@ -1160,6 +1357,11 @@ results_dir="results"
 # Directory for placing plots from analysis routines
 
 plots_dir="plots"
+
+# This factor determines the amount of time we want to 
+# use as a safety factor in ending jobs.
+
+safety_factor=0.1
 
 if [ -z $inputs ]; then
     inputs=inputs
