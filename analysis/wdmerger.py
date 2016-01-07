@@ -572,3 +572,26 @@ def get_castro_const(var_name):
     file.close()
 
     return const
+
+
+
+# Given a plotfile directory, return the simulation time.
+
+def get_time_from_plotfile(pltfile):
+
+    f = open(pltfile + '/Header', 'r')
+    
+    # Skip the first line, then read in the 
+    # number of variables in the plotfile.
+
+    line = f.readline()
+    nspec = int(f.readline())
+
+    # Now skip all the species, plus one more line.
+    
+    for n in range(nspec+2):
+        line = f.readline()
+
+    time = float(line[:-1])
+
+    return time
