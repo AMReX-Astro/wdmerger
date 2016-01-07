@@ -1,7 +1,12 @@
+module bc_fill_module
 
-   ! ::: -----------------------------------------------------------
+  implicit none
 
-   subroutine ca_hypfill(adv,adv_lo,adv_hi,domlo,domhi,delta,xlo,time,bc)
+  public
+
+contains
+
+   subroutine ca_hypfill(adv,adv_lo,adv_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
 
      use bl_constants_module, only: HALF
      use meth_params_module, only: NVAR
@@ -65,9 +70,9 @@
         
    end subroutine ca_hypfill
 
-   ! ::: -----------------------------------------------------------
 
-   subroutine ca_denfill(adv,adv_lo,adv_hi,domlo,domhi,delta,xlo,time,bc)
+
+   subroutine ca_denfill(adv,adv_lo,adv_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
 
      use prob_params_module, only: dim
      
@@ -84,9 +89,10 @@
 
    end subroutine ca_denfill
 
-   ! ::: -----------------------------------------------------------
 
-   subroutine ca_gravxfill(grav,grav_lo,grav_hi,domlo,domhi,delta,xlo,time,bc)
+
+#ifdef GRAVITY
+   subroutine ca_gravxfill(grav,grav_lo,grav_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
 
      use prob_params_module, only: dim     
      
@@ -103,9 +109,9 @@
 
    end subroutine ca_gravxfill
 
-   ! ::: -----------------------------------------------------------
 
-   subroutine ca_gravyfill(grav,grav_lo,grav_hi,domlo,domhi,delta,xlo,time,bc)
+
+   subroutine ca_gravyfill(grav,grav_lo,grav_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
 
      use prob_params_module, only: dim     
      
@@ -122,9 +128,9 @@
 
    end subroutine ca_gravyfill
 
-   ! ::: -----------------------------------------------------------
 
-   subroutine ca_gravzfill(grav,grav_lo,grav_hi,domlo,domhi,delta,xlo,time,bc)
+
+   subroutine ca_gravzfill(grav,grav_lo,grav_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
 
      use prob_params_module, only: dim     
      
@@ -141,9 +147,9 @@
 
    end subroutine ca_gravzfill
 
-   ! ::: -----------------------------------------------------------
 
-   subroutine ca_phigravfill(phi,phi_lo,phi_hi,domlo,domhi,delta,xlo,time,bc)
+
+   subroutine ca_phigravfill(phi,phi_lo,phi_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
 
      use prob_params_module, only: dim     
      
@@ -159,10 +165,90 @@
      call filcc_nd(phi,phi_lo,phi_hi,domlo,domhi,delta,xlo,bc)
 
    end subroutine ca_phigravfill
+#endif
 
-   ! ::: -----------------------------------------------------------
 
-   subroutine ca_reactfill(react,react_lo,react_hi,domlo,domhi,delta,xlo,time,bc)
+
+#ifdef ROTATION
+   subroutine ca_rotxfill(rot,rot_lo,rot_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
+
+     use prob_params_module, only: dim     
+     
+     implicit none
+     include 'bc_types.fi'
+
+     integer          :: rot_lo(3), rot_hi(3)
+     integer          :: bc(dim,2)
+     integer          :: domlo(3), domhi(3)
+     double precision :: delta(3), xlo(3), time
+     double precision :: rot(rot_lo(1):rot_hi(1),rot_lo(2):rot_hi(2),rot_lo(3):rot_hi(3))
+
+     call filcc_nd(rot,rot_lo,rot_hi,domlo,domhi,delta,xlo,bc)
+
+   end subroutine ca_rotxfill
+
+
+
+   subroutine ca_rotyfill(rot,rot_lo,rot_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
+
+     use prob_params_module, only: dim     
+     
+     implicit none
+     include 'bc_types.fi'
+
+     integer          :: rot_lo(3), rot_hi(3)
+     integer          :: bc(dim,2)
+     integer          :: domlo(3), domhi(3)
+     double precision :: delta(3), xlo(3), time
+     double precision :: rot(rot_lo(1):rot_hi(1),rot_lo(2):rot_hi(2),rot_lo(3):rot_hi(3))
+
+     call filcc_nd(rot,rot_lo,rot_hi,domlo,domhi,delta,xlo,bc)
+
+   end subroutine ca_rotyfill
+
+
+
+   subroutine ca_rotzfill(rot,rot_lo,rot_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
+
+     use prob_params_module, only: dim     
+     
+     implicit none
+     include 'bc_types.fi'
+
+     integer          :: rot_lo(3), rot_hi(3)
+     integer          :: bc(dim,2)
+     integer          :: domlo(3), domhi(3)
+     double precision :: delta(3), xlo(3), time
+     double precision :: rot(rot_lo(1):rot_hi(1),rot_lo(2):rot_hi(2),rot_lo(3):rot_hi(3))
+
+     call filcc_nd(rot,rot_lo,rot_hi,domlo,domhi,delta,xlo,bc)
+
+   end subroutine ca_rotzfill
+
+
+
+   subroutine ca_phirotfill(phi,phi_lo,phi_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
+
+     use prob_params_module, only: dim     
+     
+     implicit none
+     include 'bc_types.fi'
+
+     integer          :: phi_lo(3), phi_hi(3)
+     integer          :: bc(dim,2)
+     integer          :: domlo(3), domhi(3)
+     double precision :: delta(3), xlo(3), time
+     double precision :: phi(phi_lo(1):phi_hi(1),phi_lo(2):phi_hi(2),phi_lo(3):phi_hi(3))
+
+     call filcc_nd(phi,phi_lo,phi_hi,domlo,domhi,delta,xlo,bc)
+
+   end subroutine ca_phirotfill
+#endif
+
+
+
+#ifdef REACTIONS
+   subroutine ca_reactfill(react,react_lo,react_hi,domlo,domhi,delta,xlo,time,bc) bind(C)
 
      use prob_params_module, only: dim     
      
@@ -178,3 +264,6 @@
      call filcc_nd(react,react_lo,react_hi,domlo,domhi,delta,xlo,bc)
 
    end subroutine ca_reactfill
+#endif
+
+end module bc_fill_module
