@@ -106,7 +106,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
 
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo
-  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
+  use probdata_module, only: mass_P, mass_S, com_P, com_S
 
   implicit none
 
@@ -160,15 +160,19 @@ subroutine wdcom(rho,  r_lo, r_hi, &
 
            dm = rho(i,j,k) * vol(i,j,k)
 
-           grav_force_P = mass_P / r_P
-
-           if (single_star .or. mass_S < 1d-12 * mass_P) then
+           if (mass_P == ZERO .or. mass_P < 1.d-12 * mass_S) then
+              grav_force_P = ZERO
+           else
+              grav_force_P = mass_P / r_P
+           endif
+           
+           if (mass_S == ZERO .or. mass_S < 1.d-12 * mass_P) then
               grav_force_S = ZERO
            else
               grav_force_S = mass_S / r_S
            endif
-
-           if (grav_force_P > grav_force_S) then
+           
+           if (grav_force_P > ZERO .and. grav_force_P > grav_force_S) then
 
               m_p = m_p + dm
 
@@ -180,7 +184,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
               vel_p_y = vel_p_y + ymom(i,j,k) * vol(i,j,k)
               vel_p_z = vel_p_z + zmom(i,j,k) * vol(i,j,k)
 
-           else
+           else if (grav_force_S > ZERO .and. grav_force_S > grav_force_P) then
 
               m_s = m_s + dm
 
@@ -211,7 +215,7 @@ end subroutine wdcom
 subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,vols,rho_cutoff) bind(C)
 
   use bl_constants_module
-  use probdata_module, only: mass_P, mass_S, com_P, com_S, single_star
+  use probdata_module, only: mass_P, mass_S, com_P, com_S
   use prob_params_module, only: problo
 
   implicit none
@@ -241,16 +245,21 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,
               r_P = sqrt(sum((r - com_p)**2))
               r_S = sqrt(sum((r - com_s)**2))
 
-              grav_force_P = mass_P / r_P
-              if (single_star .or. mass_S < 1.d-12 * mass_P) then
+              if (mass_P == ZERO .or. mass_P < 1.d-12 * mass_S) then
+                 grav_force_P = ZERO
+              else
+                 grav_force_P = mass_P / r_P
+              endif
+
+              if (mass_S == ZERO .or. mass_S < 1.d-12 * mass_P) then
                  grav_force_S = ZERO
               else
                  grav_force_S = mass_S / r_S
               endif
               
-              if (grav_force_P > grav_force_S) then
+              if (grav_force_P > ZERO .and. grav_force_P > grav_force_S) then
                  volp = volp + vol(i,j,k)
-              else
+              else if (grav_force_S > ZERO .and. grav_force_S > grav_force_P) then
                  vols = vols + vol(i,j,k)
               endif
              

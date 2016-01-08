@@ -1065,17 +1065,25 @@ contains
 
     double precision :: r
 
-    com_P = P_com
-    vel_P = P_vel
-    mass_P = P_mass
-
     r = ZERO
 
-    if (.not. single_star) then
+    if (mass_P > ZERO) then
+
+       com_P = P_com
+       vel_P = P_vel
+       mass_P = P_mass
+
+    endif
+
+    if (mass_S > ZERO) then
 
        com_S = S_com
        vel_S = S_vel
        mass_S = S_mass
+
+    endif
+
+    if (mass_P > ZERO .and. mass_S > ZERO) then
 
        r = sum((com_P-com_S)**2)**(0.5)
 
@@ -1083,14 +1091,20 @@ contains
 
        ! Beyond a certain point, it doesn't make sense to track the stars separately
        ! anymore. We'll set the secondary to a fixed constant and keep it there
-       ! if its Roche radius becomes smaller than 10% of the primary's.
+       ! if its Roche radius becomes smaller than 10% of the primary's. Also, for exactly 
+       ! equal mass systems sometimes it is the primary that disrupts, perhaps
+       ! just due to numerical noise, so do the same check for the primary.
 
-       if (roche_rad_S .lt. TENTH * roche_rad_P) then
+       if (roche_rad_S < TENTH * roche_rad_P) then
           com_S = center
           vel_S = ZERO
           mass_S = ZERO
           roche_rad_S = ZERO
-          single_star = .true.
+       else if (roche_rad_P < TENTH * roche_rad_S) then
+          com_P = center
+	  vel_P = ZERO
+	  mass_S = ZERO
+	  roche_rad_P = ZERO
        endif
 
     endif

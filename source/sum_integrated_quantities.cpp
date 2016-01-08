@@ -87,8 +87,6 @@ Castro::sum_integrated_quantities ()
     Real t_ff_p = 0.0;
     Real t_ff_s = 0.0;
 
-    int single_star;
-
     // Gravitational wave amplitudes.
     
     Real h_plus_1  = 0.0;
@@ -125,9 +123,6 @@ Castro::sum_integrated_quantities ()
     int axis_2;
     int axis_3;
 
-    // Determine whether we're doing a single star simulation
-    get_single_star(single_star);
-    
     // Determine various coordinate axes
     get_axes(axis_1, axis_2, axis_3);
 
@@ -217,13 +212,12 @@ Castro::sum_integrated_quantities ()
 
     get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
-    if (single_star != 1) {
+    if (mass_p > 0.0 && mass_s > 0.0) {
       
       // Calculate the distance between the primary and secondary.
 
-      if (mass_s > 0.0)
-	for ( int i = 0; i < 3; i++ ) 
-	  wd_dist[i] = com_s[i] - com_p[i];
+      for ( int i = 0; i < 3; i++ ) 
+	wd_dist[i] = com_s[i] - com_p[i];
     
       separation = norm(wd_dist);
 
