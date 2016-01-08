@@ -1145,6 +1145,8 @@ function cancel {
 
       if [ $job_number -gt 0 ]; then
 
+	  echo "Cancelling job number $job_number in directory $dir."
+
 	  $cancel_job $job_number
 
       fi
