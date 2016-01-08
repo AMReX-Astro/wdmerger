@@ -528,7 +528,7 @@ contains
 
   end subroutine scf_update_density
 
-
+  
 
   subroutine scf_check_convergence(kin_eng, pot_eng, int_eng, &
                                    left_mass, right_mass, &

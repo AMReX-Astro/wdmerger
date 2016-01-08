@@ -1025,7 +1025,7 @@ contains
   end function inertial_velocity
 
 
-
+  
   ! Return the locations of the stellar centers of mass
   
   subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)

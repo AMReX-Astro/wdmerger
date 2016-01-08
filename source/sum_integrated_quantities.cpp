@@ -101,7 +101,7 @@ Castro::sum_integrated_quantities ()
     // Number of species.
     
     int NumSpec;
-    BL_FORT_PROC_CALL(GET_NUM_SPEC, get_num_spec)(&NumSpec);    
+    get_num_spec(&NumSpec);    
 
     // Species names and total masses on the domain.
 
@@ -141,7 +141,7 @@ Castro::sum_integrated_quantities ()
 
       // Update the local level we're on.
       
-      BL_FORT_PROC_CALL(SET_AMR_INFO,set_amr_info)(lev, -1, -1, -1.0, -1.0);
+      set_amr_info(lev, -1, -1, -1.0, -1.0);
       
       // Get the current level from Castro
 
@@ -189,7 +189,7 @@ Castro::sum_integrated_quantities ()
 
     // Return to the original level.
     
-    BL_FORT_PROC_CALL(SET_AMR_INFO,set_amr_info)(level, -1, -1, -1.0, -1.0);    
+    set_amr_info(level, -1, -1, -1.0, -1.0);    
     
     // Complete calculations for energy and momenta
 
@@ -266,7 +266,7 @@ Castro::sum_integrated_quantities ()
 
     Real Gconst;
 
-    BL_FORT_PROC_CALL(GET_GRAV_CONST, get_grav_const)(&Gconst);
+    get_grav_const(&Gconst);
 
     if (mass_p > 0.0 && vol_p[2] > 0.0) {
       rho_avg_p = mass_p / vol_p[2];
