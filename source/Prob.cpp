@@ -113,37 +113,42 @@ Castro::problem_post_timestep()
     Real L1[3] = { -1.0e200 };
     Real L2[3] = { -1.0e200 };
     Real L3[3] = { -1.0e200 };
-    
-    get_lagrange_points(mass_p, mass_s, com_p, com_s, L1, L2, L3);
-    
-    // Now cycle through the grids and determine if the L1
-    // point has reached the density threshold.
-    
-    int relaxation_is_done = 0;
 
-    MultiFab& S_new = get_new_data(State_Type);
+    if (mass_p > 0.0 && mass_s > 0.0)
+    {
+
+      get_lagrange_points(mass_p, mass_s, com_p, com_s, L1, L2, L3);
+    
+      // Now cycle through the grids and determine if the L1
+      // point has reached the density threshold.
+    
+      int relaxation_is_done = 0;
+
+      MultiFab& S_new = get_new_data(State_Type);
     
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:relaxation_is_done)
 #endif    
-    for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
-    {
-        const Box& box  = mfi.tilebox();
+      for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
+	{
+	  const Box& box  = mfi.tilebox();
 
-        const int* lo   = box.loVect();
-        const int* hi   = box.hiVect();
+	  const int* lo   = box.loVect();
+	  const int* hi   = box.hiVect();
 
-	check_relaxation(BL_TO_FORTRAN_3D(S_new[mfi]),
-			 ARLIM_3D(lo),ARLIM_3D(hi),
-			 L1,relaxation_is_done);
+	  check_relaxation(BL_TO_FORTRAN_3D(S_new[mfi]),
+			   ARLIM_3D(lo),ARLIM_3D(hi),
+			   L1,relaxation_is_done);
 	
-    }
+	}
 
-    // If any of the grids returned that it has the L1 point and
-    // the density has passed the cutoff, then disable the initial relaxation.
+      // If any of the grids returned that it has the L1 point and
+      // the density has passed the cutoff, then disable the initial relaxation.
     
-    if (relaxation_is_done > 0)
-      turn_off_relaxation();
+      if (relaxation_is_done > 0)
+	turn_off_relaxation();
+
+    }
     
 }
 #endif
