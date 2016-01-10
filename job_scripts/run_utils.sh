@@ -29,7 +29,7 @@ source $script_dir/machines.sh
 
 function get_make_var {
 
-  make print-$1 -C $compile_dir DIM=$DIM &> temp_make.out 
+  make print-$1 -C $compile_dir CASTRO_DIR=$CASTRO_DIR DIM=$DIM &> temp_make.out 
   cat temp_make.out | tail -2 | head -1 | awk '{ print $NF }'
   rm -f temp_make.out
 
@@ -1296,7 +1296,7 @@ function set_up_problem_dir {
 	    echo "Detected that the executable doesn't exist yet; building executable now."
 
 	    cd $compile_dir
-	    make -j8 DIM=$DIM &> compile_"$DIM"d.out
+	    make -j8 CASTRO_DIR=$CASTRO_DIR DIM=$DIM &> compile_"$DIM"d.out
 	    cd - > /dev/null
 
 	    echo "Done building executable."
