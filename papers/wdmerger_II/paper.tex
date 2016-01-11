@@ -42,6 +42,9 @@
 \newcommand{\python}{\texttt{Python}}
 \newcommand{\matplotlib}{\texttt{matplotlib}}
 \newcommand{\yt}{\texttt{yt}}
+\newcommand{\aproxthirteen}{\texttt{aprox13}}
+\newcommand{\aproxnineteen}{\texttt{aprox19}}
+\newcommand{\aproxtwentyone}{\texttt{aprox21}}
 
 \begin{document}
 
@@ -92,15 +95,108 @@ supernovae.
 % Introduction
 %==========================================================================
 \section{Introduction}
+\label{sec:introduction}
 
 We consider the collisions of white dwarfs as possible progenitors of Type Ia 
 supernovae, using the code \castro\ \cite{castro}.
 
 
 %==========================================================================
+% Numerical Implementation
+%==========================================================================
+\section{Numerical Methods}
+\label{sec:numericalmethods}
+
+The hydrodynamical equations solved in this paper were presented in \citet{wdmergerI}.
+In this paper we focus our discussion on our implementation of the nuclear
+reaction network and integrator.
+
+%==========================================================================
+% Problem Setup
+%==========================================================================
+\section{Problem Setup}
+\label{sec:problemsetup}
+
+We implement the white dwarf collision problem in \castro\ using our \wdmerger\
+package. The white dwarf centers of mass are separated by a distance of four times
+the (secondary) white dwarf radius. Their initial velocity is that of
+two point-masses in free-fall towards each other, at the appropriate distance.
+
+
+%==========================================================================
+% 2D simulations
+%==========================================================================
+\section{Two-Dimensional Simulations}
+\label{sec:2D}
+
+Though the main focus of this work is fully three-dimensional simulations,
+there is much to be learned from simpler, and much computationally cheaper,
+two-dimensional axisymmetric collision simulations. These are implemented
+in a cylindrical ($R-z$) coordinate system. We use these for three purposes.
+First, in the regime where the 2D and 3D simulations can be usefully compared, 
+zero-impact parameter simulations, to understand to what extent the
+reduced-dimensionality approach can reproduce the 3D results and thus to
+conclude whether 2D simulations can be used for obtaining scientific data
+such as nucleosynthesis yields. Second, for testing the effect of various
+code choices such as the number of isotopes in the nuclear network. A third
+effect which comes for free with the others is that we can benchmark existing
+and new code tools such as our nuclear postprocessing analysis. Prepared
+with these choices and a better understanding of how reliable our approximations
+are, we can then proceed to performing 3D simulations with our code choices
+already made and with confidence in our analysis software.
+
+\subsection{Dynamics}
+\label{sec:2D:dynamics}
+
+First we briefly consider whether the dynamical evolution of the system
+is consistent with simple physics we understand. We ask two questions.
+First, is the time it takes for the white dwarfs to collide consistent with
+basic kinematics. Second, is the amount of energy released in the
+collision by the nuclear reactions comparable to the amount of kinetic
+energy we infer from observations of Type Ia supernovae?
+
+\subsection{Timestep Limiting}
+\label{sec:2D:timestep}
+
+Here we discuss the effect of limiting the hydrodynamic timestep based on
+changes in the internal energy in the nuclear reaction network.
+
+\subsection{Nuclear Network}
+\label{sec:2D:network}
+
+Now we move to a discussion of the effect of including various isotopes
+in the nuclear reaction network. In particular we compare the \aproxthirteen,
+\aproxnineteen, and \aproxtwentyone reaction networks.
+
+\subsection{Nucleosynthetic Postprocessing}
+\label{sec:2D:postprocessing}
+
+We consider also the results of our postprocessing step for nucleosynthesis
+yields, to understand whether the results for the isotopes not included in
+our networks make sense.
+
+
+
+%==========================================================================
+% 3D simulations
+%==========================================================================
+\section{Three-Dimensional Simulations}
+\label{sec:3D}
+
+Now that we have analyzed the various parts of our simulation software and
+discussed our code choices, we consider full 3D simulations to understand
+the potential for white dwarf collisions to be progenitors of Type Ia
+supernovae. We focus on two main quantities of interest: the total amount of
+nickel produced in the explosion, which directly powers the light curve
+observed in SNe Ia; and, the gravitational wave signature produced by
+these events.
+
+
+%==========================================================================
 % Conclusions
 %==========================================================================
 \section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
+\label{sec:2D}
 
 
 \acknowledgments
