@@ -1,13 +1,15 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-TEST_DIR=$CASTRO_DIR/Exec/KH
+inputs=inputs.2d
+probin=probin
 
-cp $TEST_DIR/inputs.2d $compile_dir/inputs
-cp $TEST_DIR/probin $compile_dir/probin
+problem_dir=$CASTRO_DIR/Exec/KH
+
+DIM=2
 
 # Loop over problem choices
 
-for p in 1 2 3
+for p in 1 2 3 4
 do
 
   # Loop over possible bulk flow velocities
@@ -17,7 +19,7 @@ do
 
     # Loop over the resolutions in question
 
-    for ncell in 64 128 256 1024 2048 4096
+    for ncell in 64 128 256 512 1024 2048 4096
     do
 
       # We only want to do the high-resolution convergence test
@@ -42,6 +44,9 @@ do
 	  stop_time=2.0
 	  amr_plot_per=0.05
       elif [ $p -eq 3 ]; then
+	  stop_time=10.0
+	  amr_plot_per=0.1
+      elif [ $p -eq 4 ]; then
 	  stop_time=10.0
 	  amr_plot_per=0.1
       fi
@@ -75,9 +80,34 @@ do
 	     walltime=20:00:00
 	  fi
 
+      elif [ $MACHINE == "LIRED" ]; then
+
+	  if [ $ncell -eq 64 ]; then
+	      nprocs=24
+	      walltime=1:00:00
+	  elif [ $ncell -eq 128 ]; then
+	      nprocs=24
+	      walltime=1:00:00
+	  elif [ $ncell -eq 256 ]; then
+	      nprocs=24
+	      walltime=1:00:00
+	  elif [ $ncell -eq 512 ]; then
+	      nprocs=48
+	      walltime=2:00:00
+	  elif [ $ncell -eq 1024 ]; then
+	      nprocs=48
+	      walltime=2:00:00
+	  elif [ $ncell -eq 2048 ]; then
+	      nprocs=48
+	      walltime=4:00:00
+	  elif [ $ncell -eq 4096 ]; then
+	      nprocs=48
+	      walltime=8:00:00
+	  fi
+
       fi
 
-      run $dir $nprocs $walltime
+      run
 
     done
   done

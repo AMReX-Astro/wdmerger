@@ -5,7 +5,7 @@ from mpl_toolkits.axes_grid1 import AxesGrid
 import os
 import wdmerger
 
-problem_arr = [1, 2, 3]
+problem_arr = [1, 2, 3, 4]
 
 ncell_arr = [64, 128, 256, 512, 1024, 2048, 4096]
 
@@ -36,6 +36,14 @@ for problem in problem_arr:
 
             for t in time_arr:
 
+                dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/n" + str(ncell) + "/output"
+
+                # Make sure there's actually data for this combination of settings.
+                # For example, we don't do every flow velocity at every resolution.
+
+                if (not os.path.isdir(dir)):
+                    continue
+
                 # Generate the plot name, and skip this iteration if it already exists.
 
                 eps_filename = plots_dir + 'kh_t' + str(t) + '_p' + str(problem) + '_v' + str(v) + '_n' + str(ncell) + '.eps'
@@ -44,34 +52,37 @@ for problem in problem_arr:
                     print "Plot with filename " + eps_filename + " already exists; skipping."
                     continue
 
-                # First we load in the numerical data.
-
-                dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/" + str(ncell) + "/output"
-
-                # Make sure there's actually data for this combination of settings.
-                # For example, we don't do every flow velocity at every resolution.
-
-                if (not os.path.isdir(dir)):
-                    continue
-
                 print "Generating plot with filename " + eps_filename
+
+                # First we load in the numerical data.
 
                 # Get the list of plotfiles in the directory.
 
                 plotfiles = wdmerger.get_plotfiles(dir)
 
-                # Figure out which one in the list we want by dividing the simulation time
-                # by the interval between plotfile outputs.
+                # Figure out which one in the list we want by searching through
+                # and checking the Header file. We'll take the first plotfile 
+                # after the desired time.
 
-                index = int(round(t / plot_per))
+                plotfile_times = np.zeros(len(plotfiles))
 
-                # As a redundancy, guard against the possibility that this plotfile doesn't exist.
-                # Could happen if the full run hasn't been completed yet.
+                for n in range(len(plotfiles)):                
+                    plotfile_times[n] = wdmerger.get_time_from_plotfile(dir + '/' + plotfiles[n])
 
-                if (index >= len(plotfiles)):
-                    print "Error: the plotfile does not exist. Skipping this iteration."
-                    continue
+                for n in range(len(plotfile_times)):
 
+                    index = n
+
+                    time_curr = plotfile_times[n]
+
+                    if (n == 0):
+                        time_old = time_curr
+                    else:
+                        time_old = plotfile_times[n-1]
+
+                    if (time_old <= t and time_curr >= t):
+                        break
+                
                 pf_name = dir + "/" + plotfiles[index]
 
                 pf = yt.load(pf_name)
@@ -174,7 +185,7 @@ for problem in problem_arr:
 
                 # First we load in the numerical data.
 
-                dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/" + str(ncell) + "/output"
+                dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/n" + str(ncell) + "/output"
 
                 # Make sure there's actually data for this combination of settings.
                 # For example, we don't do every flow velocity at every resolution.
@@ -187,18 +198,29 @@ for problem in problem_arr:
 
                 plotfiles = wdmerger.get_plotfiles(dir)
 
-                # Figure out which one in the list we want by dividing the simulation time
-                # by the interval between plotfile outputs.
+                # Figure out which one in the list we want by searching through
+                # and checking the Header file. We'll take the first plotfile 
+                # after the desired time.
 
-                index = int(round(t / plot_per))
+                plotfile_times = np.zeros(len(plotfiles))
 
-                # As a redundancy, guard against the possibility that this plotfile doesn't exist.
-                # Could happen if the full run hasn't been completed yet.
+                for n in range(len(plotfiles)):                
+                    plotfile_times[n] = wdmerger.get_time_from_plotfile(dir + '/' + plotfiles[n])
 
-                if (index >= len(plotfiles)):
-                    print "Error: the plotfile does not exist. Quitting."
-                    exit()
+                for n in range(len(plotfile_times)):
 
+                    index = n
+
+                    time_curr = plotfile_times[n]
+
+                    if (n == 0):
+                        time_old = time_curr
+                    else:
+                        time_old = plotfile_times[n-1]
+
+                    if (time_old <= t and time_curr >= t):
+                        break
+                
                 pf_name = dir + "/" + plotfiles[index]
 
                 pf = yt.load(pf_name)
@@ -295,7 +317,7 @@ for ncell in ncell_arr:
 
         # First we load in the numerical data.
 
-        dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/" + str(ncell) + "/output"
+        dir = "results/problem" + str(problem) + "/velocity" + str(v) + "/n" + str(ncell) + "/output"
 
         # Make sure there's actually data for this combination of settings.
         # For example, we don't do every flow velocity at every resolution.
@@ -308,18 +330,29 @@ for ncell in ncell_arr:
 
         plotfiles = wdmerger.get_plotfiles(dir)
 
-        # Figure out which one in the list we want by dividing the simulation time
-        # by the interval between plotfile outputs.
+        # Figure out which one in the list we want by searching through
+        # and checking the Header file. We'll take the first plotfile 
+        # after the desired time.
 
-        index = int(round(t / plot_per))
+        plotfile_times = np.zeros(len(plotfiles))
 
-        # As a redundancy, guard against the possibility that this plotfile doesn't exist.
-        # Could happen if the full run hasn't been completed yet.
+        for n in range(len(plotfiles)):                
+            plotfile_times[n] = wdmerger.get_time_from_plotfile(dir + '/' + plotfiles[n])
 
-        if (index >= len(plotfiles)):
-            print "Error: the plotfile does not exist. Quitting."
-            exit()
+        for n in range(len(plotfile_times)):
 
+            index = n
+
+            time_curr = plotfile_times[n]
+
+            if (n == 0):
+                time_old = time_curr
+            else:
+                time_old = plotfile_times[n-1]
+
+            if (time_old <= t and time_curr >= t):
+                break
+                
         pf_name = dir + "/" + plotfiles[index]
 
         pf = yt.load(pf_name)
