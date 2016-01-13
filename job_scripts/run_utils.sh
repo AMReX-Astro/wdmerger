@@ -1159,6 +1159,68 @@ function cancel {
 
 
 
+# Pause the last submitted job in the directory.
+
+function pause {
+
+  if [ -z $dir ]; then
+      echo "No directory given to pause; exiting."
+      return
+  fi
+
+  if [ -d $dir ]; then
+
+      cd $dir
+
+      job_number=$(get_last_submitted_job)
+
+      if [ $job_number -gt 0 ]; then
+
+	  echo "Pausing job number $job_number in directory $dir."
+
+	  $pause_job $job_number
+
+      fi
+
+      cd - > /dev/null
+
+  fi
+
+}
+
+
+
+# Resume the last submitted job in the directory.
+
+function resumd {
+
+  if [ -z $dir ]; then
+      echo "No directory given to resume; exiting."
+      return
+  fi
+
+  if [ -d $dir ]; then
+
+      cd $dir
+
+      job_number=$(get_last_submitted_job)
+
+      if [ $job_number -gt 0 ]; then
+
+	  echo "Resuming job number $job_number in directory $dir."
+
+	  $resume_job $job_number
+
+      fi
+
+      cd - > /dev/null
+
+  fi
+
+}
+
+
+
 # Main submission function. Checks which Linux variant we're on,
 # and uses the relevant batch submission script. If you want to
 # use a different machine, you'll need to include a run script
