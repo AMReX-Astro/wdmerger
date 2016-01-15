@@ -1192,7 +1192,7 @@ function pause {
 
 # Resume the last submitted job in the directory.
 
-function resumd {
+function resume {
 
   if [ -z $dir ]; then
       echo "No directory given to resume; exiting."
