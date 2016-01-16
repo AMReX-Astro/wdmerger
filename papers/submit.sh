@@ -1,4 +1,4 @@
-submit_dir="submit"
+submit_dir="submit2"
 
 # Build the PDF so that we have the bibilography
 
@@ -6,14 +6,14 @@ make
 
 # Move all the source files to the submit directory
 
-mkdir -p submit/
+mkdir -p $submit_dir
 
 cp -f paper.tex $submit_dir
 cp -f paper.bbl $submit_dir
 cp -f plots/*.eps $submit_dir
 cp -f plots/*.table $submit_dir
-cp -f ../apj.bst $submit_dir
-cp -f ../emulateapj.cls $submit_dir
+cp -f ../aasjournal.bst $submit_dir
+cp -f ../aastex6.cls $submit_dir
 
 # Get rid of all references to the plots subdirectory
 
@@ -28,4 +28,4 @@ sed -i "s/\.\.\///" $submit_dir/paper.tex
 
 sed -i "s/bibliography{refs}/input{paper.bbl}/" $submit_dir/paper.tex
 
-tar -czvf submit.tar $submit_dir
+tar -czvf $submit_dir.tar $submit_dir

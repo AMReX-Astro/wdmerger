@@ -1,4 +1,4 @@
-\documentclass[iop,numberedappendix]{../emulateapj}
+\documentclass[twocolumn,numberedappendix]{../aastex6}
 
 % these lines seem necessary for pdflatex to get the paper size right
 \pdfpagewidth 8.5in
@@ -18,11 +18,6 @@
 
 % allows comment sections
 \usepackage{verbatim}
-
-% allows in-document links; see http://www.astrobetter.com/blog/2014/09/29/latex-hyperref-and-emulateapj/
-\usepackage[backref,breaklinks,colorlinks,citecolor=blue]{hyperref} 
-\usepackage[all]{hypcap} %Links go to figures;breaks on deluxetables       
-\renewcommand*{\backref}[1]{[#1]}
 
 % Override choices in \autoref
 \def\sectionautorefname{Section}
@@ -56,7 +51,7 @@
 \title{White Dwarf Mergers on Adaptive Meshes\\ I. Methodology and Code Verification}
 
 \shorttitle{WD Mergers I. Methodology}
-\shortauthors{Katz et al. (2015)}
+\shortauthors{Katz et al. (2016)}
 
 \author{Max P. Katz\altaffilmark{1}}
 \author{Michael Zingale\altaffilmark{1}}
@@ -717,7 +712,7 @@ leaking---evaluating the energy transfer at the six zone faces instead of the si
 center---adds only a very minor cost in terms of code complexity and computational time.
 
 Another approach to conserving total energy recently taken in the literature is to evolve an 
-equation for the total energy $(\rho E_{\text{tot}})$; see \cite{marcello:2012} and \cite{jiang:2013} (see also 
+equation for the total energy $(\rho E_{\text{tot}})$; see \cite{jiang:2013} (see also 
 \cite{arepo}, Section 5.3). That is, one can replace the gas energy equation with a total energy equation, 
 and then the energy flux includes a term corresponding to the flux of gravitational potential energy. We 
 avoid this approach for our problem because there are regions on the computational domain where the total 
@@ -1700,26 +1695,28 @@ initial perturbation ($v^\prime_A$ and $v^\prime_B$ respectively), and
 the frequency of the perturbation ($n_A = 4$ and $n_B = 2$):
 \begin{align}
   R_A &= \begin{cases} 0 & |y - 0.5| > 0.25 \\ 1 & |y - 0.5| < 0.25 \end{cases} \label{eq:kh_ic_a_ramp}\\
-  R_B &= \Big\{\left[1 + e^{-2(y-0.25)/\Delta_y}\right]\left[1 + e^{2(y-0.75)/\Delta_y}\right]\Big\}^{-1} \label{eq:kh_ic_b_ramp}\\
+  R_B &= \Big\{\left[1 + e^{-2(y-0.25)/\Delta y}\right]\left[1 + e^{2(y-0.75)/\Delta y}\right]\Big\}^{-1} \label{eq:kh_ic_b_ramp}
+\end{align}
+\begin{align}
   v^\prime_A &= w_0\, \text{sin}\left(n_A\, \pi\, x\right) \left\{e^{-(y-0.25)^2 / 2\sigma^2} + e^{-(y-0.75)^2/2\sigma^2}\right\} \label{eq:kh_ic_a}\\
   v^\prime_B &= w_0\, \text{sin}\left(n_B\, \pi\, x\right). \label{eq:kh_ic_b}
 \end{align}
-
-\begin{figure*}[ht]
-  \centering
-  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p3_low_res_collage}}}
-  \caption{2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
-    conditions given by \autoref{eq:kh_p3_rho} through \autoref{eq:kh_p3_vy}. 
-    The meaning of the rows and columns is the same as in \autoref{fig:kh_p2}.
-    \label{fig:kh_p3}  {\color{red} You should note this is $R_B$}}
-\end{figure*}
-
 Here $w_0 = 0.1$ is the scale of the velocity perturbation, $\sigma =
 0.05/\sqrt{2}$ controls the width of the Gaussian for IC A, and
 $\Delta y = 0.05$ is the transition distance scale for the smooth ramp of IC
 B. The pressure everywhere is set to $p = 2.5$, and we run this with a
 gamma-law equation of state set to $\gamma = 5/3$. Plotfiles are
 generated every 0.05 seconds, and the problem is run until $t = 2$.
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p3_low_res_collage}}}
+  \caption{2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
+    conditions given by \autoref{eq:kh_p3_rho} through \autoref{eq:kh_p3_vy},
+    which come from McNally et al. (2012).
+    The meaning of the rows and columns is the same as in \autoref{fig:kh_p2}.
+    \label{fig:kh_p3}}
+\end{figure*}
 
 We run the problem for $v_\text{bulk} = [0, 1, 3, 10, 30, 100]$, and
 for each set of initial conditions run the problem at resolutions of
@@ -1765,7 +1762,9 @@ conditions for this problem are:
   \rho &= \begin{dcases} \rho_1 - \rho_m e^{(y-0.25)/\Delta y} & 0.25 > y \geq 0 \\ 
                          \rho_2 + \rho_m e^{(0.25-y)/\Delta y} & 0.5 > y \geq 0.25 \\
                          \rho_2 + \rho_m e^{(y-0.75)/\Delta y} & 0.75 > y \geq 0.5 \\
-                         \rho_1 - \rho_m e^{(0.75-y)/\Delta y} & 1 > y \geq 0.75 \end{dcases} \label{eq:kh_p3_rho}\\
+                         \rho_1 - \rho_m e^{(0.75-y)/\Delta y} & 1 > y \geq 0.75 \end{dcases} \label{eq:kh_p3_rho}
+\end{align}
+\begin{align}
   v_x &= \begin{dcases} v_1 - v_m e^{(y-0.25)/\Delta y} & 0.25 > y \geq 0 \\
                         v_2 + v_m e^{(0.25-y)/\Delta y} & 0.5 > y \geq 0.25 \\
                         v_2 + v_m e^{(y-0.75)/\Delta y} & 0.75 > y \geq 0.5 \\
@@ -1780,11 +1779,14 @@ and bulk velocities as the previous two problems. The results for the normal res
 at $t = 2.0$ are displayed in \autoref{fig:kh_p3}. We see a similar pattern as for 
 the test proposed by R10: as we get to higher flow speeds we need to have higher 
 spatial resolution to compensate for the increased numerical diffusion. The 
-accuracy is much lower for the highest bulk velocities. This is probably because 
-the initial conditions feature a transition that is twice as sharp (compare the $\Delta y$ 
-parameters in each case). This means that there are smaller scale numerical 
-perturbations on the grid, which can be amplified by numerical noise in the time 
-evolution of the system.
+qualitative accuracy is much lower for the highest bulk velocities for this problem
+than for the previous problems. This is because the amplitude of the instability overall
+is smaller than for the previous problems, at least by $t = 2.0$, so it is easier
+for numerical diffusion at the shearing layer, caused by the high bulk velocities,
+to completely wipe out the instability. Like \citet{robertson:2010} found for
+their problem, we find for this problem that the convergence properties are not
+substantially affected by altering the perturbation frequency -- the results
+show the same qualitative pattern even if we halve this frequency.
 
 \citet{hopkins:2015} performed this test as part of the testing of
 their code GIZMO.  They showed the late-time evolution of this system,
@@ -1948,9 +1950,7 @@ in the inertial frame. We see that the choice of rotational coupling is much les
 The ``conservative'' ${\tt rs} = 4$ is slightly better in energy conservation than the non-conservative, 
 cell-centered ${\tt rs} = 2$ algorithm, but it is a small effect.
 
-\capstartfalse
 \input{plots/sources.table}
-\capstarttrue
 
 We are most interested in the stability of these systems over long
 timescales. To this end, we consider the same systems as above, but
@@ -2006,7 +2006,7 @@ fairly typical cases the equal mass system in the inertial frame for
 energy conservation (\autoref{fig:energy_conservation_equal}), and the
 unequal mass system in the rotating frame for angular momentum
 conservation (\autoref{fig:angular_momentum_conservation_unequal}).
-For the former system Angular momentum is conserved to within 10 percent over the 25
+For the former system angular momentum is conserved to within 10 percent over the 25
 orbits, while energy conservation is about an order of magnitude
 better. We note that while this is already a fairly good level of
 energy conservation, it is not nearly as good as the results of
@@ -2071,23 +2071,49 @@ level of agreement holds in the rotating frame as well.
 \end{figure}
 
 Finally we consider whether the dynamical behavior of the system converges with resolution. 
-In \autoref{fig:unequal_spatial_convergence} we plot the first 10 seconds of the orbit for 
+In \autoref{fig:unequal_spatial_convergence_inertial} we plot the first full orbit for 
 the unequal mass system, at three different resolutions in the inertial frame: our default 
 resolution of $256^3$ zones, as well as a single level of refinement with a jump by a factor of 
 two (effective resolution $512^3$) or a jump by a factor of four (effective resolution $1024^3$). 
 It is clear that at the latter resolution (corresponding to physical resolution of 100 km), 
-we have achieved convergent behavior. In the rotating frame (not shown here), the results are 
-not quite the same but for these resolutions the results do tend toward convergence. These 
-results suggest a minimum resolution of 200 km for getting the dynamics right.
+we have achieved convergent behavior. In the rotating frame, the results also show
+convergent behavior but the convergence is not as fast with resolution as in the inertial frame; 
+see \autoref{fig:unequal_spatial_convergence_rotating}. At the two higher resolutions the white dwarf
+distance is qualitatively similar, and both are qualitatively different from the lower resolution. However,
+quantitatively the two higher resolution runs are not as similar to each other as the analogous runs in the
+inertial frame. Convergence with resolution is slightly slower in the rotating reference frame
+because in the rotating reference frame a stable, unchanging circular orbit requires balance between
+two forces with opposite sign (the gravitational and centrifugal forces), and slight perturbations from the
+circular orbit are amplified by the effect of the Corolis force. In the inertial frame, these numerical instabilities
+vanish, but the cost is that there is no centrifugal force to actively maintain the white dwarf distance,
+which is why it is much more likely for the orbit to prematurely decay. In either case, these results suggest
+at least a minimum resolution of 200 km for getting the dynamics qualitatively right. To put that into context,
+consider that the parameter study of \citet{dan:2014} used 40,000 SPH particles per simulation, or (for an equal mass
+binary) 20,000 particles per white dwarf. For, say, a $0.9\ \msolar + 0.9\ \msolar$ white dwarf binary on
+a $256^3$ zone simulation grid, there are 20,000 zones that fit within a white dwarf. We do not
+intend here to directly compare results between the two simulation methods. We limit ourselves to the
+observation that at least for grid-based codes, a parameter study such as the ones performed by
+\citet{dan:2012} and \citet{dan:2014} would likely not yield qualitatively convergent results if it were to use the
+same effective mass resolution. Instead the number of zones inside each star should at least be doubled.
 
 \begin{figure}
   \centering
   \includegraphics[scale=0.45]{plots/spatial_convergence_rot0}
-  \caption{Distance between the two white dwarfs in the unequal mass system, for the first 
-           10 seconds of their orbit. The distance is scaled by the initial orbital distance. 
+  \caption{Distance between the two white dwarfs in the unequal mass system, for the first orbit.
+           The distance is scaled by the initial orbital distance. 
            We plot at three different resolutions, corresponding to the number of 
-           effective zones per dimension in the refined regions. Note that the $n = 1024$ curve
-           falls nearly exactly on top of the $n = 512$ curve.\label{fig:unequal_spatial_convergence}}
+           effective zones per dimension in the refined regions.
+           \label{fig:unequal_spatial_convergence_inertial}}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.45]{plots/spatial_convergence_rot1}
+  \caption{Distance between the two white dwarfs in the unequal mass system, for the first orbit.
+           The distance is scaled by the initial orbital distance. 
+           We plot at three different resolutions, corresponding to the number of 
+           effective zones per dimension in the refined regions.
+           \label{fig:unequal_spatial_convergence_rotating}}
 \end{figure}
 
 
@@ -2189,7 +2215,7 @@ computed every timestep). We computed the median wall time required
 per time step for each simulation, and then normalized this to the
 median time per timestep for the smallest simulation. We find
 excellent weak scaling through 4,096 processors. At the largest run,
-the simulation time required is slightly than 1.5 times the amount
+the simulation time required is slightly less than 1.5 times the amount
 required for the smallest simulation.  This is due entirely to the
 increased cost of the multigrid Poisson solve in each timestep and
 this cannot be mitigated except by improving communication or
@@ -2307,7 +2333,8 @@ these are possible under the framework we have established.
 
 \acknowledgments
 
-The authors thank John Bell for helpful discussions on gravity 
+The authors thank John Bell, Volker Springel, and Dominic Marcello
+for helpful discussions on gravity 
 and hydrodynamics issues. We also thank Noel Scudder and Platon Karpov 
 for their help with this project, especially related to visualization of the results, 
 and Adam Jacobs for his advice on and assistance with 
@@ -2343,6 +2370,14 @@ Project AST100037 supported use of the resources NICS/Kraken and NICS/Darter.
 This research has made use of NASA's Astrophysics Data System 
 Bibliographic Services. In addition, this research has made use
 of the AstroBetter blog and wiki.
+
+\software{BoxLib (\url{https://github.com/BoxLib-Codes/BoxLib}),
+          CASTRO (\citet{castro}, \url{https://github.com/BoxLib-Codes/Castro}),
+          wdmerger (\url{https://github.com/BoxLib-Codes/wdmerger}),
+          GCC (\url{https://gcc.gnu.org/}),
+          python (\url{https://www.python.org/}),
+          matplotlib (\citet{matplotlib}, \url{http://matplotlib.org/}),
+          yt (\citet{yt}, \url{http://yt-project.org/})}
 
 \clearpage
 
@@ -2655,7 +2690,7 @@ In practice, of course, we select some maximum value $l_{\text{max}}$ at which w
 
 \clearpage
 
-\bibliographystyle{../apj}
+\bibliographystyle{../aasjournal}
 \bibliography{../refs}
 
 \clearpage
