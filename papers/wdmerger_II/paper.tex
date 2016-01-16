@@ -1,4 +1,4 @@
-\documentclass[iop,numberedappendix]{../emulateapj}
+\documentclass[twocolumn,numberedappendix]{../aastex6}
 
 % these lines seem necessary for pdflatex to get the paper size right
 \pdfpagewidth 8.5in
@@ -19,11 +19,6 @@
 % allows comment sections
 \usepackage{verbatim}
 
-% allows in-document links; see http://www.astrobetter.com/blog/2014/09/29/latex-hyperref-and-emulateapj/
-\usepackage[backref,breaklinks,colorlinks,citecolor=blue]{hyperref} 
-\usepackage[all]{hypcap} %Links go to figures;breaks on deluxetables       
-\renewcommand*{\backref}[1]{[#1]}
-
 % Override choices in \autoref
 \def\sectionautorefname{Section}
 \def\subsectionautorefname{Section}
@@ -42,6 +37,7 @@
 \newcommand{\python}{\texttt{Python}}
 \newcommand{\matplotlib}{\texttt{matplotlib}}
 \newcommand{\yt}{\texttt{yt}}
+\newcommand{\isoseven}{\texttt{iso7}}
 \newcommand{\aproxthirteen}{\texttt{aprox13}}
 \newcommand{\aproxnineteen}{\texttt{aprox19}}
 \newcommand{\aproxtwentyone}{\texttt{aprox21}}
@@ -196,7 +192,7 @@ these events.
 % Conclusions
 %==========================================================================
 \section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
-\label{sec:2D}
+\label{sec:conclusion}
 
 
 \acknowledgments
@@ -223,7 +219,7 @@ of the AstroBetter blog and wiki.
 
 \clearpage
 
-\bibliographystyle{../apj}
+\bibliographystyle{../aasjournal}
 \bibliography{../refs}
 
 

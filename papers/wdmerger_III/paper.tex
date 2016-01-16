@@ -1,8 +1,8 @@
-\documentclass[iop,numberedappendix]{../emulateapj}
-% for \sout
-\usepackage{ulem}
-% makes sure \em{} is italic rather than underlined (corrects ulem from line above)
-\normalem
+\documentclass[twocolumn,numberedappendix]{../aastex6}
+
+% these lines seem necessary for pdflatex to get the paper size right
+\pdfpagewidth 8.5in
+\pdfpageheight 11.0in
 
 % for the red MarginPars
 \usepackage{color}
@@ -10,21 +10,33 @@
 % some extra math symbols
 \usepackage{mathtools}
 
-\newcommand{\gcc}{\mathrm{g~cm^{-3} }}
+% allows Greek symbols to be bold
+\usepackage{bm}
+
+% allows us to force the location of a figure
+\usepackage{float}
+
+% allows comment sections
+\usepackage{verbatim}
+
+% Override choices in \autoref
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
+\def\subsubsectionautorefname{Section}
 
 % MarginPars
 \setlength{\marginparwidth}{0.75in}
 \newcommand{\MarginPar}[1]{\marginpar{\vskip-\baselineskip\raggedright\tiny\sffamily\hrule\smallskip{\color{red}#1}\par\smallskip\hrule}}
 
-
-\newcommand{\evm}{{(-)}}
-\newcommand{\evz}{{(\circ)}}
-\newcommand{\evp}{{(+)}}
-\newcommand{\enu}{{(\nu)}}
-
-
-
 \newcommand{\msolar}{\mathrm{M}_\odot}
+
+% Software names
+\newcommand{\boxlib}{\texttt{BoxLib}}
+\newcommand{\castro}{\texttt{CASTRO}}
+\newcommand{\wdmerger}{\texttt{wdmerger}}
+\newcommand{\python}{\texttt{Python}}
+\newcommand{\matplotlib}{\texttt{matplotlib}}
+\newcommand{\yt}{\texttt{yt}}
 
 \begin{document}
 
@@ -77,7 +89,7 @@ DE-AC05-00OR22725.
 
 \clearpage
 
-\bibliographystyle{../apj}
+\bibliographystyle{../aasjournal}
 \bibliography{../refs}
 
 
