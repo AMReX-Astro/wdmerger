@@ -331,9 +331,16 @@ the Coriolis force. When rotation is enabled, the rotation is along the $z = 0$ 
 coordinate dimension. To try this out you should use \texttt{DIM = 2} in the makefile and
 use \texttt{inputs\_2d} in the \texttt{source/} directory.
 
-For the nuclear network we use the \texttt{aprox13} network provided by Frank Timmes, which 
+For the nuclear network we use by default the \texttt{aprox13} network provided by Frank Timmes, which 
 we have ported for use in the \texttt{Microphysics} repository. It is an alpha-chain network 
-with isotopes ranging from ${}^4$He to ${}^{56}$Ni.
+with isotopes ranging from ${}^4$He to ${}^{56}$Ni. We have also ported \texttt{aprox19} and
+\texttt{aprox21}, which include the alpha chain isotopes as well as other nuclides for hydrogen
+burning and more accurate iron-group calculations. It is also possible to use the \texttt{iso7}
+network, which has the alpha nuclides from helium to silicon as well as nickel. The energy generation
+rate will be less accurate but at least should give some qualitatively correct answers. You can also
+provide your own network following the instructions in the Microphysics repository, as long as it
+contains at least ${}^4$He, ${}^{12}$C, ${}^{16}$O, ${}^{20}$Ne, and ${}^{24}$Mg. This the minimum
+set of isotopes needed to construct the initial white dwarf models.
 
 \section{Runtime Parameters}
 
@@ -641,13 +648,16 @@ If you want to build your own problem setup, you can do that too. The job submis
 requirements are the same as in Section \ref{sec:standard_problems}, but you will need to provide 
 your own source files and makefile. They can go in the \texttt{compile/} subdirectory in your problem location.
 At minimum, you'll need a \texttt{Prob\_3d.f90} file (or the equivalent for lower dimensions) and
-corresponding inputs and probin files. The problems in \texttt{science/wdmerger_I/castro} are similar to this;
+corresponding inputs and probin files. The problems in \texttt{science/wdmerger\_I/castro} are similar to this;
 they are ultimately building using the source code in the CASTRO test suite, but using a
-\texttt{run\_test.sh} that is very similar to the one used for merger problems.
+\texttt{run\_test.sh} that is very similar to the one used for merger problems. Note that for problems
+in CASTRO/Exec, you'll need to append \texttt{CASTRO\_DIR=\$CASTRO\_DIR} to \texttt{make} at the
+command line, which will force an override of that variable so that you can compile
+outside of the root CASTRO directory.
 
 \chapter{Test Problems}
 
-The \texttt{science/wdmerger_I/} directory contains a number of example problems that we use
+The \texttt{science/wdmerger\_I/} directory contains a number of example problems that we use
 to assess the reliability of \texttt{CASTRO} in performing hydrodynamics simulations 
 with self-gravity. This section includes a list of the existing problems 
 as well as the instructions for building and running a problem.
