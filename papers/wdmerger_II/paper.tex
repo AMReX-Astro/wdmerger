@@ -33,10 +33,12 @@
 % Software names
 \newcommand{\boxlib}{\texttt{BoxLib}}
 \newcommand{\castro}{\texttt{CASTRO}}
+\newcommand{\microphysics}{\texttt{Microphysics}}
 \newcommand{\wdmerger}{\texttt{wdmerger}}
 \newcommand{\python}{\texttt{Python}}
 \newcommand{\matplotlib}{\texttt{matplotlib}}
 \newcommand{\yt}{\texttt{yt}}
+\newcommand{\vode}{\texttt{VODE}}
 \newcommand{\isoseven}{\texttt{iso7}}
 \newcommand{\aproxthirteen}{\texttt{aprox13}}
 \newcommand{\aproxnineteen}{\texttt{aprox19}}
@@ -105,7 +107,123 @@ supernovae, using the code \castro\ \cite{castro}.
 
 The hydrodynamical equations solved in this paper were presented in \citet{wdmergerI}.
 In this paper we focus our discussion on our implementation of the nuclear
-reaction network and integrator.
+reaction network and integrator. There are three main areas of concern: first,
+specifying what nuclides are in the network and what reaction rates link the
+various nuclides; second, once the system of ODEs governing the evolution of
+the nuclear species has been written down, how to append to them ODEs governing
+the evolution of the thermodynamics, in particular the temperature; third,
+coupling the nuclear reaction updates to the evolution of the hydrodynamical
+system. We will deal with each of these in turn in the following subsections.
+
+\subsection{Nuclear Network}
+\label{sec:network}
+
+White dwarfs are mainly composed of $\alpha$-chain particles, primarily ${}^4$He,
+${}^{12}$C, ${}^{16}$O, ${}^{20}$Ne, and ${}^{24}$ Mg. Therefore the core of
+any network appropriate for modeling nuclear burning in white dwarfs will be
+these alpha chain nuclides, with the idea being that links up the $\alpha$-chain
+will eventually get us to ${}^{56}$Ni, the nuclide responsible for the
+energy output of Type Ia supernovae. In this paper we consider four networks
+to do this, presented in order of increasing complexity. The most simple is
+\isoseven\ \citep{timmes:2000}, which includes all of the aforementioned isotopes and
+${}^{28}$Si (see also \citet{hix:1998}). ${}^{28}$Si effectively measures the
+equilibrium state of silicon-group elements, and ${}^{56}$Ni effectively measures
+the equilibrium state of iron-group elements, with the link between them governed
+by the effective loss or gain of seven $\alpha$-particles. This type of network
+was used by \citet{rosswog:2009} for their collision calculations in SPH.
+
+Next is \aproxthirteen\ \citep{timmes:1999,timmes:2000}. This includes
+all of the isotopes of \isoseven, and all of the $alpha$-chain particles between
+silicon and nickel (${}^{32}$S, ${}^{36}$Ar, ${}^{40}$Ca, ${}^{44}$Ti, ${}^{48}$Cr,
+and ${}^{52}$Fe). This network was used by \citet{hawley:2012} and \citet{raskin:2010}.
+\citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a very similar network
+that included additionally ${}^{60}$Zn. The \aproxnineteen\ network \citep{timmes:1999}
+builds on \aproxthirteen\ by including isotopes for hydrogen burning and explicit
+tracking of photodisintegration into ${}^{54}$Fe. This network was used by
+\citet{kushnir:2013}, \citet{kushnir:2014}, \citet{rosswog:2009} for their
+calculations with FLASH, and \citet{papish:2015}. Finally we will also
+consider \aproxtwentyone, which includes all of the above plus ${}^{56}$Cr
+and ${}^{56}$Fe and related reaction links. The primary virtue of using
+the latter two networks is that they allow us to track changes away from
+$Y_e = 0.5$.
+
+All four of these networks have been ported into a form that is consistent
+with the \boxlib\ codes, in the freely available \microphysics\ code
+repository\footnote{\microphysics\ can be obtained at \url{https://github.com/BoxLib-Codes/Microphysics}.},
+a collection of microphysical routines that are designed to be used in our
+hydrodynamics codes. These can be easily swapped at compile time by using the 
+appropriate makefile variable.
+
+\subsection{Nuclear Burning}
+\label{sec:burner}
+
+Given a set of nuclides and the reaction links between them, we now consider
+how a burning step is performed in our software. The integration of the stiff,
+implicit system is performed by \vode\ \citep{vode}, a copy of which is
+provided with \castro. To \vode\ we provide an integration state containing
+the molar abundances $Y_{n} = X_{n} / A_{n}$, where $X$ is the mass fraction
+of the abundance in the zone and $A$ is the number of nucleons. The integration
+of
+\begin{equation}
+  \frac{d\bm{Y}}{dt} = f(\mathbf{Y})
+\end{equation}
+is determined using a right-hand-side provided by the nuclear burning network.
+When it comes to the thermodynamical evolution, the internal energy $e$ of the zone
+will change when the nuclear abundances evolve. During the integration we track
+the energy release from the system using
+\begin{equation}
+  \frac{\partial e}{\partial t} = N_A \sum_{n} \frac{\partial Y_{n}}{\partial t} m_{n} c^2,
+\end{equation}
+where $c$ is the speed of light and $m_n$ is the mass of each nuclide.
+
+In a hydrostatic burn, we keep $\rho$ and $T$ fixed throughout, and use
+the energy released at the end to compute a final temperature that is
+thermodynamically consistent with the new internal energy. By contrast,
+in a self-heating burn, we allow the temperature to evolve in response
+to the burning (see \citet{maestro3}):
+\begin{equation}
+  \frac{dT}{dt} = \frac{1}{c_V}\left(\frac{\partial e}{\partial t} - \sum_n \frac{\partial e}{\partial X_n}\frac{\partial X_n}{\partial t}\right)
+\end{equation}
+Here $c_V$ is the specific heat at constant volume, and $(\partial e/\partial X_n)$
+is the derivative of the internal energy with respect to the mass fraction of a given
+species (with other thermodynamic variables held constant). Both quantities are provided by the
+equation of state. During this burn, we can keep these thermodynamic
+derivatives constant using their value at the beginning of the run, or at each step we
+can choose to re-evaluate the equation of state using the latest value of $(rho, T)$.
+The latter is more expensive but also more accurate, and we use it in this paper.
+A third option presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
+In this mode, by default we do a hydrostatic burn. If that burn fails, or if the net
+energy change is negative, we do the burn again in self-heating mode. All three options
+are implemented in our burner software.
+
+\subsection{Coupling to the Hydrodynamics}
+\label{sec:hydrocoupling}
+
+In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
+In a given timestep advance $\Delta t$, we first evolve the reactions alone through
+a time interval $\Delta t / 2$. Then, we evolve the hydrodynamics for $\Delta t$,
+and we evolve the reactions again for a further $\Delta t / 2$. The principal
+drawback of this approach is that the reactions and the hydrodynamics can become
+decoupled from each other. A common solution to this problem presented in
+the literature has been to limit the size of the timestep and thereby limit the
+extent of this decoupling \citep{raskin:2010,hawley:2012}, which we adopt here.
+(A related approach presented in \citet{kushnir:2013} is to limit the magnitude
+of the energy release in any given integration by scaling all the reaction rates.)
+At the start of each advance, we limit the size of the timestep to be the smaller
+of the minimum hydro timestep (limited by the CFL condition), and the minimum burning
+timestep. In a given zone, the burning timestep is defined as:
+\begin{equation}
+  \Delta t_{\text{burning}} = f_b\, \frac{e}{\dot{e}}.
+\end{equation}
+Here $\dot{e}$ is an estimate of the time rate of change of the internal energy
+from nuclear burning. We estimate this using the energy change in the last burning
+update, divided by the length of the burning timestep. The factor $f_b$ then
+determines by what fraction we would like to allow the internal energy to change
+in the current timestep (assuming that $\dot{e}$ does not change quickly from
+timestep to timestep, which is not always the case). By making $f_b$ smaller,
+we can control the magnitude of the decoupling between the reactions and the hydro.
+A typical choice in the literature is $f_b \sim 0.3$. This timestep limiting has
+now been implemented in \castro\ and the factor $f_b$ can be set at runtime.
 
 %==========================================================================
 % Problem Setup
