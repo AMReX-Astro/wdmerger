@@ -164,11 +164,20 @@ module probdata_module
   ! ONeMg WDs. All masses are in solar masses.
 
   double precision, save :: max_he_wd_mass = 0.45d0
-  double precision, save :: max_hybrid_co_wd_mass = 0.6d0
-  double precision, save :: hybrid_co_wd_he_shell_mass = 0.1d0
+  double precision, save :: max_hybrid_wd_mass = 0.6d0
+  double precision, save :: hybrid_wd_he_shell_mass = 0.1d0
   double precision, save :: max_co_wd_mass = 1.05d0
   double precision, save :: co_wd_he_shell_mass = 0.0d0
 
+  double precision, save :: hybrid_wd_c_frac = 0.50d0
+  double precision, save :: hybrid_wd_o_frac = 0.50d0
+
+  double precision, save :: co_wd_c_frac = 0.40d0
+  double precision, save :: co_wd_o_frac = 0.60d0
+
+  double precision, save :: onemg_wd_o_frac  = 0.60d0
+  double precision, save :: onemg_wd_ne_frac = 0.35d0
+  double precision, save :: onemg_wd_mg_frac = 0.05d0
 
   
   ! Tagging criteria
@@ -264,8 +273,12 @@ contains
          ambient_density, &
          stellar_temp, ambient_temp, &
          max_he_wd_mass, &
-         max_hybrid_co_wd_mass, hybrid_co_wd_he_shell_mass, &
+         max_hybrid_wd_mass, hybrid_wd_he_shell_mass, &
          max_co_wd_mass, &
+         co_wd_he_shell_mass, &
+         hybrid_wd_c_frac, hybrid_wd_o_frac, &
+         co_wd_c_frac, co_wd_o_frac, &
+         onemg_wd_o_frac, onemg_wd_ne_frac, onemg_wd_mg_frac, &
          orbital_eccentricity, orbital_angle, &
          axis_1, axis_2, axis_3, &
          max_tagging_radius, stellar_density_threshold, &
@@ -292,10 +305,10 @@ contains
     mass_S = mass_S * M_solar
 
     max_he_wd_mass = max_he_wd_mass * M_solar
-    max_hybrid_co_wd_mass = max_hybrid_co_wd_mass * M_solar
+    max_hybrid_wd_mass = max_hybrid_wd_mass * M_solar
     max_co_wd_mass = max_co_wd_mass * M_solar
 
-    hybrid_co_wd_he_shell_mass = hybrid_co_wd_he_shell_mass * M_solar
+    hybrid_wd_he_shell_mass = hybrid_wd_he_shell_mass * M_solar
     co_wd_he_shell_mass = co_wd_he_shell_mass * M_solar
 
     if (mass_S < ZERO .and. central_density_S < ZERO) single_star = .true.
@@ -718,12 +731,12 @@ contains
        
        model % envelope_comp = model % core_comp
 
-    else if (model % mass >= max_he_wd_mass .and. model % mass < max_hybrid_co_wd_mass) then
+    else if (model % mass >= max_he_wd_mass .and. model % mass < max_hybrid_wd_mass) then
 
-       model % core_comp(iC12) = HALF
-       model % core_comp(iO16) = HALF
+       model % core_comp(iC12) = hybrid_wd_c_frac
+       model % core_comp(iO16) = hybrid_wd_o_frac
 
-       model % envelope_mass = hybrid_co_wd_he_shell_mass
+       model % envelope_mass = hybrid_wd_he_shell_mass
 
        if (model % envelope_mass > ZERO) then
           model % envelope_comp(iHe4) = ONE
@@ -731,10 +744,10 @@ contains
           model % envelope_comp = model % core_comp
        endif
 
-    else if (model % mass >= max_hybrid_co_wd_mass .and. model % mass < max_co_wd_mass) then
+    else if (model % mass >= max_hybrid_wd_mass .and. model % mass < max_co_wd_mass) then
          
-       model % core_comp(iC12) = 0.4d0
-       model % core_comp(iO16) = 0.6d0
+       model % core_comp(iC12) = co_wd_c_frac
+       model % core_comp(iO16) = co_wd_o_frac
 
        model % envelope_mass = co_wd_he_shell_mass
 
@@ -746,9 +759,9 @@ contains
 
     else if (model % mass > max_co_wd_mass) then
 
-       model % core_comp(iO16)  = 0.60d0
-       model % core_comp(iNe20) = 0.35d0
-       model % core_comp(iMg24) = 0.05d0
+       model % core_comp(iO16)  = onemg_wd_o_frac
+       model % core_comp(iNe20) = onemg_wd_ne_frac
+       model % core_comp(iMg24) = onemg_wd_mg_frac
 
        model % envelope_comp = model % core_comp
 

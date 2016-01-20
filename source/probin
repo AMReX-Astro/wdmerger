@@ -52,6 +52,22 @@
   gw_dist = 10.0
 
   fill_ambient_bc = F
+
+  max_he_wd_mass = 0.45d0
+  max_hybrid_wd_mass = 0.6d0
+  hybrid_wd_he_shell_mass = 0.1d0
+  max_co_wd_mass = 1.05d0
+  co_wd_he_shell_mass = 0.0d0
+
+  hybrid_wd_c_frac = 0.50d0
+  hybrid_wd_o_frac = 0.50d0
+
+  co_wd_c_frac = 0.40d0
+  co_wd_o_frac = 0.60d0
+
+  onemg_wd_o_frac  = 0.60d0
+  onemg_wd_ne_frac = 0.35d0
+  onemg_wd_mg_frac = 0.05d0
 /
 
 &scf
