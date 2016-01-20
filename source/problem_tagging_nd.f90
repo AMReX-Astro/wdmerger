@@ -13,10 +13,11 @@ contains
                               dx,problo,time,level) bind(C)
 
     use bl_constants_module, only: ZERO, HALF, TWO
-    use meth_params_module, only: NVAR, URHO
+    use meth_params_module, only: NVAR, URHO, UTEMP
     use prob_params_module, only: center, probhi
     use probdata_module, only: max_tagging_radius, stellar_density_threshold, &
-                               com_P, com_S, roche_rad_P, roche_rad_S  
+                               temperature_tagging_threshold, &
+                               com_P, com_S, roche_rad_P, roche_rad_S
 
     implicit none
 
@@ -69,6 +70,12 @@ contains
                    tag(i,j,k) = set
                 endif
 
+             endif
+
+             ! Tag all zones at all levels that are hotter than a specified temperature threshold.
+
+             if (state(i,j,k,UTEMP) > temperature_tagging_threshold) then
+                tag(i,j,k) = set
              endif
 
              ! Clear all tagging that occurs outside the radius set by max_tagging_radius.

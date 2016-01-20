@@ -9,7 +9,7 @@ module probdata_module
 
   ! Initial stellar properties
   ! Note that the envelope mass is included within the total mass of the star
-  
+
   double precision, save :: mass_P = ONE
   double precision, save :: mass_S = ONE
   double precision, save :: central_density_P = -ONE
@@ -19,108 +19,108 @@ module probdata_module
   double precision, save :: primary_envelope_comp(nspec), secondary_envelope_comp(nspec)
 
 
-  
+
   ! Ambient medium
-  
+
   double precision, save :: ambient_density = 1.0d-4
   double precision, save :: ambient_temp = 1.0d7
   double precision, save :: ambient_comp(nspec)
 
 
-  
+
   ! Smallest allowed mass fraction
-  
+
   double precision, save :: smallx = 1.0d-12
 
   ! Smallest allowed velocity on the grid
-  
+
   double precision, save :: smallu = 1.0d-12
 
 
-  
+
   ! Parameters for nterpolation from 1D model to 3D model:
 
   ! Number of sub-grid-scale zones to use
-  
+
   integer, save :: nsub = 1
 
   ! Default to interpolation that preserves temperature; otherwise, use pressure
-  
+
   logical, save :: interp_temp = .true.
 
 
-  
+
   ! Whether or not to give stars an initial orbital velocity
   ! consistent with their Keplerian orbit speed.
-  
+
   logical, save :: no_orbital_kick = .false.
 
 
-  
+
   ! Collision parameters
-  
+
   ! Whether or not to give the stars an initial velocity
   ! consistent with the free-fall speed.
-  
+
   logical, save :: collision = .false.
 
   ! For a collision, number of (secondary) WD radii to 
   ! separate the WDs by.
-  
+
   double precision, save :: collision_separation = 4.0d0
 
   ! For a collision, the impact parameter measured in
   ! units of the primary's initial radius.
-  
+
   double precision, save :: collision_impact_parameter = 0.0d0
 
 
-  
+
   ! Binary orbit properties
-  
+
   double precision, save :: r_P_initial, r_S_initial, a_P_initial, a_S_initial, a  
   double precision, save :: v_P_r, v_S_r, v_P_phi, v_S_phi
   double precision, save :: center_P_initial(3), center_S_initial(3)
   double precision, save :: orbital_eccentricity = 0.0d0
   double precision, save :: orbital_angle = 0.0d0
-    
 
-  
+
+
   ! Axis is in orbital plane; we measure angle with respect to this axis. Normally the x axis.
-  
+
   integer, save :: axis_1 = 1
 
   ! Perpendicular axis in the orbital plane. Normally the y axis.
-  
+
   integer, save :: axis_2 = 2
 
   ! Perpendicular to both other axies. Normally the z axis and also the rotation axis.
-  
+
   integer, save :: axis_3 = 3
-  
+
   ! Location of the physical center of the problem, as a fraction of domain size
-  
+
   double precision, save :: center_fracx = HALF
   double precision, save :: center_fracy = HALF
   double precision, save :: center_fracz = HALF
 
   ! Bulk system motion
-  
+
   double precision, save :: bulk_velx = ZERO
   double precision, save :: bulk_vely = ZERO
   double precision, save :: bulk_velz = ZERO
 
   ! Whether we're doing an initialization or a restart
-  
+
   integer, save :: init
 
   ! Are we doing a single star simulation?
-  
+
   logical, save :: single_star
 
   ! Should we override the domain boundary conditions with
   ! ambient material?
-  
+
   logical, save :: fill_ambient_bc = .false.
 
 
@@ -144,17 +144,17 @@ module probdata_module
   ! equal to the desired mass. It can be reasonably small, since there
   ! will always be a central density value that can give the desired
   ! WD mass on the grid we use.
-  
+
   double precision, save :: initial_model_mass_tol = 1.d-6
 
   ! hse_tol is the tolerance used when iterating over a zone to force
   ! it into HSE by adjusting the current density (and possibly
   ! temperature).  hse_tol should be very small (~ 1.e-10).
-  
+
   double precision, save :: initial_model_hse_tol = 1.d-10
 
 
-  
+
   ! Composition properties of initial models.
   ! We follow the prescription of Dan et al. 2012 for determining
   ! the composition of the WDs. In this approach, below a certain 
@@ -179,34 +179,35 @@ module probdata_module
   double precision, save :: onemg_wd_ne_frac = 0.35d0
   double precision, save :: onemg_wd_mg_frac = 0.05d0
 
-  
+
   ! Tagging criteria
-  
+
   double precision, save :: max_tagging_radius = 0.75d0
   double precision, save :: stellar_density_threshold = 1.0d0
+  double precision, save :: temperature_tagging_threshold = 5.0d8
 
 
-  
+
   ! Stores the center of mass location of the stars throughout the run
-  
+
   double precision, save :: com_P(3), com_S(3)
   double precision, save :: vel_P(3), vel_S(3)
 
   ! Stores the effective Roche radii
-  
+
   double precision, save :: roche_rad_P, roche_rad_S
 
 
 
   ! Relaxation parameters
-  
+
   logical, save          :: do_initial_relaxation = .false.
   double precision, save :: relaxation_timescale = 0.001
   double precision, save :: relaxation_density_cutoff = 1.0d0
 
   ! Distance (in kpc) used for calculation of the gravitational wave amplitude
   ! (this wil be calculated along all three coordinate axes).
-  
+
   double precision, save :: gw_dist = 10.0d0
 
 contains
@@ -218,22 +219,22 @@ contains
 
     use bl_error_module, only: bl_error
     use prob_params_module, only: dim
-    
+
     implicit none
 
     integer :: init_in
- 
-    ! Safety check: we can't run this problem in one dimension.       
+
+    ! Safety check: we can't run this problem in one dimension.
     if (dim .eq. 1) then
        call bl_error("Cannot run wdmerger problem in one dimension. Exiting.")
     endif
-    
+
     init = init_in
 
     ! Read in the namelist to set problem parameters.
 
     call read_namelist
-    
+
     ! Establish binary parameters and create initial models.
 
     call binary_setup
@@ -253,7 +254,7 @@ contains
     use meth_params_module
     use prob_params_module, only: dim, coord_type
     use problem_io_module, only: probin
-    
+
     implicit none
 
     integer :: untin
@@ -282,6 +283,7 @@ contains
          orbital_eccentricity, orbital_angle, &
          axis_1, axis_2, axis_3, &
          max_tagging_radius, stellar_density_threshold, &
+         temperature_tagging_threshold, &
          bulk_velx, bulk_vely, bulk_velz, &
          smallx, smallu, &
          center_fracx, center_fracy, center_fracz, &
@@ -325,11 +327,11 @@ contains
        if (coord_type .ne. 1) then
           call bl_error("We only support cylindrical coordinates in two dimensions. Set coord_type == 1.")
        endif
-       
+
        axis_1 = 2
        axis_2 = 3
        rot_axis = 1
-       
+
     endif
 
     ! Make sure we have a sensible collision impact parameter.
@@ -339,11 +341,11 @@ contains
     endif
 
     ! Don't do a collision in a rotating reference frame.
-    
+
     if (collision .and. do_rotation .eq. 1) then
        call bl_error("The collision problem does not make sense in a rotating reference frame.")
     endif
-    
+
     ! Make sure we have a sensible eccentricity.
 
     if (orbital_eccentricity >= 1.0) then
@@ -357,7 +359,7 @@ contains
     endif
 
     orbital_angle = orbital_angle * M_PI / 180.0
-    
+
   end subroutine read_namelist
 
 
@@ -373,7 +375,7 @@ contains
     type (eos_t) :: eos_state
 
     ! Given the inputs of small_dens and small_temp, figure out small_pres.
- 
+
     eos_state % rho = small_dens
     eos_state % T   = small_temp
     eos_state % xn  = ambient_comp
@@ -421,7 +423,7 @@ contains
     use math_module, only: cross_product
     use binary_module, only: get_roche_radii
     use problem_io_module, only: ioproc
-    
+
     implicit none
 
     double precision :: v_ff, collision_offset
@@ -429,7 +431,7 @@ contains
     double precision :: omega(3)
 
     omega = get_omega(ZERO)
-    
+
     ! Set up the center variable. We want it to be at 
     ! problo + center_frac * domain_width in each direction.
     ! center_frac is 1/2 by default, so the problem
@@ -438,7 +440,7 @@ contains
     ! radial coordinate must be centered at zero for the problem to make sense.
 
     if (dim .eq. 3) then
-    
+
        center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
        center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
        center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
@@ -553,12 +555,12 @@ contains
     call establish_hse(model_P)
 
     if (ioproc .and. init == 1) then
-       
+
        ! Set the color to bold green for printing to terminal in this section. See:
        ! http://stackoverflow.com/questions/6402700/coloured-terminal-output-from-fortran
-       
+
        print *, ''//achar(27)//'[1;32m'
-       
+
        write (*,1001) model_P % mass / M_solar, model_P % central_density, model_P % radius
        1001 format ("Generated initial model for primary WD of mass ", f4.2, &
                     " solar masses, central density ", ES8.2, " g cm**-3, and radius ", ES8.2, " cm.")
@@ -603,7 +605,7 @@ contains
 
           center_P_initial(axis_1) = center_P_initial(axis_1) + r_P_initial
           center_S_initial(axis_1) = center_S_initial(axis_1) + r_S_initial
-           
+
           ! We also permit a non-zero impact parameter b in the direction perpendicular
           ! to the motion of the stars. This is measured in units of the radius of the
           ! primary, so that b > 1 doesn't make any sense as the stars won't collide.
@@ -611,10 +613,10 @@ contains
           ! units of the primary's radius will guarantee contact.
 
           collision_offset = collision_impact_parameter * model_P % radius
-          
+
           center_P_initial(axis_2) = center_P_initial(axis_2) - collision_offset
           center_S_initial(axis_2) = center_S_initial(axis_2) + collision_offset                  
-           
+
        else
 
           call kepler_third_law(model_P % radius, model_P % mass, model_S % radius, model_S % mass, &
@@ -634,12 +636,12 @@ contains
 
           center_P_initial(axis_1) = center_P_initial(axis_1) + r_P_initial * cos(orbital_angle)
           center_P_initial(axis_2) = center_P_initial(axis_2) + r_P_initial * sin(orbital_angle)
-          
+
           center_S_initial(axis_1) = center_S_initial(axis_1) + r_S_initial * cos(orbital_angle)
           center_S_initial(axis_2) = center_S_initial(axis_2) + r_S_initial * sin(orbital_angle)           
-           
+
           ! Star velocities, from Kepler's third law.
-          
+
           vel_P(axis_1) = v_P_r   * cos(orbital_angle) - v_P_phi * sin(orbital_angle)
           vel_P(axis_2) = v_P_phi * cos(orbital_angle) + v_P_r   * sin(orbital_angle)
 
@@ -653,15 +655,15 @@ contains
           if ( .not. no_orbital_kick ) then
              vel_P = vel_P - cross_product(omega, center_P_initial)
              vel_S = vel_S - cross_product(omega, center_S_initial)
-          endif                      
-          
+          endif
+
        endif
 
        ! Compute initial Roche radii
 
        call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
 
-       
+
     endif
 
     ! Reset the terminal color to its previous state.
@@ -717,7 +719,7 @@ contains
     if (iO16 < 0) call bl_error("Must have O16 in the nuclear network.")
     if (iNe20 < 0) call bl_error("Must have Ne20 in the nuclear network.")
     if (iMg24 < 0) call bl_error("Must have Mg24 in the nuclear network.")
-    
+
     model % core_comp = smallx
     model % envelope_comp = smallx
 
@@ -728,7 +730,7 @@ contains
     if (model % mass > ZERO .and. model % mass < max_he_wd_mass) then
 
        model % core_comp(iHe4) = ONE
-       
+
        model % envelope_comp = model % core_comp
 
     else if (model % mass >= max_he_wd_mass .and. model % mass < max_hybrid_wd_mass) then
@@ -745,7 +747,7 @@ contains
        endif
 
     else if (model % mass >= max_hybrid_wd_mass .and. model % mass < max_co_wd_mass) then
-         
+
        model % core_comp(iC12) = co_wd_c_frac
        model % core_comp(iO16) = co_wd_o_frac
 
@@ -771,7 +773,7 @@ contains
 
      model % core_comp = model % core_comp / sum(model % core_comp)
      model % envelope_comp = model % envelope_comp / sum(model % envelope_comp)
-       
+
   end subroutine set_wd_composition
 
 
@@ -795,18 +797,18 @@ contains
     double precision :: mu, M ! Reduced mass, total mass
     double precision :: r     ! Position
     double precision :: v_r, v_phi ! Radial and azimuthal velocity
-    
+
     ! Definitions of total and reduced mass
-    
+
     M  = mass_1 + mass_2
     mu = mass_1 * mass_2 / M    
-    
+
     ! First, solve for the orbit in the reduced one-body problem, where
     ! an object of mass mu orbits an object with mass M located at r = 0.
     ! For this we follow Carroll and Ostlie, Chapter 2, but many texts discuss this.
     ! Note that we use the convention that phi measures angle from aphelion,
     ! which is opposite to the convention they use.
-    
+
     a = (Gconst * M * period**2 / (FOUR * M_PI**2))**THIRD ! C + O, Equation 2.37
 
     r = a * (ONE - eccentricity**2) / (ONE - eccentricity * cos(phi)) ! C + O, Equation 2.3
@@ -814,7 +816,7 @@ contains
     ! To get the radial and azimuthal velocity, we take the appropriate derivatives of the above.
     ! v_r = dr / dt = dr / d(phi) * d(phi) / dt, with d(phi) / dt being derived from
     ! C + O, Equation 2.30 for the angular momentum, and the fact that L = mu * r**2 * d(phi) / dt.
-    
+
     v_r   = -TWO * M_PI * a * eccentricity * sin(phi) / (period * (ONE - eccentricity**2)**HALF)
     v_phi =  TWO * M_PI * a * (ONE - eccentricity * cos(phi)) / (period * (ONE - eccentricity**2)**HALF)
 
@@ -823,13 +825,13 @@ contains
 
     r_1  = -(mu / mass_1) * r
     r_2  =  (mu / mass_2) * r
-    
+
     v_1r = -(mu / mass_1) * v_r
     v_2r =  (mu / mass_2) * v_r
 
     v_1p = -(mu / mass_1) * v_phi
-    v_2p =  (mu / mass_2) * v_phi    
-    
+    v_2p =  (mu / mass_2) * v_phi
+
     ! Make sure the domain is big enough to hold stars in an orbit this size
 
     length = (r_2 - r_1) + radius_1 + radius_2
@@ -871,7 +873,7 @@ contains
   subroutine ensure_primary_mass_larger
 
     use problem_io_module, only: ioproc
-    
+
     implicit none
 
     double precision :: temp_mass
@@ -896,7 +898,7 @@ contains
 
 
   ! Given a zone state, fill it with ambient material.
-   
+
    subroutine fill_ambient(state, loc, time)
 
     use bl_constants_module, only: ZERO
@@ -949,15 +951,15 @@ contains
 
     use rotation_module, only: get_omega
     use meth_params_module, only: do_rotation, rot_period, rot_period_dot
-    
+
     implicit none
 
     double precision :: vec(3), time
 
     double precision :: vec_i(3)
-    
+
     double precision :: omega(3), theta(3), rot_matrix(3,3)
-    
+
 
     ! To get the angle, we integrate omega over the time of the
     ! simulation. Since the time rate of change is linear in the
@@ -971,26 +973,26 @@ contains
     ! if dPdt = 0, then theta = 2 * pi * t / P_0 = omega_0 * t, as expected.
     ! if dPdt > 0, then theta = (2 * pi / P_0) * (P_0 / dPdt) * ln| (dPdt / P_0) * t + 1 |
     ! Note that if dPdt << P_0, then we have ln(1 + x) = x, and we again
-    ! recover the original expression as expected.        
-    
+    ! recover the original expression as expected.
+
     if (do_rotation .eq. 1) then
-  
+
        if (abs(rot_period_dot) > ZERO .and. time > ZERO) then
           theta = get_omega(ZERO) * (rot_period / rot_period_dot) * &
                   log( abs( (rot_period_dot / rot_period) * time + 1 ) )
        else
           theta = get_omega(ZERO) * time
        endif
-       
+
        omega = get_omega(time)
-     
+
     else
 
        omega = ZERO
        theta = ZERO
 
     endif
-       
+
     ! This is the 3D rotation matrix for converting between reference frames.
     ! It is the composition of rotations along the x, y, and z axes. Therefore 
     ! it allows for the case where we are rotating about multiple axes. Normally 
@@ -1010,37 +1012,37 @@ contains
     rot_matrix(3,3) =  cos(theta(1)) * cos(theta(2))
 
     vec_i = matmul(rot_matrix, vec)
-  
+
   end function inertial_rotation
 
-  
-  
+
+
   ! Given a rotating frame velocity, get the inertial frame velocity.
   ! Note that this will simply return the original velocity if we're
   ! already in the inertial frame, since omega = 0.
 
   function inertial_velocity(loc, vel, time) result (vel_i)
-    
+
     use rotation_module, only: get_omega
     use math_module, only: cross_product
-    
+
     implicit none
 
     double precision :: loc(3), vel(3), time
     double precision :: omega(3)
-    
+
     double precision :: vel_i(3)
 
     omega = get_omega(time)
-    
+
     vel_i = vel + cross_product(omega, loc)
 
   end function inertial_velocity
 
 
-  
+
   ! Return the locations of the stellar centers of mass
-  
+
   subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
 
     implicit none
@@ -1115,9 +1117,9 @@ contains
           roche_rad_S = ZERO
        else if (roche_rad_P < TENTH * roche_rad_S) then
           com_P = center
-	  vel_P = ZERO
-	  mass_S = ZERO
-	  roche_rad_P = ZERO
+          vel_P = ZERO
+          mass_S = ZERO
+          roche_rad_P = ZERO
        endif
 
     endif
@@ -1129,7 +1131,7 @@ contains
   ! Check whether we should stop the initial relaxation.
   ! If so, set do_initial_relaxation to false, which will effectively
   ! turn off the external source terms.
-  
+
   subroutine check_relaxation(state, s_lo, s_hi, lo, hi, L1, is_done) bind(C)
 
     use meth_params_module, only: URHO, NVAR
@@ -1184,7 +1186,7 @@ contains
   end subroutine turn_off_relaxation
 
 
-  
+
   subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C)
 
     implicit none
@@ -1200,7 +1202,7 @@ contains
 
 
   ! Return whether we're doing a single star simulation or not.
-  
+
   subroutine get_single_star(flag) bind(C)
 
     implicit none
