@@ -22,6 +22,33 @@ source $script_dir/math.sh
 # System information.
 source $script_dir/machines.sh
 
+
+
+# Return a string to append to the 'make' command
+# if we have various makefile options specified.
+
+function compile_options {
+
+  compile_opts=''
+
+  if [ ! -z $CASTRO_DIR ]; then
+      compile_opts=$compile_opts' CASTRO_DIR='$CASTRO_DIR
+  fi
+
+  if [ ! -z $DIM ]; then
+      compile_opts=$compile_opts' DIM='$DIM
+  fi
+
+  if [ ! -z $Network_dir ]; then
+      compile_opts=$compile_opts' Network_dir='$Network_dir
+  fi
+
+  echo $compile_opts
+
+}
+
+
+
 # This uses the functionality built into the CASTRO makefile setup,
 # where make print-$VAR finds the variable VAR in the makefile
 # variable list and prints it out to stdout. It is the last word
@@ -29,9 +56,9 @@ source $script_dir/machines.sh
 
 function get_make_var {
 
-  make print-$1 -C $compile_dir CASTRO_DIR=$CASTRO_DIR DIM=$DIM &> temp_make.out 
-  cat temp_make.out | tail -2 | head -1 | awk '{ print $NF }'
-  rm -f temp_make.out
+  make print-$1 -C $compile_dir $(compile_options) &> temp_compile.out 
+  cat temp_compile.out | tail -2 | head -1 | awk '{ print $NF }'
+  rm -f temp_compile.out
 
 }
 
@@ -1351,19 +1378,35 @@ function set_up_problem_dir {
 	state_arr=()
 	walltime_arr=()
 
-        # Build the executable if we haven't yet.
+        # Build the executable if we haven't yet. Optionally,
+	# the user can force a recompile from the run script.
+
+	if [ ! -z $force_recompile ]; then
+
+	    if [ $force_recompile -eq 1 ]; then
+
+		echo "Re-compiling the executable at the user's request."
+
+		cd $compile_dir
+		make realclean &> compile.out
+		make -j8 $(compile_options) &> compile.out
+		cd - > /dev/null
+
+	    fi
+
+	fi
 
 	if [ ls $compile_dir/*"$DIM"d*.ex 1> /dev/null 2>&1 ]; then
 
 	    echo "Detected that the executable doesn't exist yet; building executable now."
 
 	    cd $compile_dir
-	    make -j8 CASTRO_DIR=$CASTRO_DIR DIM=$DIM &> compile_"$DIM"d.out
+	    make -j8 $(compile_options) &> compile.out
 	    cd - > /dev/null
 
 	    echo "Done building executable."
 
-	fi       
+	fi
 
         # Fill these arrays.
 
