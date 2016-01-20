@@ -48,7 +48,7 @@ amr.ref_ratio = 4 4 4 4 4                          # Refinement ratio
 amr.regrid_int = 2                                 # How many coarse timesteps between regridding
 amr.n_error_buf = 0 0 0 0 0                        # Number of buffer cells in error estimation
 
-amr.max_grid_size = 32 48 64                       # Maximum grid size at each level
+amr.max_grid_size = 32 48 64 64                    # Maximum grid size at each level
 amr.blocking_factor = 16                           # Grid sizes must be a multiple of this
 
 amr.grid_eff = 0.9                                 # What constitutes an efficient grid
