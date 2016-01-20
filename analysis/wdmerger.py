@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import yt
-from yt.analysis_modules.level_sets.api import *
 import string
+import matplotlib.pyplot as plt
 
 #
 # Returns the current git hash of the wdmerger repo.
@@ -595,3 +595,107 @@ def get_time_from_plotfile(pltfile):
     time = float(line[:-1])
 
     return time
+
+
+
+# Make a scatter-plot in the rho-T plane of all of the zones 
+# in a plotfile, optionally coloring the points by the dominant
+# species in that zone. We'll use a yt covering grid defined at 
+# the coarse level for simplicity of access to the data.
+# The inspiration for this is the upper-left panel of Figure 3 
+# in Hawley et al., 2012.
+
+def rho_T_scatterplot(output_filename, pltfile):
+
+    ds = yt.load(pltfile)
+
+    grid = ds.covering_grid(level=0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
+
+    # NumPy arrays of density and temperature.
+
+    dens = grid['density'].v
+    temp = grid['Temp'].v
+
+    # Set the data limits. The upper limit in density is 10**8 g cm**-3,
+    # which is a good upper limit for white dwarfs at our masses of interest. 
+    # The lower limit is 10**4 g cm**-3, since we're not interested in the 
+    # low-density material. In temperature, the upper limit will be 1e10 K 
+    # because we won't burn hotter than that. For the lower limits, we will 
+    # take 10**7 K because we aren't interested in material colder than that.
+
+    min_dens = 1.0e4
+    max_dens = 1.0e8
+
+    min_temp = 1.0e7
+    max_temp = 1.0e10
+
+    # Create a mask that filters out all data we're not interested in.
+    # This is done now because it has the benefit of speeding up the
+    # plot creation because there's less data to work with.
+
+    rho_T_mask = np.where(np.logical_and(temp > min_temp, dens > min_dens))
+
+    dens = dens[rho_T_mask]
+    temp = temp[rho_T_mask]
+
+    # Get 12C, 28Si, and 56Ni masses.
+
+    rho_c12  = grid['rho_c12'].v
+    rho_si28 = grid['rho_si28'].v
+    rho_ni56 = grid['rho_ni56'].v
+
+    # Convert to mass fractions.
+
+    xc12  = rho_c12[rho_T_mask]  / dens
+    xsi28 = rho_si28[rho_T_mask] / dens
+    xni56 = rho_ni56[rho_T_mask] / dens    
+
+    # What we want is to make a mask array that determines which 
+    # zones are dominated by each of these three species.
+
+    c12_mask  = np.where(np.logical_and(xc12  > xsi28, xc12  > xni56))
+    si28_mask = np.where(np.logical_and(xsi28 > xc12,  xsi28 > xni56))
+    ni56_mask = np.where(np.logical_and(xni56 > xc12,  xni56 > xsi28))
+
+    # Now create separate scatterplots for each of these three species.
+
+    markersize = 40
+
+    # The \! fixes an issue with spacing after a superscript in 
+    # the version of matplotlib that is shipped with yt, though
+    # it looks like it was fixed as of November 2015:
+    # https://github.com/matplotlib/matplotlib/pull/4873
+
+    plt.rcParams['mathtext.default'] = 'regular' # So the exponent is the same font as the text
+
+    plt.scatter(dens[c12_mask],  temp[c12_mask],  color='g', s=markersize, marker='o', label=r'${}^{12\!}$C')
+    plt.scatter(dens[si28_mask], temp[si28_mask], color='b', s=markersize, marker='s', label=r'${}^{28\!}$Si')
+    plt.scatter(dens[ni56_mask], temp[ni56_mask], color='r', s=markersize, marker='d', label=r'${}^{56\!}$Ni')
+
+    # Insert a buffer at the bottom of the plot since there will 
+    # likely be a lot of points at the floor.
+
+    min_temp = 0.7 * min_temp
+    min_dens = 0.7 * min_dens
+
+    plt.xlim([min_dens, max_dens])
+    plt.ylim([min_temp, max_temp])
+
+    plt.xscale('log')
+    plt.yscale('log')
+
+    # Axis labels and legend.
+
+    plt.xlabel(r'Density (g / cm$^{-3\!}$)', fontsize=20)
+    plt.ylabel(r'Temperature (K)', fontsize=20)
+    plt.tick_params(labelsize=16)
+
+    plt.legend(loc='upper left', fontsize=16, scatterpoints=1)
+
+    # Save the plotfile.
+
+    plt.tight_layout()
+    plt.savefig(output_filename)
+    insert_commits_into_eps(output_filename, pltfile, 'plot')
+
+    plt.close()
