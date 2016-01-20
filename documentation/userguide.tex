@@ -233,9 +233,11 @@ commonly distributed on Linux systems: \texttt{bash}, \texttt{GNU bc}, \texttt{G
 \href{https://www.python.org/}{python}, with the \href{http://matplotlib.org/}{matplotlib} 
 library and the \href{http://yt-project.org/}{yt} code being used for visualization. 
 If python and yt are not installed on your system, you will still be able to compile and 
-run this code, but you will need some other mechanism for analyzing the \texttt{BoxLib} output data.
-We have some routines for this purpose available in Fortran and may be able to provide them
-upon request.
+run this code, but we use yt for all analysis of \texttt{BoxLib} output data other than 
+the ASCII files that are generated at runtime. We have some routines for this purpose 
+available in Fortran and Python; some of the Fortran tools are provided in \texttt{BoxLib} 
+itself, in the \texttt{Tools/Postprocessing} subdirectory, and it is straightforward enough 
+to modify them for basic analysis. We may be able to provide others upon request.
 
 This software assumes that you have set several environment variables:
 \begin{itemize}
