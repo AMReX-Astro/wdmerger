@@ -24,7 +24,6 @@ castro.fixed_dt = -1.0                             # Fixed level 0 timestep; unu
 castro.init_shrink = 0.0001                        # Scale back initial timestep by this factor
 castro.change_max = 1.01                           # Factor by which dt is allowed to change each timestep
 castro.hard_cfl_limit = 0			   # Whether to abort a simulation if the CFL criterion is locally violated
-castro.burning_timestep_factor = 1.0               # Limit timestep based on nuclear burning considerations
 
 ############################################################################################
 # Boundary conditions
@@ -95,6 +94,15 @@ castro.allow_negative_energy = 0                   # Disable the possibility of 
 castro.dual_energy_update_E_from_e = 0             # Don't update the total energy using the internal energy
 castro.dual_energy_eta1 = 1.0e-3                   # Threshold for when to use the internal energy in calculating pressure
 castro.dual_energy_eta2 = 1.0e-4                   # Threshold for when to use (E - K) in updating internal energy
+
+############################################################################################
+# Reactions
+############################################################################################
+
+castro.dtnuc_f1 = 1.0                              # Limit timestep based on nuclear burning considerations
+castro.dtnuc_f2 = 1.0                              # Limit timestep based on nuclear burning considerations
+castro.react_T_min = 1.0e8                         # Minimum temperature for allowing nuclear burning
+castro.react_T_max = 1.0e12                        # Maximum temperature for allowing nuclear burning
 
 ############################################################################################
 # Gravity
