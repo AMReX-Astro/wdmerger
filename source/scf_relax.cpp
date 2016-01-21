@@ -260,9 +260,8 @@ void Castro::scf_relaxation() {
 
   for (int k = 0; k <= parent->finestLevel(); k++)
   {
-     BoxArray ba = getLevel(k).boxArray();
-     MultiFab grav_vec_new(ba,BL_SPACEDIM,0,Fab_allocate);
-     gravity->get_new_grav_vector(k,grav_vec_new,time);
+     MultiFab& grav_new = getLevel(k).get_new_data(Gravity_Type);
+     gravity->get_new_grav_vector(k,grav_new,time);
   }
 
 }
