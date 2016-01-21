@@ -207,23 +207,49 @@ drawback of this approach is that the reactions and the hydrodynamics can become
 decoupled from each other. A common solution to this problem presented in
 the literature has been to limit the size of the timestep and thereby limit the
 extent of this decoupling \citep{raskin:2010,hawley:2012}, which we adopt here.
-(A related approach presented in \citet{kushnir:2013} is to limit the magnitude
-of the energy release in any given integration by scaling all the reaction rates.)
-At the start of each advance, we limit the size of the timestep to be the smaller
-of the minimum hydro timestep (limited by the CFL condition), and the minimum burning
-timestep. In a given zone, the burning timestep is defined as:
+We define a burning-limited timestep $\Delta t_{b1}$ as:
 \begin{equation}
-  \Delta t_{\text{burning}} = f_b\, \frac{e}{\dot{e}}.
+  \Delta t_{b1} = f_{b1}\, \frac{e}{|\dot{e}|}.
 \end{equation}
 Here $\dot{e}$ is an estimate of the time rate of change of the internal energy
 from nuclear burning. We estimate this using the energy change in the last burning
-update, divided by the length of the burning timestep. The factor $f_b$ then
+update, divided by the length of the burning timestep. The factor $f_{b1}$ then
 determines by what fraction we would like to allow the internal energy to change
 in the current timestep (assuming that $\dot{e}$ does not change quickly from
-timestep to timestep, which is not always the case). By making $f_b$ smaller,
+timestep to timestep, which is not always the case). By making $f_{b1}$ smaller,
 we can control the magnitude of the decoupling between the reactions and the hydro.
-A typical choice in the literature is $f_b \sim 0.3$. This timestep limiting has
-now been implemented in \castro\ and the factor $f_b$ can be set at runtime.
+Typical choices in the literature are $f_{b1} = 0.2$ or $0.3$. This timestep limiting has
+now been implemented in \castro\ and the factor $f_{b1}$ can be set at runtime.
+
+\citet{kushnir:2013} point out this is not the only way for the burning to
+become numerically unstable; another failure mode is when the energy injection timescale
+is faster than the sound-crossing time in a zone. \citet{kushnir:2013} solved this by
+limiting the magnitude of the energy release after a burn; we take a slightly different
+approach and limit the timestep based on the previous burning, as with the other limiter.
+The goal is to ensure that the following condition holds:
+\begin{equation}
+  \frac{\partial e}{\partial t} = f_{b2} \frac{e}{t_s},
+\end{equation}
+The sound crossing time, $t_s$, is given by $\Delta x / c_s$, where $c_s$ is the sound speed
+and $\Delta x$ is the zone size. The parameter $f_{b2}$ then determines the ratio of the
+nuclear energy generation timescale to the sound-crossing time, in the limit of uniform
+timesteps. \citet{kushnir:2013} choose $f_{b2} = 0.1$ for their simulations.
+(As with the previous limiter, this parameter can be set at runtime in \castro.)
+We then re-write this as a limit on the size of the next timestep, using the same
+estimate as above for the nuclear energy generation rate $\dot{e}$ from the last burn:
+\begin{equation}
+  \Delta t_{b2} = \left[f_{b2}\, \frac{e}{|\dot{e}| \Delta t_{\rm{old}}}\right]^{-1}\, {t_s}
+\end{equation}
+Here $\Delta t_{\rm{old}}$ is the size of the timestep used in the burning advance that calculated
+$\dot{e}$. In the case of our Strang splitting approach it is half of the old advance
+timestep, $\Delta t^{n-1} / 2$. Thus the denominator inside the brackets is simply the net
+change in internal energy during the last burn.
+
+At the start of each advance, we limit the size of the timestep to be the smaller
+of the minimum hydro timestep (limited by the CFL condition), and the minimum of each
+burning timestep across all zones.
+
+
 
 %==========================================================================
 % Problem Setup
