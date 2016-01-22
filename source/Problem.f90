@@ -105,8 +105,9 @@ subroutine wdcom(rho,  r_lo, r_hi, &
                  m_p, m_s) bind(C)
 
   use bl_constants_module, only: HALF, ZERO, ONE
-  use prob_params_module, only: problo
+  use prob_params_module, only: problo, probhi, physbc_lo, physbc_hi, Symmetry
   use probdata_module, only: mass_P, mass_S, com_P, com_S
+  use castro_util_module, only: position
 
   implicit none
 
@@ -115,13 +116,13 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   integer         , intent(in   ) :: py_lo(3), py_hi(3)
   integer         , intent(in   ) :: pz_lo(3), pz_hi(3)
   integer         , intent(in   ) :: vo_lo(3), vo_hi(3)
-  
+
   double precision, intent(in   ) :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
   double precision, intent(in   ) :: xmom(px_lo(1):px_hi(1),px_lo(2):px_hi(2),px_lo(3):px_hi(3))
   double precision, intent(in   ) :: ymom(py_lo(1):py_hi(1),py_lo(2):py_hi(2),py_lo(3):py_hi(3))
   double precision, intent(in   ) :: zmom(pz_lo(1):pz_hi(1),pz_lo(2):pz_hi(2),pz_lo(3):pz_hi(3))  
   double precision, intent(in   ) :: vol(vo_lo(1):vo_hi(1),vo_lo(2):vo_hi(2),vo_lo(3):vo_hi(3))
-  
+
   integer         , intent(in   ) :: lo(3), hi(3)
   double precision, intent(in   ) :: dx(3), time
   double precision, intent(inout) :: com_p_x, com_p_y, com_p_z
@@ -149,11 +150,17 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   ! force on that zone.
 
   do k = lo(3), hi(3)
-     r(3) = problo(3) + (dble(k) + HALF) * dx(3)
      do j = lo(2), hi(2)
-        r(2) = problo(2) + (dble(j) + HALF) * dx(2)
         do i = lo(1), hi(1)
-           r(1) = problo(1) + (dble(i) + HALF) * dx(1)
+
+           r = position(i,j,k)
+
+           ! We account for symmetric boundaries in this sum as usual,
+           ! by adding to the position the locations that would exist
+           ! on the opposite side of the symmetric boundary.
+
+           r = merge(r + (problo - r), r, physbc_lo(:) .eq. Symmetry)
+           r = merge(r + (r - probhi), r, physbc_hi(:) .eq. Symmetry)
 
            r_P = sqrt(sum((r - com_P)**2))
            r_S = sqrt(sum((r - com_S)**2))
@@ -165,13 +172,13 @@ subroutine wdcom(rho,  r_lo, r_hi, &
            else
               grav_force_P = mass_P / r_P
            endif
-           
+
            if (mass_S == ZERO .or. mass_S < 1.d-12 * mass_P) then
               grav_force_S = ZERO
            else
               grav_force_S = mass_S / r_S
            endif
-           
+
            if (grav_force_P > ZERO .and. grav_force_P > grav_force_S) then
 
               m_p = m_p + dm
@@ -219,7 +226,7 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,
   use prob_params_module, only: problo
 
   implicit none
-  
+
   integer          :: r_lo(3), r_hi(3)
   integer          :: v_lo(3), v_hi(3)
   integer          :: lo(3), hi(3)
@@ -256,13 +263,13 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,
               else
                  grav_force_S = mass_S / r_S
               endif
-              
+
               if (grav_force_P > ZERO .and. grav_force_P > grav_force_S) then
                  volp = volp + vol(i,j,k)
               else if (grav_force_S > ZERO .and. grav_force_S > grav_force_P) then
                  vols = vols + vol(i,j,k)
               endif
-             
+
            endif
 
         enddo
@@ -286,9 +293,10 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
                                         lo, hi, dx, time, Qtt) bind(C)
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
-  use prob_params_module, only: center, problo
+  use prob_params_module, only: center, problo, probhi, physbc_lo, physbc_hi, Symmetry
   use probdata_module, only: inertial_rotation, inertial_velocity
-  
+  use castro_util_module, only: position
+
   implicit none
 
   integer         , intent(in   ) :: r_lo(3), r_hi(3)
@@ -317,13 +325,19 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
   double precision :: dQtt(3,3)
 
   dQtt(:,:) = ZERO
-  
+
   do k = lo(3), hi(3)
-     r(3) = problo(3) + (k + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
-        r(2) = problo(2) + (j + HALF) * dx(2) - center(2)
         do i = lo(1), hi(1)
-           r(1) = problo(1) + (i + HALF) * dx(1) - center(1)
+
+           r = position(i,j,k)
+
+           ! We account for symmetric boundaries in this sum as usual,
+           ! by adding to the position the locations that would exist
+           ! on the opposite side of the symmetric boundary.
+
+           r = merge(r + (problo - r), r, physbc_lo(:) .eq. Symmetry)
+           r = merge(r + (r - probhi), r, physbc_hi(:) .eq. Symmetry)
 
            if (rho(i,j,k) > ZERO) then
               rhoInv = ONE / rho(i,j,k)
@@ -347,8 +361,13 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
 
            vel(1) = xmom(i,j,k) * rhoInv
            vel(2) = ymom(i,j,k) * rhoInv
-           vel(3) = zmom(i,j,k) * rhoInv           
-           
+           vel(3) = zmom(i,j,k) * rhoInv
+
+           ! Account for symmetric boundaries.
+
+           vel = merge(ZERO, vel, physbc_lo(:) .eq. Symmetry)
+           vel = merge(ZERO, vel, physbc_hi(:) .eq. Symmetry)
+
            vel = inertial_velocity(pos, vel, time)
 
            g(1) = gravx(i,j,k)
@@ -400,11 +419,11 @@ subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, 
   double precision, intent(inout) :: h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3
   double precision, intent(in   ) :: Qtt(3,3)
   double precision, intent(in   ) :: time
-  
+
   integer          :: i, j, k, l, dir
   double precision :: h(3,3), proj(3,3,3,3), delta(3,3), n(3), r
   double precision :: dist(3)
-  
+
   ! Standard Kronecker delta.
 
   delta(:,:) = ZERO
@@ -490,7 +509,7 @@ end subroutine gw_strain_tensor
 
 subroutine update_center(time) bind(C)
 
-  use bl_constants_module, only: ZERO  
+  use bl_constants_module, only: ZERO
   use probdata_module, only: bulk_velx, bulk_vely, bulk_velz, &
                              center_fracx, center_fracy, center_fracz
   use prob_params_module, only: center, problo, probhi, dim
@@ -502,7 +521,7 @@ subroutine update_center(time) bind(C)
   ! Determine the original location of the center.
 
   if (dim .eq. 3) then
-  
+
      center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
      center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
      center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
