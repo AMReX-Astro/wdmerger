@@ -321,16 +321,28 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datawidth) << " XMOM                  ";
 	     grid_log << std::setw(datawidth) << " YMOM                  ";
 	     grid_log << std::setw(datawidth) << " ZMOM                  ";
+#if (BL_SPACEDIM == 3)
 	     grid_log << std::setw(datawidth) << " ANG. MOM. X           ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. Y           ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
+#else
+	     grid_log << std::setw(datawidth) << " ANG. MOM. R           ";
+	     grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
+#endif
 	     grid_log << std::setw(datawidth) << " MASS                  ";
+#if (BL_SPACEDIM == 3)
 	     grid_log << std::setw(datawidth) << " X COM                 ";
 	     grid_log << std::setw(datawidth) << " Y COM                 ";
 	     grid_log << std::setw(datawidth) << " Z COM                 ";
 	     grid_log << std::setw(datawidth) << " X COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Y COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Z COM VEL             ";
+#else
+	     grid_log << std::setw(datawidth) << " R COM                 ";
+	     grid_log << std::setw(datawidth) << " Z COM                 ";
+	     grid_log << std::setw(datawidth) << " R COM VEL             ";
+	     grid_log << std::setw(datawidth) << " Z COM VEL             ";
+#endif
 	     grid_log << std::setw(datawidth) << " h_+ (axis 1)          ";
 	     grid_log << std::setw(datawidth) << " h_x (axis 1)          ";
 	     grid_log << std::setw(datawidth) << " h_+ (axis 2)          ";
@@ -407,24 +419,38 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(datawidth) << " WD DISTANCE           ";
 	     star_log << std::setw(datawidth) << "   WD ANGLE            ";
 
+#if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datawidth) << " PRIMARY X COM         ";
 	     star_log << std::setw(datawidth) << " PRIMARY Y COM         ";
 	     star_log << std::setw(datawidth) << " PRIMARY Z COM         ";
 	     star_log << std::setw(datawidth) << " PRIMARY X VEL         ";
 	     star_log << std::setw(datawidth) << " PRIMARY Y VEL         ";
 	     star_log << std::setw(datawidth) << " PRIMARY Z VEL         ";
+#else
+	     star_log << std::setw(datawidth) << " PRIMARY R COM         ";
+	     star_log << std::setw(datawidth) << " PRIMARY Z COM         ";
+	     star_log << std::setw(datawidth) << " PRIMARY R VEL         ";
+	     star_log << std::setw(datawidth) << " PRIMARY Z VEL         ";
+#endif
 	     star_log << std::setw(datawidth) << " PRIMARY MASS          ";
 	     star_log << std::setw(datawidth) << " PRIMARY AVG DENSITY   ";
 	     star_log << std::setw(datawidth) << " PRIMARY T_FREEFALL    ";
 	     for (int i = 0; i <= 6; ++i)
 	       star_log << "  PRIMARY 1E" << i << " RADIUS    ";
 
+#if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datawidth) << " SECONDARY X COM       ";
 	     star_log << std::setw(datawidth) << " SECONDARY Y COM       ";
 	     star_log << std::setw(datawidth) << " SECONDARY Z COM       ";
 	     star_log << std::setw(datawidth) << " SECONDARY X VEL       ";
 	     star_log << std::setw(datawidth) << " SECONDARY Y VEL       ";
 	     star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
+#else
+	     star_log << std::setw(datawidth) << " SECONDARY R COM       ";
+	     star_log << std::setw(datawidth) << " SECONDARY Z COM       ";
+	     star_log << std::setw(datawidth) << " SECONDARY R VEL       ";
+	     star_log << std::setw(datawidth) << " SECONDARY Z VEL       ";
+#endif
 	     star_log << std::setw(datawidth) << " SECONDARY MASS        ";
 	     star_log << std::setw(datawidth) << " SECONDARY AVG DENSITY ";
 	     star_log << std::setw(datawidth) << " SECONDARY T_FREEFALL  ";
