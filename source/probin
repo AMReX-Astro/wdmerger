@@ -32,6 +32,7 @@
 
   max_tagging_radius = 0.75d0
   stellar_density_threshold = 1.0d0
+  temperature_tagging_threshold = 5.0d8
  
   bulk_velx = 0.0d0
   bulk_vely = 0.0d0
@@ -92,7 +93,7 @@
 /
 
 &extern
-  use_eos_coulomb = F
+  use_eos_coulomb = T
   eos_input_is_constant = T
   eos_do_acc = T
   eos_acc_cutoff = 128
