@@ -50,7 +50,6 @@ Castro::sum_integrated_quantities ()
     Real total_E_grid = 0.0;
 
     Real com[3]       = { 0.0 };
-    Real lev_com[3]   = { 0.0 };
     Real com_vel[3]   = { 0.0 };
 
     Real mass_p       = 0.0;
@@ -148,8 +147,7 @@ Castro::sum_integrated_quantities ()
       Castro& ca_lev = getLevel(lev);
 
       for ( int i = 0; i < 3; i++ ) {
-        lev_com[i]    = ca_lev.locWgtSum("density", time, i);
-        com[i]       += lev_com[i];
+        com[i] += ca_lev.locWgtSum("density", time, i);
       }
 
       // Calculate total mass, momentum, angular momentum, and energy of system.
