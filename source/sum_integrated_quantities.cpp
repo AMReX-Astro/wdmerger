@@ -316,14 +316,16 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datawidth) << " ROT. ENERGY           ";
 	     grid_log << std::setw(datawidth) << " GRAV. ENERGY          ";
 	     grid_log << std::setw(datawidth) << " INT. ENERGY           ";
+#if (BL_SPACEDIM == 3)
 	     grid_log << std::setw(datawidth) << " XMOM                  ";
 	     grid_log << std::setw(datawidth) << " YMOM                  ";
 	     grid_log << std::setw(datawidth) << " ZMOM                  ";
-#if (BL_SPACEDIM == 3)
 	     grid_log << std::setw(datawidth) << " ANG. MOM. X           ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. Y           ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
 #else
+	     grid_log << std::setw(datawidth) << " RMOM                  ";
+	     grid_log << std::setw(datawidth) << " ZMOM                  ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. R           ";
 	     grid_log << std::setw(datawidth) << " ANG. MOM. Z           ";
 #endif
@@ -370,17 +372,25 @@ Castro::sum_integrated_quantities ()
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << internal_energy;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[1];
+#if (BL_SPACEDIM == 3)
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << momentum[2];
+#endif
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[0];
-	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1]; 
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[1];
+#if (BL_SPACEDIM == 3)
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << angular_momentum[2];
+#endif
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[1];
+#if (BL_SPACEDIM == 3)
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com[2];
+#endif
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[0];
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[1];
+#if (BL_SPACEDIM == 3)
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
+#endif
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_1;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_1;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_2;
@@ -475,10 +485,14 @@ Castro::sum_integrated_quantities ()
 
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[0];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[1];
+#if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_p[2];
+#endif
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[0];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[1];
+#if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_p[2];
+#endif
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_p;
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rho_avg_p;
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << t_ff_p;
@@ -487,10 +501,14 @@ Castro::sum_integrated_quantities ()
 
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[0];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[1];
+#if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_s[2];
+#endif
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[0];
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[1];
+#if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << vel_s[2];
+#endif
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << mass_s;
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << rho_avg_s;
 	   star_log << std::setw(datawidth) << std::setprecision(dataprecision) << t_ff_s;
