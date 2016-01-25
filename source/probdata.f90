@@ -54,6 +54,8 @@ module probdata_module
   !
   ! 0 = Collision; distance determined by a multiple of the secondary WD radius
   ! 1 = Keplerian orbit; distance determined by the rotation period
+  ! 2 = Keplerian orbit; distance set so that secondary fills its Roche lobe
+  ! 3 = same as 2, but increase the WD distance and enable the initial relaxation process
 
   integer, save :: problem = 1
 
@@ -67,12 +69,10 @@ module probdata_module
 
 
   ! If we're automatically determining the initial distance based on the Roche lobe
-  ! radii, this is the safety factor we use. Setting it to one means that
-  ! the stars will be just filling their inner Roche lobe radius, and making it
-  ! greater than one will put them further out (more stable); making it less
-  ! than one will bring them closer in (less stable).
+  ! radii for problem 3, this is the safety factor we use. We set it to 2 by default,
+  ! which should be a large enough distance so that the system is initially stable.
 
-  double precision, save :: roche_radius_factor = 1.1d0
+  double precision, save :: roche_radius_factor = 2.0d0
 
 
 
@@ -213,9 +213,8 @@ module probdata_module
 
 
 
-  ! Relaxation parameters
+  ! Relaxation parameters for problem 3
 
-  logical, save          :: do_initial_relaxation = .false.
   double precision, save :: relaxation_timescale = 0.001
   double precision, save :: relaxation_density_cutoff = 1.0d0
 
@@ -283,7 +282,6 @@ contains
          collision_separation, &
          collision_impact_parameter, &
          interp_temp, &
-         do_initial_relaxation, &
          relaxation_timescale, &
          relaxation_density_cutoff, &
          ambient_density, &
@@ -599,6 +597,10 @@ contains
        mass_S = model_S % mass
        roche_rad_S = model_S % radius
 
+       ! Compute initial Roche radii
+
+       call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P)
+
        ! For a collision, set the stars up with a free-fall velocity at a specified number
        ! of secondary radii; for a circular orbit, use Kepler's third law.
 
@@ -632,7 +634,31 @@ contains
           center_P_initial(axis_2) = center_P_initial(axis_2) - collision_offset
           center_S_initial(axis_2) = center_S_initial(axis_2) + collision_offset                  
 
-       else if (problem == 1) then
+       else if (problem == 1 .or. problem == 2 .or. problem == 3) then
+
+          if (problem == 1) then
+
+             ! Determine the orbital distance based on the rotational period.
+
+             a = -ONE
+
+          else if (problem == 2 .or. problem == 3) then
+
+             ! Set the orbital distance, then calculate the rotational period.
+
+             if (problem == 2) then
+
+                a = model_S % radius / roche_rad_S
+
+             else if (problem == 3) then
+
+                a = roche_radius_factor * (model_S % radius / roche_rad_S)
+
+             endif
+
+             rot_period = -ONE
+
+          endif
 
           call kepler_third_law(model_P % radius, model_P % mass, model_S % radius, model_S % mass, &
                                 rot_period, orbital_eccentricity, orbital_angle, &
@@ -642,9 +668,11 @@ contains
              write (*,1003) a, a / AU
              write (*,1004) r_P_initial, r_P_initial / AU
              write (*,1005) r_S_initial, r_S_initial / AU
+             write (*,1006) rot_period
 1003         format ("Generated binary orbit of distance ", ES8.2, " cm = ", ES8.2, " AU.")
 1004         format ("The primary orbits the center of mass at distance ", ES9.2, " cm = ", ES9.2, " AU.")
 1005         format ("The secondary orbits the center of mass at distance ", ES9.2, " cm = ", ES9.2, " AU.")
+1006         format ("The initial orbital period is ", F6.2 " s.")
           endif
 
           ! Star center positions -- we'll put them in the midplane, with the center of mass at the center of the domain.
@@ -678,9 +706,10 @@ contains
 
        endif
 
-       ! Compute initial Roche radii
+       ! Scale the Roche radii by the initial distance.
 
-       call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
+       roche_rad_P = roche_rad_P * a
+       roche_rad_S = roche_rad_S * a
 
     endif
 
@@ -807,8 +836,8 @@ contains
 
     implicit none
 
-    double precision, intent(in   ) :: mass_1, mass_2, period, eccentricity, phi, radius_1, radius_2
-    double precision, intent(inout) :: a, r_1, r_2, v_1r, v_2r, v_1p, v_2p
+    double precision, intent(in   ) :: mass_1, mass_2, eccentricity, phi, radius_1, radius_2
+    double precision, intent(inout) :: period, a, r_1, r_2, v_1r, v_2r, v_1p, v_2p
 
     double precision :: length
 
@@ -819,7 +848,7 @@ contains
     ! Definitions of total and reduced mass
 
     M  = mass_1 + mass_2
-    mu = mass_1 * mass_2 / M    
+    mu = mass_1 * mass_2 / M
 
     ! First, solve for the orbit in the reduced one-body problem, where
     ! an object of mass mu orbits an object with mass M located at r = 0.
@@ -827,7 +856,19 @@ contains
     ! Note that we use the convention that phi measures angle from aphelion,
     ! which is opposite to the convention they use.
 
-    a = (Gconst * M * period**2 / (FOUR * M_PI**2))**THIRD ! C + O, Equation 2.37
+    if (period > ZERO .and. a < ZERO) then
+
+       a = (Gconst * M * period**2 / (FOUR * M_PI**2))**THIRD ! C + O, Equation 2.37
+
+    else if (period < ZERO .and. a > ZERO) then
+
+       period = (a**3 * FOUR * M_PI**2 / (Gconst * M))**HALF
+
+    else
+
+       call bl_error("Error: overspecified Kepler's third law calculation.")
+
+    endif
 
     r = a * (ONE - eccentricity**2) / (ONE - eccentricity * cos(phi)) ! C + O, Equation 2.3
 
@@ -1195,7 +1236,7 @@ contains
 
     implicit none
 
-    do_initial_relaxation = .false.
+    relaxation_timescale = -ONE
 
     if (ioproc) then
        print *, "Initial relaxation phase terminated."

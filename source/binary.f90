@@ -9,8 +9,8 @@ contains
 
   ! Given the mass ratio q of two stars (assumed to be q = M_1 / M_2), 
   ! compute the effective Roche radii of the stars, normalized to unity, 
-  ! using the approximate formula of Eggleton (1983). We then 
-  ! scale them appropriately using the current orbital distance.
+  ! using the approximate formula of Eggleton (1983). Optionally we can
+  ! pass in a distance scale.
   
   subroutine get_roche_radii(mass_ratio, r_1, r_2, a) bind(C)
 
@@ -18,22 +18,31 @@ contains
 
     implicit none
 
-    double precision, intent(in   ) :: mass_ratio, a
+    double precision, intent(in   ) :: mass_ratio
     double precision, intent(inout) :: r_1, r_2
+    double precision, intent(in   ), optional :: a
 
     double precision :: q
     double precision :: c1, c2
+
+    double precision :: scale
+
+    if (present(a)) then
+       scale = a
+    else
+       scale = ONE
+    endif
 
     c1 = 0.49d0
     c2 = 0.60d0
 
     q = mass_ratio
 
-    r_1 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
+    r_1 = scale * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
 
     q = ONE / q
 
-    r_2 = a * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
+    r_2 = scale * c1 * q**(TWO3RD) / (c2 * q**(TWO3RD) + LOG(ONE + q**(THIRD)))
 
   end subroutine get_roche_radii
 

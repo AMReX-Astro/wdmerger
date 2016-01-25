@@ -11,6 +11,8 @@
 
   problem = 1
 
+  roche_radius_factor = 2.0d0
+
   collision_separation = 4.0
   collision_impact_parameter = 0.0
 

@@ -7,7 +7,7 @@
        use meth_params_module,  only: NVAR, URHO, UMX, UMZ, UEDEN
        use prob_params_module,  only: center
        use bl_constants_module, only: ZERO, HALF, ONE, TWO
-       use probdata_module,     only: do_initial_relaxation, relaxation_timescale
+       use probdata_module,     only: problem, relaxation_timescale
        
        implicit none
 
@@ -31,7 +31,7 @@
 
        src(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
 
-       if (do_initial_relaxation) then
+       if (problem == 3 .and. relaxation_timescale > ZERO) then
 
           damping_factor = ONE / (ONE + HALF * dt / relaxation_timescale)
 

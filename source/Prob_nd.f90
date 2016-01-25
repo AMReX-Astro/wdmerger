@@ -163,7 +163,7 @@
               ! coordinate, whose unit vector is tangent to the unit circle, so we should
               ! have the same velocity everywhere along that coordinate to begin with.
 
-              if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. collision) ) then
+              if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. problem == 0) ) then
 
                  vel = cross_product(omega, loc)
 
