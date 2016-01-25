@@ -564,7 +564,7 @@ end subroutine set_period
 
 subroutine get_omega_vec(omega_in, time) bind(C)
 
-  use rotation_module, only: get_omega
+  use rotation_frequency_module, only: get_omega
 
   implicit none
 

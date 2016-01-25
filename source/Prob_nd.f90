@@ -53,7 +53,7 @@
      use initial_model_module, only: interpolate_3d_from_1d
      use math_module, only: cross_product
      use castro_util_module, only: position
-     use rotation_module, only: get_omega
+     use rotation_frequency_module, only: get_omega
 
      implicit none
 

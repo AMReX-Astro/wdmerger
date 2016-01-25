@@ -200,7 +200,7 @@ contains
 
     use bl_constants_module, only: ONE, TWO
     use meth_params_module, only: NVAR
-    use rotation_module, only: get_omega
+    use rotation_frequency_module, only: get_omega
     use prob_params_module, only: problo, probhi
 
     implicit none
@@ -273,7 +273,7 @@ contains
 
     use bl_constants_module, only: HALF, ONE, TWO, M_PI
     use meth_params_module, only: NVAR
-    use rotation_module, only: get_omega
+    use rotation_frequency_module, only: get_omega
     use math_module, only: cross_product
 
     implicit none
@@ -334,7 +334,7 @@ contains
     use meth_params_module, only: NVAR
     use prob_params_module, only: problo, center, probhi
     use probdata_module
-    use rotation_module, only: get_omega
+    use rotation_frequency_module, only: get_omega
     use math_module, only: cross_product
 
     implicit none
@@ -416,7 +416,7 @@ contains
     use prob_params_module, only: problo, center, probhi
     use probdata_module, only: axis_1, get_ambient
     use eos_module
-    use rotation_module, only: get_omega
+    use rotation_frequency_module, only: get_omega
     use math_module, only: cross_product
 
     implicit none
