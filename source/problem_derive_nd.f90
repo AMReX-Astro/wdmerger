@@ -291,3 +291,92 @@ subroutine ca_derphieff(phi,phi_lo,phi_hi,ncomp_phi, &
   enddo
 
 end subroutine ca_derphieff
+
+
+
+! Derive an approximation to the effective potential of the primary only,
+! by treating it as a point-mass at its center of mass.
+! The u array contains the rotational potential, so we only need to calculate
+! the gravitational potential from the point-mass.
+
+subroutine ca_derphieffpm_p(phi,phi_lo,phi_hi,ncomp_phi, &
+                            u,u_lo,u_hi,ncomp_u, &
+                            lo,hi,domlo,domhi, &
+                            dx,xlo,time,dt,bc,level,grid_no) bind(C)
+
+  use bl_constants_module, only: HALF
+  use probdata_module, only: mass_P, com_P
+  use fundamental_constants_module, only: Gconst
+
+  implicit none
+
+  integer          :: phi_lo(3), phi_hi(3), ncomp_phi ! == 1
+  integer          :: u_lo(3), u_hi(3), ncomp_u ! == 1
+  integer          :: lo(3), hi(3), domlo(3), domhi(3)
+  double precision :: phi(phi_lo(1):phi_hi(1),phi_lo(2):phi_hi(2),phi_lo(3):phi_hi(3),ncomp_phi)
+  double precision :: u(u_lo(1):u_hi(1),u_lo(2):u_hi(2),u_lo(3):u_hi(3),ncomp_u)
+  double precision :: dx(3), xlo(3), time, dt
+  integer          :: bc(3,2,ncomp_u), level, grid_no
+
+  integer          :: i, j, k
+  double precision :: loc(3), r
+
+  do k = lo(3), hi(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     do j = lo(2), hi(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        do i = lo(1), hi(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+
+           r = sqrt( sum( (loc - com_P)**2 ) )
+
+           phi(i,j,k,1) = -Gconst * mass_P / r + u(i,j,k,1)
+
+        enddo
+     enddo
+  enddo
+
+end subroutine ca_derphieffpm_p
+
+
+
+! Same as above, but for the secondary.
+
+subroutine ca_derphieffpm_s(phi,phi_lo,phi_hi,ncomp_phi, &
+                            u,u_lo,u_hi,ncomp_u, &
+                            lo,hi,domlo,domhi, &
+                            dx,xlo,time,dt,bc,level,grid_no) bind(C)
+
+  use bl_constants_module, only: HALF
+  use probdata_module, only: mass_S, com_S
+  use fundamental_constants_module, only: Gconst
+
+  implicit none
+
+  integer          :: phi_lo(3), phi_hi(3), ncomp_phi ! == 1
+  integer          :: u_lo(3), u_hi(3), ncomp_u ! == 1
+  integer          :: lo(3), hi(3), domlo(3), domhi(3)
+  double precision :: phi(phi_lo(1):phi_hi(1),phi_lo(2):phi_hi(2),phi_lo(3):phi_hi(3),ncomp_phi)
+  double precision :: u(u_lo(1):u_hi(1),u_lo(2):u_hi(2),u_lo(3):u_hi(3),ncomp_u)
+  double precision :: dx(3), xlo(3), time, dt
+  integer          :: bc(3,2,ncomp_u), level, grid_no
+
+  integer          :: i, j, k
+  double precision :: loc(3), r
+
+  do k = lo(3), hi(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     do j = lo(2), hi(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        do i = lo(1), hi(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+
+           r = sqrt( sum( (loc - com_S)**2 ) )
+
+           phi(i,j,k,1) = -Gconst * mass_S / r + u(i,j,k,1)
+
+        enddo
+     enddo
+  enddo
+
+end subroutine ca_derphieffpm_s

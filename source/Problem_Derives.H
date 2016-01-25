@@ -39,5 +39,17 @@
     derive_lst.add("phiEff",IndexType::TheCellType(),1,ca_derphieff,the_same_box);
     derive_lst.addComponent("phiEff",desc_lst,PhiGrav_Type,0,1);
     derive_lst.addComponent("phiEff",desc_lst,PhiRot_Type,0,1);
+
+    //
+    // Effective potential from a point-mass approximation to the potential from the primary
+    //
+    derive_lst.add("phiEffPM_P",IndexType::TheCellType(),1,ca_derphieffpm_p,the_same_box);
+    derive_lst.addComponent("phiEffPM_P",desc_lst,PhiRot_Type,0,1);
+
+    //
+    // Effective potential from a point-mass approximation to the potential from the secondary
+    //
+    derive_lst.add("phiEffPM_S",IndexType::TheCellType(),1,ca_derphieffpm_s,the_same_box);
+    derive_lst.addComponent("phiEffPM_S",desc_lst,PhiRot_Type,0,1);
 #endif
 #endif
