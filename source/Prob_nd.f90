@@ -2,7 +2,6 @@
 
      use problem_io_module, only: initialize_io
      use probdata_module, only: initialize_problem
-     use scf_relaxation_module, only: initialize_scf
 
      implicit none
 
@@ -12,7 +11,6 @@
 
      call initialize_io(name, namlen)
      call initialize_problem(init)
-     call initialize_scf()
 
    end subroutine PROBINIT
 

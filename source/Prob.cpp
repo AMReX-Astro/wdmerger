@@ -506,26 +506,6 @@ Real Castro::norm(const Real a[]) {
 
 void Castro::problem_post_init() {
 
-    if (level > 0)
-        return;
-
-    // Determine whether we are doing a relaxation step (from the probin file)
-
-    int do_scf_initial_models = 0;
-
-    get_do_scf_initial_models(do_scf_initial_models);
-
-    if (do_scf_initial_models) {
-
-      if (gravity->NoComposite() == 1) {
-	std::cerr << "Construction of SCF initial models requires the use of multilevel gravity solves. Set gravity.no_composite = 0." << std::endl;
-	BoxLib::Error();
-      }
-
-      scf_relaxation();
-
-    }
-
 }
 
 #endif

@@ -73,8 +73,4 @@ extern "C"
 
   void get_axes(int& axis_1, int& axis_2, int& axis_3);
 
-  void get_do_scf_initial_models(int& do_scf_initial_models);
-
 }
-  
-#include <scf_relax_F.H>
