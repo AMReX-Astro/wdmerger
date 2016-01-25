@@ -223,6 +223,43 @@ module probdata_module
 
   double precision, save :: gw_dist = 10.0d0
 
+
+
+  namelist /fortin/ &
+       mass_P, mass_S, &
+       central_density_P, central_density_S, &
+       nsub, &
+       no_orbital_kick, &
+       roche_radius_factor, &
+       problem, &
+       collision_separation, &
+       collision_impact_parameter, &
+       interp_temp, &
+       relaxation_timescale, &
+       relaxation_density_cutoff, &
+       ambient_density, &
+       stellar_temp, ambient_temp, &
+       max_he_wd_mass, &
+       max_hybrid_wd_mass, hybrid_wd_he_shell_mass, &
+       max_co_wd_mass, &
+       co_wd_he_shell_mass, &
+       hybrid_wd_c_frac, hybrid_wd_o_frac, &
+       co_wd_c_frac, co_wd_o_frac, &
+       onemg_wd_o_frac, onemg_wd_ne_frac, onemg_wd_mg_frac, &
+       orbital_eccentricity, orbital_angle, &
+       axis_1, axis_2, axis_3, &
+       max_tagging_radius, stellar_density_threshold, &
+       temperature_tagging_threshold, &
+       bulk_velx, bulk_vely, bulk_velz, &
+       smallx, smallu, &
+       center_fracx, center_fracy, center_fracz, &
+       initial_model_dx, &
+       initial_model_npts, &
+       initial_model_mass_tol, &
+       initial_model_hse_tol, &
+       gw_dist, &
+       fill_ambient_bc
+
 contains
 
   ! This routine calls all of the other subroutines at the beginning
@@ -271,41 +308,6 @@ contains
     implicit none
 
     integer :: untin
-
-    namelist /fortin/ &
-         mass_P, mass_S, &
-         central_density_P, central_density_S, &
-         nsub, &
-         no_orbital_kick, &
-         roche_radius_factor, &
-         problem, &
-         collision_separation, &
-         collision_impact_parameter, &
-         interp_temp, &
-         relaxation_timescale, &
-         relaxation_density_cutoff, &
-         ambient_density, &
-         stellar_temp, ambient_temp, &
-         max_he_wd_mass, &
-         max_hybrid_wd_mass, hybrid_wd_he_shell_mass, &
-         max_co_wd_mass, &
-         co_wd_he_shell_mass, &
-         hybrid_wd_c_frac, hybrid_wd_o_frac, &
-         co_wd_c_frac, co_wd_o_frac, &
-         onemg_wd_o_frac, onemg_wd_ne_frac, onemg_wd_mg_frac, &
-         orbital_eccentricity, orbital_angle, &
-         axis_1, axis_2, axis_3, &
-         max_tagging_radius, stellar_density_threshold, &
-         temperature_tagging_threshold, &
-         bulk_velx, bulk_vely, bulk_velz, &
-         smallx, smallu, &
-         center_fracx, center_fracy, center_fracz, &
-         initial_model_dx, &
-         initial_model_npts, &
-         initial_model_mass_tol, &
-         initial_model_hse_tol, &
-         gw_dist, &
-         fill_ambient_bc
 
     ! Read namelist to override the module defaults.
 
