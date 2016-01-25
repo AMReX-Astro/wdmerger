@@ -99,8 +99,8 @@ castro.dual_energy_eta2 = 1.0e-4                   # Threshold for when to use (
 # Reactions
 ############################################################################################
 
-castro.dtnuc_f1 = 1.0                              # Limit timestep based on nuclear burning considerations
-castro.dtnuc_f2 = 1.0                              # Limit timestep based on nuclear burning considerations
+castro.dtnuc_f1 = 0.1                              # Limit timestep based on nuclear burning considerations
+castro.dtnuc_f2 = 0.1                              # Limit timestep based on nuclear burning considerations
 castro.react_T_min = 1.0e8                         # Minimum temperature for allowing nuclear burning
 castro.react_T_max = 1.0e12                        # Maximum temperature for allowing nuclear burning
 
