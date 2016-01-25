@@ -9,7 +9,8 @@
 
   no_orbital_kick = F
 
-  collision = F
+  problem = 1
+
   collision_separation = 4.0
   collision_impact_parameter = 0.0
 

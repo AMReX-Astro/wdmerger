@@ -50,6 +50,15 @@ module probdata_module
 
 
 
+  ! Method for determining the initial problem setup.
+  !
+  ! 0 = Collision; distance determined by a multiple of the secondary WD radius
+  ! 1 = Keplerian orbit; distance determined by the rotation period
+
+  integer, save :: problem = 1
+
+
+
   ! Whether or not to give stars an initial orbital velocity
   ! consistent with their Keplerian orbit speed.
 
@@ -57,12 +66,17 @@ module probdata_module
 
 
 
+  ! If we're automatically determining the initial distance based on the Roche lobe
+  ! radii, this is the safety factor we use. Setting it to one means that
+  ! the stars will be just filling their inner Roche lobe radius, and making it
+  ! greater than one will put them further out (more stable); making it less
+  ! than one will bring them closer in (less stable).
+
+  double precision, save :: roche_radius_factor = 1.1d0
+
+
+
   ! Collision parameters
-
-  ! Whether or not to give the stars an initial velocity
-  ! consistent with the free-fall speed.
-
-  logical, save :: collision = .false.
 
   ! For a collision, number of (secondary) WD radii to 
   ! separate the WDs by.
@@ -94,7 +108,7 @@ module probdata_module
 
   integer, save :: axis_2 = 2
 
-  ! Perpendicular to both other axies. Normally the z axis and also the rotation axis.
+  ! Perpendicular to both other axes. Normally the z axis and also the rotation axis.
 
   integer, save :: axis_3 = 3
 
@@ -264,7 +278,8 @@ contains
          central_density_P, central_density_S, &
          nsub, &
          no_orbital_kick, &
-         collision, &
+         roche_radius_factor, &
+         problem, &
          collision_separation, &
          collision_impact_parameter, &
          interp_temp, &
@@ -342,7 +357,7 @@ contains
 
     ! Don't do a collision in a rotating reference frame.
 
-    if (collision .and. do_rotation .eq. 1) then
+    if (problem .eq. 0 .and. do_rotation .eq. 1) then
        call bl_error("The collision problem does not make sense in a rotating reference frame.")
     endif
 
@@ -587,7 +602,7 @@ contains
        ! For a collision, set the stars up with a free-fall velocity at a specified number
        ! of secondary radii; for a circular orbit, use Kepler's third law.
 
-       if (collision) then
+       if (problem == 0) then
 
           axis_2 = axis_1
 
@@ -617,7 +632,7 @@ contains
           center_P_initial(axis_2) = center_P_initial(axis_2) - collision_offset
           center_S_initial(axis_2) = center_S_initial(axis_2) + collision_offset                  
 
-       else
+       else if (problem == 1) then
 
           call kepler_third_law(model_P % radius, model_P % mass, model_S % radius, model_S % mass, &
                                 rot_period, orbital_eccentricity, orbital_angle, &
@@ -657,12 +672,15 @@ contains
              vel_S = vel_S - cross_product(omega, center_S_initial)
           endif
 
+       else
+
+          call bl_error("Error: Unknown problem choice.")
+
        endif
 
        ! Compute initial Roche radii
 
        call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P, a)
-
 
     endif
 
