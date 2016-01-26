@@ -12,6 +12,8 @@ extern "C"
 	     BL_FORT_FAB_ARG_3D(xmom), 
 	     BL_FORT_FAB_ARG_3D(ymom), 
 	     BL_FORT_FAB_ARG_3D(zmom),
+	     BL_FORT_FAB_ARG_3D(phip),
+	     BL_FORT_FAB_ARG_3D(phis),
 	     BL_FORT_FAB_ARG_3D(vol),
 	     const int* lo, const int* hi,
 	     const Real* dx, const Real* time,
@@ -22,6 +24,8 @@ extern "C"
 	     Real* m_p, Real* m_s);
 
   void ca_volumeindensityboundary(BL_FORT_FAB_ARG_3D(rho),
+				  BL_FORT_FAB_ARG_3D(phip),
+				  BL_FORT_FAB_ARG_3D(phis),
 				  BL_FORT_FAB_ARG_3D(vol),
 				  const int* lo, const int* hi,
 				  const Real* dx,  

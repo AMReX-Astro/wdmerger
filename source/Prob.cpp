@@ -17,7 +17,7 @@ Castro::problem_post_timestep()
     Real dt = parent->dtLevel(0);
 
     if (time == 0.0) dt = 0.0; // dtLevel returns the next timestep for t = 0, so overwrite    
-    
+
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
 
@@ -40,7 +40,7 @@ Castro::problem_post_timestep()
 
     // Get the current stellar data
     get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
-    
+
     // Update the problem center using the system bulk velocity
     update_center(&time);
 
@@ -51,12 +51,12 @@ Castro::problem_post_timestep()
 
     // Now send this first estimate of the COM to Fortran, and then re-calculate
     // a more accurate result using it as a starting point.
-    
+
     set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
     mass_p = 0.0;
     mass_s = 0.0;
-    
+
     for ( int i = 0; i < 3; i++ ) {
       com_p[i] = 0.0;
       com_s[i] = 0.0;
@@ -68,7 +68,7 @@ Castro::problem_post_timestep()
     {
 
       set_amr_info(lev, -1, -1, -1.0, -1.0);
-      
+
       getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
 
       mass_p += lev_mass_p;
@@ -83,8 +83,8 @@ Castro::problem_post_timestep()
 
     }
 
-    set_amr_info(level, -1, -1, -1.0, -1.0);    
-    
+    set_amr_info(level, -1, -1, -1.0, -1.0);
+
     // Complete calculations for center of mass quantities
 
     for ( int i = 0; i < 3; i++ ) {
@@ -118,17 +118,17 @@ Castro::problem_post_timestep()
     {
 
       get_lagrange_points(mass_p, mass_s, com_p, com_s, L1, L2, L3);
-    
+
       // Now cycle through the grids and determine if the L1
       // point has reached the density threshold.
-    
+
       int relaxation_is_done = 0;
 
       MultiFab& S_new = get_new_data(State_Type);
-    
+
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:relaxation_is_done)
-#endif    
+#endif
       for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
 	{
 	  const Box& box  = mfi.tilebox();
@@ -139,17 +139,17 @@ Castro::problem_post_timestep()
 	  check_relaxation(BL_TO_FORTRAN_3D(S_new[mfi]),
 			   ARLIM_3D(lo),ARLIM_3D(hi),
 			   L1,relaxation_is_done);
-	
+
 	}
 
       // If any of the grids returned that it has the L1 point and
       // the density has passed the cutoff, then disable the initial relaxation.
-    
+
       if (relaxation_is_done > 0)
 	turn_off_relaxation();
 
     }
-    
+
 }
 #endif
 
@@ -169,17 +169,26 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 {
     BL_PROFILE("Castro::wdCOM()");
 
-    const Real* dx       = geom.CellSize();
+    const Real* dx = geom.CellSize();
 
-    MultiFab*   mfrho    = derive("density",time,0);
-    MultiFab*   mfxmom   = derive("xmom",time,0);
-    MultiFab*   mfymom   = derive("ymom",time,0);
-    MultiFab*   mfzmom   = derive("zmom",time,0);
-    
+    // Density and momenta
+
+    MultiFab* mfrho  = derive("density",time,0);
+    MultiFab* mfxmom = derive("xmom",time,0);
+    MultiFab* mfymom = derive("ymom",time,0);
+    MultiFab* mfzmom = derive("zmom",time,0);
+
+    // Effective potentials of the primary and secondary
+
+    MultiFab* mfphip = derive("phiEffPM_P", time, 0);
+    MultiFab* mfphis = derive("phiEffPM_S", time, 0);
+
     BL_ASSERT(mfrho  != 0);
     BL_ASSERT(mfxmom != 0);
     BL_ASSERT(mfymom != 0);
     BL_ASSERT(mfzmom != 0);
+    BL_ASSERT(mfphip != 0);
+    BL_ASSERT(mfphis != 0);
 
     if (level < parent->finestLevel())
     {
@@ -189,6 +198,8 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 	MultiFab::Multiply(*mfxmom, *mask, 0, 0, 1, 0);
 	MultiFab::Multiply(*mfymom, *mask, 0, 0, 1, 0);
 	MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
     }
 
     Real com_p_x = 0.0;
@@ -210,14 +221,17 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 #pragma omp parallel reduction(+:com_p_x,com_p_y,com_p_z,com_s_x,com_s_y,com_s_z) \
                      reduction(+:vel_p_x,vel_p_y,vel_p_z,vel_s_x,vel_s_y,vel_s_z) \
                      reduction(+:mp, ms)
-#endif    
+#endif
     for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi)
     {
         FArrayBox& fabrho  = (*mfrho )[mfi];
 	FArrayBox& fabxmom = (*mfxmom)[mfi];
 	FArrayBox& fabymom = (*mfymom)[mfi];
 	FArrayBox& fabzmom = (*mfzmom)[mfi];
-	
+	FArrayBox& fabphip = (*mfphip)[mfi];
+	FArrayBox& fabphis = (*mfphis)[mfi];
+	FArrayBox& vol     = volume[mfi];
+
         const Box& box  = mfi.tilebox();
         const int* lo   = box.loVect();
         const int* hi   = box.hiVect();
@@ -226,8 +240,11 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 	      BL_TO_FORTRAN_3D(fabxmom),
 	      BL_TO_FORTRAN_3D(fabymom),
 	      BL_TO_FORTRAN_3D(fabzmom),
-	      BL_TO_FORTRAN_3D(volume[mfi]),
-	      ARLIM_3D(lo),ARLIM_3D(hi),ZFILL(dx),&time,
+	      BL_TO_FORTRAN_3D(fabphip),
+	      BL_TO_FORTRAN_3D(fabphis),
+	      BL_TO_FORTRAN_3D(vol),
+	      ARLIM_3D(lo),ARLIM_3D(hi),
+	      ZFILL(dx),&time,
 	      &com_p_x, &com_p_y, &com_p_z,
 	      &com_s_x, &com_s_y, &com_s_z,
 	      &vel_p_x, &vel_p_y, &vel_p_z,
@@ -239,6 +256,8 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
     delete mfxmom;
     delete mfymom;
     delete mfzmom;
+    delete mfphip;
+    delete mfphis;
 
     com_p[0] = com_p_x;
     com_p[1] = com_p_y;
@@ -280,15 +299,24 @@ void Castro::volInBoundary (Real               time,
 {
     BL_PROFILE("Castro::volInBoundary()");
 
-    const Real* dx      = geom.CellSize();
-    MultiFab*   mf      = derive("density",time,0);
+    const Real* dx   = geom.CellSize();
+    MultiFab*   mf   = derive("density",time,0);
+
+    // Effective potentials of the primary and secondary
+
+    MultiFab* mfphip = derive("phiEffPM_P", time, 0);
+    MultiFab* mfphis = derive("phiEffPM_S", time, 0);
 
     BL_ASSERT(mf != 0);
+    BL_ASSERT(mfphip != 0);
+    BL_ASSERT(mfphis != 0);
 
     if (level < parent->finestLevel())
     {
 	const MultiFab* mask = getLevel(level+1).build_fine_mask();
 	MultiFab::Multiply(*mf, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
     }
 
     Real vp = 0.0;
@@ -296,10 +324,13 @@ void Castro::volInBoundary (Real               time,
 
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:vp,vs)
-#endif    
+#endif
     for (MFIter mfi(*mf,true); mfi.isValid(); ++mfi)
     {
         FArrayBox& fab = (*mf)[mfi];
+	FArrayBox& fabphip = (*mfphip)[mfi];
+	FArrayBox& fabphis = (*mfphis)[mfi];
+	FArrayBox& vol = volume[mfi];
 
 	Real sp = 0.0;
 	Real ss = 0.0;
@@ -308,7 +339,9 @@ void Castro::volInBoundary (Real               time,
         const int* hi   = box.hiVect();
 
 	ca_volumeindensityboundary(BL_TO_FORTRAN_3D(fab),
-				   BL_TO_FORTRAN_3D(volume[mfi]),
+				   BL_TO_FORTRAN_3D(fabphip),
+				   BL_TO_FORTRAN_3D(fabphis),
+				   BL_TO_FORTRAN_3D(vol),
 				   ARLIM_3D(lo),ARLIM_3D(hi),
 				   ZFILL(dx),&sp,&ss,&rho_cutoff);
         vp += sp;
@@ -316,6 +349,8 @@ void Castro::volInBoundary (Real               time,
     }
 
     delete mf;
+    delete mfphis;
+    delete mfphip;
 
     vol_p = vp;
     vol_s = vs;
@@ -338,7 +373,7 @@ Castro::gwstrain (Real time,
 		  Real& h_plus_3, Real& h_cross_3) {
 
     BL_PROFILE("Castro::gwstrain()");
-    
+
     const Real* dx       = geom.CellSize();
 
     MultiFab* mfrho   = derive("density",time,0);
@@ -399,7 +434,7 @@ Castro::gwstrain (Real time,
 	priv_Qtt[tid].setVal(0.0);
 #endif
 	for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi) {
-        
+
 	    const Box& box  = mfi.tilebox();
 	    const int* lo   = box.loVect();
 	    const int* hi   = box.hiVect();
@@ -471,7 +506,7 @@ Real Castro::dot_product(const Real a[], const Real b[]) {
 
   return c;
 
-}  
+}
 
 
 

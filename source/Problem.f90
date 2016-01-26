@@ -84,21 +84,25 @@ end subroutine problem_restart
 
 
 
-! Return the mass-weighted center of mass and velocity for the primary and secondary, for a given FAB.
-! Since this will rely on a sum over processors, we should only add to the relevant variables
-! in anticipation of a MPI reduction, and not overwrite them.
-! Note that what we are doing here is to use the old center of mass location to predict the new one,
-! so com_P and com_S from the probdata_module are different from com_p_x, com_p_y, etc., which are 
-! going back to C++ for the full MPI reduce. We'll then update the module locations accordingly.
-! The same is true for mass_S and mass_P versus m_s and m_p.
+! Return the mass-weighted center of mass and velocity
+! for the primary and secondary, for a given FAB.
+! Since this will rely on a sum over processors,
+! we should only add to the relevant variables
+! in anticipation of a MPI reduction, and not
+! overwrite them. Note that ultimately what we
+! are doing here is to use an old guess at the
+! effective potential of the primary and secondary
+! to generate a new estimate.
 
 subroutine wdcom(rho,  r_lo, r_hi, &
                  xmom, px_lo, px_hi, &
                  ymom, py_lo, py_hi, &
                  zmom, pz_lo, pz_hi, &
+                 phip, pp_lo, pp_hi, &
+                 phis, ps_lo, ps_hi, &
                  vol,  vo_lo, vo_hi, &
                  lo, hi, dx, time, &
-                 com_p_x, com_p_y, com_p_z, & 
+                 com_p_x, com_p_y, com_p_z, &
                  com_s_x, com_s_y, com_s_z, &
                  vel_p_x, vel_p_y, vel_p_z, &
                  vel_s_x, vel_s_y, vel_s_z, &
@@ -106,7 +110,6 @@ subroutine wdcom(rho,  r_lo, r_hi, &
 
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo, probhi, physbc_lo, physbc_hi, Symmetry
-  use probdata_module, only: mass_P, mass_S, com_P, com_S
   use castro_util_module, only: position
 
   implicit none
@@ -115,12 +118,16 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   integer         , intent(in   ) :: px_lo(3), px_hi(3)
   integer         , intent(in   ) :: py_lo(3), py_hi(3)
   integer         , intent(in   ) :: pz_lo(3), pz_hi(3)
+  integer         , intent(in   ) :: pp_lo(3), pp_hi(3)
+  integer         , intent(in   ) :: ps_lo(3), ps_hi(3)
   integer         , intent(in   ) :: vo_lo(3), vo_hi(3)
 
   double precision, intent(in   ) :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
   double precision, intent(in   ) :: xmom(px_lo(1):px_hi(1),px_lo(2):px_hi(2),px_lo(3):px_hi(3))
   double precision, intent(in   ) :: ymom(py_lo(1):py_hi(1),py_lo(2):py_hi(2),py_lo(3):py_hi(3))
-  double precision, intent(in   ) :: zmom(pz_lo(1):pz_hi(1),pz_lo(2):pz_hi(2),pz_lo(3):pz_hi(3))  
+  double precision, intent(in   ) :: zmom(pz_lo(1):pz_hi(1),pz_lo(2):pz_hi(2),pz_lo(3):pz_hi(3))
+  double precision, intent(in   ) :: phip(pp_lo(1):pp_hi(1),pp_lo(2):pp_hi(2),pp_lo(3):pp_hi(3))
+  double precision, intent(in   ) :: phis(ps_lo(1):ps_hi(1),ps_lo(2):ps_hi(2),ps_lo(3):ps_hi(3))
   double precision, intent(in   ) :: vol(vo_lo(1):vo_hi(1),vo_lo(2):vo_hi(2),vo_lo(3):vo_hi(3))
 
   integer         , intent(in   ) :: lo(3), hi(3)
@@ -132,22 +139,14 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   double precision, intent(inout) :: m_p, m_s
 
   integer          :: i, j, k
-  double precision :: r(3), r_p, r_s, grav_force_P, grav_force_S
-  double precision :: dm
+  double precision :: r(3), dm
 
-  ! If the stars have merged, then the Roche radius of the secondary will be zero (or effectively close).
-  ! In such a situation, we want to terminate this calculation gracefully. 
-  ! The simplest fix is simply by just returning zero for everything;
-
-  ! Now, add to the COM locations and velocities depending on whether we're closer
-  ! to the primary or the secondary. Note that in this routine we actually are 
+  ! Add to the COM locations and velocities of the primary and secondary
+  ! depending on which potential dominates, ignoring unbound material.
+  ! Note that in this routine we actually are
   ! summing mass-weighted quantities for the COM and the velocity; 
   ! we will account for this at the end of the calculation in 
-  ! sum_integrated_quantities() by dividing by the mass.
-
-  ! We determine whether a zone is in the region corresponding to one star 
-  ! or the other depending on which star is exerting a stronger gravitational 
-  ! force on that zone.
+  ! post_timestep() by dividing by the mass.
 
   do k = lo(3), hi(3)
      do j = lo(2), hi(2)
@@ -162,24 +161,9 @@ subroutine wdcom(rho,  r_lo, r_hi, &
            r = merge(r + (problo - r), r, physbc_lo(:) .eq. Symmetry)
            r = merge(r + (r - probhi), r, physbc_hi(:) .eq. Symmetry)
 
-           r_P = sqrt(sum((r - com_P)**2))
-           r_S = sqrt(sum((r - com_S)**2))
-
            dm = rho(i,j,k) * vol(i,j,k)
 
-           if (mass_P == ZERO .or. mass_P < 1.d-12 * mass_S) then
-              grav_force_P = ZERO
-           else
-              grav_force_P = mass_P / r_P
-           endif
-
-           if (mass_S == ZERO .or. mass_S < 1.d-12 * mass_P) then
-              grav_force_S = ZERO
-           else
-              grav_force_S = mass_S / r_S
-           endif
-
-           if (grav_force_P > ZERO .and. grav_force_P > grav_force_S) then
+           if (phip(i,j,k) < ZERO .and. phip(i,j,k) < phis(i,j,k)) then
 
               m_p = m_p + dm
 
@@ -191,7 +175,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
               vel_p_y = vel_p_y + ymom(i,j,k) * vol(i,j,k)
               vel_p_z = vel_p_z + zmom(i,j,k) * vol(i,j,k)
 
-           else if (grav_force_S > ZERO .and. grav_force_S > grav_force_P) then
+           else if (phis(i,j,k) < ZERO .and. phis(i,j,k) < phip(i,j,k)) then
 
               m_s = m_s + dm
 
@@ -216,58 +200,51 @@ end subroutine wdcom
 ! This function uses the known center of mass of the two white dwarfs,
 ! and given a density cutoff, computes the total volume of all zones
 ! whose density is greater or equal to that density cutoff.
-! We also impose a distance requirement so that we only look 
+! We also impose a distance requirement so that we only look
 ! at zones within the Roche lobe of the white dwarf.
 
-subroutine ca_volumeindensityboundary(rho,r_lo,r_hi,vol,v_lo,v_hi,lo,hi,dx,volp,vols,rho_cutoff) bind(C)
+subroutine ca_volumeindensityboundary(rho,r_lo,r_hi, &
+                                      phip,pp_lo,pp_hi, &
+                                      phis,ps_lo,ps_hi, &
+                                      vol,v_lo,v_hi, &
+                                      lo,hi,dx, &
+                                      volp,vols,rho_cutoff) bind(C)
 
   use bl_constants_module
-  use probdata_module, only: mass_P, mass_S, com_P, com_S
   use prob_params_module, only: problo
 
   implicit none
 
   integer          :: r_lo(3), r_hi(3)
+  integer          :: pp_lo(3), pp_hi(3)
+  integer          :: ps_lo(3), ps_hi(3)
   integer          :: v_lo(3), v_hi(3)
   integer          :: lo(3), hi(3)
   double precision :: volp, vols, rho_cutoff, dx(3)
   double precision :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
+  double precision :: phip(pp_lo(1):pp_hi(1),pp_lo(2):pp_hi(2),pp_lo(3):pp_hi(3))
+  double precision :: phis(ps_lo(1):ps_hi(1),ps_lo(2):ps_hi(2),ps_lo(3):ps_hi(3))
   double precision :: vol(v_lo(1):v_hi(1),v_lo(2):v_hi(2),v_lo(3):v_hi(3))
 
   integer          :: i, j, k
-  double precision :: r(3), r_P, r_S, grav_force_P, grav_force_S
 
   volp = ZERO
   vols = ZERO
 
   do k = lo(3), hi(3)
-     r(3) = problo(3) + (dble(k) + HALF) * dx(3)
      do j = lo(2), hi(2)
-        r(2) = problo(2) + (dble(j) + HALF) * dx(2)
         do i = lo(1), hi(1)
-           r(1) = problo(1) + (dble(i) + HALF) * dx(1)
 
            if (rho(i,j,k) > rho_cutoff) then
 
-              r_P = sqrt(sum((r - com_p)**2))
-              r_S = sqrt(sum((r - com_s)**2))
+              if (phip(i,j,k) < ZERO .and. phip(i,j,k) < phis(i,j,k)) then
 
-              if (mass_P == ZERO .or. mass_P < 1.d-12 * mass_S) then
-                 grav_force_P = ZERO
-              else
-                 grav_force_P = mass_P / r_P
-              endif
-
-              if (mass_S == ZERO .or. mass_S < 1.d-12 * mass_P) then
-                 grav_force_S = ZERO
-              else
-                 grav_force_S = mass_S / r_S
-              endif
-
-              if (grav_force_P > ZERO .and. grav_force_P > grav_force_S) then
                  volp = volp + vol(i,j,k)
-              else if (grav_force_S > ZERO .and. grav_force_S > grav_force_P) then
+
+              else if (phis(i,j,k) < ZERO .and. phis(i,j,k) < phip(i,j,k)) then
+
                  vols = vols + vol(i,j,k)
+
               endif
 
            endif
