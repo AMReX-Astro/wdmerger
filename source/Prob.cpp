@@ -168,15 +168,17 @@ Castro::problem_post_timestep()
 			   ARLIM_3D(lo),ARLIM_3D(hi),
 			   &potential,&relaxation_is_done);
 
-	}
+      }
+
+      ParallelDescriptor::ReduceIntSum(relaxation_is_done);
 
       delete mfphieff;
 
-      // If any of the grids returned that it has the L1 point and
-      // the density has passed the cutoff, then disable the initial relaxation.
+      // If any of the grids returned that it has satisfied the criterion,
+      // then disable the initial relaxation.
 
       if (relaxation_is_done > 0)
-	turn_off_relaxation();
+	turn_off_relaxation(&time);
 
     }
 

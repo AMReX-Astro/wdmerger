@@ -78,7 +78,7 @@ extern "C"
 			const int* lo, const int* hi,
 			const Real* potential, int* is_done);
 
-  void turn_off_relaxation();
+  void turn_off_relaxation(const Real* time);
 
   void get_axes(int& axis_1, int& axis_2, int& axis_3);
 

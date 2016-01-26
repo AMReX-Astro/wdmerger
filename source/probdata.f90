@@ -1248,16 +1248,30 @@ contains
 
 
 
-  subroutine turn_off_relaxation() bind(C)
+  ! This routine is called when we've satisfied our criterion
+  ! for disabling the initial relaxation phase. We set the
+  ! relaxation timescale to a negative number, which disables
+  ! the damping; we set the sponge timescale to a negative
+  ! number, which disables the sponging; and, we set the
+  ! rotation period to a negative number, which disables
+  ! the rotation.
+
+  subroutine turn_off_relaxation(time) bind(C)
 
     use problem_io_module, only: ioproc
+    use sponge_module, only: sponge_timescale
+    use meth_params_module, only: rot_period
 
     implicit none
 
+    double precision :: time
+
     relaxation_timescale = -ONE
+    sponge_timescale = -ONE
+    rot_period = -ONE
 
     if (ioproc) then
-       print *, "Initial relaxation phase terminated."
+       print *, "Initial relaxation phase terminated at t = ", time
     endif
 
   end subroutine turn_off_relaxation
