@@ -257,6 +257,57 @@ end subroutine ca_volumeindensityboundary
 
 
 
+! Determine the critical Roche potential at the Lagrange point L1.
+! We will use a tri-linear interpolation that gets a contribution
+! from all the zone centers that bracket the Lagrange point.
+
+subroutine get_critical_roche_potential(phiEff,p_lo,p_hi,lo,hi,L1,potential) bind(C)
+
+  use bl_constants_module, only: ZERO, HALF, ONE
+  use castro_util_module, only: position
+  use prob_params_module, only: dim, dx_level
+  use amrinfo_module, only: amr_level
+
+  implicit none
+
+  integer          :: lo(3), hi(3)
+  integer          :: p_lo(3), p_hi(3)
+  double precision :: phiEff(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
+  double precision :: L1(3), potential
+
+  double precision :: r(3), dx(3)
+  integer          :: i, j, k, n
+
+  dx = dx_level(:,amr_level)
+
+  do k = lo(3), hi(3)
+     do j = lo(2), hi(2)
+        do i = lo(1), hi(1)
+
+           r = position(i,j,k) - L1
+
+           ! Scale r by dx (in dimensions we're actually simulating).
+
+           r(1:dim) = r(1:dim) / dx(1:dim)
+           r(dim+1:3) = ZERO
+
+           ! We want a contribution from this zone if it is
+           ! less than one zone width away from the Lagrange point.
+
+           if (sum(r**2) < ONE) then
+
+              potential = potential + product(ONE - abs(r)) * phiEff(i,j,k)
+
+           endif
+
+        enddo
+     enddo
+  enddo
+
+end subroutine get_critical_roche_potential
+
+
+
 ! Calculate the second time derivative of the quadrupole moment tensor,
 ! according to the formula in Equation 6.5 of Blanchet, Damour and Schafer 1990.
 ! It involves integrating the mass distribution and then taking the symmetric 

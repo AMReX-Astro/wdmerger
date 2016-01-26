@@ -69,9 +69,14 @@ extern "C"
 	                   const Real* com_1, const Real* com_2,
 			   Real* L1, Real* L2, Real* L3);
 
+  void get_critical_roche_potential(BL_FORT_FAB_ARG_3D(phieff),
+				    const int* lo, const int* hi,
+				    Real* L1, Real* potential);
+
   void check_relaxation(BL_FORT_FAB_ARG_3D(state),
+			BL_FORT_FAB_ARG_3D(phieff),
 			const int* lo, const int* hi,
-			const Real* L1, int& is_done);
+			const Real* potential, int* is_done);
 
   void turn_off_relaxation();
 

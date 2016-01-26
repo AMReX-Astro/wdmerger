@@ -1190,43 +1190,43 @@ contains
 
 
   ! Check whether we should stop the initial relaxation.
+  ! The criterion is that we're outside the critical Roche surface
+  ! and the density is greater than a specified threshold.
   ! If so, set do_initial_relaxation to false, which will effectively
   ! turn off the external source terms.
 
-  subroutine check_relaxation(state, s_lo, s_hi, lo, hi, L1, is_done) bind(C)
+  subroutine check_relaxation(state, s_lo, s_hi, &
+                              phiEff, p_lo, p_hi, &
+                              lo, hi, potential, is_done) bind(C)
 
     use meth_params_module, only: URHO, NVAR
     use castro_util_module, only: position_to_index
 
     implicit none
 
-    integer :: lo(3), hi(3)
-    integer :: s_lo(3), s_hi(3)
-    integer :: is_done
-    double precision :: L1(3)
+    integer          :: lo(3), hi(3)
+    integer          :: s_lo(3), s_hi(3)
+    integer          :: p_lo(3), p_hi(3)
     double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+    double precision :: phiEff(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3))
+    double precision :: potential
+    integer          :: is_done
 
-    integer :: L1_idx(3)
+    integer          :: i, j, k
 
-    ! Convert the Lagrange point into a grid index.
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
-    L1_idx = position_to_index(L1)
+             if (phiEff(i,j,k) > potential .and. state(i,j,k,URHO) > relaxation_density_cutoff) then
 
-    ! Check if the Lagrange point is in this box.
+                is_done = 1
 
-    if ( lo(1) .le. L1_idx(1) .and. hi(1) .ge. L1_idx(1) .and. &
-         lo(2) .le. L1_idx(2) .and. hi(2) .ge. L1_idx(2) .and. &
-         lo(3) .le. L1_idx(3) .and. hi(3) .ge. L1_idx(3) ) then
+             endif
 
-       ! If so, check if the density in that zone is above the cutoff.
-
-       if (state(L1_idx(1),L1_idx(2),L1_idx(3),URHO) > relaxation_density_cutoff) then
-
-          is_done = 1
-
-       endif
-
-    endif
+          enddo
+       enddo
+    enddo
 
   end subroutine check_relaxation
 

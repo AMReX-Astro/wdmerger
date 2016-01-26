@@ -107,8 +107,9 @@ Castro::problem_post_timestep()
 
     // If we are doing an initial relaxation step, determine whether the 
     // criterion for terminating the relaxation has been satisfied.
-
-    // First, calculate the location of the L1 Lagrange point.
+    // Note that at present the following code is only done on the
+    // coarse grid but if we wanted more accuracy we could do a loop
+    // over levels as above.
 
     Real L1[3] = { -1.0e200 };
     Real L2[3] = { -1.0e200 };
@@ -117,10 +118,36 @@ Castro::problem_post_timestep()
     if (mass_p > 0.0 && mass_s > 0.0)
     {
 
+      // First, calculate the location of the L1 Lagrange point.
+
       get_lagrange_points(mass_p, mass_s, com_p, com_s, L1, L2, L3);
 
-      // Now cycle through the grids and determine if the L1
-      // point has reached the density threshold.
+      // Then, figure out the effective potential corresponding to that
+      // Lagrange point.
+
+      Real potential = 0.0;
+
+      MultiFab* mfphieff = derive("phiEff", time, 0);
+
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:potential)
+#endif
+      for (MFIter mfi(*mfphieff,true); mfi.isValid(); ++mfi) {
+
+	const Box& box = mfi.tilebox();
+
+	const int* lo  = box.loVect();
+	const int* hi  = box.hiVect();
+
+	get_critical_roche_potential(BL_TO_FORTRAN_3D((*mfphieff)[mfi]),
+				     lo, hi, L1, &potential);
+
+      }
+
+      ParallelDescriptor::ReduceRealSum(potential);
+
+      // Now cycle through the grids and determine if any zones
+      // have crossed the density threshold outside the critical surface.
 
       int relaxation_is_done = 0;
 
@@ -129,18 +156,21 @@ Castro::problem_post_timestep()
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:relaxation_is_done)
 #endif
-      for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
-	{
+      for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
+
 	  const Box& box  = mfi.tilebox();
 
 	  const int* lo   = box.loVect();
 	  const int* hi   = box.hiVect();
 
 	  check_relaxation(BL_TO_FORTRAN_3D(S_new[mfi]),
+			   BL_TO_FORTRAN_3D((*mfphieff)[mfi]),
 			   ARLIM_3D(lo),ARLIM_3D(hi),
-			   L1,relaxation_is_done);
+			   &potential,&relaxation_is_done);
 
 	}
+
+      delete mfphieff;
 
       // If any of the grids returned that it has the L1 point and
       // the density has passed the cutoff, then disable the initial relaxation.
