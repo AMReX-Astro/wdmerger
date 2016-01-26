@@ -323,7 +323,7 @@ subroutine ca_derphieffpm_p(phi,phi_lo,phi_hi,ncomp_phi, &
 
   ! Don't do anything here if the star no longer exists
 
-  phi = ZERO
+  phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
 
   if (mass_P == ZERO) return
 
@@ -372,7 +372,7 @@ subroutine ca_derphieffpm_s(phi,phi_lo,phi_hi,ncomp_phi, &
 
   ! Don't do anything here if the star no longer exists
 
-  phi = ZERO
+  phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
 
   if (mass_S == ZERO) return
 
