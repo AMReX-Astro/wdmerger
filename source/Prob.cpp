@@ -541,6 +541,11 @@ Real Castro::norm(const Real a[]) {
 
 void Castro::problem_post_init() {
 
+  // Execute the post timestep diagnostics here,
+  // so that the results at t = 0 and later are smooth.
+
+  problem_post_timestep();
+
 }
 
 #endif
