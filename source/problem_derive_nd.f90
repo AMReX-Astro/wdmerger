@@ -304,7 +304,7 @@ subroutine ca_derphieffpm_p(phi,phi_lo,phi_hi,ncomp_phi, &
                             lo,hi,domlo,domhi, &
                             dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
-  use bl_constants_module, only: HALF
+  use bl_constants_module, only: ZERO, HALF
   use probdata_module, only: mass_P, com_P
   use fundamental_constants_module, only: Gconst
 
@@ -320,6 +320,12 @@ subroutine ca_derphieffpm_p(phi,phi_lo,phi_hi,ncomp_phi, &
 
   integer          :: i, j, k
   double precision :: loc(3), r
+
+  ! Don't do anything here if the star no longer exists
+
+  phi = ZERO
+
+  if (mass_P == ZERO) return
 
   do k = lo(3), hi(3)
      loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
@@ -347,7 +353,7 @@ subroutine ca_derphieffpm_s(phi,phi_lo,phi_hi,ncomp_phi, &
                             lo,hi,domlo,domhi, &
                             dx,xlo,time,dt,bc,level,grid_no) bind(C)
 
-  use bl_constants_module, only: HALF
+  use bl_constants_module, only: ZERO, HALF
   use probdata_module, only: mass_S, com_S
   use fundamental_constants_module, only: Gconst
 
@@ -363,6 +369,12 @@ subroutine ca_derphieffpm_s(phi,phi_lo,phi_hi,ncomp_phi, &
 
   integer          :: i, j, k
   double precision :: loc(3), r
+
+  ! Don't do anything here if the star no longer exists
+
+  phi = ZERO
+
+  if (mass_S == ZERO) return
 
   do k = lo(3), hi(3)
      loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
