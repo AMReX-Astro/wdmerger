@@ -49,3 +49,11 @@ void problem_post_init();
 // End of timestep analytics on the white dwarf properties.
 
 void problem_post_timestep();
+
+
+
+
+// Data we want to store, for interfacing with the Fortran
+
+static int relaxation_is_done;
+static int problem;

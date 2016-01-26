@@ -1271,7 +1271,9 @@ contains
     rot_period = -ONE
 
     if (ioproc) then
+       print *, ""
        print *, "Initial relaxation phase terminated at t = ", time
+       print *, ""
     endif
 
   end subroutine turn_off_relaxation
@@ -1305,5 +1307,19 @@ contains
     if (single_star) flag = 1
 
   end subroutine get_single_star
+
+
+
+  ! Return the problem type.
+
+  subroutine get_problem_number(problem_out) bind(C)
+
+    implicit none
+
+    integer :: problem_out
+
+    problem_out = problem
+
+  end subroutine get_problem_number
 
 end module probdata_module

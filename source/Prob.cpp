@@ -5,6 +5,9 @@
 
 #include "ParmParse.H"
 
+int Castro::relaxation_is_done = 0;
+int Castro::problem = -1;
+
 #ifdef do_problem_post_timestep
 void
 Castro::problem_post_timestep()
@@ -105,8 +108,9 @@ Castro::problem_post_timestep()
 
     set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
 
-    // If we are doing an initial relaxation step, determine whether the 
-    // criterion for terminating the relaxation has been satisfied.
+    // If we are doing problem 3, which has an initial relaxation step,
+    // determine whether the criterion for terminating the relaxation
+    // has been satisfied.
     // Note that at present the following code is only done on the
     // coarse grid but if we wanted more accuracy we could do a loop
     // over levels as above.
@@ -115,7 +119,7 @@ Castro::problem_post_timestep()
     Real L2[3] = { -1.0e200 };
     Real L3[3] = { -1.0e200 };
 
-    if (mass_p > 0.0 && mass_s > 0.0)
+    if (problem == 3 && relaxation_is_done == 0 && mass_p > 0.0 && mass_s > 0.0)
     {
 
       // First, calculate the location of the L1 Lagrange point.
@@ -148,8 +152,6 @@ Castro::problem_post_timestep()
 
       // Now cycle through the grids and determine if any zones
       // have crossed the density threshold outside the critical surface.
-
-      int relaxation_is_done = 0;
 
       MultiFab& S_new = get_new_data(State_Type);
 
@@ -572,6 +574,10 @@ Real Castro::norm(const Real a[]) {
 #ifdef do_problem_post_init
 
 void Castro::problem_post_init() {
+
+  // Get the problem number fom Fortran.
+
+  get_problem_number(&problem);
 
   // Execute the post timestep diagnostics here,
   // so that the results at t = 0 and later are smooth.
