@@ -69,10 +69,10 @@ module probdata_module
 
 
   ! If we're automatically determining the initial distance based on the Roche lobe
-  ! radii for problem 3, this is the safety factor we use. We set it to 2 by default,
+  ! radii for problem 3, this is the safety factor we use. We set it to 1.5 by default,
   ! which should be a large enough distance so that the system is initially stable.
 
-  double precision, save :: roche_radius_factor = 2.0d0
+  double precision, save :: roche_radius_factor = 1.5d0
 
 
 
