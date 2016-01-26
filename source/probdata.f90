@@ -835,6 +835,7 @@ contains
   subroutine kepler_third_law(radius_1, mass_1, radius_2, mass_2, period, eccentricity, phi, a, r_1, r_2, v_1r, v_2r, v_1p, v_2p)
 
     use prob_params_module, only: problo, probhi
+    use sponge_module, only: sponge_lower_radius
 
     implicit none
 
@@ -893,18 +894,33 @@ contains
     v_1p = -(mu / mass_1) * v_phi
     v_2p =  (mu / mass_2) * v_phi
 
-    ! Make sure the domain is big enough to hold stars in an orbit this size
+    ! Make sure the domain is big enough to hold stars in an orbit this size.
 
     length = (r_2 - r_1) + radius_1 + radius_2
 
     if (length > (probhi(axis_1)-problo(axis_1))) then
-        call bl_error("ERROR: The domain width is too small to include the binary orbit.")
+       call bl_error("ERROR: The domain width is too small to include the binary orbit.")
     endif
 
-     ! Make sure the stars are not touching.
-     if (radius_1 + radius_2 > a) then
-        call bl_error("ERROR: Stars are touching!")
-     endif
+    ! We want to do a similar check to make sure that no part of the stars
+    ! land in the sponge region.
+
+    if (sponge_lower_radius > ZERO) then
+
+       if (abs(r_1) + radius_1 .ge. sponge_lower_radius) then
+          call bl_error("ERROR: Primary contains material inside the sponge region.")
+       endif
+
+       if (abs(r_2) + radius_2 .ge. sponge_lower_radius) then
+          call bl_error("ERROR: Secondary contains material inside the sponge region.")
+       endif
+
+    endif
+
+    ! Make sure the stars are not touching.
+    if (radius_1 + radius_2 > a) then
+       call bl_error("ERROR: Stars are touching!")
+    endif
 
   end subroutine kepler_third_law
 
