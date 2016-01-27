@@ -5,7 +5,7 @@
 
 #include "ParmParse.H"
 
-int Castro::relaxation_is_done = 0;
+bool Castro::relaxation_is_done = false;
 int Castro::problem = -1;
 
 #ifdef do_problem_post_timestep
@@ -119,7 +119,7 @@ Castro::problem_post_timestep()
     Real L2[3] = { -1.0e200 };
     Real L3[3] = { -1.0e200 };
 
-    if (problem == 3 && relaxation_is_done == 0 && mass_p > 0.0 && mass_s > 0.0)
+    if (problem == 3 && !relaxation_is_done && mass_p > 0.0 && mass_s > 0.0)
     {
 
       // First, calculate the location of the L1 Lagrange point.
@@ -155,8 +155,10 @@ Castro::problem_post_timestep()
 
       MultiFab& S_new = get_new_data(State_Type);
 
+      int is_done = 0;
+
 #ifdef _OPENMP
-#pragma omp parallel reduction(+:relaxation_is_done)
+#pragma omp parallel reduction(+:is_done)
 #endif
       for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi) {
 
@@ -168,19 +170,47 @@ Castro::problem_post_timestep()
 	  check_relaxation(BL_TO_FORTRAN_3D(S_new[mfi]),
 			   BL_TO_FORTRAN_3D((*mfphieff)[mfi]),
 			   ARLIM_3D(lo),ARLIM_3D(hi),
-			   &potential,&relaxation_is_done);
+			   &potential,&is_done);
 
       }
 
-      ParallelDescriptor::ReduceIntSum(relaxation_is_done);
+      ParallelDescriptor::ReduceIntSum(is_done);
+
+      if (is_done > 0)
+	relaxation_is_done = true;
 
       delete mfphieff;
 
-      // If any of the grids returned that it has satisfied the criterion,
-      // then disable the initial relaxation.
+      if (relaxation_is_done) {
 
-      if (relaxation_is_done > 0)
+	for (int lev = 0; lev <= finest_level; lev++) {
+
+	  set_amr_info(lev, -1, -1, -1.0, -1.0);
+
+	  MultiFab& state = getLevel(lev).get_new_data(State_Type);
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+	  for (MFIter mfi(state,true); mfi.isValid(); ++mfi) {
+
+	    const Box& box = mfi.tilebox();
+
+	    const int* lo  = box.loVect();
+	    const int* hi  = box.hiVect();
+
+	    transform_to_inertial_frame(BL_TO_FORTRAN_3D(state[mfi]),
+					ARLIM_3D(lo), ARLIM_3D(hi), &time);
+
+	  }
+
+	  set_amr_info(level, -1, -1, -1.0, -1.0);
+
+	}
+
 	turn_off_relaxation(&time);
+
+      }
 
     }
 

@@ -308,6 +308,41 @@ end subroutine get_critical_roche_potential
 
 
 
+! Given state data in the rotating frame, transform it to the inertial frame.
+
+subroutine transform_to_inertial_frame(state, s_lo, s_hi, lo, hi, time) bind(C)
+
+  use meth_params_module, only: NVAR, URHO, UMX, UMZ
+  use probdata_module, only: inertial_velocity
+  use castro_util_module, only: position
+
+  implicit none
+
+  integer          :: lo(3), hi(3)
+  integer          :: s_lo(3), s_hi(3)
+  double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
+  double precision :: time
+
+  double precision :: loc(3), vel(3)
+  integer          :: i, j, k
+
+  do k = lo(3), hi(3)
+     do j = lo(2), hi(2)
+        do i = lo(1), hi(1)
+
+           loc = position(i,j,k)
+           vel = state(i,j,k,UMX:UMZ) / state(i,j,k,URHO)
+
+           state(i,j,k,UMX:UMZ) = state(i,j,k,URHO) * inertial_velocity(loc, vel, time)
+
+        enddo
+     enddo
+  enddo
+
+end subroutine transform_to_inertial_frame
+
+
+
 ! Calculate the second time derivative of the quadrupole moment tensor,
 ! according to the formula in Equation 6.5 of Blanchet, Damour and Schafer 1990.
 ! It involves integrating the mass distribution and then taking the symmetric 

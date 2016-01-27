@@ -55,5 +55,5 @@ void problem_post_timestep();
 
 // Data we want to store, for interfacing with the Fortran
 
-static int relaxation_is_done;
+static bool relaxation_is_done;
 static int problem;

@@ -73,6 +73,10 @@ extern "C"
 				    const int* lo, const int* hi,
 				    Real* L1, Real* potential);
 
+  void transform_to_inertial_frame(BL_FORT_FAB_ARG_3D(state),
+				   const int* lo, const int* hi,
+				   const Real* time);
+
   void check_relaxation(BL_FORT_FAB_ARG_3D(state),
 			BL_FORT_FAB_ARG_3D(phieff),
 			const int* lo, const int* hi,
