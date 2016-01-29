@@ -15,7 +15,9 @@ contains
     use bl_constants_module, only: ZERO, HALF, TWO
     use meth_params_module, only: NVAR, URHO, UTEMP
     use prob_params_module, only: center, probhi
-    use probdata_module, only: max_tagging_radius, stellar_density_threshold, &
+    use probdata_module, only: max_tagging_radius, &
+                               roche_tagging_factor, &
+                               stellar_density_threshold, &
                                temperature_tagging_threshold, &
                                com_P, com_S, roche_rad_P, roche_rad_S
 
@@ -53,11 +55,11 @@ contains
                 r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
                 r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
 
-                if (r_P <= TWO * roche_rad_P) then
+                if (r_P <= roche_tagging_factor * roche_rad_P) then
                    tag(i,j,k) = set
                 endif
 
-                if (r_S <= TWO * roche_rad_S) then
+                if (r_S <= roche_tagging_factor * roche_rad_S) then
                    tag(i,j,k) = set
                 endif
 

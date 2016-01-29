@@ -197,6 +197,7 @@ module probdata_module
   ! Tagging criteria
 
   double precision, save :: max_tagging_radius = 0.75d0
+  double precision, save :: roche_tagging_factor = 2.0d0
   double precision, save :: stellar_density_threshold = 1.0d0
   double precision, save :: temperature_tagging_threshold = 5.0d8
 
@@ -238,7 +239,8 @@ module probdata_module
        relaxation_timescale, &
        relaxation_density_cutoff, &
        ambient_density, &
-       stellar_temp, ambient_temp, &
+       stellar_temp, &
+       ambient_temp, &
        max_he_wd_mass, &
        max_hybrid_wd_mass, hybrid_wd_he_shell_mass, &
        max_co_wd_mass, &
@@ -248,7 +250,9 @@ module probdata_module
        onemg_wd_o_frac, onemg_wd_ne_frac, onemg_wd_mg_frac, &
        orbital_eccentricity, orbital_angle, &
        axis_1, axis_2, axis_3, &
-       max_tagging_radius, stellar_density_threshold, &
+       max_tagging_radius, &
+       roche_tagging_factor, &
+       stellar_density_threshold, &
        temperature_tagging_threshold, &
        bulk_velx, bulk_vely, bulk_velz, &
        smallx, smallu, &
