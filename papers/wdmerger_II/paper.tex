@@ -206,48 +206,79 @@ and we evolve the reactions again for a further $\Delta t / 2$. The principal
 drawback of this approach is that the reactions and the hydrodynamics can become
 decoupled from each other. A common solution to this problem presented in
 the literature has been to limit the size of the timestep and thereby limit the
-extent of this decoupling \citep{raskin:2010,hawley:2012}, which we adopt here.
-We define a burning-limited timestep $\Delta t_{b1}$ as:
+extent of this decoupling \citep{raskin:2010,hawley:2012}, which we adopt here 
+and have implemented in \castro. Defining the nuclear energy injection timescale 
+$t_e$:
 \begin{equation}
-  \Delta t_{b1} = f_{b1}\, \frac{e}{|\dot{e}|}.
+  t_e \equiv \frac{e}{|\dot{e}|},
 \end{equation}
-Here $\dot{e}$ is an estimate of the time rate of change of the internal energy
-from nuclear burning. We estimate this using the energy change in the last burning
-update, divided by the length of the burning timestep. The factor $f_{b1}$ then
+where $\dot{e}$ is an estimate of the time rate of change of the internal energy
+from nuclear burning, we define a burning-limited timestep $\Delta t_{b}$:
+\begin{equation}
+  \Delta t_{b} = f_{\Delta t}\, t_e.
+\end{equation}
+We estimate $\dot{e}$ using the energy change in the last burning
+update, divided by the length of the burning timestep. The factor $f_{\Delta t}$ then
 determines by what fraction we would like to allow the internal energy to change
 in the current timestep (assuming that $\dot{e}$ does not change quickly from
-timestep to timestep, which is not always the case). By making $f_{b1}$ smaller,
+timestep to timestep, which is not always the case). By making $f_{\Delta t}$ smaller,
 we can control the magnitude of the decoupling between the reactions and the hydro.
-Typical choices in the literature are $f_{b1} = 0.2$ or $0.3$. This timestep limiting has
-now been implemented in \castro\ and the factor $f_{b1}$ can be set at runtime.
+We choose by default $f_{\Delta t} = 0.1$, a choice which is on par with others in 
+the literature. The sensitivity of results to this choice will be discussed in 
+\autoref{sec:2D:timestep}. The factor $f_{\Delta t}$ can be set at runtime in \castro.
+
+At the start of each advance, we limit the size of the timestep to be the smaller
+of the minimum hydro timestep (limited by the CFL condition), and the minimum of the
+burning timestep across all zones.
 
 \citet{kushnir:2013} point out this is not the only way for the burning to
 become numerically unstable; another failure mode is when the energy injection timescale
-is faster than the sound-crossing time in a zone. \citet{kushnir:2013} solved this by
-limiting the magnitude of the energy release after a burn; we take a slightly different
-approach and limit the timestep based on the previous burning, as with the other limiter.
+$t_e$ is shorter than the sound-crossing time $t_s$ in a zone.
 The goal is to ensure that the following condition holds:
 \begin{equation}
-  \frac{\partial e}{\partial t} = f_{b2} \frac{e}{t_s},
+  t_s \leq f_{\Delta x} t_e \label{eq:burning_limiter_2}
 \end{equation}
-The sound crossing time, $t_s$, is given by $\Delta x / c_s$, where $c_s$ is the sound speed
-and $\Delta x$ is the zone size. The parameter $f_{b2}$ then determines the ratio of the
-nuclear energy generation timescale to the sound-crossing time, in the limit of uniform
-timesteps. \citet{kushnir:2013} choose $f_{b2} = 0.1$ for their simulations.
-(As with the previous limiter, this parameter can be set at runtime in \castro.)
-We then re-write this as a limit on the size of the next timestep, using the same
-estimate as above for the nuclear energy generation rate $\dot{e}$ from the last burn:
-\begin{equation}
-  \Delta t_{b2} = \left[f_{b2}\, \frac{e}{|\dot{e}| \Delta t_{\rm{old}}}\right]^{-1}\, {t_s}
-\end{equation}
-Here $\Delta t_{\rm{old}}$ is the size of the timestep used in the burning advance that calculated
-$\dot{e}$. In the case of our Strang splitting approach it is half of the old advance
-timestep, $\Delta t^{n-1} / 2$. Thus the denominator inside the brackets is simply the net
-change in internal energy during the last burn.
+The sound crossing time, $t_s$, is given by $\Delta x / c_s$, 
+where $c_s$ is the sound speed and $\Delta x$ is the (minimum) 
+zone width. The parameter $f_{\Delta x}$ then determines the minimum
+ratio of the nuclear energy generation timescale to the 
+sound-crossing time. \citet{kushnir:2013} choose $f_{\Delta x} = 0.1$ 
+for their simulations, and we do too (this parameter can be set 
+at runtime in \castro).
 
-At the start of each advance, we limit the size of the timestep to be the smaller
-of the minimum hydro timestep (limited by the CFL condition), and the minimum of each
-burning timestep across all zones.
+\citet{kushnir:2013} implemented this criterion by artificially 
+limiting the magnitude of the energy release after a burn. As 
+this is not physical, we take a different approach. Since we 
+cannot directly control the energy injection timescale, we 
+must find a way to alter the sound-crossing timescale. 
+We can achieve this by adding levels of refinement in 
+regions that do not satisfy \autoref{eq:burning_limiter_2},
+which effectively lowers the $\Delta x$ and thus the
+sound-crossing time. We keep tagging zones for refinement
+based on this criterion until the criterion is satisfied
+on the finest level. Since the concern is regions that 
+may detonate, we also tag nearby zones in a buffer region
+which do not themselves satisfy the criterion,
+so that a detonation in a single timestep cannot 
+escape into non-refined regions. The width of the buffer 
+region should thus be at least as large as the number of 
+timesteps before a regridding procedure is performed.
+We choose a value of two for both the number of zones in the 
+buffer region and the number of steps in between regrids,
+for all simulations in this paper.
+
+While this approach may add several AMR levels 
+to a simulation, we agree with \citet{kushnir:2013} that 
+solving this numerical instability is crucial to avoiding
+early, unphysical detonations, and so it is unavoidable
+if a correct evaluation of the burning phase is desired.
+A simulation that does not solve this problem in this way
+(or some analogous manner) will not obtain the correct amount 
+of burning, and will not converge properly with resolution. 
+Fortunately, the regions where this criterion is not satisfied 
+are fairly localized on the grid, so the amount of additional 
+computational work is not exceedingly large.
+
 
 
 
