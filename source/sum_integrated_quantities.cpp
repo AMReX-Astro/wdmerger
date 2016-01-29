@@ -49,6 +49,14 @@ Castro::sum_integrated_quantities ()
     
     Real total_E_grid = 0.0;
 
+    // Maximum temperature on the grid
+
+    Real T_max = 0.0;
+
+    // Maximum density on the grid
+
+    Real rho_max = 0.0;
+
     Real com[3]       = { 0.0 };
     Real com_vel[3]   = { 0.0 };
 
@@ -182,6 +190,13 @@ Castro::sum_integrated_quantities ()
       // Integrated mass of all species on the domain.      
       for (int i = 0; i < NumSpec; i++)
 	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time) / M_solar;
+
+      MultiFab& S_new = ca_lev.get_new_data(State_Type);
+
+      // Extrema
+
+      T_max = std::max(T_max, S_new.max(Temp));
+      rho_max = std::max(rho_max, S_new.max(Density));
       
     }
 
@@ -276,6 +291,10 @@ Castro::sum_integrated_quantities ()
       t_ff_s = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_s));
     }
 
+    // Do remaining reductions
+
+    ParallelDescriptor::ReduceRealMax(T_max);
+    ParallelDescriptor::ReduceRealMax(rho_max);
 
 
     // Write data out to the log.
@@ -343,6 +362,8 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datawidth) << " R COM VEL             ";
 	     grid_log << std::setw(datawidth) << " Z COM VEL             ";
 #endif
+	     grid_log << std::setw(datawidth) << " T MAX                 ";
+	     grid_log << std::setw(datawidth) << " RHO MAX               ";
 	     grid_log << std::setw(datawidth) << " h_+ (axis 1)          ";
 	     grid_log << std::setw(datawidth) << " h_x (axis 1)          ";
 	     grid_log << std::setw(datawidth) << " h_+ (axis 2)          ";
@@ -391,6 +412,8 @@ Castro::sum_integrated_quantities ()
 #if (BL_SPACEDIM == 3)
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << com_vel[2];
 #endif
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << T_max;
+	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << rho_max;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_1;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_cross_1;
 	   grid_log << std::setw(datawidth) << std::setprecision(dataprecision) << h_plus_2;
