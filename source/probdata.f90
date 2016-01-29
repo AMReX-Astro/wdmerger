@@ -252,6 +252,8 @@ module probdata_module
        onemg_wd_o_frac, onemg_wd_ne_frac, onemg_wd_mg_frac, &
        orbital_eccentricity, orbital_angle, &
        axis_1, axis_2, axis_3, &
+       max_stellar_tagging_level, &
+       max_temperature_tagging_level, &
        max_tagging_radius, &
        roche_tagging_factor, &
        stellar_density_threshold, &
