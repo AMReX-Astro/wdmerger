@@ -16,6 +16,8 @@ contains
     use meth_params_module, only: NVAR, URHO, UTEMP
     use prob_params_module, only: center, probhi
     use probdata_module, only: max_tagging_radius, &
+                               max_stellar_tagging_level, &
+                               max_temperature_tagging_level, &
                                roche_tagging_factor, &
                                stellar_density_threshold, &
                                temperature_tagging_threshold, &
@@ -45,39 +47,51 @@ contains
           do i = lo(1), hi(1)
              x = problo(1) + (dble(i) + HALF)*dx(1)
 
-             if (level == 0) then
+             if (level < max_stellar_tagging_level) then
 
-                ! On the coarse grid, tag all regions within the Roche radii of each star.
-                ! We'll add a buffer around each star to double the Roche
-                ! radius to ensure there aren't any sharp gradients in regions of 
-                ! greater than ambient density.
+                if (level == 0) then
 
-                r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
-                r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
+                   ! On the coarse grid, tag all regions within the Roche radii of each star.
+                   ! We'll add a buffer around each star to double the Roche
+                   ! radius to ensure there aren't any sharp gradients in regions of
+                   ! greater than ambient density.
 
-                if (r_P <= roche_tagging_factor * roche_rad_P) then
-                   tag(i,j,k) = set
-                endif
+                   r_P = ( (x-com_P(1))**2 + (y-com_P(2))**2 + (z-com_P(3))**2 )**HALF
+                   r_S = ( (x-com_S(1))**2 + (y-com_S(2))**2 + (z-com_S(3))**2 )**HALF
 
-                if (r_S <= roche_tagging_factor * roche_rad_S) then
-                   tag(i,j,k) = set
-                endif
+                   if (r_P <= roche_tagging_factor * roche_rad_P) then
+                      tag(i,j,k) = set
+                   endif
 
-             else if (level >= 1) then
+                   if (r_S <= roche_tagging_factor * roche_rad_S) then
+                      tag(i,j,k) = set
+                   endif
 
-                ! On more refined levels, tag all regions within the stars themselves (defined as 
-                ! areas where the density is greater than some threshold).
+                else if (level >= 1) then
 
-                if (state(i,j,k,URHO) > stellar_density_threshold) then
-                   tag(i,j,k) = set
+                   ! On more refined levels, tag all regions within the stars themselves (defined as 
+                   ! areas where the density is greater than some threshold).
+
+                   if (state(i,j,k,URHO) > stellar_density_threshold) then
+
+                      tag(i,j,k) = set
+
+                   endif
+
                 endif
 
              endif
 
              ! Tag all zones at all levels that are hotter than a specified temperature threshold.
 
-             if (state(i,j,k,UTEMP) > temperature_tagging_threshold) then
-                tag(i,j,k) = set
+             if (level < max_temperature_tagging_level) then
+
+                if (state(i,j,k,UTEMP) > temperature_tagging_threshold) then
+
+                   tag(i,j,k) = set
+
+                endif
+
              endif
 
              ! Clear all tagging that occurs outside the radius set by max_tagging_radius.

@@ -196,6 +196,8 @@ module probdata_module
 
   ! Tagging criteria
 
+  integer,          save :: max_stellar_tagging_level = 20
+  integer,          save :: max_temperature_tagging_level = 20
   double precision, save :: max_tagging_radius = 0.75d0
   double precision, save :: roche_tagging_factor = 2.0d0
   double precision, save :: stellar_density_threshold = 1.0d0
