@@ -43,9 +43,9 @@ amr.n_cell = 256 256 256                           # Number of cells on the coar
 
 amr.max_level = 0                                  # Maximum level number allowed
 
-amr.ref_ratio = 4 4 4 4 4                          # Refinement ratio
+amr.ref_ratio = 4 4 4 4 4 4 4 4 4                  # Refinement ratio
 amr.regrid_int = 2                                 # How many coarse timesteps between regridding
-amr.n_error_buf = 0 0 0 0 0                        # Number of buffer cells in error estimation
+amr.n_error_buf = 2 2 2 2 2 2 2 2 2                # Number of buffer cells in error estimation
 
 amr.max_grid_size = 32 48 64 64                    # Maximum grid size at each level
 amr.blocking_factor = 16                           # Grid sizes must be a multiple of this
