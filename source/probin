@@ -77,8 +77,7 @@
 /
 
 &tagging 
-  max_temperr_lev    = 4
-  temperr            = 2.d8
+
 /
 
 &sponge
