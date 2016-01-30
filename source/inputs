@@ -24,6 +24,7 @@ castro.fixed_dt = -1.0                             # Fixed level 0 timestep; unu
 castro.init_shrink = 0.0001                        # Scale back initial timestep by this factor
 castro.change_max = 1.01                           # Factor by which dt is allowed to change each timestep
 castro.hard_cfl_limit = 0			   # Whether to abort a simulation if the CFL criterion is locally violated
+amr.compute_new_dt_on_regrid = 1                   # If we regrid on Level 0, compute a new timestep afterward
 
 ############################################################################################
 # Boundary conditions
