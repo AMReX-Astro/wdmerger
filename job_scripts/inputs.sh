@@ -37,12 +37,11 @@ function get_inputs_var {
     var=""
 
     # To get the value of the inputs variable, 
-    # we need to get everything between the equals sign
-    # and the # denoting the comment for that variable.
+    # we need to get everything after the equals sign.
 
     if (grep -q "$inputs_var_name[[:space:]]*=" $directory/$inputs); then
 
-	var=$(grep "$inputs_var_name" $directory/$inputs | awk -F"=" '{print $2}' | awk -F"#" '{print $1}')
+	var=$(grep "$inputs_var_name" $directory/$inputs | awk -F"=" '{print $2}')
 
     fi
 
@@ -152,24 +151,6 @@ function replace_inputs_var {
 
 	old_string=$(grep "$inputs_var_name[[:space:]]" $dir/$inputs)
 	new_string="$inputs_var_name = ${!var}"
-
-	# We want to save the comment associated with this variable.
-
-	string_before_comment=$(echo "$old_string" | awk -F# '{ print $1 }')
-	string_after_comment=$(echo "$old_string" | awk -F# '{ print $2 }')
-
-	if [ ! -z "$string_after_comment" ]; then
-
-          # Count up the number of characters before the comment string.
-
-	  chars_before_comment=${#string_before_comment}
-	  new_length=${#new_string}
-
-	  # Now, add a number of spaces so that the old and new have the same length.
-	  num_spaces_to_add=$(($chars_before_comment - $new_length))
-	  new_string=$(printf "$new_string%"$num_spaces_to_add"s#$string_after_comment")
-	  
-	fi
 
 	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/$inputs
 
