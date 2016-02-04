@@ -221,6 +221,9 @@ gravity.delta_tol = 1.e-10 1.e-10 1.e-8 1.e-8 1.e-6 1.e-6 1.e-6 1.e-5 1.e-5 1.e-
 # Turn off sync solve for gravity after refluxing
 gravity.no_sync = 1
 
+# Maximum level for doing explicit gravity solves
+gravity.max_solve_level = 20
+
 ############################################################################################
 # Load balancing
 ############################################################################################
