@@ -1,18 +1,12 @@
 
 ############################## CASTRO INPUTS ###############################################
 
-############################################################################################
-# Problem setup
-############################################################################################
-
 # Name of the probin file
 amr.probin_file = probin
 
-# Maximum coarse timestep
-max_step = 10000000
-
-# Simulation time to stop at
-stop_time = 100.0
+############################################################################################
+# Geometry
+############################################################################################
 
 # Non-periodic boundary conditions
 geometry.is_periodic = 0 0 0
@@ -28,6 +22,29 @@ geometry.prob_hi =  5.12e9  5.12e9  5.12e9
 
 # System center of mass
 castro.center =      0.0e0   0.0e0   0.0e0
+
+############################################################################################
+# Boundary conditions
+# 0 = Interior           3 = Symmetry
+# 1 = Inflow             4 = SlipWall
+# 2 = Outflow            5 = NoSlipWall
+############################################################################################
+
+# Boundary conditions on lo x, y, and z edges
+castro.lo_bc = 2 2 2
+
+# Boundary conditions on hi x, y, and z edges
+castro.hi_bc = 2 2 2
+
+############################################################################################ 
+# Timestepping
+############################################################################################
+
+# Maximum coarse timestep
+max_step = 10000000
+
+# Simulation time to stop at
+stop_time = 100.0
 
 # Level 0 timestep below which we halt
 castro.dt_cutoff = 1.e-8
@@ -50,18 +67,8 @@ castro.hard_cfl_limit = 0
 # If we regrid on Level 0, compute a new timestep afterward
 amr.compute_new_dt_on_regrid = 1
 
-############################################################################################
-# Boundary conditions
-# 0 = Interior           3 = Symmetry
-# 1 = Inflow             4 = SlipWall
-# 2 = Outflow            5 = NoSlipWall
-############################################################################################
-
-# Boundary conditions on lo x, y, and z edges
-castro.lo_bc = 2 2 2
-
-# Boundary conditions on hi x, y, and z edges
-castro.hi_bc = 2 2 2
+# Use a retry if an advance violated our stability criteria
+castro.use_retry = 1
 
 ############################################################################################ 
 # Resolution, gridding and AMR
