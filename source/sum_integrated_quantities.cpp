@@ -36,44 +36,62 @@ Castro::sum_integrated_quantities ()
     Real rho_phi              = 0.0;
     Real rho_phirot           = 0.0;
 
-    Real gravitational_energy = 0.0; 
-    Real kinetic_energy       = 0.0; 
+    // Total energy on the grid, including decomposition
+    // into the various components.
+
+    Real gravitational_energy = 0.0;
+    Real kinetic_energy       = 0.0;
     Real gas_energy           = 0.0;
     Real rotational_energy    = 0.0;
-    Real internal_energy      = 0.0; 
+    Real internal_energy      = 0.0;
     Real total_energy         = 0.0;
+    Real total_E_grid         = 0.0;
+
+    // Rotation frequency.
 
     Real omega[3] = { 0.0 };
 
     get_omega_vec(omega, time);
-    
-    Real total_E_grid = 0.0;
 
-    // Maximum temperature on the grid
+    // Maximum temperature on the grid.
 
     Real T_max = 0.0;
 
-    // Maximum density on the grid
+    // Maximum density on the grid.
 
     Real rho_max = 0.0;
+
+    // Maximum t_sound / t_enuc on finest level.
+
+    Real ts_te_max = 0.0;
+
+    // Center of mass of the system.
 
     Real com[3]       = { 0.0 };
     Real com_vel[3]   = { 0.0 };
 
+    // Stellar masses.
+
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
 
+    // Distance between the WDs.
+
     Real wd_dist[3] = { 0.0 };
     Real wd_dist_init[3] = { 0.0 };
-    
-    Real com_p[3]     = { 0.0 };
-    Real com_s[3]     = { 0.0 };
- 
-    Real vel_p[3] = { 0.0 };
-    Real vel_s[3] = { 0.0 };
-    
+
     Real separation = 0.0;
     Real angle = 0.0;
+
+    // Stellar centers of mass and velocities.
+
+    Real com_p[3]     = { 0.0 };
+    Real com_s[3]     = { 0.0 };
+
+    Real vel_p[3] = { 0.0 };
+    Real vel_s[3] = { 0.0 };
+
+    // Effective volume of the stars at various density cutoffs.
 
     Real vol_p[7] = { 0.0 };
     Real vol_s[7] = { 0.0 };
@@ -200,7 +218,14 @@ Castro::sum_integrated_quantities ()
 
       T_max = std::max(T_max, S_new.max(Temp));
       rho_max = std::max(rho_max, S_new.max(Density));
-      
+
+      if (lev == finest_level) {
+
+        MultiFab* ts_te_MF = ca_lev.derive("t_sound_t_enuc", time, 0);
+	ts_te_max = std::max(ts_te_max, ts_te_MF->max(0));
+	delete ts_te_MF;
+
+      }
     }
 
     // Return to the original level.
@@ -209,7 +234,9 @@ Castro::sum_integrated_quantities ()
     
     // Complete calculations for energy and momenta
 
-    gravitational_energy = (-1.0/2.0) * rho_phi; // avoids double counting; CASTRO uses positive phi
+    gravitational_energy = -rho_phi; // CASTRO uses positive phi
+    if (gravity->get_gravity_type() == "PoissonGrav")
+      gravitational_energy *= 0.5; // avoids double counting
     internal_energy = rho_e;
     kinetic_energy = rho_K;
     gas_energy = rho_E;
@@ -298,7 +325,7 @@ Castro::sum_integrated_quantities ()
 
     ParallelDescriptor::ReduceRealMax(T_max);
     ParallelDescriptor::ReduceRealMax(rho_max);
-
+    ParallelDescriptor::ReduceRealMax(ts_te_max);
 
     // Write data out to the log.
 
@@ -366,6 +393,7 @@ Castro::sum_integrated_quantities ()
 #endif
 	     grid_log << std::setw(datwidth) << "  T MAX                 ";
 	     grid_log << std::setw(datwidth) << "  RHO MAX               ";
+	     grid_log << std::setw(datwidth) << "  T_S / T_E MAX         ";
 	     grid_log << std::setw(datwidth) << "  h_+ (axis 1)          ";
 	     grid_log << std::setw(datwidth) << "  h_x (axis 1)          ";
 	     grid_log << std::setw(datwidth) << "  h_+ (axis 2)          ";
@@ -415,6 +443,7 @@ Castro::sum_integrated_quantities ()
 #endif
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << T_max;
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_max;
+	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << ts_te_max;
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_1;
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_1;
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_2;
