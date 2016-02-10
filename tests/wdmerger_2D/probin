@@ -7,8 +7,6 @@
 
   nsub = 4
 
-  no_orbital_kick = F
-
   problem = 1
 
   collision_separation = 4.0

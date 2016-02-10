@@ -56,15 +56,9 @@ module probdata_module
   ! 1 = Keplerian orbit; distance determined by the rotation period
   ! 2 = Keplerian orbit; distance set so that secondary fills its Roche lobe
   ! 3 = same as 2, but increase the WD distance and enable the initial relaxation process
+  ! 4 = Free-fall; distance determined by a multiple of the secondary WD radius
 
   integer, save :: problem = 1
-
-
-
-  ! Whether or not to give stars an initial orbital velocity
-  ! consistent with their Keplerian orbit speed.
-
-  logical, save :: no_orbital_kick = .false.
 
 
 
@@ -232,7 +226,6 @@ module probdata_module
        mass_P, mass_S, &
        central_density_P, central_density_S, &
        nsub, &
-       no_orbital_kick, &
        roche_radius_factor, &
        problem, &
        collision_separation, &
@@ -363,10 +356,20 @@ contains
        call bl_error("Impact parameter must be less than one in our specified units.")
     endif
 
-    ! Don't do a collision in a rotating reference frame.
+    ! Don't do a collision or a free-fall in a rotating reference frame.
 
     if (problem .eq. 0 .and. do_rotation .eq. 1) then
        call bl_error("The collision problem does not make sense in a rotating reference frame.")
+    endif
+
+    if (problem .eq. 4 .and. do_rotation .eq. 1) then
+       call bl_error("The free-fall problem does not make sense in a rotating referance frame.")
+    endif
+
+    ! The accurate ICs setup only makes sense in the rotating frame.
+
+    if (problem .eq. 3 .and. do_rotation .ne. 1) then
+       call bl_error("The accurate initial conditions setup does not make sense in the inertial frame.")
     endif
 
     ! Make sure we have a sensible eccentricity.
@@ -611,19 +614,20 @@ contains
 
        call get_roche_radii(mass_S / mass_P, roche_rad_S, roche_rad_P)
 
-       ! For a collision, set the stars up with a free-fall velocity at a specified number
-       ! of secondary radii; for a circular orbit, use Kepler's third law.
+       ! Set up the stellar distances and velocities according to the problem choice
 
-       if (problem == 0) then
-
-          axis_2 = axis_1
+       if (problem == 0 .or. problem == 4) then
 
           collision_separation = collision_separation * model_S % radius
 
-          call freefall_velocity(mass_P + mass_S, collision_separation, v_ff)
+          if (problem == 0) then
 
-          vel_P(axis_1) =  (mass_P / (mass_S + mass_P)) * v_ff
-          vel_S(axis_1) = -(mass_S / (mass_S + mass_P)) * v_ff
+             call freefall_velocity(mass_P + mass_S, collision_separation, v_ff)
+
+             vel_P(axis_1) =  (mass_P / (mass_S + mass_P)) * v_ff
+             vel_S(axis_1) = -(mass_S / (mass_S + mass_P)) * v_ff
+
+          endif
 
           r_P_initial = -(mass_P / (mass_S + mass_P)) * collision_separation
           r_S_initial =  (mass_S / (mass_S + mass_P)) * collision_separation
@@ -693,22 +697,13 @@ contains
           center_S_initial(axis_1) = center_S_initial(axis_1) + r_S_initial * cos(orbital_angle)
           center_S_initial(axis_2) = center_S_initial(axis_2) + r_S_initial * sin(orbital_angle)           
 
-          ! Star velocities, from Kepler's third law.
+          ! Star velocities, from Kepler's third law. Note that these are the velocities in the inertial frame.
 
           vel_P(axis_1) = v_P_r   * cos(orbital_angle) - v_P_phi * sin(orbital_angle)
           vel_P(axis_2) = v_P_phi * cos(orbital_angle) + v_P_r   * sin(orbital_angle)
 
           vel_S(axis_1) = v_S_r   * cos(orbital_angle) - v_S_phi * sin(orbital_angle)
           vel_S(axis_2) = v_S_phi * cos(orbital_angle) + v_S_r   * sin(orbital_angle)
-
-          ! Subtract off the rigid rotation rate. Note that this is also OK
-          ! for the inertial frame because there we're going to give everything
-          ! a kick of rigid body rotation in ca_initdata.
-
-          if ( .not. no_orbital_kick ) then
-             vel_P = vel_P - cross_product(omega, center_P_initial)
-             vel_S = vel_S - cross_product(omega, center_S_initial)
-          endif
 
        else
 
@@ -1011,7 +1006,7 @@ contains
     ! If we're in the inertial frame, give the material the rigid-body rotation speed.
     ! Otherwise set it to zero.
 
-    if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) ) then
+    if ( (do_rotation .ne. 1) .and. (problem .eq. 1 .or. problem .eq. 2 .or. problem .eq. 3) ) then
 
        state(UMX:UMZ) = state(URHO) * cross_product(omega, loc)
 

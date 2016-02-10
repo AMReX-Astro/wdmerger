@@ -148,12 +148,16 @@
               ! from an eccentric orbit or from a collision calculation.
               
               dist_P = sum((loc - center_P_initial)**2)**HALF
-              dist_S = sum((loc - center_S_initial)**2)**HALF              
-              
-              if (dist_P < model_P % radius) then
-                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
-              else if (dist_S < model_S % radius) then
-                 state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
+              dist_S = sum((loc - center_S_initial)**2)**HALF
+
+              if (.not. (problem .eq. 1 .or. problem .eq. 2 .or. problem .eq. 3)) then
+
+                 if (dist_P < model_P % radius) then
+                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_P(:) * state(i,j,k,URHO)
+                 else if (dist_S < model_S % radius) then
+                    state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + vel_S(:) * state(i,j,k,URHO)
+                 endif
+
               endif
 
               ! If we're in the inertial reference frame, use rigid body rotation with velocity omega x r.
@@ -161,12 +165,12 @@
               ! coordinate, whose unit vector is tangent to the unit circle, so we should
               ! have the same velocity everywhere along that coordinate to begin with.
 
-              if ( (do_rotation .ne. 1) .and. (.not. no_orbital_kick) .and. (.not. problem == 0) ) then
+              if ( (do_rotation .ne. 1) .and. (problem .eq. 1 .or. problem .eq. 2 .or. problem .eq. 3) ) then
 
                  vel = cross_product(omega, loc)
 
                  state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * vel(:)
-                 
+
                  if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))
 
               endif
