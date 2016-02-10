@@ -265,25 +265,11 @@ Castro::sum_integrated_quantities ()
       separation = norm(wd_dist);
 
       // Calculate the angle between the initial stellar axis and
-      // the line currently joining the two stars.
-      // We can use the atan2 function to calculate the angle of a line 
-      // specified by two points with respect to the initial axis.
+      // the line currently joining the two stars. Note that this
+      // neglects any motion in the plane perpendicular to the initial orbit.
 
-      // Source: http://www.mathworks.com/matlabcentral/answers/16243-angle-between-two-vectors-in-3d
-      // Apparently this is numerically safer than the more usual arccos( a . b / |a| |b| ).
-      
-      Real wd_cross[3] = { 0.0 };
-      
-      cross_product(wd_dist_init, wd_dist, wd_cross);
-      
-      Real wd_dot = dot_product(wd_dist_init, wd_dist);
-      
-      angle = atan2( norm(wd_cross), wd_dot ) * 180.0 / M_PI;
-
-      // Unfortunately it doesn't give us the sign of the angle, so we'll figure it out
-      // by checking if the dot product is negative and negating the sign if so.
-      
-      if (dot_product(wd_dist, wd_dist_init) < 0.0) angle = -angle;
+      angle = atan2( wd_dist[axis_2 - 1] - wd_dist_init[axis_2 - 1],
+                     wd_dist[axis_1 - 1] - wd_dist_init[axis_1 - 1] ) * 180.0 / M_PI;
 
       // Now let's transform from [-180, 180] to [0, 360].
       
@@ -477,7 +463,7 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(fixwidth) << "  TIME              ";
 
 	     star_log << std::setw(datwidth) << "  WD DISTANCE           ";
-	     star_log << std::setw(fixwidth) << "  WD ANGLE          ";
+	     star_log << std::setw(fixwidth) << "    WD ANGLE          ";
 
 #if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datwidth) << "  PRIMARY X COM         ";
@@ -530,7 +516,7 @@ Castro::sum_integrated_quantities ()
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << separation;
 
 	   star_log << std::fixed;
-	   star_log << std::setw(fixwidth) << std::setprecision(dataprecision) << angle;
+	   star_log << std::setw(fixwidth+2) << std::setprecision(dataprecision) << angle;
 
 	   star_log << std::scientific;
 
