@@ -266,6 +266,9 @@ amr.checkpoint_files_output = 1
 # Root name of checkpoint files
 amr.check_file = chk
 
+# We want to store the 'old' state data in checkpoints
+castro.dump_old = 1
+
 # Simulation time between checkpoints
 amr.check_per = 10.0
 
