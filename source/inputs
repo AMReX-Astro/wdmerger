@@ -194,10 +194,10 @@ castro.dual_energy_eta2 = 1.0e-4
 ############################################################################################
 
 # Limit timestep based on nuclear burning considerations (changes in internal energy)
-castro.dtnuc = 0.1
+castro.dtnuc_e = 0.1
 
 # Limit timestep based on nuclear burning considerations (changes in species)
-castro.dsnuc = 0.1
+castro.dtnuc_X = 0.1
 
 # Limit zone size based on nuclear burning considerations
 castro.dxnuc = 0.1
