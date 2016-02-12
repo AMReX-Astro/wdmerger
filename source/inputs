@@ -21,7 +21,7 @@ geometry.prob_lo = -5.12e9 -5.12e9 -5.12e9
 geometry.prob_hi =  5.12e9  5.12e9  5.12e9
 
 # System center of mass
-castro.center =      0.0e0   0.0e0   0.0e0
+castro.center    =   0.0e0   0.0e0   0.0e0
 
 ############################################################################################
 # Boundary conditions
@@ -166,6 +166,9 @@ castro.transverse_reset_rhoe = 0
 
 # Reset rho if it goes negative in the transverse terms
 castro.transverse_reset_density = 1
+
+# Renormalize species after a hydro update
+castro.normalize_species = 1
 
 ############################################################################################
 # Thermodynamics
