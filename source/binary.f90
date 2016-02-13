@@ -12,7 +12,7 @@ contains
   ! using the approximate formula of Eggleton (1983). Optionally we can
   ! pass in a distance scale.
   
-  subroutine get_roche_radii(mass_ratio, r_1, r_2, a) bind(C)
+  subroutine get_roche_radii(mass_ratio, r_1, r_2, a) bind(C,name="get_roche_radii")
 
     use bl_constants_module, only: ONE, TWO3RD, THIRD
 
@@ -52,7 +52,7 @@ contains
   ! closest to it (assuming we're on the coarse grid).
 
   subroutine get_lagrange_points(mass_1, mass_2, com_1, com_2, &
-                                 L1, L2, L3) bind(C)
+                                 L1, L2, L3) bind(C, name="get_lagrange_points")
 
     use bl_constants_module
     use prob_params_module, only: dx_level
