@@ -3,7 +3,8 @@
 subroutine ca_derinertialmomentumx(p,p_lo,p_hi,ncomp_p, &
                                    u,u_lo,u_hi,ncomp_u, &
                                    lo,hi,domlo,domhi, &
-                                   dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                                   dx,xlo,time,dt,bc,level,grid_no) &
+                                   bind(C,name='ca_derinertialmomentumx')
 
   use bl_constants_module, only: HALF
   use probdata_module, only: inertial_velocity
@@ -46,7 +47,8 @@ end subroutine ca_derinertialmomentumx
 subroutine ca_derinertialmomentumy(p,p_lo,p_hi,ncomp_p, &
                                    u,u_lo,u_hi,ncomp_u, &
                                    lo,hi,domlo,domhi, &
-                                   dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                                   dx,xlo,time,dt,bc,level,grid_no) &
+                                   bind(C,name='ca_derinertialmomentumy')
 
   use bl_constants_module, only: HALF
   use probdata_module, only: inertial_velocity
@@ -89,7 +91,8 @@ end subroutine ca_derinertialmomentumy
 subroutine ca_derinertialmomentumz(p,p_lo,p_hi,ncomp_p, &
                                    u,u_lo,u_hi,ncomp_u, &
                                    lo,hi,domlo,domhi, &
-                                   dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                                   dx,xlo,time,dt,bc,level,grid_no) &
+                                   bind(C,name='ca_derinertialmomentumz')
 
   use bl_constants_module, only: HALF
   use probdata_module, only: inertial_velocity
@@ -132,7 +135,8 @@ end subroutine ca_derinertialmomentumz
 subroutine ca_derinertialangmomx(L,L_lo,L_hi,ncomp_L, &
                                  u,u_lo,u_hi,ncomp_u, &
                                  lo,hi,domlo,domhi, &
-                                 dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                                 dx,xlo,time,dt,bc,level,grid_no) &
+                                 bind(C,name='ca_derinertialangmomx')
 
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
@@ -175,7 +179,8 @@ end subroutine ca_derinertialangmomx
 subroutine ca_derinertialangmomy(L,L_lo,L_hi,ncomp_L, &
                                  u,u_lo,u_hi,ncomp_u, &
                                  lo,hi,domlo,domhi, &
-                                 dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                                 dx,xlo,time,dt,bc,level,grid_no) &
+                                 bind(C,name='ca_derinertialangmomy')
 
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
@@ -218,7 +223,8 @@ end subroutine ca_derinertialangmomy
 subroutine ca_derinertialangmomz(L,L_lo,L_hi,ncomp_L, &
                                  u,u_lo,u_hi,ncomp_u, &
                                  lo,hi,domlo,domhi, &
-                                 dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                                 dx,xlo,time,dt,bc,level,grid_no) &
+                                 bind(C,name='ca_derinertialangmomz')
 
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
@@ -263,7 +269,7 @@ end subroutine ca_derinertialangmomz
 subroutine ca_derphieff(phi,phi_lo,phi_hi,ncomp_phi, &
                         u,u_lo,u_hi,ncomp_u, &
                         lo,hi,domlo,domhi, &
-                        dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                        dx,xlo,time,dt,bc,level,grid_no) bind(C,name='ca_derphieff')
 
   implicit none
 
@@ -302,7 +308,7 @@ end subroutine ca_derphieff
 subroutine ca_derphieffpm_p(phi,phi_lo,phi_hi,ncomp_phi, &
                             u,u_lo,u_hi,ncomp_u, &
                             lo,hi,domlo,domhi, &
-                            dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                            dx,xlo,time,dt,bc,level,grid_no) bind(C,name='ca_derphieffpm_p')
 
   use bl_constants_module, only: ZERO, HALF
   use probdata_module, only: mass_P, com_P
@@ -351,7 +357,7 @@ end subroutine ca_derphieffpm_p
 subroutine ca_derphieffpm_s(phi,phi_lo,phi_hi,ncomp_phi, &
                             u,u_lo,u_hi,ncomp_u, &
                             lo,hi,domlo,domhi, &
-                            dx,xlo,time,dt,bc,level,grid_no) bind(C)
+                            dx,xlo,time,dt,bc,level,grid_no) bind(C,name='ca_derphieffpm_s')
 
   use bl_constants_module, only: ZERO, HALF
   use probdata_module, only: mass_S, com_S

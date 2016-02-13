@@ -106,7 +106,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
                  com_s_x, com_s_y, com_s_z, &
                  vel_p_x, vel_p_y, vel_p_z, &
                  vel_s_x, vel_s_y, vel_s_z, &
-                 m_p, m_s) bind(C)
+                 m_p, m_s) bind(C,name='wdcom')
 
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo, probhi, physbc_lo, physbc_hi, Symmetry
@@ -208,7 +208,8 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi, &
                                       phis,ps_lo,ps_hi, &
                                       vol,v_lo,v_hi, &
                                       lo,hi,dx, &
-                                      volp,vols,rho_cutoff) bind(C)
+                                      volp,vols,rho_cutoff) &
+                                      bind(C,name='ca_volumeindensityboundary')
 
   use bl_constants_module
   use prob_params_module, only: problo
@@ -261,7 +262,8 @@ end subroutine ca_volumeindensityboundary
 ! We will use a tri-linear interpolation that gets a contribution
 ! from all the zone centers that bracket the Lagrange point.
 
-subroutine get_critical_roche_potential(phiEff,p_lo,p_hi,lo,hi,L1,potential) bind(C)
+subroutine get_critical_roche_potential(phiEff,p_lo,p_hi,lo,hi,L1,potential) &
+                                        bind(C,name='get_critical_roche_potential')
 
   use bl_constants_module, only: ZERO, HALF, ONE
   use castro_util_module, only: position
@@ -310,7 +312,8 @@ end subroutine get_critical_roche_potential
 
 ! Given state data in the rotating frame, transform it to the inertial frame.
 
-subroutine transform_to_inertial_frame(state, s_lo, s_hi, lo, hi, time) bind(C)
+subroutine transform_to_inertial_frame(state, s_lo, s_hi, lo, hi, time) &
+                                       bind(C,name='transform_to_inertial_frame')
 
   use meth_params_module, only: NVAR, URHO, UMX, UMZ
   use probdata_module, only: inertial_velocity
@@ -353,7 +356,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
                                         xmom, px_lo, px_hi, ymom, py_lo, py_hi, zmom, pz_lo, pz_hi, &
                                         gravx, gx_lo, gx_hi, gravy, gy_lo, gy_hi, gravz, gz_lo, gz_hi, &
                                         vol, vo_lo, vo_hi, &
-                                        lo, hi, dx, time, Qtt) bind(C)
+                                        lo, hi, dx, time, Qtt) bind(C,name='quadrupole_tensor_double_dot')
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo, probhi, physbc_lo, physbc_hi, Symmetry
@@ -470,7 +473,8 @@ end subroutine quadrupole_tensor_double_dot
 
 ! Given the above quadrupole tensor, calculate the strain tensor.
 
-subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, Qtt, time) bind(C)
+subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, Qtt, time) &
+                            bind(C,name='gw_strain_tensor')
 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
@@ -570,7 +574,7 @@ end subroutine gw_strain_tensor
 
 
 
-subroutine update_center(time) bind(C)
+subroutine update_center(time) bind(C,name='update_center')
 
   use bl_constants_module, only: ZERO
   use probdata_module, only: bulk_velx, bulk_vely, bulk_velz, &
@@ -609,7 +613,7 @@ end subroutine update_center
 
 ! Updates the CASTRO rotational period.
 
-subroutine set_period(period) bind(C)
+subroutine set_period(period) bind(C,name='set_period')
 
   use meth_params_module, only: rot_period
 
@@ -625,7 +629,7 @@ end subroutine set_period
 
 ! Returns the CASTRO rotation frequency vector.
 
-subroutine get_omega_vec(omega_in, time) bind(C)
+subroutine get_omega_vec(omega_in, time) bind(C,name='get_omega_vec')
 
   use rotation_frequency_module, only: get_omega
 

@@ -1123,7 +1123,7 @@ contains
 
   ! Return the locations of the stellar centers of mass
 
-  subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
+  subroutine get_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C,name='get_star_data')
 
     implicit none
 
@@ -1146,7 +1146,7 @@ contains
 
   ! Set the locations of the stellar centers of mass
 
-  subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C)
+  subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C,name='set_star_data')
 
     use bl_constants_module, only: TENTH, ZERO
     use prob_params_module, only: center
@@ -1216,7 +1216,7 @@ contains
 
   subroutine check_relaxation(state, s_lo, s_hi, &
                               phiEff, p_lo, p_hi, &
-                              lo, hi, potential, is_done) bind(C)
+                              lo, hi, potential, is_done) bind(C,name='check_relaxation')
 
     use meth_params_module, only: URHO, NVAR
     use castro_util_module, only: position_to_index
@@ -1259,7 +1259,7 @@ contains
   ! rotation period to a negative number, which disables
   ! the rotation.
 
-  subroutine turn_off_relaxation(time) bind(C)
+  subroutine turn_off_relaxation(time) bind(C,name='turn_off_relaxation')
 
     use problem_io_module, only: ioproc
     use sponge_module, only: sponge_timescale
@@ -1283,7 +1283,7 @@ contains
 
 
 
-  subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C)
+  subroutine get_axes(axis_1_in, axis_2_in, axis_3_in) bind(C,name='get_axes')
 
     implicit none
 
@@ -1299,7 +1299,7 @@ contains
 
   ! Return whether we're doing a single star simulation or not.
 
-  subroutine get_single_star(flag) bind(C)
+  subroutine get_single_star(flag) bind(C,name='get_single_star')
 
     implicit none
 
@@ -1315,7 +1315,7 @@ contains
 
   ! Return the problem type.
 
-  subroutine get_problem_number(problem_out) bind(C)
+  subroutine get_problem_number(problem_out) bind(C,name='get_problem_number')
 
     implicit none
 

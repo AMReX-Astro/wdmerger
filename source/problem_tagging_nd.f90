@@ -10,7 +10,7 @@ contains
                               state,state_lo,state_hi, &
                               set,clear,&
                               lo,hi,&
-                              dx,problo,time,level) bind(C)
+                              dx,problo,time,level) bind(C,name='set_problem_tags')
 
     use bl_constants_module, only: ZERO, HALF, TWO
     use meth_params_module, only: NVAR, URHO, UTEMP
