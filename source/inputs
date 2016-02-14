@@ -167,9 +167,6 @@ castro.transverse_reset_rhoe = 0
 # Reset rho if it goes negative in the transverse terms
 castro.transverse_reset_density = 1
 
-# Renormalize species after a hydro update
-castro.normalize_species = 1
-
 ############################################################################################
 # Thermodynamics
 ############################################################################################
