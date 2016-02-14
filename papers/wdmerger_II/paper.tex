@@ -312,7 +312,7 @@ term to the hydrodynamics corresponding to the energy release
 from the burning. We are presently investigating such a method,
 and it may form the basis of further work on this subject.
 
-Finally, we return to a point we hinted at above. The timestep
+Now we return to a point we hinted at above. The timestep
 will only actually satisfy the energy criterion
 $\Delta t \leq f_e \tau_e$ and species criterion
 $\Delta t \leq f_{X_k} \tau_{X_k}$ when the estimates for
@@ -351,6 +351,31 @@ systems such as white dwarf collisions, where even a short
 period of incorrect advances can significantly pollute the
 final answer, and the additional memory expense is justified
 by obtaining a more accurate solution.
+
+One other point worth noting for the coupling of the reactions
+and the hydrodynamics relates to the dual-energy formalism used
+by \castro\ and many other hydrodynamics codes \cite{bryan:1995}.
+\castro\ evolves separately equations for the total energy $(\rho E)$ and
+for the internal energy $(\rho e)$. The former is conservative while the latter
+is not, so for accurate hydrodynamics we prefer to use the total
+energy when possible and to use the evolved internal energy variable
+only in situations where the kinetic energy dominates the contribution
+to the total energy. Indeed, for the cosmological purpose for which
+this was originally developed, \cite{ENZO} choose a value $\eta_2 = 0.1$
+so that $e$ is only updated to be equal to $E - \mathbf{v}^2/2$ if
+$e > \eta_2\, E$. In other cases the evolved value of the internal
+energy variable is preserved. However, this choice does not work
+for our application, because the ultimate cause of the nuclear
+burning in a white dwarf collision is the rapid conversion of
+kinetic energy from the white dwarf bulk motion to thermal energy
+as the white dwarfs slam into each other. Keeping $\eta_2$ large
+prevents this from happening, and consequently the temperature
+will never reach values high enough to generate significant
+amounts of nickel. For this paper we choose $\eta_2 = 10^{-4}$,
+which is low enough for the correct conversion of kinetic energy
+but not so low that we need to be concerned about roundoff issues
+caused by subtracting kinetic from total energy. This is also
+the value that was used by \cite{hawley:2012}.
 
 \subsection{Numerically Unstable Burning}
 
@@ -522,12 +547,6 @@ of the AstroBetter blog and wiki.
 
 \bibliographystyle{../aasjournal}
 \bibliography{../refs}
-
-
-\clearpage
-\appendix
-
-
 
 \end{document}
 
