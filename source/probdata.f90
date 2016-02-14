@@ -34,7 +34,7 @@ module probdata_module
 
   ! Smallest allowed velocity on the grid
 
-  double precision, save :: smallu = 1.0d-12
+  double precision, save :: smallu = ZERO
 
 
 
