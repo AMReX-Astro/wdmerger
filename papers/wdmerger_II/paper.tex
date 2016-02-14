@@ -208,41 +208,166 @@ decoupled from each other. A common solution to this problem presented in
 the literature has been to limit the size of the timestep and thereby limit the
 extent of this decoupling \citep{raskin:2010,hawley:2012}, which we adopt here 
 and have implemented in \castro. Defining the nuclear energy injection timescale 
-$t_e$:
-\begin{equation}
-  t_e \equiv \frac{e}{|\dot{e}|},
-\end{equation}
+$\tau_e$, and the species evolution timescale $\tau_{X_k}$,
+\begin{align}
+  \tau_e &\equiv \frac{e}{|\dot{e}|} \\
+  \tau_{X_k} &\equiv \frac{X_k}{|\dot{X_k}|},
+\end{align}
 where $\dot{e}$ is an estimate of the time rate of change of the internal energy
-from nuclear burning, we define a burning-limited timestep $\Delta t_{b}$:
-\begin{equation}
-  \Delta t_{b} = f_{\Delta t}\, t_e.
-\end{equation}
-We estimate $\dot{e}$ using the energy change in the last burning
-update, divided by the length of the burning timestep. The factor $f_{\Delta t}$ then
-determines by what fraction we would like to allow the internal energy to change
-in the current timestep (assuming that $\dot{e}$ does not change quickly from
-timestep to timestep, which is not always the case). By making $f_{\Delta t}$ smaller,
-we can control the magnitude of the decoupling between the reactions and the hydro.
-We choose by default $f_{\Delta t} = 0.1$, a choice which is on par with others in 
-the literature. The sensitivity of results to this choice will be discussed in 
-\autoref{sec:2D:timestep}. The factor $f_{\Delta t}$ can be set at runtime in \castro.
+from nuclear burning, and $\dot{X_k}$ is an estimate of the time rate of change 
+of the mass fraction of the species with index $k$, we define burning-limited 
+timesteps $\Delta t_{be}$ and $\Delta t_{bX_k}$:
+\begin{align}
+  \Delta t_{be} &= f_{e}\, \tau_e \\
+  \Delta t_{bX_k} &= f_{X}\, \tau_{X_k}.
+\end{align}
+Given an estimate for $\dot{e}$, the factor $f_{e}$ determines by what 
+fraction we would like to allow the internal energy to change
+in the current timestep, under the assumption that $\dot{e}$ does not change from
+timestep to timestep. Similarly, given an estimate for $\dot{X_k}$, the factor $f_{X}$ 
+determines the maximum change in the mass fraction of any species. By making 
+$f_{e}$ and $f_{X}$ smaller, we can control the magnitude of the decoupling 
+between the reactions and the hydro. We choose by default $f_{X} = f_{e} = 0.1$, 
+a choice which is slightly smaller than others in the literature. (Note that previous 
+collision papers we are aware of only limited based on changes in internal energy, 
+not on cahnges in species.)  The sensitivity of results to this choice will be discussed in 
+\autoref{sec:2D:timestep}. The factors $f_{e}$ and $f_{X}$ can be set at runtime in \castro.
 
 At the start of each advance, we limit the size of the timestep to be the smaller
-of the minimum hydro timestep (limited by the CFL condition), and the minimum of the
-burning timestep across all zones.
+of the minimum hydro timestep (limited by the CFL condition), and the minimum of all the
+burning timesteps across all zones. To do this, we need a method for determining 
+$\dot{e}$ and $\dot{X_k}$. A typical choice in the literature has been to set, for example,
+\begin{equation}
+  \dot{e} = \frac{e^{n} - e^{n-1}}{\Delta t^{n-1}}, \label{eq:burning_mode_4}
+\end{equation}
+where is $e^n$ is the internal energy at the start of the current timestep and
+$e^{n-1}$ is the internal energy at the start of the previous timestep. 
+The obvious analogue is used for constructing the species rate of change.
+However, there are alternative methods of constructing this derivative estimate, 
+and we have found that these different methods have measurable consequences.
+We define four separate methods for calculating the time derivative, with 
+the above being method 4. Method 3 is similar to method 4 but replaces the
+denominator in Equation \ref{eq:burning_mode_4} with the change in 
+internal energy over the last timestep only from the nuclear reactions.
+Method 2 is the same as method 3 but we only use the change in internal 
+energy from the most recent nuclear burning step, that is, the second-half
+of the Strang-split burning from the last timestep (the denominator 
+then becomes $\Delta t / 2$). In method 1, the most accurate option and 
+the current default in \castro, we evaluate the right-hand-side of the 
+burning network given the current state to explicitly obtain the 
+instantaneous value of $\dot{e}$ and $\dot{X_k}$. 
 
-\citet{kushnir:2013} point out this is not the only way for the burning to
-become numerically unstable; another failure mode is when the energy injection timescale
+To understand the consequences of this choice, and more broadly to 
+understand the limitations of Strang splitting, we consider the 
+basic outline of a single-level advance in an advection-reaction system:
+\begin{enumerate}
+  \item Evaluate timestep $\Delta t$ for the current advance
+  \item Advance the nuclear burning network by $\Delta t / 2$
+  \item Advance the hydrodynamics by $\Delta t$
+  \item Advance the nuclear burning network by $\Delta t / 2$
+  \item Return to Step 1
+\end{enumerate}
+Now, consider that during a head-on collision, initial nuclear burning 
+will occur at the contact point between the two stars. Because of 
+the staggered updates from splitting, the evolution effectively progresses 
+as a cycle between burning for $\Delta t$ and getting fresh material 
+advected into the contact point by the hydro update for $\Delta t$. 
+When the collision begins, $\Delta t$ is controlled by the hydrodynamic 
+stability criterion, and may be large enough that it is possible for 
+the burning advance in Step 4 to completely burn the freshly advected 
+material all the way to NSE. Consequently the evolution is no longer 
+a good approximation to smooth burning of the in-falling material but
+rather separate discrete burning and hydro steps, and the nature of 
+the burning evolution will be quite different. Furthermore, by the 
+time we return to Step 1 and estimate the next timestep size, all 
+of the burning rates will be small again, and the instantaneous 
+timestep limiter of method 1 may actually substantially overestimate 
+the needed timestep. The other methods will see that the energy/species  
+substantially changed over the last timestep, but will still 
+overestimate the needed timestep because the burning was quiescent
+for at least some portion of the last advance. In particular, our 
+experience has shown that using only the energy change criterion
+is particularly susceptible to this phenomenon; silicon-group 
+material can build up without changing the internal energy by a 
+large fraction, so the timestep limiter is never triggered, and 
+then in a single step a substantial amount of iron-group elements 
+can be be generated. This can have non-trivial effects on the 
+total amount of iron-group elements generated over the course of
+the simulation. We have found that the addition of the 
+limiter based on changes in species functionally precludes this.
+
+With the timestep limited the way we advocate in this paper, 
+the timesteps are generally short enough so that the errors 
+due to splitting are small. Other approaches to the coupling 
+between reactions and hydrodynamics have been proposed in the 
+broader literature, especially iterative methods such as 
+deferred corrections that allow each of these operators to 
+feel the lagged effects of the other operators. For example,
+in the context of low Mach number flows, \cite{nonaka:2012} have
+used the method of spectral deferred corrections \cite{SDC} to
+couple their advection-diffusion-reaction equation set. In our
+context this would involve using the advection as a source term
+for the burning network, and symmetrically including a source
+term to the hydrodynamics corresponding to the energy release
+from the burning. We are presently investigating such a method,
+and it may form the basis of further work on this subject.
+
+Finally, we return to a point we hinted at above. The timestep
+will only actually satisfy the energy criterion
+$\Delta t \leq f_e \tau_e$ and species criterion
+$\Delta t \leq f_{X_k} \tau_{X_k}$ when the estimates for
+$\dot{e}$ and $\dot{X_k}$ we generate are at least as large
+as the actual rate of change of energy and mass fractions
+over the timestep. However, this can assumption can fail
+quite radically during periods of runaway burning when
+the rate of change of these quantities is highly nonlinear.
+We do not want to neglect the errors caused by this approximation
+because they may build up over an extended period of nonlinear
+evolution and perhaps substantially change the final results.
+To this end, we have implemented a timestep retry option in
+\castro. The retry option works by first saving a copy of the
+full state, and then doing the advance. We then explicitly
+check whether the timestep criteria were violated during the advance,
+using the time-centered energy and mass fractions and a
+time-centered differencing of the old and new states to
+calculate the evolution timescale. If so, we reject this
+advance and restore the original state data. We then perform
+a subcycled update, with the maximum timestep chosen so that
+the criterion is satisfied in each subcycle. Note that this
+occurs entirely on a single level and is separate from the
+subcycling that is used by \boxlib\ to advance the different
+AMR levels in time; the full AMR algorithm does not ever
+know that the retry subcycling took place. This can help
+substantially to mollify the problem described above, where
+the time derivative estimation methods proposed were not
+sufficient to obtain the desired limiting. Thus we strongly
+recommend that hydrodynamics codes implement such an approach,
+which ensures that the coupling actually does stay at the
+level requested. The most significant drawback is that saving
+a copy of the old state effectively doubles the memory footprint
+of the code, so this option should be disabled when not needed.
+However, it may be crucial in determining the evolution of
+systems such as white dwarf collisions, where even a short
+period of incorrect advances can significantly pollute the
+final answer, and the additional memory expense is justified
+by obtaining a more accurate solution.
+
+\subsection{Numerically Unstable Burning}
+
+\citet{kushnir:2013} point out that an inappropriate timestep is 
+not the only way for the numerical discretization to cause 
+severe errors in the burning. Another failure mode is when
+the energy injection timescale
 $t_e$ is shorter than the sound-crossing time $t_s$ in a zone.
 The goal is to ensure that the following condition holds:
 \begin{equation}
-  t_s \leq f_{\Delta x} t_e \label{eq:burning_limiter_2}
+  t_s \leq f_{s} t_e \label{eq:burning_limiter_2}
 \end{equation}
 The sound crossing time, $t_s$, is given by $\Delta x / c_s$, 
 where $c_s$ is the sound speed and $\Delta x$ is the (minimum) 
-zone width. The parameter $f_{\Delta x}$ then determines the minimum
+zone width. The parameter $f_{s}$ then determines the minimum
 ratio of the nuclear energy generation timescale to the 
-sound-crossing time. \citet{kushnir:2013} choose $f_{\Delta x} = 0.1$ 
+sound-crossing time. \citet{kushnir:2013} choose $f_{s} = 0.1$ 
 for their simulations, and we do too (this parameter can be set 
 at runtime in \castro).
 
@@ -277,8 +402,9 @@ A simulation that does not solve this problem in this way
 of burning, and will not converge properly with resolution. 
 Fortunately, the regions where this criterion is not satisfied 
 are fairly localized on the grid, so the amount of additional 
-computational work is not exceedingly large.
-
+computational work is not insurmountable for a single simulation.
+However, this level of accuracy may make a parameter study of
+the problem unfeasible, given current computational resources.
 
 
 
