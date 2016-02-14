@@ -151,9 +151,12 @@ castro.ppm_trace_sources = 1
 # Use the EOS in calculation of the edge states going into the Riemann solver
 castro.ppm_temp_fix = 0
 
-# Which Riemann solver to use. We seem to have problems with the more accurate
-# Collela & Glaz Riemann solver, so use the more approximate (and cheaper) CGF solver.
-castro.riemann_solver = 0
+# Which Riemann solver to use. By default we use the Colella & Glaz solver.
+castro.riemann_solver = 1
+
+# For the CG Riemann solver, we need to tell the solver not to quit when 
+# the iterations don't converge, but instead to do additional bisection iteration.
+castro.cg_blend = 2
 
 # How to include the gravity source term in the hydro equations
 castro.grav_source_type = 4
