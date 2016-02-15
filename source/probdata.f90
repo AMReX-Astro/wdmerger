@@ -1275,7 +1275,10 @@ contains
 
     relaxation_timescale = -ONE
     sponge_timescale = -ONE
-    rot_period = -ONE
+
+    if (do_rotation .eq. 1 .and. accurate_IC_frame .eq. 2) then
+       rot_period = -ONE
+    endif
 
     if (ioproc) then
        print *, ""
