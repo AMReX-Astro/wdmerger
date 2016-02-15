@@ -1267,7 +1267,7 @@ contains
 
     use problem_io_module, only: ioproc
     use sponge_module, only: sponge_timescale
-    use meth_params_module, only: rot_period
+    use meth_params_module, only: rot_period, do_rotation
 
     implicit none
 
