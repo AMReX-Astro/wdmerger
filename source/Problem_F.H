@@ -88,4 +88,6 @@ extern "C"
 
   void get_problem_number(int* problem);
 
+  void get_frame_choice(int* accurate_IC_frame);
+
 }

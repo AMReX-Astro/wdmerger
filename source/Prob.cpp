@@ -7,6 +7,7 @@
 
 bool Castro::relaxation_is_done = false;
 int Castro::problem = -1;
+int Castro::accurate_IC_frame = -1;
 
 #ifdef do_problem_post_timestep
 void
@@ -181,7 +182,9 @@ Castro::problem_post_timestep()
 
       delete mfphieff;
 
-      if (relaxation_is_done) {
+      // Convert to the inertial frame, if we're doing it that way.
+
+      if (relaxation_is_done && accurate_IC_frame == 2) {
 
 	for (int lev = 0; lev <= finest_level; lev++) {
 
@@ -608,6 +611,10 @@ void Castro::problem_post_init() {
   // Get the problem number fom Fortran.
 
   get_problem_number(&problem);
+
+  // For the accurate ICs, get the reference frame choice.
+
+  get_frame_choice(&accurate_IC_frame);
 
   // Execute the post timestep diagnostics here,
   // so that the results at t = 0 and later are smooth.

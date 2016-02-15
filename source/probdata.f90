@@ -66,6 +66,14 @@ module probdata_module
 
 
 
+  ! For problem 3, we have multiple ways to approach it:
+  ! 1: do full problem in rotating frame
+  ! 2: start problem in rotating frame and convert to inertial frame when damping is disabled
+
+  integer, save :: accurate_IC_frame = 1
+
+
+
   ! Collision parameters
 
   ! For a collision, number of (secondary) WD radii to 
@@ -1320,5 +1328,19 @@ contains
     problem_out = problem
 
   end subroutine get_problem_number
+
+
+
+  ! Return accurate_IC_frame.
+
+  subroutine get_frame_choice(frame_out) bind(C,name='get_frame_choice')
+
+    implicit none
+
+    integer :: frame_out
+
+    frame_out = accurate_IC_frame
+
+  end subroutine get_frame_choice
 
 end module probdata_module

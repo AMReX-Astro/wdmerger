@@ -57,3 +57,4 @@ void problem_post_timestep();
 
 static bool relaxation_is_done;
 static int problem;
+static int accurate_IC_frame;

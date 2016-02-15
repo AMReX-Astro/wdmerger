@@ -11,6 +11,8 @@
 
   roche_radius_factor = 1.5d0
 
+  accurate_IC_frame = 1
+
   collision_separation = 4.0
   collision_impact_parameter = 0.0
 
