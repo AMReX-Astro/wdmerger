@@ -1,6 +1,6 @@
 module probdata_module
 
-  use network, only: nspec, network_species_index
+  use network, only: nspec, network_species_index, smallx
   use eos_type_module, only: eos_t
   use eos_module, only: eos_input_rt, eos
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO, THREE, M_PI, FOUR
@@ -27,10 +27,6 @@ module probdata_module
   double precision, save :: ambient_comp(nspec)
 
 
-
-  ! Smallest allowed mass fraction
-
-  double precision, save :: smallx = 1.0d-12
 
   ! Smallest allowed velocity on the grid
 
