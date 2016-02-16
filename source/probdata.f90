@@ -231,6 +231,7 @@ module probdata_module
        central_density_P, central_density_S, &
        nsub, &
        roche_radius_factor, &
+       accurate_IC_frame, &
        problem, &
        collision_separation, &
        collision_impact_parameter, &
