@@ -165,7 +165,7 @@ castro.grav_source_type = 4
 castro.rot_source_type = 4
 
 # Reset (rho*e) if it goes negative in the transverse terms
-castro.transverse_reset_rhoe = 0
+castro.transverse_reset_rhoe = 1
 
 # Reset rho if it goes negative in the transverse terms
 castro.transverse_reset_density = 1
