@@ -3,6 +3,7 @@ import numpy as np
 import yt
 import string
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import AxesGrid
 
 #
 # Returns the current git hash of the wdmerger repo.
@@ -697,5 +698,69 @@ def rho_T_scatterplot(output_filename, pltfile):
     plt.tight_layout()
     plt.savefig(output_filename)
     insert_commits_into_eps(output_filename, pltfile, 'plot')
+
+    plt.close()
+
+
+
+def rho_T_sliceplot(output_filename, pltfile):
+
+    fig = plt.figure()
+
+    grid_padding = 0.01
+    label_mode = 'L'
+
+    grid = AxesGrid(fig, (0.025, 0.1, 0.975, 0.8),
+                    nrows_ncols=(1, 2),
+                    axes_pad=grid_padding,
+                    label_mode=label_mode,
+                    cbar_location='top',
+                    cbar_mode='each',
+                    cbar_size='5%',
+                    cbar_pad='0%')
+
+    ds = yt.load(pltfile)
+
+    dim = ds.dimensionality
+
+    if dim == 1:
+        print "This slice plot routine is not implemented in one dimension."
+        exit
+    elif dim == 2:
+        sp = yt.SlicePlot(ds, 'theta', fields=['density', 'Temp'])
+    elif dim == 3:
+        sp = yt.SlicePlot(ds, 'z', fields=['density', 'Temp'])
+
+    sp.set_cmap('density', 'bone')
+    sp.set_cmap('Temp', 'hot')
+
+    sp.set_zlim('density', 0.0001, 100000000.0)
+    sp.set_zlim('Temp', 10000000.0, 10000000000.0)
+
+    plot_dens = sp.plots['density']
+    plot_dens.figure = fig
+    plot_dens.axes = grid[0].axes
+    plot_dens.cax = grid.cbar_axes[0]
+
+    plot_temp = sp.plots['Temp']
+    plot_temp.figure = fig
+    plot_temp.axes = grid[1].axes
+    plot_temp.cax = grid.cbar_axes[1]
+
+    cb_dens = plot_dens.cb
+    cb_dens.solids.set_rasterized(True)
+
+    cb_temp = plot_temp.cb
+    cb_temp.solids.set_rasterized(True)
+
+
+    sp._setup_plots()
+    grid[0].invert_xaxis()
+
+    plt.savefig(output_filename)
+
+    insert_commits_into_eps(output_filename, pltfile, 'plot')
+
+    plt.savefig(output_filename[:-4] + '.png')
 
     plt.close()
