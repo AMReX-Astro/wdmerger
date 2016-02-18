@@ -1,6 +1,6 @@
 module probdata_module
 
-  use network, only: nspec, network_species_index, smallx
+  use network, only: nspec, network_species_index
   use eos_type_module, only: eos_t
   use eos_module, only: eos_input_rt, eos
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO, THREE, M_PI, FOUR
@@ -257,7 +257,7 @@ module probdata_module
        stellar_density_threshold, &
        temperature_tagging_threshold, &
        bulk_velx, bulk_vely, bulk_velz, &
-       smallx, smallu, &
+       smallu, &
        center_fracx, center_fracy, center_fracz, &
        initial_model_dx, &
        initial_model_npts, &
@@ -761,6 +761,10 @@ contains
 
   subroutine set_wd_composition(model)
 
+    use meth_params_module, only: small_x
+
+    implicit none
+
     type (initial_model), intent(inout) :: model
 
     integer :: iHe4, iC12, iO16, iNe20, iMg24
@@ -777,8 +781,8 @@ contains
     if (iNe20 < 0) call bl_error("Must have Ne20 in the nuclear network.")
     if (iMg24 < 0) call bl_error("Must have Mg24 in the nuclear network.")
 
-    model % core_comp = smallx
-    model % envelope_comp = smallx
+    model % core_comp = small_x
+    model % envelope_comp = small_x
 
     model % envelope_mass = ZERO
 
