@@ -34,7 +34,6 @@
   bulk_vely = 0.0d0
   bulk_velz = 0.0d0
 
-  smallx = 1.0d-12
   smallu = 1.0d-12
 
   center_fracx = 0.5d0
