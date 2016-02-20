@@ -8,6 +8,7 @@ subroutine ca_derinertialmomentumx(p,p_lo,p_hi,ncomp_p, &
 
   use bl_constants_module, only: HALF
   use probdata_module, only: inertial_velocity
+  use prob_params_module, only: center
 
   implicit none
 
@@ -23,11 +24,11 @@ subroutine ca_derinertialmomentumx(p,p_lo,p_hi,ncomp_p, &
   double precision :: loc(3), vel(3), mom(3), rho
 
   do k = lo(3), hi(3)
-     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
-        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
         do i = lo(1), hi(1)
-           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
 
            rho = u(i,j,k,1)
            vel = u(i,j,k,2:4) / rho
@@ -52,6 +53,7 @@ subroutine ca_derinertialmomentumy(p,p_lo,p_hi,ncomp_p, &
 
   use bl_constants_module, only: HALF
   use probdata_module, only: inertial_velocity
+  use prob_params_module, only: center
 
   implicit none
 
@@ -67,11 +69,11 @@ subroutine ca_derinertialmomentumy(p,p_lo,p_hi,ncomp_p, &
   double precision :: loc(3), vel(3), mom(3), rho
 
   do k = lo(3), hi(3)
-     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
-        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
         do i = lo(1), hi(1)
-           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
 
            rho = u(i,j,k,1)
            vel = u(i,j,k,2:4) / rho
@@ -96,6 +98,7 @@ subroutine ca_derinertialmomentumz(p,p_lo,p_hi,ncomp_p, &
 
   use bl_constants_module, only: HALF
   use probdata_module, only: inertial_velocity
+  use prob_params_module, only: center
 
   implicit none
 
@@ -111,11 +114,11 @@ subroutine ca_derinertialmomentumz(p,p_lo,p_hi,ncomp_p, &
   double precision :: loc(3), vel(3), mom(3), rho
 
   do k = lo(3), hi(3)
-     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
-        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
         do i = lo(1), hi(1)
-           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
 
            rho = u(i,j,k,1)
            vel = u(i,j,k,2:4) / rho
@@ -141,6 +144,7 @@ subroutine ca_derinertialangmomx(L,L_lo,L_hi,ncomp_L, &
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
   use probdata_module, only: inertial_velocity
+  use prob_params_module, only: center
 
   implicit none
 
@@ -156,11 +160,11 @@ subroutine ca_derinertialangmomx(L,L_lo,L_hi,ncomp_L, &
   double precision :: loc(3), vel(3), ang_mom(3), rho
 
   do k = lo(3), hi(3)
-     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
-        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
         do i = lo(1), hi(1)
-           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
 
            rho = u(i,j,k,1)
            vel = u(i,j,k,2:4) / rho
@@ -185,6 +189,7 @@ subroutine ca_derinertialangmomy(L,L_lo,L_hi,ncomp_L, &
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
   use probdata_module, only: inertial_velocity
+  use prob_params_module, only: center
 
   implicit none
 
@@ -200,11 +205,11 @@ subroutine ca_derinertialangmomy(L,L_lo,L_hi,ncomp_L, &
   double precision :: loc(3), vel(3), ang_mom(3), rho
 
   do k = lo(3), hi(3)
-     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
-        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
         do i = lo(1), hi(1)
-           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
 
            rho = u(i,j,k,1)
            vel = u(i,j,k,2:4) / rho
@@ -229,6 +234,7 @@ subroutine ca_derinertialangmomz(L,L_lo,L_hi,ncomp_L, &
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
   use probdata_module, only: inertial_velocity
+  use prob_params_module, only: center
 
   implicit none
 
@@ -244,11 +250,11 @@ subroutine ca_derinertialangmomz(L,L_lo,L_hi,ncomp_L, &
   double precision :: loc(3), vel(3), ang_mom(3), rho
 
   do k = lo(3), hi(3)
-     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
      do j = lo(2), hi(2)
-        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
         do i = lo(1), hi(1)
-           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
 
            rho = u(i,j,k,1)
            vel = u(i,j,k,2:4) / rho
