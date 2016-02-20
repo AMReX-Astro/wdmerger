@@ -1107,11 +1107,12 @@ contains
 
 
   ! Given a rotating frame velocity, get the inertial frame velocity.
-  ! Note that this will simply return the original velocity if we're
-  ! already in the inertial frame, since omega = 0.
+  ! Note that we simply return the original velocity if we're
+  ! already in the inertial frame.
 
   function inertial_velocity(loc, vel, time) result (vel_i)
 
+    use meth_params_module, only: do_rotation
     use rotation_frequency_module, only: get_omega
     use math_module, only: cross_product
 
@@ -1124,7 +1125,11 @@ contains
 
     omega = get_omega(time)
 
-    vel_i = vel + cross_product(omega, loc)
+    vel_i = vel
+
+    if (do_rotation .eq. 1) then
+       vel_i = vel_i + cross_product(omega, loc)
+    endif
 
   end function inertial_velocity
 
