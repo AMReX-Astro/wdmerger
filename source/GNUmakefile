@@ -29,6 +29,8 @@ USE_ROTATION ?= TRUE
 
 DIMENSION_AGNOSTIC ?= TRUE
 
+USE_HYBRID_MOMENTUM ?= TRUE
+
 # Override default compiler for certain machines.
 
 UNAMEN := $(shell uname -n)
