@@ -143,7 +143,7 @@ castro.ppm_trace_sources = 1
 castro.ppm_temp_fix = 0
 
 # Which Riemann solver to use. By default we use the Colella & Glaz solver.
-castro.riemann_solver = 1
+castro.riemann_solver = 0
 
 # For the CG Riemann solver, we need to tell the solver not to quit when 
 # the iterations don't converge, but instead to do additional bisection iteration.
