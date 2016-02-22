@@ -117,15 +117,6 @@ castro.do_sponge = 1
 # Whether or not to apply external source terms
 castro.add_ext_src = 1
 
-# Whether or not to include the rotation source term
-castro.do_rotation = 1
-
-# Rotational period of the rotating reference frame
-castro.rotational_period = 100.0
-
-# Time rate of change of the rotational period
-castro.rotational_dPdt = -0.0
-
 # Use a lagged predictor estimate of the source terms in the hydro
 castro.source_term_predictor = 1
 
@@ -214,7 +205,6 @@ castro.react_T_min = 1.0e8
 # Maximum temperature for allowing nuclear burning
 castro.react_T_max = 1.0e12
 
-
 ############################################################################################
 # Gravity
 ############################################################################################
@@ -239,6 +229,22 @@ gravity.no_sync = 1
 
 # Maximum level for doing explicit gravity solves
 gravity.max_solve_level = 20
+
+############################################################################################
+# Gravity
+############################################################################################
+
+# Whether or not to include the rotation source term
+castro.do_rotation = 1
+
+# Rotational period of the rotating reference frame
+castro.rotational_period = 100.0
+
+# Time rate of change of the rotational period
+castro.rotational_dPdt = -0.0
+
+# Enable the implicit rotation update
+castro.implicit_rotation_update = 1
 
 ############################################################################################
 # Load balancing
