@@ -85,8 +85,14 @@ Castro::sum_integrated_quantities ()
 
     // Stellar centers of mass and velocities.
 
+    Real com_p_mag = 0.0;
+    Real com_s_mag = 0.0;
+
     Real com_p[3]     = { 0.0 };
     Real com_s[3]     = { 0.0 };
+
+    Real vel_p_mag = 0.0;
+    Real vel_s_mag = 0.0;
 
     Real vel_p[3] = { 0.0 };
     Real vel_s[3] = { 0.0 };
@@ -254,6 +260,11 @@ Castro::sum_integrated_quantities ()
     }
 
     get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+
+    com_p_mag += std::pow( std::pow(com_p[0],2) + std::pow(com_p[1],2) + std::pow(com_p[2],2), 0.5 );
+    com_s_mag += std::pow( std::pow(com_s[0],2) + std::pow(com_s[1],2) + std::pow(com_s[2],2), 0.5 );
+    vel_p_mag += std::pow( std::pow(vel_p[0],2) + std::pow(vel_p[1],2) + std::pow(vel_p[2],2), 0.5 );
+    vel_s_mag += std::pow( std::pow(vel_s[0],2) + std::pow(vel_s[1],2) + std::pow(vel_s[2],2), 0.5 );
 
     if (mass_p > 0.0 && mass_s > 0.0) {
       
@@ -464,17 +475,21 @@ Castro::sum_integrated_quantities ()
 
 	     star_log << std::setw(datwidth) << "              WD DISTANCE";
 	     star_log << std::setw(fixwidth) << "                 WD ANGLE";
-
+	     star_log << std::setw(datwidth) << "          PRIMARY MAG COM";
 #if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datwidth) << "            PRIMARY X COM";
 	     star_log << std::setw(datwidth) << "            PRIMARY Y COM";
 	     star_log << std::setw(datwidth) << "            PRIMARY Z COM";
+#else
+	     star_log << std::setw(datwidth) << "            PRIMARY R COM";
+	     star_log << std::setw(datwidth) << "            PRIMARY Z COM";
+#endif
+	     star_log << std::setw(datwidth) << "          PRIMARY MAG VEL";
+#if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datwidth) << "            PRIMARY X VEL";
 	     star_log << std::setw(datwidth) << "            PRIMARY Y VEL";
 	     star_log << std::setw(datwidth) << "            PRIMARY Z VEL";
 #else
-	     star_log << std::setw(datwidth) << "            PRIMARY R COM";
-	     star_log << std::setw(datwidth) << "            PRIMARY Z COM";
 	     star_log << std::setw(datwidth) << "            PRIMARY R VEL";
 	     star_log << std::setw(datwidth) << "            PRIMARY Z VEL";
 #endif
@@ -484,16 +499,21 @@ Castro::sum_integrated_quantities ()
 	     for (int i = 0; i <= 6; ++i)
 	       star_log << "       PRIMARY 1E" << i << " RADIUS";
 
+	     star_log << std::setw(datwidth) << "        SECONDARY MAG COM";
 #if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datwidth) << "          SECONDARY X COM";
 	     star_log << std::setw(datwidth) << "          SECONDARY Y COM";
 	     star_log << std::setw(datwidth) << "          SECONDARY Z COM";
+#else
+	     star_log << std::setw(datwidth) << "          SECONDARY R COM";
+	     star_log << std::setw(datwidth) << "          SECONDARY Z COM";
+#endif
+	     star_log << std::setw(datwidth) << "        SECONDARY MAG VEL";
+#if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datwidth) << "          SECONDARY X VEL";
 	     star_log << std::setw(datwidth) << "          SECONDARY Y VEL";
 	     star_log << std::setw(datwidth) << "          SECONDARY Z VEL";
 #else
-	     star_log << std::setw(datwidth) << "          SECONDARY R COM";
-	     star_log << std::setw(datwidth) << "          SECONDARY Z COM";
 	     star_log << std::setw(datwidth) << "          SECONDARY R VEL";
 	     star_log << std::setw(datwidth) << "          SECONDARY Z VEL";
 #endif
@@ -520,11 +540,13 @@ Castro::sum_integrated_quantities ()
 
 	   star_log << std::scientific;
 
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p_mag;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[0];
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[1];
 #if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[2];
 #endif
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_mag;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[0];
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[1];
 #if (BL_SPACEDIM == 3)
@@ -536,11 +558,13 @@ Castro::sum_integrated_quantities ()
 	   for (int i = 0; i <= 6; ++i)
 	       star_log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_p[i];
 
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s_mag;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[0];
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[1];
 #if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[2];
 #endif
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_mag;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[0];
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[1];
 #if (BL_SPACEDIM == 3)
