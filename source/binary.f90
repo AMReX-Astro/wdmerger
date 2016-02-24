@@ -12,7 +12,7 @@ contains
   ! using the approximate formula of Eggleton (1983). Optionally we can
   ! pass in a distance scale.
   
-  subroutine get_roche_radii(mass_ratio, r_1, r_2, a) bind(C,name="get_roche_radii")
+  subroutine get_roche_radii(mass_ratio, r_1, r_2, a)
 
     use bl_constants_module, only: ONE, TWO3RD, THIRD
 
