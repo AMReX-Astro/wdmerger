@@ -420,7 +420,7 @@ def energy_momentum_diagnostics(output_filename):
 # Get a sorted list of all the plotfiles in directory dir.
 #
 
-def get_plotfiles(dir):
+def get_plotfiles(dir, prefix='plt'):
 
     # Check to make sure the directory exists.
 
@@ -434,20 +434,22 @@ def get_plotfiles(dir):
 
     # Strip out non-plotfiles.
 
-    plotfiles = sorted(filter(lambda s: s[0:3] == 'plt', dir_contents))
+    namlen = len(prefix)
+
+    plotfiles = sorted(filter(lambda s: s[0:namlen] == prefix, dir_contents))
 
     # Remove any redundant plotfiles. These are generated with names like "old" or "temp"
     # and an easy way to get rid of them is just to check on all plotfiles that don't have
     # the right number of characters.
 
-    plotfiles = filter(lambda s: len(s) == 8 or len(s) == 9, plotfiles)
+    plotfiles = filter(lambda s: len(s) == namlen + 5 or len(s) == namlen + 6, plotfiles)
 
     # This step strips out 'plt' from each plotfile, sorts them numerically,
     # then recasts them as strings. This is necessary because we may have some
     # plotfiles with six digits and some with five, and the default sort will
     # not sort them properly numerically.
 
-    plotfiles = ['plt' + str(y).zfill(5) for y in sorted([int(x[3:]) for x in plotfiles])]
+    plotfiles = [prefix + str(y).zfill(5) for y in sorted([int(x[namlen:]) for x in plotfiles])]
 
     return plotfiles
 
