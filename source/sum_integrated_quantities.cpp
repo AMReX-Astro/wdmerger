@@ -30,6 +30,7 @@ Castro::sum_integrated_quantities ()
     Real mass                 = 0.0;
     Real momentum[3]          = { 0.0 };
     Real angular_momentum[3]  = { 0.0 };
+    Real hybrid_momentum[3]   = { 0.0 };
     Real rho_E                = 0.0;
     Real rho_e                = 0.0;
     Real rho_K                = 0.0;
@@ -196,7 +197,13 @@ Castro::sum_integrated_quantities ()
       angular_momentum[0] += ca_lev.volWgtSum("inertial_angular_momentum_x", time);
       angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time);
       angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time);
-      
+
+#ifdef HYBRID_MOMENTUM
+      hybrid_momentum[0] += ca_lev.volWgtSum("rmom", time);
+      hybrid_momentum[1] += ca_lev.volWgtSum("lmom", time);
+      hybrid_momentum[2] += ca_lev.volWgtSum("pmom", time);
+#endif
+
       rho_E += ca_lev.volWgtSum("rho_E", time);
       rho_K += ca_lev.volWgtSum("kineng",time);
       rho_e += ca_lev.volWgtSum("rho_e", time);
@@ -365,6 +372,11 @@ Castro::sum_integrated_quantities ()
 	     grid_log << std::setw(datwidth) << "                     XMOM";
 	     grid_log << std::setw(datwidth) << "                     YMOM";
 	     grid_log << std::setw(datwidth) << "                     ZMOM";
+#ifdef HYBRID_MOMENTUM
+	     grid_log << std::setw(datwidth) << "              HYB. MOM. R";
+	     grid_log << std::setw(datwidth) << "              HYB. MOM. L";
+	     grid_log << std::setw(datwidth) << "              HYB. MOM. P";
+#endif
 	     grid_log << std::setw(datwidth) << "              ANG. MOM. X";
 	     grid_log << std::setw(datwidth) << "              ANG. MOM. Y";
 	     grid_log << std::setw(datwidth) << "              ANG. MOM. Z";
@@ -421,6 +433,11 @@ Castro::sum_integrated_quantities ()
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[1];
 #if (BL_SPACEDIM == 3)
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[2];
+#endif
+#ifdef HYBRID_MOMENTUM
+	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[0];
+	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[1];
+	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[2];
 #endif
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[0];
 	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[1];
