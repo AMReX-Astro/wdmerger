@@ -1,5 +1,7 @@
 SHELL=/bin/bash
 
+UNAMEN := $(shell uname -n)
+
 # Makefile options. We'll use the ?= method so that
 # any including makefile can override these for custom tests
 # (e.g. changing the number of dimensions or the EOS).
@@ -12,7 +14,16 @@ BACKTRACE ?= FALSE
 TEST ?= FALSE
 
 USE_MPI ?= TRUE
-USE_OMP ?= TRUE
+
+# Some systems don't play as nicely with
+# OpenMP, so disable it by default.
+
+ifeq ($(findstring mira, $(UNAMEN)), mira)
+	# ALCF Mira
+	USE_OMP ?= FALSE
+else
+	USE_OMP ?= TRUE
+endif
 
 DIM ?= 3
 
@@ -33,8 +44,6 @@ USE_HYBRID_MOMENTUM ?= FALSE
 
 # Override default compiler for certain machines.
 
-UNAMEN := $(shell uname -n)
-
 ifeq ($(findstring titan, $(UNAMEN)), titan)
 	# OLCF Titan
 	COMP ?= Cray
@@ -43,6 +52,9 @@ else ifeq ($(findstring h2o, $(UNAMEN)), h2o)
 	# NCSA Blue Waters
 	COMP ?= Cray
 	FCOMP ?= Cray
+else ifeq ($(findstring mira, $(UNAMEN)), mira)
+	COMP ?= IBM
+	FCOMP ?= IBM
 else
 	COMP ?= g++
 	FCOMP ?= gfortran
