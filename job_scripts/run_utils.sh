@@ -1231,16 +1231,6 @@ function create_job_script {
       echo "check_to_stop &" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
-      # Number of OpenMP threads. According to the Cobalt guide
-      # this shouldn't work though because environment variables are not saved.
-
-      echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
-
-      # Amount of memory allocated to each OpenMP thread.
-
-      echo "export OMP_STACKSIZE=64M" >> $dir/$job_script
-      echo "" >> $dir/$job_script
-
       if [ $launcher == "runjob" ]; then
 	  launcher_opts="--np $nprocs -p $tasks_per_node --block=\$COBALT_PARTNAME --verbose=INFO : "
       fi
