@@ -69,33 +69,33 @@ function get_make_var {
 
 function get_submitted_jobs {
 
+  job_file=$WDMERGER_HOME/job_scripts/jobs.txt
+
+  # Store the result of the queue information command, 
+  # but only keep the lines that store jobs with our 
+  # username so that we remove all formatting output.
+  # We are only interested in storing the job
+  # numbers that are somewhere in the queue.
+
   if [ $batch_system == "PBS" ]; then
 
-      # Store the result of showq
+      showq -u $USER | grep $USER | awk '{ print $1 }' > $job_file
 
-      job_file=$WDMERGER_HOME/job_scripts/jobs.txt
-      showq -u $USER > $job_file.temp
+  elif [ $batch_system == "COBALT" ]; then
 
-      # Remove the lines that don't store jobs.
-      # A useful heuristic is that lines containing our username
-      # are going to have jobs printed on that line.
-
-      grep $USER $job_file.temp > $job_file
-      rm -f $job_file.temp
-
-      # Store as arrays the status of all jobs.
-
-      num_jobs=$(cat $job_file | wc -l)
-      
-      for i in $(seq 0 $(($num_jobs-1)))
-      do
-	  line=$(awk "NR == $i+1" $job_file)
-	  job_arr[$i]=$(echo $line | awk '{ print $1 }')
-	  state_arr[$i]=$(echo $line | awk '{ print $3 }')
-	  walltime_arr[$i]=$(echo $line | awk '{ print $5 }')
-      done
+      qstat -u $USER | grep $USER | awk '{ print $1 }' > $job_file
 
   fi
+
+  # Store it as an array.
+
+  num_jobs=$(cat $job_file | wc -l)
+      
+  for i in $(seq 0 $(($num_jobs-1)))
+  do
+      line=$(awk "NR == $i+1" $job_file)
+      job_arr[$i]=$(echo $line | awk '{ print $1 }')
+  done
 
 }
 
@@ -242,13 +242,11 @@ function get_remaining_walltime {
   if [ ! -z $1 ]; then
       job_number=$1
   else
+      echo "Job number not given to get_remaining_walltime" >&2
       return
   fi
 
-  total_time=0.0
-
-  # Extract the job number from the filename, then
-  # use the relevant batch submission system.
+  total_time=''
 
   if [ $batch_system == "PBS" ]; then
 
@@ -257,8 +255,34 @@ function get_remaining_walltime {
       # the relevant job number.
 
       total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
-	
+
+      if [ -z $total_time ]; then
+	  echo "Unable to get total_time from job submission system" >&2
+      fi
+
+      if [ ! -z $total_time ]; then
+	  total_time=$(hours_to_seconds $total_time)
+      fi
+
+  elif [ $batch_system == "COBALT" ]; then
+
+      export QSTAT_HEADER=JobId:User:WallTime:RunTime:Nodes:Mode:State:Queue
+
+      # For Cobalt we need to subtract the run time from the total allotted time.
+
+      total_time=$(qstat -u $USER | grep $job_number | awk '{ print $3 }')
       total_time=$(hours_to_seconds $total_time)
+
+      time_used=$(qstat -u $USER | grep $job_number | awk '{ print $4 }')
+      time_used=$(hours_to_seconds $time_used)
+
+      if [ ! -z $total_time ] && [ ! -z $time_used ]; then
+	  total_time=$(echo "$total_time - $time_used" | bc -l)
+      fi
+
+  else
+
+      echo "Unknown job submission system in get_remaining_walltime" >&2
 
   fi
 
@@ -310,7 +334,7 @@ function is_job_running {
 
   # Check if a file with the appropriate run extension exists in that directory.
   # If not, check if there is an active job yet to be completed or started 
-  # in the directory using the results of showq.
+  # in the directory using the results of the queue information (showq, qstat, etc.).
 
   if [ -e $dir/*$run_ext ]; then
 
@@ -652,8 +676,18 @@ function check_to_stop {
   job_number=$(get_last_submitted_job)
 
   # Determine how much time the job has, in seconds.
-    
+  
   total_time=$(get_remaining_walltime $job_number)
+
+  # Account for the possibility that we don't yet have
+  # this information because the job is just starting;
+  # cycle until we do.
+
+  while [ -z $total_time ]
+  do
+      sleep 1
+      total_time=$(get_remaining_walltime $job_number)
+  done
 
   # Now we'll plan to stop when (1 - safety_factor) of the time has been used up.
 
@@ -781,6 +815,7 @@ function submit_job {
 
   old_date=$(tail -1 jobs_submitted.txt | awk '{print $2}')
   old_walltime=$(tail -1 jobs_submitted.txt | awk '{print $3}')
+  old_nprocs=$(tail -1 jobs_submitted.txt | awk '{print $4}')
 
   if [ ! -z $old_date ] && [ ! -z $old_walltime ]; then
 
@@ -795,16 +830,7 @@ function submit_job {
 
   fi
 
-  # If we made it to this point, now actually submit the job.
-
-  job_number=`$exec $job_script`
-
-  # Some systems like Blue Waters include the system name
-  # at the end of the number, so remove any appended text.
-
-  job_number=${job_number%%.*}
-
-  # Store the requested walltime, in seconds.
+  # Determine the requested walltime, in seconds.
 
   if [ -z $walltime ]; then
       if [ ! -z $old_walltime ]; then
@@ -816,8 +842,36 @@ function submit_job {
   fi
 
   walltime_in_seconds=$(hours_to_seconds $walltime)
+  walltime_in_minutes=$(hours_to_minutes $walltime)
 
-  echo "$job_number $current_date $walltime_in_seconds" >> jobs_submitted.txt
+  # Determine the number of nodes; some job submission systems
+  # (e.g. Cobalt) need to know this at submission.
+
+  if [ -z $nprocs ]; then
+      if [ ! -z $old_nprocs ]; then
+	  nprocs=$old_nprocs
+      else
+	  echo "Don't know how many processors this job needs; aborting."
+	  return
+      fi
+  fi
+
+  nodes=$(compute_num_nodes)
+
+  # If we made it to this point, now actually submit the job.
+
+  if [ $batch_system == "PBS" ]; then
+      job_number=`qsub $job_script`
+  elif [ $batch_system == "COBALT" ]; then
+      job_number=`qsub -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
+  fi
+
+  # Some systems like Blue Waters include the system name
+  # at the end of the number, so remove any appended text.
+
+  job_number=${job_number%%.*}
+
+  echo "$job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
 
 }
 
@@ -832,6 +886,8 @@ function get_last_submitted_job {
       job_number=$(tail -1 jobs_submitted.txt | awk '{print $1}')
 
   else
+
+      echo "No jobs_submitted.txt file to obtain last job number from" >&2
 
       job_number=-1
 
@@ -930,21 +986,13 @@ function create_job_script {
       return
   fi
 
-  # The number of nodes is equal to the number of processors divided 
-  # by the number of processors per node. This will not be an integer 
-  # if the number of processors requested is not an integer multiple 
-  # of the number of processors per node. So we want to use a trick 
-  # that guarantees we round upward so that we have enough nodes:
-  # if we want the result of (A / B) to be always rounded upward 
-  # in integer arithmetic, we evaluate (A + B - 1) / B.
-
-  nodes=$(echo "($nprocs + $ppn - 1) / $ppn" | bc)
+  nodes=$(compute_num_nodes)
 
   # Number of threads for OpenMP. This will be equal to 
   # what makes the most sense for the machine architecture 
   # by default. For example, the Titan XK7 and Blue Waters XE6
   # Cray nodes are composed of Interlagos boards which are composed 
-  # of two NUMA nodes (each NUmA node has 8 integer cores and 4 
+  # of two NUMA nodes (each NUMA node has 8 integer cores and 4 
   # floating point cores). If the user doesn't set it,
   # we'll update the default with our experience from running on 
   # these machines with tiling. When the grids are small enough,
@@ -1014,6 +1062,11 @@ function create_job_script {
 
   num_mpi_tasks=$(echo "$nprocs / $OMP_NUM_THREADS" | bc)
   tasks_per_node=$(echo "$ppn / $OMP_NUM_THREADS" | bc)
+
+  # Create the job script and make it executable.
+
+  touch $dir/$job_script
+  chmod u+x $dir/$job_script
 
   if [ $batch_system == "PBS" ]; then
 
@@ -1121,6 +1174,86 @@ function create_job_script {
 	echo "" >> $dir/$job_script
 
       fi
+
+      # Check to make sure we are done, and if not, re-submit the job.
+
+      if [ -z $no_continue ]; then
+
+	echo "if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
+	echo "  submit_job" >> $dir/$job_script
+	echo "fi" >> $dir/$job_script
+	echo "" >> $dir/$job_script
+
+      fi
+
+      # Run the archive script at the end of the simulation.
+
+      if [ $do_storage -ne 1 ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+      fi
+      echo "archive_all" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+  elif [ $batch_system == "COBALT" ]; then
+
+      echo "#!/bin/bash" > $dir/$job_script
+
+      echo "" >> $dir/$job_script
+
+      # Set name of problem directory, if applicable.
+
+      if [ ! -z $problem_dir ]; then
+	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Set the name of the inputs and probin files, in case they are 
+      # unique for this problem.
+
+      if [ $inputs != "inputs" ]; then
+	  echo "inputs=$inputs" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      if [ $probin != "probin" ]; then
+	  echo "probin=$probin" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Load up our helper functions.
+
+      echo "source job_scripts/run_utils.sh" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
+
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Number of OpenMP threads. According to the Cobalt guide
+      # this shouldn't work though because environment variables are not saved.
+
+      echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
+
+      # Amount of memory allocated to each OpenMP thread.
+
+      echo "export OMP_STACKSIZE=64M" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      if [ $launcher == "runjob" ]; then
+	  launcher_opts="--np $nprocs -p $tasks_per_node --block=\$COBALT_PARTNAME --verbose=INFO : "
+      fi
+
+      redirect="> $job_name.OU"
+
+      # Main job execution.
+
+      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "mv $job_name.OU \$(get_last_submitted_job).out" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
       # Check to make sure we are done, and if not, re-submit the job.
 
@@ -1426,6 +1559,25 @@ function set_up_problem_dir {
     fi
 
 }
+
+
+
+# The number of nodes is equal to the number of processors divided 
+# by the number of processors per node. This will not be an integer 
+# if the number of processors requested is not an integer multiple 
+# of the number of processors per node. So we want to use a trick 
+# that guarantees we round upward so that we have enough nodes:
+# if we want the result of (A / B) to be always rounded upward 
+# in integer arithmetic, we evaluate (A + B - 1) / B.
+
+function compute_num_nodes {
+
+  nodes=$(echo "($nprocs + $ppn - 1) / $ppn" | bc)
+
+  echo $nodes
+
+}
+
 
 
 ########################################################################
