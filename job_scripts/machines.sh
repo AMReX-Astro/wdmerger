@@ -19,6 +19,8 @@ function get_machine {
 	MACHINE=HOPPER
       elif [[ $UNAMEN == *"lired"*  ]]; then
 	MACHINE=LIRED
+      elif [[ $UNAMEN == *"mira"*   ]]; then
+	MACHINE=MIRA
       else
 	MACHINE=GENERICLINUX
       fi
@@ -70,7 +72,6 @@ function set_machine_params {
 	archive_method="globus"
 	globus_src_endpoint="ncsa#BlueWaters"
 	globus_dst_endpoint="ncsa#Nearline/projects/sciteam/$allocation/$USER"
-	time_remaining_column="5"
 
     # Titan at OLCF
 
@@ -87,7 +88,6 @@ function set_machine_params {
 	batch_system="PBS"
 	launcher="aprun"
 	archive_method="htar"
-	time_remaining_column="5"
 
     # Hopper at NERSC
 
@@ -118,8 +118,21 @@ function set_machine_params {
 	launcher="mpirun"
 	queue="medium"
 	run_ext=".OU"
-	time_remaining_column="5"
+
+    # Mira at ALCF
+
+    elif [ $MACHINE == "MIRA" ]; then
+
+	exec="qsub"
+	cancel_job="qdel"
+	pause_job="qhold"
+	resume_job="qrls"
+	ppn="16"
+	queue="prod"
+	run_ext=".OU"
+	batch_system="COBALT"
+	launcher="runjob"
+	allocation="wdmerger"
 
     fi
-
 }
