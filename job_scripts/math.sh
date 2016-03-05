@@ -90,3 +90,23 @@ function hours_to_seconds {
     echo $seconds
 
 }
+
+
+
+# Same as above but we want a number of minutes.
+
+function hours_to_minutes {
+
+    if [ ! -z $1 ]; then
+	hours=$1
+    else
+	return
+    fi
+
+    seconds=$(hours_to_seconds $hours)
+
+    minutes=$(echo "$seconds / 60" | bc)
+
+    echo $minutes
+
+}
