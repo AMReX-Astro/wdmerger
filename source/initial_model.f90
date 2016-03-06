@@ -142,7 +142,7 @@ contains
 
     ! Check to make sure the initial temperature makes sense.
 
-    if (model % state(1) % T < small_temp) then
+    if (model % central_temp < small_temp) then
        call bl_error("Error: WD central temperature is less than small_temp. Aborting.")
     endif
 
