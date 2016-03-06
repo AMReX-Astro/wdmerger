@@ -46,6 +46,8 @@ contains
 
   subroutine initialize_model(model, dx, npts, mass_tol, hse_tol)
 
+    implicit none
+
     type (initial_model) :: model
     integer :: npts
     double precision :: dx, mass_tol, hse_tol
