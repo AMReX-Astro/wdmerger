@@ -13,6 +13,7 @@ module initial_model_module
   use model_parser_module, only: itemp_model, idens_model, ipres_model, ispec_model
   use fundamental_constants_module, only: Gconst, M_solar
   use interpolate_module, only: interpolate
+  use meth_params_module, only: small_temp
 
   type :: initial_model
 
@@ -137,6 +138,12 @@ contains
        rho_c_old = -ONE
        rho_c     = 1.d7     ! A reasonable starting guess for moderate-mass WDs
 
+    endif
+
+    ! Check to make sure the initial temperature makes sense.
+
+    if (model % state(1) % T < small_temp) then
+       call bl_error("Error: WD central temperature is less than small_temp. Aborting.")
     endif
 
     mass_converged = .false.
