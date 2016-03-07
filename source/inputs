@@ -117,8 +117,8 @@ castro.do_sponge = 1
 # Whether or not to apply external source terms
 castro.add_ext_src = 1
 
-# Use a lagged predictor estimate of the source terms in the hydro
-castro.source_term_predictor = 1
+# Whether or not to include the rotation source term
+castro.do_rotation = 1
 
 ############################################################################################
 # PPM/Hydro options
@@ -142,12 +142,18 @@ castro.ppm_trace_sources = 1
 # Use the EOS in calculation of the edge states going into the Riemann solver
 castro.ppm_temp_fix = 0
 
-# Which Riemann solver to use. By default we use the Colella & Glaz solver.
+# Which Riemann solver to use.
+# 0 = Colella, Glaz, and Ferguson (cheaper, less accurate)
+# 1 = Colella and Glaz 1985 (more expensive, more accurate)
+# 2 = HLL
 castro.riemann_solver = 0
 
 # For the CG Riemann solver, we need to tell the solver not to quit when 
 # the iterations don't converge, but instead to do additional bisection iteration.
 castro.cg_blend = 2
+
+# Use a lagged predictor estimate of the source terms in the hydro
+castro.source_term_predictor = 1
 
 # How to include the gravity source term in the hydro equations
 castro.grav_source_type = 4
@@ -231,11 +237,8 @@ gravity.no_sync = 1
 gravity.max_solve_level = 20
 
 ############################################################################################
-# Gravity
+# Rotation
 ############################################################################################
-
-# Whether or not to include the rotation source term
-castro.do_rotation = 1
 
 # Rotational period of the rotating reference frame
 castro.rotational_period = 100.0

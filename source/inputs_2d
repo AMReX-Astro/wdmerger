@@ -1,18 +1,12 @@
 
 ############################## CASTRO INPUTS ###############################################
 
-############################################################################################
-# Problem setup
-############################################################################################
-
 # Name of the probin file
 amr.probin_file = probin
 
-# Maximum coarse timestep
-max_step = 10000000
-
-# Simulation time to stop at
-stop_time = 100.0
+############################################################################################
+# Geometry
+############################################################################################
 
 # Non-periodic boundary conditions
 geometry.is_periodic = 0 0
@@ -21,13 +15,36 @@ geometry.is_periodic = 0 0
 geometry.coord_sys = 1
 
 # Lower boundary limits in physical space
-geometry.prob_lo =  0.0e0  -5.12e9
+geometry.prob_lo =   0.0e0 -5.12e9
 
 # Upper boundary limits in physical space
-geometry.prob_hi = 5.12e9   5.12e9
+geometry.prob_hi =  5.12e9  5.12e9
 
 # System center of mass
-castro.center =     0.0e0    0.0e0
+castro.center    =   0.0e0   0.0e0
+
+############################################################################################
+# Boundary conditions
+# 0 = Interior           3 = Symmetry
+# 1 = Inflow             4 = SlipWall
+# 2 = Outflow            5 = NoSlipWall
+############################################################################################
+
+# Boundary conditions on lo x, y, and z edges
+castro.lo_bc = 3 2
+
+# Boundary conditions on hi x, y, and z edges
+castro.hi_bc = 2 2
+
+############################################################################################ 
+# Timestepping
+############################################################################################
+
+# Maximum coarse timestep
+max_step = 10000000
+
+# Simulation time to stop at
+stop_time = 100.0
 
 # Level 0 timestep below which we halt
 castro.dt_cutoff = 1.e-8
@@ -50,18 +67,8 @@ castro.hard_cfl_limit = 0
 # If we regrid on Level 0, compute a new timestep afterward
 amr.compute_new_dt_on_regrid = 1
 
-############################################################################################
-# Boundary conditions
-# 0 = Interior           3 = Symmetry
-# 1 = Inflow             4 = SlipWall
-# 2 = Outflow            5 = NoSlipWall
-############################################################################################
-
-# Boundary conditions on lo x, y, and z edges
-castro.lo_bc = 3 2
-
-# Boundary conditions on hi x, y, and z edges
-castro.hi_bc = 2 2
+# Use a retry if an advance violated our stability criteria
+castro.use_retry = 1
 
 ############################################################################################ 
 # Resolution, gridding and AMR
@@ -113,15 +120,6 @@ castro.add_ext_src = 1
 # Whether or not to include the rotation source term
 castro.do_rotation = 1
 
-# Rotational period of the rotating reference frame
-castro.rotational_period = 100.0
-
-# Time rate of change of the rotational period
-castro.rotational_dPdt = -0.0
-
-# Use a lagged predictor estimate of the source terms in the hydro
-castro.source_term_predictor = 1
-
 ############################################################################################
 # PPM/Hydro options
 ############################################################################################
@@ -144,9 +142,18 @@ castro.ppm_trace_sources = 1
 # Use the EOS in calculation of the edge states going into the Riemann solver
 castro.ppm_temp_fix = 0
 
-# Which Riemann solver to use. We seem to have problems with the more accurate
-# Collela & Glaz Riemann solver, so use the more approximate (and cheaper) CGF solver.
+# Which Riemann solver to use.
+# 0 = Colella, Glaz, and Ferguson (cheaper, less accurate)
+# 1 = Colella and Glaz 1985 (more expensive, more accurate)
+# 2 = HLL
 castro.riemann_solver = 0
+
+# For the CG Riemann solver, we need to tell the solver not to quit when 
+# the iterations don't converge, but instead to do additional bisection iteration.
+castro.cg_blend = 2
+
+# Use a lagged predictor estimate of the source terms in the hydro
+castro.source_term_predictor = 1
 
 # How to include the gravity source term in the hydro equations
 castro.grav_source_type = 4
@@ -155,7 +162,7 @@ castro.grav_source_type = 4
 castro.rot_source_type = 4
 
 # Reset (rho*e) if it goes negative in the transverse terms
-castro.transverse_reset_rhoe = 0
+castro.transverse_reset_rhoe = 1
 
 # Reset rho if it goes negative in the transverse terms
 castro.transverse_reset_density = 1
@@ -183,11 +190,17 @@ castro.dual_energy_eta1 = 1.0e-3
 castro.dual_energy_eta2 = 1.0e-4
 
 ############################################################################################
-# Reactions
+# Reactions/Network
 ############################################################################################
 
-# Limit timestep based on nuclear burning considerations
-castro.dtnuc = 0.1
+# Minimum allowable mass fraction on the grid
+castro.small_x = 1.0e-12
+
+# Limit timestep based on nuclear burning considerations (changes in internal energy)
+castro.dtnuc_e = 0.1
+
+# Limit timestep based on nuclear burning considerations (changes in species)
+castro.dtnuc_X = 0.1
 
 # Limit zone size based on nuclear burning considerations
 castro.dxnuc = 0.1
@@ -197,7 +210,6 @@ castro.react_T_min = 1.0e8
 
 # Maximum temperature for allowing nuclear burning
 castro.react_T_max = 1.0e12
-
 
 ############################################################################################
 # Gravity
@@ -213,13 +225,29 @@ gravity.max_multipole_order = 6
 gravity.direct_sum_bcs = 0
 
 # Relative tolerance for multigrid solver for phi solves
-gravity.ml_tol = 1.e-10 1.e-10 1.e-8 1.e-8 1.e-6 1.e-6 1.e-6 1.e-6 1.e-6 1.e-6
+gravity.ml_tol = 1.e-10 1.e-10 1.e-8 1.e-8 1.e-6 1.e-6 1.e-6 1.e-5 1.e-5 1.e-5
 
 # Relative tolerance for multigrid solver for delta phi solves
-gravity.delta_tol = 1.e-10 1.e-10 1.e-8 1.e-8 1.e-6 1.e-6 1.e-6 1.e-6 1.e-6 1.e-6
+gravity.delta_tol = 1.e-10 1.e-10 1.e-8 1.e-8 1.e-6 1.e-6 1.e-6 1.e-5 1.e-5 1.e-5
 
 # Turn off sync solve for gravity after refluxing
 gravity.no_sync = 1
+
+# Maximum level for doing explicit gravity solves
+gravity.max_solve_level = 20
+
+############################################################################################
+# Rotation
+############################################################################################
+
+# Rotational period of the rotating reference frame
+castro.rotational_period = 100.0
+
+# Time rate of change of the rotational period
+castro.rotational_dPdt = -0.0
+
+# Enable the implicit rotation update
+castro.implicit_rotation_update = 1
 
 ############################################################################################
 # Load balancing
@@ -255,6 +283,9 @@ amr.checkpoint_files_output = 1
 
 # Root name of checkpoint files
 amr.check_file = chk
+
+# We want to store the 'old' state data in checkpoints
+castro.dump_old = 1
 
 # Simulation time between checkpoints
 amr.check_per = 10.0
@@ -305,7 +336,7 @@ amr.derive_plot_vars = NONE
 amr.small_plot_vars = density
 
 # Name of the diagnostic sum output files
-amr.data_log = grid_diag.out star_diag.out species_diag.out
+amr.data_log = grid_diag.out star_diag.out species_diag.out amr_diag.out
 
 # Write out plotfile data in single precision
 fab.format = NATIVE_32
