@@ -269,6 +269,9 @@ castro.print_energy_diagnostics = 1
 # Timesteps between computing and printing volume averaged diagnostic quantities
 castro.sum_interval = 1
 
+# Simulation time between computing and printing volume averaged diagnostic quantities
+castro.sum_per = -1.0
+
 # Whether or not to output plotfiles
 amr.plot_files_output = 1
 
