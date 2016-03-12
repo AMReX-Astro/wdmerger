@@ -162,7 +162,7 @@ Castro::sum_integrated_quantities ()
     get_axes(axis_1, axis_2, axis_3);
 
     wd_dist_init[axis_1 - 1] = 1.0;
-    
+
     // Determine the names of the species in the simulation.    
 
     for (int i = 0; i < NumSpec; i++) {
@@ -170,7 +170,7 @@ Castro::sum_integrated_quantities ()
       species_names[i] = species_names[i].substr(4,std::string::npos);
       species_mass[i]  = 0.0;	
     }
-    
+
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
@@ -685,6 +685,55 @@ Castro::sum_integrated_quantities ()
 	   amr_log << std::setw(intwidth)                                     << parent->finestLevel();
 
 	   amr_log << std::endl;
+
+	 }
+
+      }
+
+      if (parent->NumDataLogs() > 4 && level == 0) {
+
+	 std::ostream& boundary_log = parent->DataLog(4);
+
+	 if ( boundary_log.good() ) {
+
+	   if (time == 0.0) {
+
+	     // Output the git commit hashes used to build the executable.
+
+	     const char* castro_hash   = buildInfoGetGitHash(1);
+	     const char* boxlib_hash   = buildInfoGetGitHash(2);
+	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
+
+	     boundary_log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     boundary_log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     boundary_log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+
+	     boundary_log << std::setw(intwidth) << "#   TIMESTEP";
+	     boundary_log << std::setw(fixwidth) << "                     TIME";
+	     boundary_log << std::setw(datwidth) << "                MASS LOST";
+	     boundary_log << std::setw(datwidth) << "                XMOM LOST";
+	     boundary_log << std::setw(datwidth) << "                YMOM LOST";
+	     boundary_log << std::setw(datwidth) << "                ZMOM LOST";
+	     boundary_log << std::setw(datwidth) << "                EDEN LOST";
+	     boundary_log << std::setw(datwidth) << "         ANG. MOM. X LOST";
+	     boundary_log << std::setw(datwidth) << "         ANG. MOM. Y LOST";
+	     boundary_log << std::setw(datwidth) << "         ANG. MOM. Z LOST";
+
+	     boundary_log << std::endl;
+
+	   }
+
+	   boundary_log << std::fixed;
+
+	   boundary_log << std::setw(intwidth)                                     << timestep;
+	   boundary_log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+
+	   boundary_log << std::scientific;
+
+	   for (int i = 0; i < n_lost; i++)
+	     boundary_log << std::setw(datwidth) << std::setprecision(dataprecision) << material_lost_through_boundary_cumulative[i];
+
+	   boundary_log << std::endl;
 
 	 }
 

@@ -269,8 +269,11 @@ DistributionMapping.efficiency = 0.9
 # Calculate and print the center of mass at each time step
 castro.show_center_of_mass = 1
 
-# Diagnostics on how much energy and momentum is lost off the grid
+# Diagnostics on mass/momentum/energy added during a hydro update
 castro.print_energy_diagnostics = 1
+
+# Diagnostics on mass/momentum/energy lost through physical ground boundaries
+castro.track_grid_losses = 1
 
 # Timesteps between computing and printing volume averaged diagnostic quantities
 castro.sum_interval = 1
@@ -339,7 +342,7 @@ amr.derive_plot_vars = NONE
 amr.small_plot_vars = density
 
 # Name of the diagnostic sum output files
-amr.data_log = grid_diag.out star_diag.out species_diag.out amr_diag.out
+amr.data_log = grid_diag.out star_diag.out species_diag.out amr_diag.out bndy_diag.out
 
 # Write out plotfile data in single precision
 fab.format = NATIVE_32
