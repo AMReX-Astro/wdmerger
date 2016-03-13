@@ -2,12 +2,12 @@
 #include "Castro_F.H"
 
 #include "Gravity.H"
+#include <Gravity_F.H>
 
 #include "ParmParse.H"
 
 bool Castro::relaxation_is_done = false;
 int Castro::problem = -1;
-int Castro::accurate_IC_frame = -1;
 
 #ifdef do_problem_post_timestep
 void
@@ -40,10 +40,28 @@ Castro::problem_post_timestep()
     Real lev_vel_p[3] = { 0.0 };
     Real lev_vel_s[3] = { 0.0 };
 
+    // Effective volume of the stars at various density cutoffs.
+
+    Real vol_p[7] = { 0.0 };
+    Real vol_s[7] = { 0.0 };
+
+    Real lev_vol_p[7] = { 0.0 };
+    Real lev_vol_s[7] = { 0.0 };
+
+    // Average density of the stars.
+
+    Real rho_avg_p = 0.0;
+    Real rho_avg_s = 0.0;
+
+    // Gravitational free-fall timescale of the stars.
+
+    Real t_ff_p       = 0.0;
+    Real t_ff_s       = 0.0;
+
 
 
     // Get the current stellar data
-    get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
     // Update the problem center using the system bulk velocity
     update_center(&time);
@@ -56,7 +74,7 @@ Castro::problem_post_timestep()
     // Now send this first estimate of the COM to Fortran, and then re-calculate
     // a more accurate result using it as a starting point.
 
-    set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
     mass_p = 0.0;
     mass_s = 0.0;
@@ -105,9 +123,39 @@ Castro::problem_post_timestep()
 
     }
 
+    // Compute effective radii of stars at various density cutoffs
+
+    for (int lev = 0; lev <= finest_level; lev++)
+        for (int i = 0; i <= 6; ++i) {
+	    getLevel(lev).volInBoundary(time, lev_vol_p[i], lev_vol_s[i], pow(10.0,i));
+	    vol_p[i] += lev_vol_p[i];
+	    vol_s[i] += lev_vol_s[i];
+	}
+
+    for (int i = 0; i <= 6; ++i) {
+        rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
+	rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
+    }
+
+    // Free-fall timescale ~ 1 / sqrt(G * rho_avg}
+
+    Real Gconst;
+
+    get_grav_const(&Gconst);
+
+    if (mass_p > 0.0 && vol_p[2] > 0.0) {
+      rho_avg_p = mass_p / vol_p[2];
+      t_ff_p = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_p));
+    }
+
+    if (mass_s > 0.0 && vol_s[2] > 0.0) {
+      rho_avg_s = mass_s / vol_s[2];
+      t_ff_s = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_s));
+    }
+
     // Send this updated information back to the Fortran probdata module
 
-    set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
     // If we are doing problem 3, which has an initial relaxation step,
     // determine whether the criterion for terminating the relaxation
@@ -182,34 +230,7 @@ Castro::problem_post_timestep()
 
       delete mfphieff;
 
-      // Convert to the inertial frame, if we're doing it that way.
-
-      if (relaxation_is_done && accurate_IC_frame == 2) {
-
-	for (int lev = 0; lev <= finest_level; lev++) {
-
-	  set_amr_info(lev, -1, -1, -1.0, -1.0);
-
-	  MultiFab& state = getLevel(lev).get_new_data(State_Type);
-
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-	  for (MFIter mfi(state,true); mfi.isValid(); ++mfi) {
-
-	    const Box& box = mfi.tilebox();
-
-	    const int* lo  = box.loVect();
-	    const int* hi  = box.hiVect();
-
-	    transform_to_inertial_frame(BL_TO_FORTRAN_3D(state[mfi]),
-					ARLIM_3D(lo), ARLIM_3D(hi), &time);
-
-	  }
-
-	  set_amr_info(level, -1, -1, -1.0, -1.0);
-
-	}
+      if (relaxation_is_done) {
 
 	turn_off_relaxation(&time);
 
@@ -611,10 +632,6 @@ void Castro::problem_post_init() {
   // Get the problem number fom Fortran.
 
   get_problem_number(&problem);
-
-  // For the accurate ICs, get the reference frame choice.
-
-  get_frame_choice(&accurate_IC_frame);
 
   // Execute the post timestep diagnostics here,
   // so that the results at t = 0 and later are smooth.

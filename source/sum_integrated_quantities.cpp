@@ -98,21 +98,11 @@ Castro::sum_integrated_quantities ()
     Real vel_p[3] = { 0.0 };
     Real vel_s[3] = { 0.0 };
 
-    // Effective volume of the stars at various density cutoffs.
+    Real vel_p_rad = 0.0;
+    Real vel_s_rad = 0.0;
 
-    Real vol_p[7] = { 0.0 };
-    Real vol_s[7] = { 0.0 };
-
-    Real lev_vol_p[7] = { 0.0 };
-    Real lev_vol_s[7] = { 0.0 };
-
-    Real rad_p[7] = { 0.0 };
-    Real rad_s[7] = { 0.0 };
-
-    // Average density of the stars.
-    
-    Real rho_avg_p = 0.0;
-    Real rho_avg_s = 0.0;
+    Real vel_p_phi = 0.0;
+    Real vel_s_phi = 0.0;
 
     // Gravitational free-fall timescale of the stars.
     
@@ -266,12 +256,26 @@ Castro::sum_integrated_quantities ()
 
     }
 
-    get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s);
+    get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
 
     com_p_mag += std::pow( std::pow(com_p[0],2) + std::pow(com_p[1],2) + std::pow(com_p[2],2), 0.5 );
     com_s_mag += std::pow( std::pow(com_s[0],2) + std::pow(com_s[1],2) + std::pow(com_s[2],2), 0.5 );
     vel_p_mag += std::pow( std::pow(vel_p[0],2) + std::pow(vel_p[1],2) + std::pow(vel_p[2],2), 0.5 );
     vel_s_mag += std::pow( std::pow(vel_s[0],2) + std::pow(vel_s[1],2) + std::pow(vel_s[2],2), 0.5 );
+
+#if (BL_SPACEDIM == 3)
+    vel_p_rad = (com_p[axis_1 - 1] / com_p_mag) * vel_p[axis_1 - 1] + (com_p[axis_2 - 1] / com_p_mag) * vel_p[axis_2 - 1];
+    vel_s_rad = (com_s[axis_1 - 1] / com_s_mag) * vel_s[axis_1 - 1] + (com_s[axis_2 - 1] / com_s_mag) * vel_s[axis_2 - 1];
+
+    vel_p_phi = (com_p[axis_1 - 1] / com_p_mag) * vel_p[axis_2 - 1] - (com_p[axis_2 - 1] / com_p_mag) * vel_p[axis_1 - 1];
+    vel_s_phi = (com_s[axis_1 - 1] / com_s_mag) * vel_s[axis_2 - 1] - (com_s[axis_2 - 1] / com_s_mag) * vel_s[axis_1 - 1];
+#else
+    vel_p_rad = vel_p[axis_1 - 1];
+    vel_s_rad = vel_s[axis_1 - 1];
+
+    vel_p_phi = vel_p[axis_3 - 1];
+    vel_s_phi = vel_s[axis_3 - 1];
+#endif
 
     if (mass_p > 0.0 && mass_s > 0.0) {
       
@@ -293,36 +297,6 @@ Castro::sum_integrated_quantities ()
       
       if (angle < 0.0) angle += 360.0;
       
-    }
-
-    // Compute effective radii of stars at various density cutoffs
-
-    for (int lev = 0; lev <= finest_level; lev++)
-        for (int i = 0; i <= 6; ++i) {
-	    getLevel(lev).volInBoundary(time, lev_vol_p[i], lev_vol_s[i], pow(10.0,i));
-	    vol_p[i] += lev_vol_p[i];
-	    vol_s[i] += lev_vol_s[i];
-	}
-
-    for (int i = 0; i <= 6; ++i) {
-        rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
-	rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
-    }
-
-    // Free-fall timescale ~ 1 / sqrt(G * rho_avg}
-
-    Real Gconst;
-
-    get_grav_const(&Gconst);
-
-    if (mass_p > 0.0 && vol_p[2] > 0.0) {
-      rho_avg_p = mass_p / vol_p[2];
-      t_ff_p = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_p));
-    }
-
-    if (mass_s > 0.0 && vol_s[2] > 0.0) {
-      rho_avg_s = mass_s / vol_s[2];
-      t_ff_s = sqrt(3.0 * M_PI / (32.0 * Gconst * rho_avg_s));
     }
 
     // Do remaining reductions
@@ -502,6 +476,8 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(datwidth) << "            PRIMARY Z COM";
 #endif
 	     star_log << std::setw(datwidth) << "          PRIMARY MAG VEL";
+	     star_log << std::setw(datwidth) << "          PRIMARY RAD VEL";
+	     star_log << std::setw(datwidth) << "          PRIMARY ANG VEL";
 #if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datwidth) << "            PRIMARY X VEL";
 	     star_log << std::setw(datwidth) << "            PRIMARY Y VEL";
@@ -511,7 +487,6 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(datwidth) << "            PRIMARY Z VEL";
 #endif
 	     star_log << std::setw(datwidth) << "             PRIMARY MASS";
-	     star_log << std::setw(datwidth) << "      PRIMARY AVG DENSITY";
 	     star_log << std::setw(datwidth) << "       PRIMARY T_FREEFALL";
 	     for (int i = 0; i <= 6; ++i)
 	       star_log << "       PRIMARY 1E" << i << " RADIUS";
@@ -526,6 +501,8 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(datwidth) << "          SECONDARY Z COM";
 #endif
 	     star_log << std::setw(datwidth) << "        SECONDARY MAG VEL";
+	     star_log << std::setw(datwidth) << "        SECONDARY RAD VEL";
+	     star_log << std::setw(datwidth) << "        SECONDARY ANG VEL";
 #if (BL_SPACEDIM == 3)
 	     star_log << std::setw(datwidth) << "          SECONDARY X VEL";
 	     star_log << std::setw(datwidth) << "          SECONDARY Y VEL";
@@ -535,7 +512,6 @@ Castro::sum_integrated_quantities ()
 	     star_log << std::setw(datwidth) << "          SECONDARY Z VEL";
 #endif
 	     star_log << std::setw(datwidth) << "           SECONDARY MASS";
-	     star_log << std::setw(datwidth) << "    SECONDARY AVG DENSITY";
 	     star_log << std::setw(datwidth) << "     SECONDARY T_FREEFALL";
 	     for (int i = 0; i <= 6; ++i)
 	       star_log << "     SECONDARY 1E" << i << " RADIUS";
@@ -564,13 +540,14 @@ Castro::sum_integrated_quantities ()
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[2];
 #endif
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_mag;
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_rad;
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_phi;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[0];
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[1];
 #if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[2];
 #endif
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << mass_p;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_avg_p;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << t_ff_p;
 	   for (int i = 0; i <= 6; ++i)
 	       star_log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_p[i];
@@ -582,13 +559,14 @@ Castro::sum_integrated_quantities ()
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[2];
 #endif
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_mag;
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_rad;
+	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_phi;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[0];
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[1];
 #if (BL_SPACEDIM == 3)
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[2];
 #endif
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << mass_s;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_avg_s;
 	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << t_ff_s;
 	   for (int i = 0; i <= 6; ++i)
 	       star_log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_s[i];

@@ -34,7 +34,7 @@ module probdata_module
 
 
 
-  ! Parameters for nterpolation from 1D model to 3D model:
+  ! Parameters for interpolation from 1D model to 3D model:
 
   ! Number of sub-grid-scale zones to use
 
@@ -49,28 +49,19 @@ module probdata_module
   ! Method for determining the initial problem setup.
   !
   ! 0 = Collision; distance determined by a multiple of the secondary WD radius
-  ! 1 = Keplerian orbit; distance determined by the rotation period
-  ! 2 = Keplerian orbit; distance set so that secondary fills its Roche lobe
-  ! 3 = same as 2, but increase the WD distance and enable the initial relaxation process
-  ! 4 = Free-fall; distance determined by a multiple of the secondary WD radius
+  ! 1 = Free-fall; distance determined by a multiple of the secondary WD radius
+  ! 2 = Keplerian orbit; distance determined by the rotation period
+  ! 3 = Keplerian orbit; distance set based on the secondary radius as a multiple of its Roche lobe radius
 
-  integer, save :: problem = 1
+  integer, save :: problem = 2
 
 
 
   ! If we're automatically determining the initial distance based on the Roche lobe
-  ! radii for problem 3, this is the safety factor we use. We set it to 1.5 by default,
-  ! which should be a large enough distance so that the system is initially stable.
+  ! radii for problem 3, this is the sizing factor we use. We set the default value
+  ! to be a large enough distance so that the system is close to stable.
 
-  double precision, save :: roche_radius_factor = 1.5d0
-
-
-
-  ! For problem 3, we have multiple ways to approach it:
-  ! 1: do full problem in rotating frame
-  ! 2: start problem in rotating frame and convert to inertial frame when damping is disabled
-
-  integer, save :: accurate_IC_frame = 1
+  double precision, save :: roche_radius_factor = 2.0d0
 
 
 
@@ -216,13 +207,22 @@ module probdata_module
 
   ! Relaxation parameters for problem 3
 
-  double precision, save :: relaxation_timescale = 0.001
-  double precision, save :: relaxation_density_cutoff = 1.0d0
+  double precision, save :: relaxation_damping_factor = -1.0d-1
+  double precision, save :: relaxation_density_cutoff = 1.0d3
+
+  ! Radial damping parameters for problem 3
+
+  double precision, save :: radial_damping_factor = 1.0d3
+  double precision, save :: initial_radial_velocity_factor = -1.0d-3
 
   ! Distance (in kpc) used for calculation of the gravitational wave amplitude
   ! (this wil be calculated along all three coordinate axes).
 
   double precision, save :: gw_dist = 10.0d0
+
+  ! Current value of the dynamical timescale for each star
+
+  double precision, save :: t_ff_P, t_ff_S
 
 
 
@@ -231,13 +231,14 @@ module probdata_module
        central_density_P, central_density_S, &
        nsub, &
        roche_radius_factor, &
-       accurate_IC_frame, &
        problem, &
        collision_separation, &
        collision_impact_parameter, &
        interp_temp, &
-       relaxation_timescale, &
+       relaxation_damping_factor, &
        relaxation_density_cutoff, &
+       initial_radial_velocity_factor, &
+       radial_damping_factor, &
        ambient_density, &
        stellar_temp, &
        ambient_temp, &
@@ -361,20 +362,20 @@ contains
        call bl_error("Impact parameter must be less than one in our specified units.")
     endif
 
+    ! Don't do a merger in 2D.
+
+    if (dim .eq. 2 .and. problem .eq. 3) then
+       call bl_error("2D simulations do not work for non-axisymmetric problems like mergers.")
+    endif
+
     ! Don't do a collision or a free-fall in a rotating reference frame.
 
     if (problem .eq. 0 .and. do_rotation .eq. 1) then
        call bl_error("The collision problem does not make sense in a rotating reference frame.")
     endif
 
-    if (problem .eq. 4 .and. do_rotation .eq. 1) then
+    if (problem .eq. 1 .and. do_rotation .eq. 1) then
        call bl_error("The free-fall problem does not make sense in a rotating referance frame.")
-    endif
-
-    ! The accurate ICs setup only makes sense in the rotating frame.
-
-    if (problem .eq. 3 .and. do_rotation .ne. 1) then
-       call bl_error("The accurate initial conditions setup does not make sense in the inertial frame.")
     endif
 
     ! Make sure we have a sensible eccentricity.
@@ -848,6 +849,7 @@ contains
 
     use prob_params_module, only: problo, probhi
     use sponge_module, only: sponge_lower_radius
+    use meth_params_module, only: do_sponge
 
     implicit none
 
@@ -917,7 +919,7 @@ contains
     ! We want to do a similar check to make sure that no part of the stars
     ! land in the sponge region.
 
-    if (sponge_lower_radius > ZERO) then
+    if (do_sponge .eq. 1 .and. sponge_lower_radius > ZERO) then
 
        if (abs(r_1) + radius_1 .ge. sponge_lower_radius) then
           call bl_error("ERROR: Primary contains material inside the sponge region.")
@@ -1160,7 +1162,7 @@ contains
 
   ! Set the locations of the stellar centers of mass
 
-  subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass) bind(C,name='set_star_data')
+  subroutine set_star_data(P_com, S_com, P_vel, S_vel, P_mass, S_mass, P_t_ff, S_t_ff) bind(C,name='set_star_data')
 
     use bl_constants_module, only: TENTH, ZERO
     use prob_params_module, only: center
@@ -1171,6 +1173,7 @@ contains
     double precision, intent(in) :: P_com(3), S_com(3)
     double precision, intent(in) :: P_vel(3), S_vel(3)
     double precision, intent(in) :: P_mass, S_mass
+    double precision, intent(in) :: P_t_ff, S_t_ff
 
     double precision :: r
 
@@ -1178,17 +1181,19 @@ contains
 
     if (mass_P > ZERO) then
 
-       com_P = P_com
-       vel_P = P_vel
+       com_P  = P_com
+       vel_P  = P_vel
        mass_P = P_mass
+       t_ff_P = P_t_ff
 
     endif
 
     if (mass_S > ZERO) then
 
-       com_S = S_com
-       vel_S = S_vel
+       com_S  = S_com
+       vel_S  = S_vel
        mass_S = S_mass
+       t_ff_S = S_t_ff
 
     endif
 
@@ -1209,11 +1214,13 @@ contains
           vel_S = ZERO
           mass_S = ZERO
           roche_rad_S = ZERO
+          t_ff_S = ZERO
        else if (roche_rad_P < TENTH * roche_rad_S) then
           com_P = center
           vel_P = ZERO
           mass_S = ZERO
           roche_rad_P = ZERO
+          t_ff_P = ZERO
        endif
 
     endif
@@ -1268,10 +1275,8 @@ contains
   ! This routine is called when we've satisfied our criterion
   ! for disabling the initial relaxation phase. We set the
   ! relaxation timescale to a negative number, which disables
-  ! the damping; we set the sponge timescale to a negative
-  ! number, which disables the sponging; and, we set the
-  ! rotation period to a negative number, which disables
-  ! the rotation.
+  ! the damping, and we set the sponge timescale to a negative
+  ! number, which disables the sponging.
 
   subroutine turn_off_relaxation(time) bind(C,name='turn_off_relaxation')
 
@@ -1283,12 +1288,8 @@ contains
 
     double precision :: time
 
-    relaxation_timescale = -ONE
+    relaxation_damping_factor = -ONE
     sponge_timescale = -ONE
-
-    if (do_rotation .eq. 1 .and. accurate_IC_frame .eq. 2) then
-       rot_period = -ONE
-    endif
 
     if (ioproc) then
        print *, ""
@@ -1341,19 +1342,5 @@ contains
     problem_out = problem
 
   end subroutine get_problem_number
-
-
-
-  ! Return accurate_IC_frame.
-
-  subroutine get_frame_choice(frame_out) bind(C,name='get_frame_choice')
-
-    implicit none
-
-    integer :: frame_out
-
-    frame_out = accurate_IC_frame
-
-  end subroutine get_frame_choice
 
 end module probdata_module

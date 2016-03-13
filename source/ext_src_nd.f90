@@ -7,8 +7,11 @@
        use meth_params_module,  only: NVAR, URHO, UMX, UMZ, UEDEN
        use prob_params_module,  only: center
        use bl_constants_module, only: ZERO, HALF, ONE, TWO
-       use probdata_module,     only: problem, relaxation_timescale
-       
+       use probdata_module,     only: problem, relaxation_damping_factor, radial_damping_factor, &
+                                      t_ff_P, t_ff_S, axis_1, axis_2, axis_3, inertial_velocity, &
+                                      com_P, com_S
+       use castro_util_module,  only: position
+
        implicit none
 
        integer          :: lo(3),hi(3)
@@ -22,55 +25,117 @@
 
        ! Local variables
 
-       double precision :: damping_factor
+       double precision :: relaxation_timescale, radial_damping_timescale
+       double precision :: dynamical_timescale, damping_factor
+       double precision :: loc(3), R_prp, sinTheta, cosTheta, v_rad, Sr(3)
        integer          :: i, j, k
-       double precision :: new_mom(3), old_mom(3), new_ke, old_ke, rhoInv, dtInv
+       double precision :: new_mom(3), old_mom(3), mag_mom, new_ke, old_ke, rhoInv, dtInv
 
        ! Note that this function exists in a tiling region so we should only 
        ! modify the zones between lo and hi. 
 
        src(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
 
-       if (problem == 3 .and. relaxation_timescale > ZERO) then
+       ! The relevant dynamical timescale for determining our source term timescales should be
+       ! the larger of the two WD timescales. Generally this should be the secondary, but we'll
+       ! be careful just in case.
+
+       dynamical_timescale = max(t_ff_P, t_ff_S)
+
+       ! First do any relaxation source terms.
+
+       if (problem == 3 .and. relaxation_damping_factor > ZERO) then
+
+          relaxation_timescale = relaxation_damping_factor * dynamical_timescale
 
           damping_factor = ONE / (ONE + HALF * dt / relaxation_timescale)
 
-       else
+          dtInv = ONE / dt
 
-          damping_factor = ONE
-          
-       endif
+          do k = lo(3), hi(3)
+             do j = lo(2), hi(2)
+                do i = lo(1), hi(1)
 
-       dtInv = ONE / dt
+                   rhoInv = ONE / new_state(i,j,k,URHO)
 
-       do k = lo(3), hi(3)
-          do j = lo(2), hi(2)
-             do i = lo(1), hi(1)
-                
-                rhoInv = ONE / new_state(i,j,k,URHO)
+                   ! The form of the source term is d(rho * v) / dt = - (rho * v) / tau.
+                   ! The solution to this is an exponential decline, (rho * v) = (rho * v)_0 * exp(-t / tau).
+                   ! However, an explicit discretized update of mom -> -mom * (dt / 2) / tau does not provide
+                   ! a good approximation to this if tau << t. So we want to implicitly solve
+                   ! that update: (rho * v) -> (rho * v) / (1 + (dt / 2) / tau). Then, since we will be
+                   ! multiplying this source term by dt / 2, divide by that here to get the scaling right.
 
-                ! The form of the source term is d(rho * v) / dt = - (rho * v) / tau.
-                ! The solution to this is an exponential decline, (rho * v) = (rho * v)_0 * exp(-t / tau).
-                ! However, an explicit discretized update of mom -> -mom * (dt / 2) / tau does not provide
-                ! a good approximation to this if tau << t. So we want to implicitly solve
-                ! that update: (rho * v) -> (rho * v) / (1 + (dt / 2) / tau). Then, since we will be
-                ! multiplying this source term by dt / 2, divide by that here to get the scaling right.
+                   old_mom = new_state(i,j,k,UMX:UMZ)
+                   new_mom = new_state(i,j,k,UMX:UMZ) * damping_factor
 
-                old_mom = new_state(i,j,k,UMX:UMZ)
-                new_mom = new_state(i,j,k,UMX:UMZ) * damping_factor
+                   Sr = (TWO * dtInv) * (new_mom - old_mom)
 
-                src(i,j,k,UMX:UMZ) = (TWO * dtInv) * (new_mom - old_mom)
+                   src(i,j,k,UMX:UMZ) = src(i,j,k,UMX:UMZ) + Sr
 
-                ! Do the same thing for the kinetic energy update.
+                   ! Do the same thing for the kinetic energy update.
 
-                old_ke = HALF * sum(old_mom**2) * rhoInv
-                new_ke = HALF * sum(new_mom**2) * rhoInv
+                   old_ke = HALF * sum(old_mom**2) * rhoInv
+                   new_ke = HALF * sum(new_mom**2) * rhoInv
 
-                src(i,j,k,UEDEN) = (TWO * dtInv) * (new_ke - old_ke)
-                   
+                   src(i,j,k,UEDEN) = src(i,j,k,UEDEN) + (TWO * dtInv) * (new_ke - old_ke)
+
+                enddo
              enddo
           enddo
-       enddo
- 
-     end subroutine ca_ext_src
 
+       endif
+
+
+
+       ! Now do the radial drift source terms.
+
+       if (problem == 3 .and. radial_damping_factor > ZERO) then
+
+          radial_damping_timescale = radial_damping_factor * dynamical_timescale
+
+          damping_factor = ONE / radial_damping_timescale
+
+          dtInv = ONE / dt
+
+          do k = lo(3), hi(3)
+             do j = lo(2), hi(2)
+                do i = lo(1), hi(1)
+
+                   rhoInv = ONE / new_state(i,j,k,URHO)
+
+                   loc      = position(i,j,k) - center
+                   R_prp    = sqrt(loc(axis_1)**2 + loc(axis_2)**2)
+                   cosTheta = loc(axis_1) / R_prp
+                   sinTheta = loc(axis_2) / R_prp
+
+                   old_mom = inertial_velocity(loc, new_state(i,j,k,UMX:UMZ), time)
+                   v_rad   = cosTheta * old_mom(UMX + axis_1 - 1) + sinTheta * old_mom(UMX + axis_2 - 1)
+
+                   ! What we want to do is insert a negative radial drift acceleration. If continued
+                   ! for long enough, it will eventually drive coalescence of the binary. The
+                   ! restriction on how large the acceleration can be is guided by the dynamical
+                   ! properties of the system: it needs to be small enough that the WDs can be
+                   ! in approximate dynamical equilibrium at all times before significant mass
+                   ! transfer begins. So, if we write the force as
+                   ! d(v_rad) / dt = -|v_phi| / tau,
+                   ! where tau is the timescale and |v_phi| is the magnitude of the azimuthal velocity,
+                   ! tau = radial_damping_factor * dynamical_timescale,
+                   ! where radial_damping_factor should be much greater than unity.
+
+                   Sr(axis_1) = -cosTheta * abs(v_rad) * damping_factor
+                   Sr(axis_2) = -sinTheta * abs(v_rad) * damping_factor
+                   Sr(axis_3) = ZERO
+
+                   src(i,j,k,UMX:UMZ) = src(i,j,k,UMX:UMZ) + Sr
+
+                   ! The kinetic energy source term is v . Sr:
+
+                   src(i,j,k,UEDEN) = src(i,j,k,UEDEN) + dot_product(rhoInv * old_mom, Sr)
+
+                enddo
+             enddo
+          enddo
+
+       endif
+
+     end subroutine ca_ext_src

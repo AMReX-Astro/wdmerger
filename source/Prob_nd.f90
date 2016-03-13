@@ -63,6 +63,7 @@
 
      double precision :: loc(3), omega(3), vel(3)
      double precision :: dist_P, dist_S
+     double precision :: cosTheta, sinTheta, R_prp, mag_vel
 
      type (eos_t) :: zone_state, ambient_state
 
@@ -172,6 +173,28 @@
                  state(i,j,k,UMX:UMZ) = state(i,j,k,UMX:UMZ) + state(i,j,k,URHO) * vel(:)
 
                  if (dim .eq. 2) state(i,j,k,UMZ) = abs(state(i,j,k,UMZ))
+
+              endif
+
+              ! If we're doing the merger problem and want to add an initial radial velocity, do that here.
+              ! We're only going to impart this velocity to the stars themselves, so that we prevent
+              ! artificial infall in the ambient regions.
+
+              if (problem .eq. 3 .and. initial_radial_velocity_factor > ZERO) then
+
+                 if (dist_P < model_P % radius .or. dist_P < model_S % radius) then
+
+                    R_prp    = sqrt(loc(axis_1)**2 + loc(axis_2)**2)
+                    cosTheta = loc(axis_1) / R_prp
+                    sinTheta = loc(axis_2) / R_prp
+
+                    vel = inertial_velocity(loc, state(i,j,k,UMX:UMZ), time)
+                    mag_vel = sqrt( sum( vel**2 ) )
+
+                    state(i,j,k,UMX+axis_1-1) = state(i,j,k,UMX+axis_1-1) - initial_radial_velocity_factor * cosTheta * mag_vel
+                    state(i,j,k,UMX+axis_2-1) = state(i,j,k,UMX+axis_2-1) - initial_radial_velocity_factor * sinTheta * mag_vel
+
+                 endif
 
               endif
 

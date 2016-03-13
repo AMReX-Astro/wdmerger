@@ -57,4 +57,8 @@ void problem_post_timestep();
 
 static bool relaxation_is_done;
 static int problem;
-static int accurate_IC_frame;
+
+// Radii of the WDs at various density thresholds.
+
+Real rad_p[7];
+Real rad_s[7];

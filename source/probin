@@ -7,19 +7,20 @@
 
   nsub = 4
 
-  problem = 1
+  problem = 2
 
-  roche_radius_factor = 1.5d0
-
-  accurate_IC_frame = 1
+  roche_radius_factor = 2.0d0
 
   collision_separation = 4.0
   collision_impact_parameter = 0.0
 
   interp_temp = T
 
-  relaxation_timescale = 1.0d-3
-  relaxation_density_cutoff = 1.0d0
+  relaxation_damping_factor = -1.0d-1
+  relaxation_density_cutoff = 1.0d3
+
+  radial_damping_factor = 1.0d2
+  initial_radial_velocity_factor = -1.0d-3
 
   ambient_density = 1.0d-4
 
