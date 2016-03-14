@@ -40,6 +40,12 @@ Castro::problem_post_timestep()
     Real lev_vel_p[3] = { 0.0 };
     Real lev_vel_s[3] = { 0.0 };
 
+    Real old_com_p[3] = { 0.0 };
+    Real old_com_s[3] = { 0.0 };
+
+    Real old_vel_p[3] = { 0.0 };
+    Real old_vel_s[3] = { 0.0 };
+
     // Effective volume of the stars at various density cutoffs.
 
     Real vol_p[7] = { 0.0 };
@@ -80,10 +86,19 @@ Castro::problem_post_timestep()
     mass_s = 0.0;
 
     for ( int i = 0; i < 3; i++ ) {
+
+      old_com_p[i] = com_p[i];
+      old_com_s[i] = com_s[i];
+
+      old_vel_p[i] = vel_p[i];
+      old_vel_s[i] = vel_s[i];
+
       com_p[i] = 0.0;
       com_s[i] = 0.0;
+
       vel_p[i] = 0.0;
       vel_s[i] = 0.0;
+
     }
 
     for (int lev = 0; lev <= finest_level; lev++)
@@ -235,6 +250,12 @@ Castro::problem_post_timestep()
 	turn_off_relaxation(&time);
 
       }
+
+      // Given the new estimate of the velocities relative to the old,
+      // estimate the acceleration of each star. This is then used to
+      // construct a new estimate for the rotation frequency.
+
+      set_stellar_acceleration(&time, &dt, old_com_p, old_com_s, old_vel_p, old_vel_s);
 
     }
 

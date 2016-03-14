@@ -12,7 +12,8 @@ contains
      use bl_constants_module, only: HALF
      use meth_params_module, only: NVAR
      use prob_params_module, only: center, dim
-     use probdata_module, only: fill_ambient_bc, fill_ambient
+     use probdata_module, only: fill_ambient_bc
+     use wdmerger_util_module, only: fill_ambient
 
      implicit none
 

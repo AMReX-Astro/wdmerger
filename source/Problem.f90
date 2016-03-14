@@ -316,7 +316,7 @@ subroutine transform_to_inertial_frame(state, s_lo, s_hi, lo, hi, time) &
                                        bind(C,name='transform_to_inertial_frame')
 
   use meth_params_module, only: NVAR, URHO, UMX, UMZ
-  use probdata_module, only: inertial_velocity
+  use wdmerger_util_module, only: inertial_velocity
   use castro_util_module, only: position
 
   implicit none
@@ -360,7 +360,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
   use prob_params_module, only: center, problo, probhi, physbc_lo, physbc_hi, Symmetry
-  use probdata_module, only: inertial_rotation, inertial_velocity
+  use wdmerger_util_module, only: inertial_rotation, inertial_velocity
   use castro_util_module, only: position
 
   implicit none

@@ -7,7 +7,7 @@ subroutine ca_derinertialmomentumx(p,p_lo,p_hi,ncomp_p, &
                                    bind(C,name='ca_derinertialmomentumx')
 
   use bl_constants_module, only: HALF
-  use probdata_module, only: inertial_velocity
+  use wdmerger_util_module, only: inertial_velocity
   use prob_params_module, only: center
 
   implicit none
@@ -52,7 +52,7 @@ subroutine ca_derinertialmomentumy(p,p_lo,p_hi,ncomp_p, &
                                    bind(C,name='ca_derinertialmomentumy')
 
   use bl_constants_module, only: HALF
-  use probdata_module, only: inertial_velocity
+  use wdmerger_util_module, only: inertial_velocity
   use prob_params_module, only: center
 
   implicit none
@@ -97,7 +97,7 @@ subroutine ca_derinertialmomentumz(p,p_lo,p_hi,ncomp_p, &
                                    bind(C,name='ca_derinertialmomentumz')
 
   use bl_constants_module, only: HALF
-  use probdata_module, only: inertial_velocity
+  use wdmerger_util_module, only: inertial_velocity
   use prob_params_module, only: center
 
   implicit none
@@ -143,7 +143,7 @@ subroutine ca_derinertialangmomx(L,L_lo,L_hi,ncomp_L, &
 
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
-  use probdata_module, only: inertial_velocity
+  use wdmerger_util_module, only: inertial_velocity
   use prob_params_module, only: center
 
   implicit none
@@ -188,7 +188,7 @@ subroutine ca_derinertialangmomy(L,L_lo,L_hi,ncomp_L, &
 
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
-  use probdata_module, only: inertial_velocity
+  use wdmerger_util_module, only: inertial_velocity
   use prob_params_module, only: center
 
   implicit none
@@ -233,7 +233,7 @@ subroutine ca_derinertialangmomz(L,L_lo,L_hi,ncomp_L, &
 
   use bl_constants_module, only: HALF
   use math_module, only: cross_product
-  use probdata_module, only: inertial_velocity
+  use wdmerger_util_module, only: inertial_velocity
   use prob_params_module, only: center
 
   implicit none

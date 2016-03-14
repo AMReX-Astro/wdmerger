@@ -86,6 +86,10 @@ extern "C"
 
   void turn_off_relaxation(const Real* time);
 
+  void set_stellar_acceleration(const Real* time, const Real* dt,
+				const Real* com_p, const Real* com_s,
+				const Real* vel_p, const Real* vel_s);
+
   void get_axes(int& axis_1, int& axis_2, int& axis_3);
 
   void get_problem_number(int* problem);

@@ -1,7 +1,7 @@
    subroutine PROBINIT (init,name,namlen,problo,probhi)
 
      use problem_io_module, only: initialize_io
-     use probdata_module, only: initialize_problem
+     use wdmerger_util_module, only: initialize_problem
 
      implicit none
 
@@ -41,6 +41,7 @@
                           dx,xlo,xhi)
 
      use probdata_module
+     use wdmerger_util_module
      use prob_params_module, only: center, dim
      use eos_module
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
@@ -52,6 +53,7 @@
      use math_module, only: cross_product
      use castro_util_module, only: position
      use rotation_frequency_module, only: get_omega
+     use wdmerger_util_module, only: inertial_velocity
 
      implicit none
 
