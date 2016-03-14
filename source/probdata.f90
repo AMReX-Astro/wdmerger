@@ -207,7 +207,7 @@ module probdata_module
 
   ! Relaxation parameters for problem 3
 
-  double precision, save :: relaxation_damping_factor = -1.0d-1
+  double precision, save :: relaxation_damping_factor = -1.0d2
   double precision, save :: relaxation_density_cutoff = 1.0d3
 
   ! Radial damping parameters for problem 3

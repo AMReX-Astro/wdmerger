@@ -36,19 +36,13 @@
 
        src(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
 
-       ! The relevant dynamical timescale for determining our source term timescales should be
-       ! the larger of the two WD timescales. Generally this should be the secondary, but we'll
-       ! be careful just in case.
-
-       dynamical_timescale = max(t_ff_P, t_ff_S)
-
        ! First do any relaxation source terms.
 
        if (problem == 3 .and. relaxation_damping_factor > ZERO) then
 
-          relaxation_timescale = relaxation_damping_factor * dynamical_timescale
+          relaxation_timescale = relaxation_damping_factor * dt
 
-          damping_factor = ONE / (ONE + HALF * dt / relaxation_timescale)
+          damping_factor = ONE / relaxation_timescale
 
           dtInv = ONE / dt
 
@@ -58,26 +52,15 @@
 
                    rhoInv = ONE / new_state(i,j,k,URHO)
 
-                   ! The form of the source term is d(rho * v) / dt = - (rho * v) / tau.
-                   ! The solution to this is an exponential decline, (rho * v) = (rho * v)_0 * exp(-t / tau).
-                   ! However, an explicit discretized update of mom -> -mom * (dt / 2) / tau does not provide
-                   ! a good approximation to this if tau << t. So we want to implicitly solve
-                   ! that update: (rho * v) -> (rho * v) / (1 + (dt / 2) / tau). Then, since we will be
-                   ! multiplying this source term by dt / 2, divide by that here to get the scaling right.
+                   new_mom = new_state(i,j,k,UMX:UMZ)
 
-                   old_mom = new_state(i,j,k,UMX:UMZ)
-                   new_mom = new_state(i,j,k,UMX:UMZ) * damping_factor
-
-                   Sr = (TWO * dtInv) * (new_mom - old_mom)
+                   Sr = -new_mom * damping_factor
 
                    src(i,j,k,UMX:UMZ) = src(i,j,k,UMX:UMZ) + Sr
 
                    ! Do the same thing for the kinetic energy update.
 
-                   old_ke = HALF * sum(old_mom**2) * rhoInv
-                   new_ke = HALF * sum(new_mom**2) * rhoInv
-
-                   src(i,j,k,UEDEN) = src(i,j,k,UEDEN) + (TWO * dtInv) * (new_ke - old_ke)
+                   src(i,j,k,UEDEN) = src(i,j,k,UEDEN) + dot_product(rhoInv * new_mom, Sr)
 
                 enddo
              enddo
@@ -90,6 +73,12 @@
        ! Now do the radial drift source terms.
 
        if (problem == 3 .and. radial_damping_factor > ZERO) then
+
+          ! The relevant dynamical timescale for determining our source term timescales should be
+          ! the larger of the two WD timescales. Generally this should be the secondary, but we'll
+          ! be careful just in case.
+
+          dynamical_timescale = max(t_ff_P, t_ff_S)
 
           radial_damping_timescale = radial_damping_factor * dynamical_timescale
 
