@@ -7,6 +7,7 @@ subroutine problem_checkpoint(int_dir_name, len)
   use bl_IO_module
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
   use prob_params_module, only: center
+  use meth_params_module, only: rot_period
 
   implicit none
 
@@ -38,6 +39,14 @@ subroutine problem_checkpoint(int_dir_name, len)
 
   close (un)
 
+
+
+  open (unit=un, file=trim(dir)//"/Rotation", status="unknown")
+
+  write (un,100) rot_period
+
+  close (un)
+
 end subroutine problem_checkpoint
 
 
@@ -47,8 +56,9 @@ subroutine problem_restart(int_dir_name, len)
   ! called by ALL processors during restart 
 
   use bl_IO_module
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, problem
   use prob_params_module, only: center
+  use meth_params_module, only: rot_period
 
   implicit none
 
@@ -79,6 +89,18 @@ subroutine problem_restart(int_dir_name, len)
   read (un,100) vel_P(3), vel_S(3)
 
   close (un)
+
+
+
+  if (problem .eq. 3) then
+
+     open (unit=un, file=trim(dir)//"/Rotation", status="old")
+
+     read (un,100) rot_period
+
+     close (un)
+
+  endif
 
 end subroutine problem_restart
 
