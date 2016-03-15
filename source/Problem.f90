@@ -421,7 +421,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
      do j = lo(2), hi(2)
         do i = lo(1), hi(1)
 
-           r = position(i,j,k)
+           r = position(i,j,k) - center
 
            ! We account for symmetric boundaries in this sum as usual,
            ! by adding to the position the locations that would exist
