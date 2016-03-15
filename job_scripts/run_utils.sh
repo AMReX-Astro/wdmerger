@@ -723,7 +723,12 @@ function copy_files {
       fi
   fi
   
+  new_inputs="F"
+
   if [ ! -e "$dir/$inputs" ]; then
+
+      new_inputs="T"
+
       if [ -e "$compile_dir/$inputs" ]; then
           cp $compile_dir/inputs $dir/$inputs
       else
@@ -735,7 +740,12 @@ function copy_files {
       fi
   fi
 
+  new_probin="F"
+
   if [ ! -e "$dir/$probin" ]; then
+
+      new_probin="T"
+
       if [ -e "$compile_dir/$probin" ]; then
 	  cp $compile_dir/probin $dir/$probin
       else
@@ -783,8 +793,13 @@ function copy_files {
   for var in $input_vars
   do
 
-      replace_inputs_var $var
-      replace_probin_var $var
+      if [ $new_inputs == "T" ]; then
+	  replace_inputs_var $var
+      fi
+
+      if [ $new_probin == "T" ]; then
+	  replace_probin_var $var
+      fi
 
   done
 
