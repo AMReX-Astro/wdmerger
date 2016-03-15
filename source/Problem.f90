@@ -174,6 +174,9 @@ subroutine wdcom(rho,  r_lo, r_hi, &
      do j = lo(2), hi(2)
         do i = lo(1), hi(1)
 
+           ! We want the COM locations for the WDs to be absolute positions
+           ! on the grid, not relative to the center.
+
            r = position(i,j,k)
 
            ! We account for symmetric boundaries in this sum as usual,
