@@ -1194,8 +1194,12 @@ function create_job_script {
 
       if [ -z $no_continue ]; then
 
-	echo "if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
-	echo "  submit_job" >> $dir/$job_script
+        echo "if [ ! -e no_submit ]; then" >> $dir/$job_script
+	echo "  if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
+	echo "    submit_job" >> $dir/$job_script
+	echo "  fi" >> $dir/$job_script
+        echo "else" >> $dir/$job_script
+	echo "  rm -f no_submit" >> $dir/$job_script
 	echo "fi" >> $dir/$job_script
 	echo "" >> $dir/$job_script
 
@@ -1264,9 +1268,13 @@ function create_job_script {
 
       if [ -z $no_continue ]; then
 
-	echo "if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
-	echo "  submit_job" >> $dir/$job_script
-	echo "fi" >> $dir/$job_script
+        echo "if [ ! -e no_submit ]; then" >> $dir/$job_script
+	echo "  if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
+	echo "    submit_job" >> $dir/$job_script
+	echo "  fi" >> $dir/$job_script
+        echo "else" >> $dir/$job_script
+	echo "  rm -f no_submit" >> $dir/$job_script
+	echo "fi"
 	echo "" >> $dir/$job_script
 
       fi
