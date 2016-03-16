@@ -137,9 +137,27 @@ Castro::problem_post_timestep()
 
     // Compute effective radii of stars at various density cutoffs
 
-    for (int i = 0; i <= 6; ++i) {
+    for (int i = 0; i <= 6; ++i)
+        Castro::volInBoundary(time, vol_p[i], vol_s[i], pow(10.0,i), true);
 
-        Castro::volInBoundary(time, vol_p[i], vol_s[i], pow(10.0,i));
+    // Do all of the reductions in a single step.
+
+    const int nfoo = 14;
+    Real foo[nfoo] = { 0.0 };
+
+    for (int i = 0; i <= 6; ++i) {
+      foo[i  ] = vol_p[i];
+      foo[i+7] = vol_s[i];
+    }
+
+    ParallelDescriptor::ReduceRealSum(foo, nfoo);
+
+    for (int i = 0; i <= 6; ++i) {
+      vol_p[i] = foo[i  ];
+      vol_s[i] = foo[i+7];
+    }
+
+    for (int i = 0; i <= 6; ++i) {
 
         rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
         rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
@@ -395,10 +413,7 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 // We also impose a distance requirement so that we only look 
 // at zones that are within twice the original radius of the white dwarf.
 
-void Castro::volInBoundary (Real               time,
-			    Real&              vol_p,
-			    Real&              vol_s,
-                            Real               rho_cutoff)
+void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff, bool local)
 {
     BL_PROFILE("Castro::volInBoundary()");
 
@@ -470,8 +485,10 @@ void Castro::volInBoundary (Real               time,
 
     }
 
-    ParallelDescriptor::ReduceRealSum(vol_p);
-    ParallelDescriptor::ReduceRealSum(vol_s);
+    if (!local) {
+      ParallelDescriptor::ReduceRealSum(vol_p);
+      ParallelDescriptor::ReduceRealSum(vol_s);
+    }
 
 }
 
