@@ -5,7 +5,7 @@ subroutine problem_checkpoint(int_dir_name, len)
   ! called by the IO processor during checkpoint
 
   use bl_IO_module
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
 
@@ -29,13 +29,14 @@ subroutine problem_checkpoint(int_dir_name, len)
 200 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
 
   write (un,200) center(1), center(2), center(3)
-  write (un,100) mass_P, mass_S
+  write (un,100) mass_P,   mass_S
   write (un,100) com_P(1), com_S(1)
   write (un,100) com_P(2), com_S(2)
   write (un,100) com_P(3), com_S(3)
   write (un,100) vel_P(1), vel_S(1)
   write (un,100) vel_P(2), vel_S(2)
   write (un,100) vel_P(3), vel_S(3)
+  write (un,100) t_ff_P,   t_ff_S
 
   close (un)
 
@@ -56,7 +57,7 @@ subroutine problem_restart(int_dir_name, len)
   ! called by ALL processors during restart 
 
   use bl_IO_module
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, problem
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S, problem
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
 
@@ -80,13 +81,14 @@ subroutine problem_restart(int_dir_name, len)
 200 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
 
   read (un,200) center(1), center(2), center(3)
-  read (un,100) mass_P, mass_S
+  read (un,100) mass_P,   mass_S
   read (un,100) com_P(1), com_S(1)
   read (un,100) com_P(2), com_S(2)
   read (un,100) com_P(3), com_S(3)
   read (un,100) vel_P(1), vel_S(1)
   read (un,100) vel_P(2), vel_S(2)
   read (un,100) vel_P(3), vel_S(3)
+  read (un,100) t_ff_P,   t_ff_S
 
   close (un)
 
