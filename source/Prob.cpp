@@ -51,9 +51,6 @@ Castro::problem_post_timestep()
     Real vol_p[7] = { 0.0 };
     Real vol_s[7] = { 0.0 };
 
-    Real lev_vol_p[7] = { 0.0 };
-    Real lev_vol_s[7] = { 0.0 };
-
     // Average density of the stars.
 
     Real rho_avg_p = 0.0;
@@ -140,16 +137,13 @@ Castro::problem_post_timestep()
 
     // Compute effective radii of stars at various density cutoffs
 
-    for (int lev = 0; lev <= finest_level; lev++)
-        for (int i = 0; i <= 6; ++i) {
-	    getLevel(lev).volInBoundary(time, lev_vol_p[i], lev_vol_s[i], pow(10.0,i));
-	    vol_p[i] += lev_vol_p[i];
-	    vol_s[i] += lev_vol_s[i];
-	}
-
     for (int i = 0; i <= 6; ++i) {
+
+        Castro::volInBoundary(time, vol_p[i], vol_s[i], pow(10.0,i));
+
         rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
-	rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
+        rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
+
     }
 
     // Free-fall timescale ~ 1 / sqrt(G * rho_avg}
@@ -408,61 +402,73 @@ void Castro::volInBoundary (Real               time,
 {
     BL_PROFILE("Castro::volInBoundary()");
 
-    const Real* dx   = geom.CellSize();
-    MultiFab*   mf   = derive("density",time,0);
+    BL_ASSERT(level == 0);
 
-    // Effective potentials of the primary and secondary
+    vol_p = 0.0;
+    vol_s = 0.0;
 
-    MultiFab* mfphip = derive("phiEffPM_P", time, 0);
-    MultiFab* mfphis = derive("phiEffPM_S", time, 0);
+    for (int lev = 0; lev <= parent->finestLevel(); lev++) {
 
-    BL_ASSERT(mf != 0);
-    BL_ASSERT(mfphip != 0);
-    BL_ASSERT(mfphis != 0);
+      Castro& c_lev = getLevel(lev);
 
-    if (level < parent->finestLevel())
-    {
-	const MultiFab* mask = getLevel(level+1).build_fine_mask();
-	MultiFab::Multiply(*mf, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
-    }
+      const Real* dx   = c_lev.geom.CellSize();
+      MultiFab*   mf   = c_lev.derive("density",time,0);
 
-    Real vp = 0.0;
-    Real vs = 0.0;
+      // Effective potentials of the primary and secondary
+
+      MultiFab* mfphip = c_lev.derive("phiEffPM_P", time, 0);
+      MultiFab* mfphis = c_lev.derive("phiEffPM_S", time, 0);
+
+      BL_ASSERT(mf != 0);
+      BL_ASSERT(mfphip != 0);
+      BL_ASSERT(mfphis != 0);
+
+      if (lev < parent->finestLevel())
+      {
+	  const MultiFab* mask = getLevel(lev+1).build_fine_mask();
+	  MultiFab::Multiply(*mf, *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
+      }
+
+      Real vp = 0.0;
+      Real vs = 0.0;
 
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:vp,vs)
 #endif
-    for (MFIter mfi(*mf,true); mfi.isValid(); ++mfi)
-    {
-        FArrayBox& fab = (*mf)[mfi];
-	FArrayBox& fabphip = (*mfphip)[mfi];
-	FArrayBox& fabphis = (*mfphis)[mfi];
-	FArrayBox& vol = volume[mfi];
+      for (MFIter mfi(*mf,true); mfi.isValid(); ++mfi)
+      {
+          FArrayBox& fab     = (*mf)[mfi];
+	  FArrayBox& fabphip = (*mfphip)[mfi];
+	  FArrayBox& fabphis = (*mfphis)[mfi];
+	  FArrayBox& vol     = c_lev.volume[mfi];
 
-	Real sp = 0.0;
-	Real ss = 0.0;
-        const Box& box  = mfi.tilebox();
-        const int* lo   = box.loVect();
-        const int* hi   = box.hiVect();
+	  Real sp = 0.0;
+	  Real ss = 0.0;
 
-	ca_volumeindensityboundary(BL_TO_FORTRAN_3D(fab),
-				   BL_TO_FORTRAN_3D(fabphip),
-				   BL_TO_FORTRAN_3D(fabphis),
-				   BL_TO_FORTRAN_3D(vol),
-				   ARLIM_3D(lo),ARLIM_3D(hi),
-				   ZFILL(dx),&sp,&ss,&rho_cutoff);
-        vp += sp;
-	vs += ss;
+	  const Box& box  = mfi.tilebox();
+	  const int* lo   = box.loVect();
+	  const int* hi   = box.hiVect();
+
+	  ca_volumeindensityboundary(BL_TO_FORTRAN_3D(fab),
+		                     BL_TO_FORTRAN_3D(fabphip),
+				     BL_TO_FORTRAN_3D(fabphis),
+				     BL_TO_FORTRAN_3D(vol),
+				     ARLIM_3D(lo),ARLIM_3D(hi),
+				     ZFILL(dx),&sp,&ss,&rho_cutoff);
+	  vp += sp;
+	  vs += ss;
+      }
+
+      delete mf;
+      delete mfphis;
+      delete mfphip;
+
+      vol_p += vp;
+      vol_s += vs;
+
     }
-
-    delete mf;
-    delete mfphis;
-    delete mfphip;
-
-    vol_p = vp;
-    vol_s = vs;
 
     ParallelDescriptor::ReduceRealSum(vol_p);
     ParallelDescriptor::ReduceRealSum(vol_s);
