@@ -14,7 +14,7 @@
 
 // Routine for determining white dwarf masses, centers of mass and velocities.
 
-void wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, Real* vel_p, Real* vel_s);
+void wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, Real* vel_p, Real* vel_s, bool local = false);
 
 // Volume within white dwarfs at a given density cutoff.
 

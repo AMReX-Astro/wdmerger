@@ -25,20 +25,11 @@ Castro::problem_post_timestep()
     Real mass_p       = 0.0;
     Real mass_s       = 0.0;
 
-    Real lev_mass_p   = 0.0;
-    Real lev_mass_s   = 0.0;
-
     Real com_p[3]     = { 0.0 };
     Real com_s[3]     = { 0.0 };
 
-    Real lev_com_p[3] = { 0.0 };
-    Real lev_com_s[3] = { 0.0 };
-
     Real vel_p[3]     = { 0.0 };
     Real vel_s[3]     = { 0.0 };
-
-    Real lev_vel_p[3] = { 0.0 };
-    Real lev_vel_s[3] = { 0.0 };
 
     Real old_com_p[3] = { 0.0 };
     Real old_com_s[3] = { 0.0 };
@@ -98,42 +89,9 @@ Castro::problem_post_timestep()
 
     }
 
-    for (int lev = 0; lev <= finest_level; lev++)
-    {
+    // Compute white dwarf centers of mass
 
-      set_amr_info(lev, -1, -1, -1.0, -1.0);
-
-      getLevel(lev).wdCOM(time, lev_mass_p, lev_mass_s, lev_com_p, lev_com_s, lev_vel_p, lev_vel_s);
-
-      mass_p += lev_mass_p;
-      mass_s += lev_mass_s;
-
-      for ( int i = 0; i < 3; i++ ) {
-	com_p[i] += lev_com_p[i];
-	com_s[i] += lev_com_s[i];
-	vel_p[i] += lev_vel_p[i];
-	vel_s[i] += lev_vel_s[i];
-      }
-
-    }
-
-    set_amr_info(level, -1, -1, -1.0, -1.0);
-
-    // Complete calculations for center of mass quantities
-
-    for ( int i = 0; i < 3; i++ ) {
-
-      if ( mass_p > 0.0 ) {
-	com_p[i] = com_p[i] / mass_p;
-        vel_p[i] = vel_p[i] / mass_p;
-      }
-
-      if ( mass_s > 0.0 ) {
-	com_s[i] = com_s[i] / mass_s;
-	vel_s[i] = vel_s[i] / mass_s;
-      }
-
-    }
+    Castro::wdCOM(time, mass_p, mass_s, com_p, com_s, vel_p, vel_s, true);
 
     // Compute effective radii of stars at various density cutoffs
 
@@ -142,12 +100,22 @@ Castro::problem_post_timestep()
 
     // Do all of the reductions in a single step.
 
-    const int nfoo = 14;
+    const int nfoo = 28;
     Real foo[nfoo] = { 0.0 };
 
     for (int i = 0; i <= 6; ++i) {
       foo[i  ] = vol_p[i];
       foo[i+7] = vol_s[i];
+    }
+
+    foo[14] = mass_p;
+    foo[15] = mass_s;
+
+    for (int i = 0; i <= 2; ++i) {
+      foo[i+16] = com_p[i];
+      foo[i+19] = com_s[i];
+      foo[i+22] = vel_p[i];
+      foo[i+25] = vel_s[i];
     }
 
     ParallelDescriptor::ReduceRealSum(foo, nfoo);
@@ -157,10 +125,38 @@ Castro::problem_post_timestep()
       vol_s[i] = foo[i+7];
     }
 
+    mass_p = foo[14];
+    mass_s = foo[15];
+
+    for (int i = 0; i <= 2; ++i) {
+      com_p[i] = foo[i+16];
+      com_s[i] = foo[i+19];
+      vel_p[i] = foo[i+22];
+      vel_s[i] = foo[i+25];
+    }
+
+    // Compute effective WD radii
+
     for (int i = 0; i <= 6; ++i) {
 
         rad_p[i] = std::pow(vol_p[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
         rad_s[i] = std::pow(vol_s[i] * 3.0 / 4.0 / M_PI, 1.0/3.0);
+
+    }
+
+     // Complete calculations for center of mass quantities
+
+    for ( int i = 0; i < 3; i++ ) {
+
+      if ( mass_p > 0.0 ) {
+        com_p[i] = com_p[i] / mass_p;
+        vel_p[i] = vel_p[i] / mass_p;
+      }
+
+      if ( mass_s > 0.0 ) {
+        com_s[i] = com_s[i] / mass_s;
+        vel_s[i] = vel_s[i] / mass_s;
+      }
 
     }
 
@@ -286,42 +282,11 @@ Castro::problem_post_timestep()
 //
 
 void
-Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, Real* vel_p, Real* vel_s)
+Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, Real* vel_p, Real* vel_s, bool local)
 {
     BL_PROFILE("Castro::wdCOM()");
 
-    const Real* dx = geom.CellSize();
-
-    // Density and momenta
-
-    MultiFab* mfrho  = derive("density",time,0);
-    MultiFab* mfxmom = derive("xmom",time,0);
-    MultiFab* mfymom = derive("ymom",time,0);
-    MultiFab* mfzmom = derive("zmom",time,0);
-
-    // Effective potentials of the primary and secondary
-
-    MultiFab* mfphip = derive("phiEffPM_P", time, 0);
-    MultiFab* mfphis = derive("phiEffPM_S", time, 0);
-
-    BL_ASSERT(mfrho  != 0);
-    BL_ASSERT(mfxmom != 0);
-    BL_ASSERT(mfymom != 0);
-    BL_ASSERT(mfzmom != 0);
-    BL_ASSERT(mfphip != 0);
-    BL_ASSERT(mfphis != 0);
-
-    if (level < parent->finestLevel())
-    {
-	const MultiFab* mask = getLevel(level+1).build_fine_mask();
-
-	MultiFab::Multiply(*mfrho,  *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfxmom, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfymom, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
-    }
+    BL_ASSERT(level == 0);
 
     Real com_p_x = 0.0;
     Real com_p_y = 0.0;
@@ -338,47 +303,88 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
     Real mp      = 0.0;
     Real ms      = 0.0;
 
+    for (int lev = 0; lev <= parent->finestLevel(); lev++) {
+
+      set_amr_info(lev, -1, -1, -1.0, -1.0);
+
+      Castro& c_lev = getLevel(lev);
+
+      const Real* dx = c_lev.geom.CellSize();
+
+      // Density and momenta
+
+      MultiFab* mfrho  = c_lev.derive("density",time,0);
+      MultiFab* mfxmom = c_lev.derive("xmom",time,0);
+      MultiFab* mfymom = c_lev.derive("ymom",time,0);
+      MultiFab* mfzmom = c_lev.derive("zmom",time,0);
+
+      // Effective potentials of the primary and secondary
+
+      MultiFab* mfphip = c_lev.derive("phiEffPM_P", time, 0);
+      MultiFab* mfphis = c_lev.derive("phiEffPM_S", time, 0);
+
+      BL_ASSERT(mfrho  != 0);
+      BL_ASSERT(mfxmom != 0);
+      BL_ASSERT(mfymom != 0);
+      BL_ASSERT(mfzmom != 0);
+      BL_ASSERT(mfphip != 0);
+      BL_ASSERT(mfphis != 0);
+
+      if (lev < parent->finestLevel())
+      {
+          const MultiFab* mask = c_lev.getLevel(lev+1).build_fine_mask();
+
+	  MultiFab::Multiply(*mfrho,  *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfxmom, *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfymom, *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
+      }
+
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:com_p_x,com_p_y,com_p_z,com_s_x,com_s_y,com_s_z) \
                      reduction(+:vel_p_x,vel_p_y,vel_p_z,vel_s_x,vel_s_y,vel_s_z) \
                      reduction(+:mp, ms)
 #endif
-    for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi)
-    {
-        FArrayBox& fabrho  = (*mfrho )[mfi];
-	FArrayBox& fabxmom = (*mfxmom)[mfi];
-	FArrayBox& fabymom = (*mfymom)[mfi];
-	FArrayBox& fabzmom = (*mfzmom)[mfi];
-	FArrayBox& fabphip = (*mfphip)[mfi];
-	FArrayBox& fabphis = (*mfphis)[mfi];
-	FArrayBox& vol     = volume[mfi];
+      for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi)
+	{
+	  FArrayBox& fabrho  = (*mfrho )[mfi];
+	  FArrayBox& fabxmom = (*mfxmom)[mfi];
+	  FArrayBox& fabymom = (*mfymom)[mfi];
+	  FArrayBox& fabzmom = (*mfzmom)[mfi];
+	  FArrayBox& fabphip = (*mfphip)[mfi];
+	  FArrayBox& fabphis = (*mfphis)[mfi];
+	  FArrayBox& vol     = c_lev.volume[mfi];
 
-        const Box& box  = mfi.tilebox();
-        const int* lo   = box.loVect();
-        const int* hi   = box.hiVect();
+	  const Box& box  = mfi.tilebox();
+	  const int* lo   = box.loVect();
+	  const int* hi   = box.hiVect();
 
-	wdcom(BL_TO_FORTRAN_3D(fabrho),
-	      BL_TO_FORTRAN_3D(fabxmom),
-	      BL_TO_FORTRAN_3D(fabymom),
-	      BL_TO_FORTRAN_3D(fabzmom),
-	      BL_TO_FORTRAN_3D(fabphip),
-	      BL_TO_FORTRAN_3D(fabphis),
-	      BL_TO_FORTRAN_3D(vol),
-	      ARLIM_3D(lo),ARLIM_3D(hi),
-	      ZFILL(dx),&time,
-	      &com_p_x, &com_p_y, &com_p_z,
-	      &com_s_x, &com_s_y, &com_s_z,
-	      &vel_p_x, &vel_p_y, &vel_p_z,
-	      &vel_s_x, &vel_s_y, &vel_s_z,
-	      &mp, &ms);
+	  wdcom(BL_TO_FORTRAN_3D(fabrho),
+		BL_TO_FORTRAN_3D(fabxmom),
+		BL_TO_FORTRAN_3D(fabymom),
+		BL_TO_FORTRAN_3D(fabzmom),
+		BL_TO_FORTRAN_3D(fabphip),
+		BL_TO_FORTRAN_3D(fabphis),
+		BL_TO_FORTRAN_3D(vol),
+		ARLIM_3D(lo),ARLIM_3D(hi),
+		ZFILL(dx),&time,
+		&com_p_x, &com_p_y, &com_p_z,
+		&com_s_x, &com_s_y, &com_s_z,
+		&vel_p_x, &vel_p_y, &vel_p_z,
+		&vel_s_x, &vel_s_y, &vel_s_z,
+		&mp, &ms);
+	}
+
+      delete mfrho;
+      delete mfxmom;
+      delete mfymom;
+      delete mfzmom;
+      delete mfphip;
+      delete mfphis;
+
     }
-
-    delete mfrho;
-    delete mfxmom;
-    delete mfymom;
-    delete mfzmom;
-    delete mfphip;
-    delete mfphis;
 
     com_p[0] = com_p_x;
     com_p[1] = com_p_y;
@@ -395,13 +401,36 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
     mass_p   = mp;
     mass_s   = ms;
 
-    ParallelDescriptor::ReduceRealSum(com_p,3);
-    ParallelDescriptor::ReduceRealSum(com_s,3);
-    ParallelDescriptor::ReduceRealSum(vel_p,3);
-    ParallelDescriptor::ReduceRealSum(vel_s,3);
+    if (!local) {
 
-    ParallelDescriptor::ReduceRealSum(mass_p);
-    ParallelDescriptor::ReduceRealSum(mass_s);
+      const int nfoo = 14;
+      Real foo[nfoo] = { 0.0 };
+
+      foo[0] = mass_p;
+      foo[1] = mass_s;
+
+      for (int i = 0; i <=2; i++) {
+	foo[i+2 ] = com_p[i];
+	foo[i+5 ] = com_s[i];
+	foo[i+8 ] = vel_p[i];
+	foo[i+11] = vel_s[i];
+      }
+
+      ParallelDescriptor::ReduceRealSum(foo, nfoo);
+
+      mass_p = foo[0];
+      mass_s = foo[1];
+
+      for (int i = 0; i <=2; i++) {
+	com_p[i] = foo[i+2 ];
+	com_s[i] = foo[i+5 ];
+	vel_p[i] = foo[i+8 ];
+	vel_s[i] = foo[i+11];
+      }
+
+    }
+
+    set_amr_info(level, -1, -1, -1.0, -1.0);
 
 }
 
@@ -442,7 +471,7 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
 
       if (lev < parent->finestLevel())
       {
-	  const MultiFab* mask = getLevel(lev+1).build_fine_mask();
+	  const MultiFab* mask = c_lev.getLevel(lev+1).build_fine_mask();
 	  MultiFab::Multiply(*mf, *mask, 0, 0, 1, 0);
 	  MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
 	  MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
@@ -488,8 +517,15 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
     }
 
     if (!local) {
-      ParallelDescriptor::ReduceRealSum(vol_p);
-      ParallelDescriptor::ReduceRealSum(vol_s);
+
+      const int nfoo = 2;
+      Real foo[nfoo] = {vol_p, vol_s};
+
+      ParallelDescriptor::ReduceRealSum(foo, nfoo);
+
+      vol_p = foo[0];
+      vol_s = foo[1];
+
     }
 
     set_amr_info(level, -1, -1, -1.0, -1.0);
