@@ -383,8 +383,8 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
                                         vol, vo_lo, vo_hi, &
                                         lo, hi, dx, time, Qtt) bind(C,name='quadrupole_tensor_double_dot')
 
-  use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO
-  use prob_params_module, only: center, problo, probhi, physbc_lo, physbc_hi, Symmetry
+  use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO, M_PI
+  use prob_params_module, only: center, problo, probhi, physbc_lo, physbc_hi, Symmetry, dim
   use wdmerger_util_module, only: inertial_rotation, inertial_velocity
   use castro_util_module, only: position
 
@@ -412,7 +412,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
   double precision, intent(inout) :: Qtt(3,3)
 
   integer          :: i, j, k, l, m
-  double precision :: r(3), pos(3), vel(3), g(3), rhoInv
+  double precision :: r(3), pos(3), vel(3), g(3), rhoInv, dm
   double precision :: dQtt(3,3)
 
   dQtt(:,:) = ZERO
@@ -422,13 +422,6 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
         do i = lo(1), hi(1)
 
            r = position(i,j,k) - center
-
-           ! We account for symmetric boundaries in this sum as usual,
-           ! by adding to the position the locations that would exist
-           ! on the opposite side of the symmetric boundary.
-
-           r = merge(r + (problo - r), r, physbc_lo(:) .eq. Symmetry)
-           r = merge(r + (r - probhi), r, physbc_hi(:) .eq. Symmetry)
 
            if (rho(i,j,k) > ZERO) then
               rhoInv = ONE / rho(i,j,k)
@@ -454,11 +447,6 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
            vel(2) = ymom(i,j,k) * rhoInv
            vel(3) = zmom(i,j,k) * rhoInv
 
-           ! Account for symmetric boundaries.
-
-           vel = merge(ZERO, vel, physbc_lo(:) .eq. Symmetry)
-           vel = merge(ZERO, vel, physbc_hi(:) .eq. Symmetry)
-
            vel = inertial_velocity(pos, vel, time)
 
            g(1) = gravx(i,j,k)
@@ -469,11 +457,41 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
 
            g = inertial_rotation(g, time)
 
-           do m = 1, 3
-              do l = 1, 3
-                 dQtt(l,m) = dQtt(l,m) + TWO * rho(i,j,k) * vol(i,j,k) * (vel(l) * vel(m) + pos(l) * g(m))
+           ! Absorb the factor of 2 outside the integral into the zone mass, for efficiency.
+
+           dm = TWO * rho(i,j,k) * vol(i,j,k)
+
+           if (dim .eq. 3) then
+
+              do m = 1, 3
+                 do l = 1, 3
+                    dQtt(l,m) = dQtt(l,m) + dM * (vel(l) * vel(m) + pos(l) * g(m))
+                 enddo
               enddo
-           enddo
+
+           else
+
+              ! For axisymmetric coordinates we need to be careful here.
+              ! We want to calculate the quadrupole tensor in terms of
+              ! Cartesian coordinates but our coordinates are cylindrical (R, z).
+              ! What we can do is to first express the Cartesian coordinates
+              ! as (x, y, z) = (R cos(phi), R sin(phi), z). Then we can integrate
+              ! out the phi coordinate for each component. The off-diagonal components
+              ! all then vanish automatically. The on-diagonal components xx and yy
+              ! pick up a factor of cos**2(phi) which when integrated from (0, 2*pi)
+              ! yields pi. Note that we're going to choose that the cylindrical z axis
+              ! coincides with the Cartesian x-axis, which is our default choice.
+
+              ! We also need to then divide by the volume by 2*pi since
+              ! it has already been integrated out.
+
+              dm = dm / (TWO * M_PI)
+
+              dQtt(1,1) = dQtt(1,1) + dm * (TWO * M_PI) * (vel(2)**2 + pos(2) * g(2))
+              dQtt(2,2) = dQtt(2,2) + dm * M_PI * (vel(1)**2 + pos(1) * g(1))
+              dQtt(3,3) = dQtt(3,3) + dm * M_PI * (vel(1)**2 + pos(1) * g(1))
+
+           endif
 
         enddo
      enddo
@@ -505,6 +523,7 @@ subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, 
   use fundamental_constants_module, only: Gconst, c_light, parsec
   use probdata_module, only: gw_dist, axis_1, axis_2, axis_3
   use meth_params_module, only: rot_axis
+  use prob_params_module, only: dim
 
   implicit none
 
@@ -571,25 +590,51 @@ subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, 
 
      h(:,:) = h(:,:) * TWO * Gconst / (c_light**4 * r)
 
-     ! If rot_axis == 3, then h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}.
-     ! Analogous statements hold along the other axes.
+     if (dim .eq. 3) then
 
-     ! We are adding here so that this calculation makes sense on multiple levels.
+        ! If rot_axis == 3, then h_+ = h_{11} = -h_{22} and h_x = h_{12} = h_{21}.
+        ! Analogous statements hold along the other axes.
 
-     if (dir .eq. axis_1) then
+        ! We are adding here so that this calculation makes sense on multiple levels.
 
-        h_plus_1  = h_plus_1  + h(axis_2,axis_2)
-        h_cross_1 = h_cross_1 + h(axis_2,axis_3)
+        if (dir .eq. axis_1) then
 
-     else if (dir .eq. axis_2) then
+           h_plus_1  = h_plus_1  + h(axis_2,axis_2)
+           h_cross_1 = h_cross_1 + h(axis_2,axis_3)
 
-        h_plus_2  = h_plus_2  + h(axis_3,axis_3)
-        h_cross_2 = h_cross_2 + h(axis_3,axis_1)
+        else if (dir .eq. axis_2) then
 
-     else if (dir .eq. axis_3) then
+           h_plus_2  = h_plus_2  + h(axis_3,axis_3)
+           h_cross_2 = h_cross_2 + h(axis_3,axis_1)
 
-        h_plus_3  = h_plus_3  + h(axis_1,axis_1)
-        h_cross_3 = h_cross_3 + h(axis_1,axis_2)
+        else if (dir .eq. axis_3) then
+
+           h_plus_3  = h_plus_3  + h(axis_1,axis_1)
+           h_cross_3 = h_cross_3 + h(axis_1,axis_2)
+
+        endif
+
+     else
+
+        ! In 2D axisymmetric coordinates, enforce that axis_1 is the x-axis,
+        ! axis_2 is the y-axis, and axis_3 is the z-axis.
+
+        if (dir .eq. 1) then
+
+           h_plus_1  = h_plus_1  + h(2,2)
+           h_cross_1 = h_cross_1 + h(2,3)
+
+        else if (dir .eq. 2) then
+
+           h_plus_2  = h_plus_2  + h(3,3)
+           h_cross_2 = h_cross_2 + h(3,1)
+
+        else if (dir .eq. 3) then
+
+           h_plus_3  = h_plus_3  + h(1,1)
+           h_cross_3 = h_cross_3 + h(1,2)
+
+        endif
 
      endif
 
