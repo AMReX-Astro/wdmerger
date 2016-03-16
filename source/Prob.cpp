@@ -424,6 +424,8 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
 
     for (int lev = 0; lev <= parent->finestLevel(); lev++) {
 
+      set_amr_info(lev, -1, -1, -1.0, -1.0);
+
       Castro& c_lev = getLevel(lev);
 
       const Real* dx   = c_lev.geom.CellSize();
@@ -489,6 +491,8 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
       ParallelDescriptor::ReduceRealSum(vol_p);
       ParallelDescriptor::ReduceRealSum(vol_s);
     }
+
+    set_amr_info(level, -1, -1, -1.0, -1.0);
 
 }
 
