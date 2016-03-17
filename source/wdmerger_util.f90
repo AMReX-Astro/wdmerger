@@ -116,6 +116,12 @@ contains
        call bl_error("The free-fall problem does not make sense in a rotating referance frame.")
     endif
 
+    ! Disable the Coriolis term if we're doing a relaxation.
+
+    if (problem .eq. 3 .and. relaxation_damping_factor > ZERO) then
+       rotation_include_coriolis = 0
+    endif
+
     ! Make sure we have a sensible eccentricity.
 
     if (orbital_eccentricity >= 1.0) then
@@ -1031,7 +1037,7 @@ contains
 
     use problem_io_module, only: ioproc
     use sponge_module, only: sponge_timescale
-    use meth_params_module, only: rot_period, do_rotation
+    use meth_params_module, only: rot_period, do_rotation, rotation_include_coriolis
 
     implicit none
 
@@ -1039,6 +1045,7 @@ contains
 
     relaxation_damping_factor = -ONE
     sponge_timescale = -ONE
+    rotation_include_coriolis = 1
 
     if (ioproc) then
        print *, ""
