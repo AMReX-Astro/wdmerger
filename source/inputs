@@ -164,6 +164,9 @@ castro.grav_source_type = 4
 # How to include the rotation source term in the hydro equations
 castro.rot_source_type = 4
 
+# Whether to use the hybrid advection technique that conserves angular momentum
+castro.hybrid_hydro = 0
+
 # Reset (rho*e) if it goes negative in the transverse terms
 castro.transverse_reset_rhoe = 1
 
