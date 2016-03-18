@@ -264,17 +264,25 @@ Castro::sum_integrated_quantities ()
     vel_s_mag += std::pow( std::pow(vel_s[0],2) + std::pow(vel_s[1],2) + std::pow(vel_s[2],2), 0.5 );
 
 #if (BL_SPACEDIM == 3)
-    vel_p_rad = (com_p[axis_1 - 1] / com_p_mag) * vel_p[axis_1 - 1] + (com_p[axis_2 - 1] / com_p_mag) * vel_p[axis_2 - 1];
-    vel_s_rad = (com_s[axis_1 - 1] / com_s_mag) * vel_s[axis_1 - 1] + (com_s[axis_2 - 1] / com_s_mag) * vel_s[axis_2 - 1];
+    if (mass_p > 0.0) {
+      vel_p_rad = (com_p[axis_1 - 1] / com_p_mag) * vel_p[axis_1 - 1] + (com_p[axis_2 - 1] / com_p_mag) * vel_p[axis_2 - 1];
+      vel_p_phi = (com_p[axis_1 - 1] / com_p_mag) * vel_p[axis_2 - 1] - (com_p[axis_2 - 1] / com_p_mag) * vel_p[axis_1 - 1];
+    }
 
-    vel_p_phi = (com_p[axis_1 - 1] / com_p_mag) * vel_p[axis_2 - 1] - (com_p[axis_2 - 1] / com_p_mag) * vel_p[axis_1 - 1];
-    vel_s_phi = (com_s[axis_1 - 1] / com_s_mag) * vel_s[axis_2 - 1] - (com_s[axis_2 - 1] / com_s_mag) * vel_s[axis_1 - 1];
+    if (mass_s > 0.0) {
+      vel_s_rad = (com_s[axis_1 - 1] / com_s_mag) * vel_s[axis_1 - 1] + (com_s[axis_2 - 1] / com_s_mag) * vel_s[axis_2 - 1];
+      vel_s_phi = (com_s[axis_1 - 1] / com_s_mag) * vel_s[axis_2 - 1] - (com_s[axis_2 - 1] / com_s_mag) * vel_s[axis_1 - 1];
+    }
 #else
-    vel_p_rad = vel_p[axis_1 - 1];
-    vel_s_rad = vel_s[axis_1 - 1];
+    if (mass_p > 0.0) {
+      vel_p_rad = vel_p[axis_1 - 1];
+      vel_p_phi = vel_p[axis_3 - 1];
+    }
 
-    vel_p_phi = vel_p[axis_3 - 1];
-    vel_s_phi = vel_s[axis_3 - 1];
+    if (mass_s > 0.0) {
+      vel_s_rad = vel_s[axis_1 - 1];
+      vel_s_phi = vel_s[axis_3 - 1];
+    }
 #endif
 
     if (mass_p > 0.0 && mass_s > 0.0) {
