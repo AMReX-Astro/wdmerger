@@ -59,3 +59,8 @@ static int problem;
 
 Real rad_p[7];
 Real rad_s[7];
+
+// Rate of change of stellar masses
+
+Real mdot_p;
+Real mdot_s;
