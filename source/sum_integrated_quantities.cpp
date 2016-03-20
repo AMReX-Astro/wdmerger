@@ -21,6 +21,8 @@ Castro::sum_integrated_quantities ()
 {
     if (level > 0) return;
 
+    bool local_flag = true;
+
     int finest_level  = parent->finestLevel();
     Real time         = state[State_Type].curTime();
     Real dt           = parent->dtLevel(0);
@@ -179,68 +181,141 @@ Castro::sum_integrated_quantities ()
       Castro& ca_lev = getLevel(lev);
 
       for ( int i = 0; i < 3; i++ ) {
-        com[i] += ca_lev.locWgtSum("density", time, i);
+        com[i] += ca_lev.locWgtSum("density", time, i, local_flag);
       }
 
       // Calculate total mass, momentum, angular momentum, and energy of system.
 
-      mass += ca_lev.volWgtSum("density", time);
+      mass += ca_lev.volWgtSum("density", time, local_flag);
 
-      momentum[0] += ca_lev.volWgtSum("inertial_momentum_x", time);
-      momentum[1] += ca_lev.volWgtSum("inertial_momentum_y", time);
-      momentum[2] += ca_lev.volWgtSum("inertial_momentum_z", time);
+      momentum[0] += ca_lev.volWgtSum("inertial_momentum_x", time, local_flag);
+      momentum[1] += ca_lev.volWgtSum("inertial_momentum_y", time, local_flag);
+      momentum[2] += ca_lev.volWgtSum("inertial_momentum_z", time, local_flag);
 
-      angular_momentum[0] += ca_lev.volWgtSum("inertial_angular_momentum_x", time);
-      angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time);
-      angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time);
+      angular_momentum[0] += ca_lev.volWgtSum("inertial_angular_momentum_x", time, local_flag);
+      angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time, local_flag);
+      angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time, local_flag);
 
 #ifdef HYBRID_MOMENTUM
-      hybrid_momentum[0] += ca_lev.volWgtSum("rmom", time);
-      hybrid_momentum[1] += ca_lev.volWgtSum("lmom", time);
-      hybrid_momentum[2] += ca_lev.volWgtSum("pmom", time);
+      hybrid_momentum[0] += ca_lev.volWgtSum("rmom", time, local_flag);
+      hybrid_momentum[1] += ca_lev.volWgtSum("lmom", time, local_flag);
+      hybrid_momentum[2] += ca_lev.volWgtSum("pmom", time, local_flag);
 #endif
 
-      rho_E += ca_lev.volWgtSum("rho_E", time);
-      rho_K += ca_lev.volWgtSum("kineng",time);
-      rho_e += ca_lev.volWgtSum("rho_e", time);
+      rho_E += ca_lev.volWgtSum("rho_E", time, local_flag);
+      rho_K += ca_lev.volWgtSum("kineng",time, local_flag);
+      rho_e += ca_lev.volWgtSum("rho_e", time, local_flag);
 
 #ifdef GRAVITY
       if (do_grav)
-        rho_phi += ca_lev.volProductSum("density", "phiGrav", time);
+        rho_phi += ca_lev.volProductSum("density", "phiGrav", time, local_flag);
 #endif
 
 #ifdef ROTATION
       if (do_rotation)
-	rho_phirot += ca_lev.volProductSum("density", "phiRot", time);
+	rho_phirot += ca_lev.volProductSum("density", "phiRot", time, local_flag);
 #endif            
       
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
-      ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3);
+      ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, local_flag);
 
       // Integrated mass of all species on the domain.      
       for (int i = 0; i < NumSpec; i++)
-	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time) / M_solar;
+	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time, local_flag) / M_solar;
 
       MultiFab& S_new = ca_lev.get_new_data(State_Type);
 
       // Extrema
 
-      T_max = std::max(T_max, S_new.max(Temp));
-      rho_max = std::max(rho_max, S_new.max(Density));
+      T_max = std::max(T_max, S_new.max(Temp, 0, local_flag));
+      rho_max = std::max(rho_max, S_new.max(Density, 0, local_flag));
 
       if (lev == finest_level) {
 
         MultiFab* ts_te_MF = ca_lev.derive("t_sound_t_enuc", time, 0);
-	ts_te_max = std::max(ts_te_max, ts_te_MF->max(0));
+	ts_te_max = std::max(ts_te_max, ts_te_MF->max(0,0,local_flag));
 	delete ts_te_MF;
 
       }
+
     }
 
     // Return to the original level.
     
     set_amr_info(level, -1, -1, -1.0, -1.0);    
+
+    // Do the reductions.
+
+    int nfoo_sum = 24 + NumSpec;
+
+    Array<Real> foo_sum(nfoo_sum);
+
+    foo_sum[0] = mass;
+
+    for (int i = 0; i < 3; i++) {
+      foo_sum[i+1]  = com[i];
+      foo_sum[i+4]  = momentum[i];
+      foo_sum[i+7]  = angular_momentum[i];
+      foo_sum[i+10] = hybrid_momentum[i];
+    }
     
+    foo_sum[13] = rho_E;
+    foo_sum[14] = rho_K;
+    foo_sum[15] = rho_e;
+    foo_sum[16] = rho_phi;
+    foo_sum[17] = rho_phirot;
+    foo_sum[18] = h_plus_1;
+    foo_sum[19] = h_cross_1;
+    foo_sum[20] = h_plus_2;
+    foo_sum[21] = h_cross_2;
+    foo_sum[22] = h_plus_3;
+    foo_sum[23] = h_cross_3;
+
+    for (int i = 0; i < NumSpec; i++) {
+      foo_sum[i + 24] = species_mass[i];
+    }
+
+    ParallelDescriptor::ReduceRealSum(foo_sum.dataPtr(), nfoo_sum);
+
+    mass = foo_sum[0];
+
+    for (int i = 0; i < 3; i++) {
+      com[i]              = foo_sum[i+1];
+      momentum[i]         = foo_sum[i+4];
+      angular_momentum[i] = foo_sum[i+7];
+      hybrid_momentum[i]  = foo_sum[i+10];
+    }
+
+    rho_E      = foo_sum[13];
+    rho_K      = foo_sum[14];
+    rho_e      = foo_sum[15];
+    rho_phi    = foo_sum[16];
+    rho_phirot = foo_sum[17];
+    h_plus_1   = foo_sum[18];
+    h_cross_1  = foo_sum[19];
+    h_plus_2   = foo_sum[20];
+    h_cross_2  = foo_sum[21];
+    h_plus_3   = foo_sum[22];
+    h_cross_3  = foo_sum[23];
+
+    for (int i = 0; i < NumSpec; i++) {
+      species_mass[i] = foo_sum[i + 24];
+    }
+
+    int nfoo_max = 3;
+
+    Array<Real> foo_max(nfoo_max);
+
+    foo_max[0] = T_max;
+    foo_max[1] = rho_max;
+    foo_max[2] = ts_te_max;
+
+    ParallelDescriptor::ReduceRealMax(foo_max.dataPtr(), nfoo_max);
+
+    T_max     = foo_max[0];
+    rho_max   = foo_max[1];
+    ts_te_max = foo_max[2];
+
     // Complete calculations for energy and momenta
 
     gravitational_energy = -rho_phi; // CASTRO uses positive phi
@@ -312,12 +387,6 @@ Castro::sum_integrated_quantities ()
       if (angle < 0.0) angle += 360.0;
       
     }
-
-    // Do remaining reductions
-
-    ParallelDescriptor::ReduceRealMax(T_max);
-    ParallelDescriptor::ReduceRealMax(rho_max);
-    ParallelDescriptor::ReduceRealMax(ts_te_max);
 
     // Write data out to the log.
 

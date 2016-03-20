@@ -558,7 +558,8 @@ void
 Castro::gwstrain (Real time,
 		  Real& h_plus_1, Real& h_cross_1,
 		  Real& h_plus_2, Real& h_cross_2,
-		  Real& h_plus_3, Real& h_cross_3) {
+		  Real& h_plus_3, Real& h_cross_3,
+		  bool local) {
 
     BL_PROFILE("Castro::gwstrain()");
 
@@ -670,7 +671,8 @@ Castro::gwstrain (Real time,
 
     // Now, do a global reduce over all processes.
 
-    ParallelDescriptor::ReduceRealSum(Qtt.dataPtr(),bx.numPts());
+    if (!local)
+      ParallelDescriptor::ReduceRealSum(Qtt.dataPtr(),bx.numPts());
 
     // Now that we have the second time derivative of the quadrupole 
     // tensor, we can calculate the transverse-trace gauge strain tensor.

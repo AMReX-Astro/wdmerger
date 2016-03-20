@@ -25,7 +25,8 @@ void volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff, bool l
 void gwstrain (Real time,
 	       Real& h_plus_1, Real& h_cross_1,
 	       Real& h_plus_2, Real& h_cross_2,
-	       Real& h_plus_3, Real& h_cross_3);
+	       Real& h_plus_3, Real& h_cross_3,
+	       bool local = false);
 
 // Computes standard dot product of two three-vectors.
 
