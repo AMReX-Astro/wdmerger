@@ -108,4 +108,6 @@
   atol_enuc = 1.d-6
 
   retry_burn = T
+
+  renormalize_abundaces = T
 /
