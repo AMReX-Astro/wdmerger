@@ -31,6 +31,9 @@ Castro::problem_post_timestep()
     Real vel_p[3]     = { 0.0 };
     Real vel_s[3]     = { 0.0 };
 
+    Real old_mass_p   = 0.0;
+    Real old_mass_s   = 0.0;
+
     Real old_com_p[3] = { 0.0 };
     Real old_com_s[3] = { 0.0 };
 
@@ -69,6 +72,9 @@ Castro::problem_post_timestep()
     // a more accurate result using it as a starting point.
 
     set_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
+
+    old_mass_p = mass_p;
+    old_mass_s = mass_s;
 
     mass_p = 0.0;
     mass_s = 0.0;
@@ -134,6 +140,16 @@ Castro::problem_post_timestep()
       vel_p[i] = foo[i+22];
       vel_s[i] = foo[i+25];
     }
+
+    if (mass_p > 0.0 && dt > 0.0)
+      mdot_p = (mass_p - old_mass_p) / dt;
+    else
+      mdot_p = 0.0;
+
+    if (mass_s > 0.0 && dt > 0.0)
+      mdot_s = (mass_s - old_mass_s) / dt;
+    else
+      mdot_s = 0.0;
 
     // Compute effective WD radii
 
@@ -542,7 +558,8 @@ void
 Castro::gwstrain (Real time,
 		  Real& h_plus_1, Real& h_cross_1,
 		  Real& h_plus_2, Real& h_cross_2,
-		  Real& h_plus_3, Real& h_cross_3) {
+		  Real& h_plus_3, Real& h_cross_3,
+		  bool local) {
 
     BL_PROFILE("Castro::gwstrain()");
 
@@ -654,7 +671,8 @@ Castro::gwstrain (Real time,
 
     // Now, do a global reduce over all processes.
 
-    ParallelDescriptor::ReduceRealSum(Qtt.dataPtr(),bx.numPts());
+    if (!local)
+      ParallelDescriptor::ReduceRealSum(Qtt.dataPtr(),bx.numPts());
 
     // Now that we have the second time derivative of the quadrupole 
     // tensor, we can calculate the transverse-trace gauge strain tensor.

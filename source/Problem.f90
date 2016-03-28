@@ -135,6 +135,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo, probhi, physbc_lo, physbc_hi, Symmetry
   use castro_util_module, only: position
+  use probdata_module, only: stellar_density_threshold
 
   implicit none
 
@@ -175,6 +176,10 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   do k = lo(3), hi(3)
      do j = lo(2), hi(2)
         do i = lo(1), hi(1)
+
+           ! Don't sum up material that is below the density threshold.
+
+           if (rho(i,j,k) < stellar_density_threshold) continue
 
            ! We want the COM locations for the WDs to be absolute positions
            ! on the grid, not relative to the center.

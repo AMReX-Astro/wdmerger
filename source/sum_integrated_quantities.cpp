@@ -19,6 +19,10 @@
 void
 Castro::sum_integrated_quantities ()
 {
+    if (level > 0) return;
+
+    bool local_flag = true;
+
     int finest_level  = parent->finestLevel();
     Real time         = state[State_Type].curTime();
     Real dt           = parent->dtLevel(0);
@@ -65,6 +69,10 @@ Castro::sum_integrated_quantities ()
     // Maximum t_sound / t_enuc on finest level.
 
     Real ts_te_max = 0.0;
+
+    // Mass transfer rate
+
+    Real mdot = 0.5 * (std::abs(mdot_p) + std::abs(mdot_s));
 
     // Center of mass of the system.
 
@@ -173,68 +181,141 @@ Castro::sum_integrated_quantities ()
       Castro& ca_lev = getLevel(lev);
 
       for ( int i = 0; i < 3; i++ ) {
-        com[i] += ca_lev.locWgtSum("density", time, i);
+        com[i] += ca_lev.locWgtSum("density", time, i, local_flag);
       }
 
       // Calculate total mass, momentum, angular momentum, and energy of system.
 
-      mass += ca_lev.volWgtSum("density", time);
+      mass += ca_lev.volWgtSum("density", time, local_flag);
 
-      momentum[0] += ca_lev.volWgtSum("inertial_momentum_x", time);
-      momentum[1] += ca_lev.volWgtSum("inertial_momentum_y", time);
-      momentum[2] += ca_lev.volWgtSum("inertial_momentum_z", time);
+      momentum[0] += ca_lev.volWgtSum("inertial_momentum_x", time, local_flag);
+      momentum[1] += ca_lev.volWgtSum("inertial_momentum_y", time, local_flag);
+      momentum[2] += ca_lev.volWgtSum("inertial_momentum_z", time, local_flag);
 
-      angular_momentum[0] += ca_lev.volWgtSum("inertial_angular_momentum_x", time);
-      angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time);
-      angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time);
+      angular_momentum[0] += ca_lev.volWgtSum("inertial_angular_momentum_x", time, local_flag);
+      angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time, local_flag);
+      angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time, local_flag);
 
 #ifdef HYBRID_MOMENTUM
-      hybrid_momentum[0] += ca_lev.volWgtSum("rmom", time);
-      hybrid_momentum[1] += ca_lev.volWgtSum("lmom", time);
-      hybrid_momentum[2] += ca_lev.volWgtSum("pmom", time);
+      hybrid_momentum[0] += ca_lev.volWgtSum("rmom", time, local_flag);
+      hybrid_momentum[1] += ca_lev.volWgtSum("lmom", time, local_flag);
+      hybrid_momentum[2] += ca_lev.volWgtSum("pmom", time, local_flag);
 #endif
 
-      rho_E += ca_lev.volWgtSum("rho_E", time);
-      rho_K += ca_lev.volWgtSum("kineng",time);
-      rho_e += ca_lev.volWgtSum("rho_e", time);
+      rho_E += ca_lev.volWgtSum("rho_E", time, local_flag);
+      rho_K += ca_lev.volWgtSum("kineng",time, local_flag);
+      rho_e += ca_lev.volWgtSum("rho_e", time, local_flag);
 
 #ifdef GRAVITY
       if (do_grav)
-        rho_phi += ca_lev.volProductSum("density", "phiGrav", time);
+        rho_phi += ca_lev.volProductSum("density", "phiGrav", time, local_flag);
 #endif
 
 #ifdef ROTATION
       if (do_rotation)
-	rho_phirot += ca_lev.volProductSum("density", "phiRot", time);
+	rho_phirot += ca_lev.volProductSum("density", "phiRot", time, local_flag);
 #endif            
       
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
-      ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3);
+      ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, local_flag);
 
       // Integrated mass of all species on the domain.      
       for (int i = 0; i < NumSpec; i++)
-	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time) / M_solar;
+	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time, local_flag) / M_solar;
 
       MultiFab& S_new = ca_lev.get_new_data(State_Type);
 
       // Extrema
 
-      T_max = std::max(T_max, S_new.max(Temp));
-      rho_max = std::max(rho_max, S_new.max(Density));
+      T_max = std::max(T_max, S_new.max(Temp, 0, local_flag));
+      rho_max = std::max(rho_max, S_new.max(Density, 0, local_flag));
 
       if (lev == finest_level) {
 
         MultiFab* ts_te_MF = ca_lev.derive("t_sound_t_enuc", time, 0);
-	ts_te_max = std::max(ts_te_max, ts_te_MF->max(0));
+	ts_te_max = std::max(ts_te_max, ts_te_MF->max(0,0,local_flag));
 	delete ts_te_MF;
 
       }
+
     }
 
     // Return to the original level.
     
     set_amr_info(level, -1, -1, -1.0, -1.0);    
+
+    // Do the reductions.
+
+    int nfoo_sum = 24 + NumSpec;
+
+    Array<Real> foo_sum(nfoo_sum);
+
+    foo_sum[0] = mass;
+
+    for (int i = 0; i < 3; i++) {
+      foo_sum[i+1]  = com[i];
+      foo_sum[i+4]  = momentum[i];
+      foo_sum[i+7]  = angular_momentum[i];
+      foo_sum[i+10] = hybrid_momentum[i];
+    }
     
+    foo_sum[13] = rho_E;
+    foo_sum[14] = rho_K;
+    foo_sum[15] = rho_e;
+    foo_sum[16] = rho_phi;
+    foo_sum[17] = rho_phirot;
+    foo_sum[18] = h_plus_1;
+    foo_sum[19] = h_cross_1;
+    foo_sum[20] = h_plus_2;
+    foo_sum[21] = h_cross_2;
+    foo_sum[22] = h_plus_3;
+    foo_sum[23] = h_cross_3;
+
+    for (int i = 0; i < NumSpec; i++) {
+      foo_sum[i + 24] = species_mass[i];
+    }
+
+    ParallelDescriptor::ReduceRealSum(foo_sum.dataPtr(), nfoo_sum);
+
+    mass = foo_sum[0];
+
+    for (int i = 0; i < 3; i++) {
+      com[i]              = foo_sum[i+1];
+      momentum[i]         = foo_sum[i+4];
+      angular_momentum[i] = foo_sum[i+7];
+      hybrid_momentum[i]  = foo_sum[i+10];
+    }
+
+    rho_E      = foo_sum[13];
+    rho_K      = foo_sum[14];
+    rho_e      = foo_sum[15];
+    rho_phi    = foo_sum[16];
+    rho_phirot = foo_sum[17];
+    h_plus_1   = foo_sum[18];
+    h_cross_1  = foo_sum[19];
+    h_plus_2   = foo_sum[20];
+    h_cross_2  = foo_sum[21];
+    h_plus_3   = foo_sum[22];
+    h_cross_3  = foo_sum[23];
+
+    for (int i = 0; i < NumSpec; i++) {
+      species_mass[i] = foo_sum[i + 24];
+    }
+
+    int nfoo_max = 3;
+
+    Array<Real> foo_max(nfoo_max);
+
+    foo_max[0] = T_max;
+    foo_max[1] = rho_max;
+    foo_max[2] = ts_te_max;
+
+    ParallelDescriptor::ReduceRealMax(foo_max.dataPtr(), nfoo_max);
+
+    T_max     = foo_max[0];
+    rho_max   = foo_max[1];
+    ts_te_max = foo_max[2];
+
     // Complete calculations for energy and momenta
 
     gravitational_energy = -rho_phi; // CASTRO uses positive phi
@@ -307,12 +388,6 @@ Castro::sum_integrated_quantities ()
       
     }
 
-    // Do remaining reductions
-
-    ParallelDescriptor::ReduceRealMax(T_max);
-    ParallelDescriptor::ReduceRealMax(rho_max);
-    ParallelDescriptor::ReduceRealMax(ts_te_max);
-
     // Write data out to the log.
 
     if ( ParallelDescriptor::IOProcessor() )
@@ -323,9 +398,9 @@ Castro::sum_integrated_quantities ()
 
       if (parent->NumDataLogs() > 0) {
 
-	 std::ostream& grid_log = parent->DataLog(0);
+	 std::ostream& log = parent->DataLog(0);
 
-	 if ( grid_log.good() ) {
+	 if ( log.good() ) {
 
 	   // Write header row
 
@@ -337,125 +412,125 @@ Castro::sum_integrated_quantities ()
 	     const char* boxlib_hash   = buildInfoGetGitHash(2);
 	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
 
-	     grid_log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     grid_log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     grid_log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
 
-	     grid_log << std::setw(intwidth) << "#   TIMESTEP";
-	     grid_log << std::setw(fixwidth) << "                     TIME";
-	     grid_log << std::setw(datwidth) << "             TOTAL ENERGY";
-	     grid_log << std::setw(datwidth) << "             TOTAL E GRID";
-	     grid_log << std::setw(datwidth) << "               GAS ENERGY";
-	     grid_log << std::setw(datwidth) << "              KIN. ENERGY";
-	     grid_log << std::setw(datwidth) << "              ROT. ENERGY";
-	     grid_log << std::setw(datwidth) << "             GRAV. ENERGY";
-	     grid_log << std::setw(datwidth) << "              INT. ENERGY";
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                     TIME";
+	     log << std::setw(datwidth) << "             TOTAL ENERGY";
+	     log << std::setw(datwidth) << "             TOTAL E GRID";
+	     log << std::setw(datwidth) << "               GAS ENERGY";
+	     log << std::setw(datwidth) << "              KIN. ENERGY";
+	     log << std::setw(datwidth) << "              ROT. ENERGY";
+	     log << std::setw(datwidth) << "             GRAV. ENERGY";
+	     log << std::setw(datwidth) << "              INT. ENERGY";
 #if (BL_SPACEDIM == 3)
-	     grid_log << std::setw(datwidth) << "                     XMOM";
-	     grid_log << std::setw(datwidth) << "                     YMOM";
-	     grid_log << std::setw(datwidth) << "                     ZMOM";
+	     log << std::setw(datwidth) << "                     XMOM";
+	     log << std::setw(datwidth) << "                     YMOM";
+	     log << std::setw(datwidth) << "                     ZMOM";
 #ifdef HYBRID_MOMENTUM
-	     grid_log << std::setw(datwidth) << "              HYB. MOM. R";
-	     grid_log << std::setw(datwidth) << "              HYB. MOM. L";
-	     grid_log << std::setw(datwidth) << "              HYB. MOM. P";
+	     log << std::setw(datwidth) << "              HYB. MOM. R";
+	     log << std::setw(datwidth) << "              HYB. MOM. L";
+	     log << std::setw(datwidth) << "              HYB. MOM. P";
 #endif
-	     grid_log << std::setw(datwidth) << "              ANG. MOM. X";
-	     grid_log << std::setw(datwidth) << "              ANG. MOM. Y";
-	     grid_log << std::setw(datwidth) << "              ANG. MOM. Z";
+	     log << std::setw(datwidth) << "              ANG. MOM. X";
+	     log << std::setw(datwidth) << "              ANG. MOM. Y";
+	     log << std::setw(datwidth) << "              ANG. MOM. Z";
 #else
-	     grid_log << std::setw(datwidth) << "                     RMOM";
-	     grid_log << std::setw(datwidth) << "                     ZMOM";
-	     grid_log << std::setw(datwidth) << "              ANG. MOM. R";
-	     grid_log << std::setw(datwidth) << "              ANG. MOM. Z";
+	     log << std::setw(datwidth) << "                     RMOM";
+	     log << std::setw(datwidth) << "                     ZMOM";
+	     log << std::setw(datwidth) << "              ANG. MOM. R";
+	     log << std::setw(datwidth) << "              ANG. MOM. Z";
 #endif
-	     grid_log << std::setw(datwidth) << "                     MASS";
+	     log << std::setw(datwidth) << "                     MASS";
 #if (BL_SPACEDIM == 3 )
-	     grid_log << std::setw(datwidth) << "                    X COM";
-	     grid_log << std::setw(datwidth) << "                    Y COM";
-	     grid_log << std::setw(datwidth) << "                    Z COM";
-	     grid_log << std::setw(datwidth) << "                X COM VEL";
-	     grid_log << std::setw(datwidth) << "                Y COM VEL";
-	     grid_log << std::setw(datwidth) << "                Z COM VEL";
+	     log << std::setw(datwidth) << "                    X COM";
+	     log << std::setw(datwidth) << "                    Y COM";
+	     log << std::setw(datwidth) << "                    Z COM";
+	     log << std::setw(datwidth) << "                X COM VEL";
+	     log << std::setw(datwidth) << "                Y COM VEL";
+	     log << std::setw(datwidth) << "                Z COM VEL";
 #else
-	     grid_log << std::setw(datwidth) << "                R COM    ";
-	     grid_log << std::setw(datwidth) << "                Z COM    ";
-	     grid_log << std::setw(datwidth) << "                R COM VEL";
-	     grid_log << std::setw(datwidth) << "                Z COM VEL";
+	     log << std::setw(datwidth) << "                R COM    ";
+	     log << std::setw(datwidth) << "                Z COM    ";
+	     log << std::setw(datwidth) << "                R COM VEL";
+	     log << std::setw(datwidth) << "                Z COM VEL";
 #endif
-	     grid_log << std::setw(datwidth) << "                    T MAX";
-	     grid_log << std::setw(datwidth) << "                  RHO MAX";
-	     grid_log << std::setw(datwidth) << "            T_S / T_E MAX";
-	     grid_log << std::setw(datwidth) << "             h_+ (axis 1)";
-	     grid_log << std::setw(datwidth) << "             h_x (axis 1)";
-	     grid_log << std::setw(datwidth) << "             h_+ (axis 2)";
-	     grid_log << std::setw(datwidth) << "             h_x (axis 2)";
-	     grid_log << std::setw(datwidth) << "             h_+ (axis 3)";
-	     grid_log << std::setw(datwidth) << "             h_x (axis 3)";
+	     log << std::setw(datwidth) << "                    T MAX";
+	     log << std::setw(datwidth) << "                  RHO MAX";
+	     log << std::setw(datwidth) << "            T_S / T_E MAX";
+	     log << std::setw(datwidth) << "             h_+ (axis 1)";
+	     log << std::setw(datwidth) << "             h_x (axis 1)";
+	     log << std::setw(datwidth) << "             h_+ (axis 2)";
+	     log << std::setw(datwidth) << "             h_x (axis 2)";
+	     log << std::setw(datwidth) << "             h_+ (axis 3)";
+	     log << std::setw(datwidth) << "             h_x (axis 3)";
 
-	     grid_log << std::endl;
+	     log << std::endl;
 	   }
 
 	   // Write data for the present time
 
-	   grid_log << std::fixed;
+	   log << std::fixed;
 
-	   grid_log << std::setw(intwidth)                                     << timestep;
-	   grid_log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
 
-	   grid_log << std::scientific;
+	   log << std::scientific;
 
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << total_energy;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << total_E_grid;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << gas_energy;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << kinetic_energy;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << rotational_energy;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << gravitational_energy;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << internal_energy;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[0];
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[1];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << total_energy;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << total_E_grid;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << gas_energy;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << kinetic_energy;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << rotational_energy;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << gravitational_energy;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << internal_energy;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[1];
 #if (BL_SPACEDIM == 3)
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[2];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[2];
 #endif
 #ifdef HYBRID_MOMENTUM
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[0];
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[1];
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[2];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[1];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[2];
 #endif
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[0];
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[1];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[1];
 #if (BL_SPACEDIM == 3)
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[2];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[2];
 #endif
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << mass;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << com[0];
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << com[1];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << mass;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com[1];
 #if (BL_SPACEDIM == 3)
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << com[2];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com[2];
 #endif
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_vel[0];
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_vel[1];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_vel[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_vel[1];
 #if (BL_SPACEDIM == 3)
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_vel[2];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_vel[2];
 #endif
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << T_max;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_max;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << ts_te_max;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_1;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_1;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_2;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_2;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_3;
-	   grid_log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_3;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << T_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << ts_te_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_1;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_1;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_2;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_2;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_3;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_3;
 
-	   grid_log << std::endl;
+	   log << std::endl;
 	 }
       }
 
       if (parent->NumDataLogs() > 1) {
 
-	 std::ostream& star_log = parent->DataLog(1);
+	 std::ostream& log = parent->DataLog(1);
 
-	 if ( star_log.good() ) {
+	 if ( log.good() ) {
 
 	   if (time == 0.0) {
 
@@ -465,130 +540,47 @@ Castro::sum_integrated_quantities ()
 	     const char* boxlib_hash   = buildInfoGetGitHash(2);
 	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
 
-	     star_log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     star_log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     star_log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
 
-	     star_log << std::setw(intwidth) << "#   TIMESTEP";
-	     star_log << std::setw(fixwidth) << "                     TIME";
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                     TIME";
 
-	     star_log << std::setw(datwidth) << "              WD DISTANCE";
-	     star_log << std::setw(fixwidth) << "                 WD ANGLE";
-	     star_log << std::setw(datwidth) << "          PRIMARY MAG COM";
-#if (BL_SPACEDIM == 3)
-	     star_log << std::setw(datwidth) << "            PRIMARY X COM";
-	     star_log << std::setw(datwidth) << "            PRIMARY Y COM";
-	     star_log << std::setw(datwidth) << "            PRIMARY Z COM";
-#else
-	     star_log << std::setw(datwidth) << "            PRIMARY R COM";
-	     star_log << std::setw(datwidth) << "            PRIMARY Z COM";
-#endif
-	     star_log << std::setw(datwidth) << "          PRIMARY MAG VEL";
-	     star_log << std::setw(datwidth) << "          PRIMARY RAD VEL";
-	     star_log << std::setw(datwidth) << "          PRIMARY ANG VEL";
-#if (BL_SPACEDIM == 3)
-	     star_log << std::setw(datwidth) << "            PRIMARY X VEL";
-	     star_log << std::setw(datwidth) << "            PRIMARY Y VEL";
-	     star_log << std::setw(datwidth) << "            PRIMARY Z VEL";
-#else
-	     star_log << std::setw(datwidth) << "            PRIMARY R VEL";
-	     star_log << std::setw(datwidth) << "            PRIMARY Z VEL";
-#endif
-	     star_log << std::setw(datwidth) << "             PRIMARY MASS";
-	     star_log << std::setw(datwidth) << "       PRIMARY T_FREEFALL";
-	     for (int i = 0; i <= 6; ++i)
-	       star_log << "       PRIMARY 1E" << i << " RADIUS";
+	     log << std::setw(datwidth) << "              WD DISTANCE";
+	     log << std::setw(fixwidth) << "                 WD ANGLE";
+	     log << std::setw(datwidth) << "                     MDOT";
 
-	     star_log << std::setw(datwidth) << "        SECONDARY MAG COM";
-#if (BL_SPACEDIM == 3)
-	     star_log << std::setw(datwidth) << "          SECONDARY X COM";
-	     star_log << std::setw(datwidth) << "          SECONDARY Y COM";
-	     star_log << std::setw(datwidth) << "          SECONDARY Z COM";
-#else
-	     star_log << std::setw(datwidth) << "          SECONDARY R COM";
-	     star_log << std::setw(datwidth) << "          SECONDARY Z COM";
-#endif
-	     star_log << std::setw(datwidth) << "        SECONDARY MAG VEL";
-	     star_log << std::setw(datwidth) << "        SECONDARY RAD VEL";
-	     star_log << std::setw(datwidth) << "        SECONDARY ANG VEL";
-#if (BL_SPACEDIM == 3)
-	     star_log << std::setw(datwidth) << "          SECONDARY X VEL";
-	     star_log << std::setw(datwidth) << "          SECONDARY Y VEL";
-	     star_log << std::setw(datwidth) << "          SECONDARY Z VEL";
-#else
-	     star_log << std::setw(datwidth) << "          SECONDARY R VEL";
-	     star_log << std::setw(datwidth) << "          SECONDARY Z VEL";
-#endif
-	     star_log << std::setw(datwidth) << "           SECONDARY MASS";
-	     star_log << std::setw(datwidth) << "     SECONDARY T_FREEFALL";
-	     for (int i = 0; i <= 6; ++i)
-	       star_log << "     SECONDARY 1E" << i << " RADIUS";
-
-	     star_log << std::endl;
+	     log << std::endl;
 
 	   }
 
-	   star_log << std::fixed;
+	   log << std::fixed;
 
-	   star_log << std::setw(intwidth)                                     << timestep;
-	   star_log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
 
-	   star_log << std::scientific;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << separation;
+	   log << std::scientific;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << separation;
 
-	   star_log << std::fixed;
-	   star_log << std::setw(fixwidth) << std::setprecision(dataprecision) << angle;
+	   log << std::fixed;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << angle;
 
-	   star_log << std::scientific;
+	   log << std::scientific;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << mdot;
 
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p_mag;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[0];
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[1];
-#if (BL_SPACEDIM == 3)
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[2];
-#endif
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_mag;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_rad;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_phi;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[0];
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[1];
-#if (BL_SPACEDIM == 3)
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[2];
-#endif
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << mass_p;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << t_ff_p;
-	   for (int i = 0; i <= 6; ++i)
-	       star_log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_p[i];
-
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s_mag;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[0];
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[1];
-#if (BL_SPACEDIM == 3)
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[2];
-#endif
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_mag;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_rad;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_phi;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[0];
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[1];
-#if (BL_SPACEDIM == 3)
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[2];
-#endif
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << mass_s;
-	   star_log << std::setw(datwidth) << std::setprecision(dataprecision) << t_ff_s;
-	   for (int i = 0; i <= 6; ++i)
-	       star_log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_s[i];
-
-	   star_log << std::endl;
+	   log << std::endl;
 
 	 }
       }
 
+      // Species
+
       if (parent->NumDataLogs() > 2) {
 
-	 std::ostream& species_log = parent->DataLog(2);
+	 std::ostream& log = parent->DataLog(2);
 
-	 if ( species_log.good() ) {
+	 if ( log.good() ) {
 
 	   if (time == 0.0) {
 
@@ -598,12 +590,12 @@ Castro::sum_integrated_quantities ()
 	     const char* boxlib_hash   = buildInfoGetGitHash(2);
 	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
 
-	     species_log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     species_log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     species_log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
 
-	     species_log << std::setw(intwidth) << "#   TIMESTEP";
-	     species_log << std::setw(fixwidth) << "                  TIME";
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                  TIME";
 
 	     // We need to be careful here since the species names have differing numbers of characters
 
@@ -614,33 +606,33 @@ Castro::sum_integrated_quantities ()
                while (outString.length() + specString.length() + massString.length() < datwidth) outString += " ";
 	       outString += massString;
 	       outString += specString;
-	       species_log << std::setw(datwidth) << outString;
+	       log << std::setw(datwidth) << outString;
 	     }
 
-	     species_log << std::endl;
+	     log << std::endl;
 
 	   }
 
-	   species_log << std::fixed;
+	   log << std::fixed;
 
-	   species_log << std::setw(intwidth)                                     << timestep;
-	   species_log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
 
-	   species_log << std::scientific;
+	   log << std::scientific;
 
 	   for (int i = 0; i < NumSpec; i++)
-	     species_log << std::setw(datwidth) << std::setprecision(dataprecision) << species_mass[i];
+	     log << std::setw(datwidth) << std::setprecision(dataprecision) << species_mass[i];
 
-	   species_log << std::endl;
+	   log << std::endl;
 
 	 }
       }
 
       if (parent->NumDataLogs() > 3) {
 
-	 std::ostream& amr_log = parent->DataLog(3);
+	 std::ostream& log = parent->DataLog(3);
 
-	 if ( amr_log.good() ) {
+	 if ( log.good() ) {
 
 	   if (time == 0.0) {
 
@@ -650,37 +642,39 @@ Castro::sum_integrated_quantities ()
 	     const char* boxlib_hash   = buildInfoGetGitHash(2);
 	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
 
-	     amr_log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     amr_log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     amr_log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
 
-	     amr_log << std::setw(intwidth) << "#   TIMESTEP";
-	     amr_log << std::setw(fixwidth) << "                     TIME";
-	     amr_log << std::setw(fixwidth) << "                       DT";
-	     amr_log << std::setw(intwidth) << "  FINEST LEV";
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                     TIME";
+	     log << std::setw(fixwidth) << "                       DT";
+	     log << std::setw(intwidth) << "  FINEST LEV";
 
-	     amr_log << std::endl;
+	     log << std::endl;
 
 	   }
 
-	   amr_log << std::fixed;
+	   log << std::fixed;
 
-	   amr_log << std::setw(intwidth)                                     << timestep;
-	   amr_log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
-	   amr_log << std::setw(fixwidth) << std::setprecision(dataprecision) << dt;
-	   amr_log << std::setw(intwidth)                                     << parent->finestLevel();
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << dt;
+	   log << std::setw(intwidth)                                     << parent->finestLevel();
 
-	   amr_log << std::endl;
+	   log << std::endl;
 
 	 }
 
       }
 
-      if (parent->NumDataLogs() > 4 && level == 0) {
+      // Material lost through domain boundaries
 
-	 std::ostream& boundary_log = parent->DataLog(4);
+      if (parent->NumDataLogs() > 4) {
 
-	 if ( boundary_log.good() ) {
+	 std::ostream& log = parent->DataLog(4);
+
+	 if ( log.good() ) {
 
 	   if (time == 0.0) {
 
@@ -690,36 +684,206 @@ Castro::sum_integrated_quantities ()
 	     const char* boxlib_hash   = buildInfoGetGitHash(2);
 	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
 
-	     boundary_log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     boundary_log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     boundary_log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
 
-	     boundary_log << std::setw(intwidth) << "#   TIMESTEP";
-	     boundary_log << std::setw(fixwidth) << "                     TIME";
-	     boundary_log << std::setw(datwidth) << "                MASS LOST";
-	     boundary_log << std::setw(datwidth) << "                XMOM LOST";
-	     boundary_log << std::setw(datwidth) << "                YMOM LOST";
-	     boundary_log << std::setw(datwidth) << "                ZMOM LOST";
-	     boundary_log << std::setw(datwidth) << "                EDEN LOST";
-	     boundary_log << std::setw(datwidth) << "         ANG. MOM. X LOST";
-	     boundary_log << std::setw(datwidth) << "         ANG. MOM. Y LOST";
-	     boundary_log << std::setw(datwidth) << "         ANG. MOM. Z LOST";
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                     TIME";
+	     log << std::setw(datwidth) << "                MASS LOST";
+	     log << std::setw(datwidth) << "                XMOM LOST";
+	     log << std::setw(datwidth) << "                YMOM LOST";
+	     log << std::setw(datwidth) << "                ZMOM LOST";
+	     log << std::setw(datwidth) << "                EDEN LOST";
+	     log << std::setw(datwidth) << "         ANG. MOM. X LOST";
+	     log << std::setw(datwidth) << "         ANG. MOM. Y LOST";
+	     log << std::setw(datwidth) << "         ANG. MOM. Z LOST";
 
-	     boundary_log << std::endl;
+	     log << std::endl;
 
 	   }
 
-	   boundary_log << std::fixed;
+	   log << std::fixed;
 
-	   boundary_log << std::setw(intwidth)                                     << timestep;
-	   boundary_log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
 
-	   boundary_log << std::scientific;
+	   log << std::scientific;
 
 	   for (int i = 0; i < n_lost; i++)
-	     boundary_log << std::setw(datwidth) << std::setprecision(dataprecision) << material_lost_through_boundary_cumulative[i];
+	     log << std::setw(datwidth) << std::setprecision(dataprecision) << material_lost_through_boundary_cumulative[i];
 
-	   boundary_log << std::endl;
+	   log << std::endl;
+
+	 }
+
+      }
+
+      // Primary star
+
+      if (parent->NumDataLogs() > 5) {
+
+	std::ostream& log = parent->DataLog(5);
+
+	 if ( log.good() ) {
+
+	   if (time == 0.0) {
+
+	     // Output the git commit hashes used to build the executable.
+
+	     const char* castro_hash   = buildInfoGetGitHash(1);
+	     const char* boxlib_hash   = buildInfoGetGitHash(2);
+	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
+
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                     TIME";
+	     log << std::setw(datwidth) << "             PRIMARY MASS";
+	     log << std::setw(datwidth) << "             PRIMARY MDOT";
+	     log << std::setw(datwidth) << "          PRIMARY MAG COM";
+#if (BL_SPACEDIM == 3)
+	     log << std::setw(datwidth) << "            PRIMARY X COM";
+	     log << std::setw(datwidth) << "            PRIMARY Y COM";
+	     log << std::setw(datwidth) << "            PRIMARY Z COM";
+#else
+	     log << std::setw(datwidth) << "            PRIMARY R COM";
+	     log << std::setw(datwidth) << "            PRIMARY Z COM";
+#endif
+	     log << std::setw(datwidth) << "          PRIMARY MAG VEL";
+	     log << std::setw(datwidth) << "          PRIMARY RAD VEL";
+	     log << std::setw(datwidth) << "          PRIMARY ANG VEL";
+#if (BL_SPACEDIM == 3)
+	     log << std::setw(datwidth) << "            PRIMARY X VEL";
+	     log << std::setw(datwidth) << "            PRIMARY Y VEL";
+	     log << std::setw(datwidth) << "            PRIMARY Z VEL";
+#else
+	     log << std::setw(datwidth) << "            PRIMARY R VEL";
+	     log << std::setw(datwidth) << "            PRIMARY Z VEL";
+#endif
+	     log << std::setw(datwidth) << "       PRIMARY T_FREEFALL";
+	     for (int i = 0; i <= 6; ++i)
+	       log << "       PRIMARY 1E" << i << " RADIUS";
+
+	     log << std::endl;
+
+	   }
+
+	   log << std::fixed;
+
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+
+	   log << std::scientific;
+
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << mass_p;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << mdot_p;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p_mag;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[1];
+#if (BL_SPACEDIM == 3)
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_p[2];
+#endif
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_mag;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_rad;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p_phi;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[1];
+#if (BL_SPACEDIM == 3)
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_p[2];
+#endif
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << t_ff_p;
+	   for (int i = 0; i <= 6; ++i)
+	       log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_p[i];
+
+	   log << std::endl;
+
+	 }
+
+      }
+
+      // Secondary star
+
+      if (parent->NumDataLogs() > 6) {
+
+	std::ostream& log = parent->DataLog(6);
+
+	 if ( log.good() ) {
+
+	   if (time == 0.0) {
+
+	     // Output the git commit hashes used to build the executable.
+
+	     const char* castro_hash   = buildInfoGetGitHash(1);
+	     const char* boxlib_hash   = buildInfoGetGitHash(2);
+	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
+
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                     TIME";
+	     log << std::setw(datwidth) << "           SECONDARY MASS";
+	     log << std::setw(datwidth) << "           SECONDARY MDOT";
+	     log << std::setw(datwidth) << "        SECONDARY MAG COM";
+#if (BL_SPACEDIM == 3)
+	     log << std::setw(datwidth) << "          SECONDARY X COM";
+	     log << std::setw(datwidth) << "          SECONDARY Y COM";
+	     log << std::setw(datwidth) << "          SECONDARY Z COM";
+#else
+	     log << std::setw(datwidth) << "          SECONDARY R COM";
+	     log << std::setw(datwidth) << "          SECONDARY Z COM";
+#endif
+	     log << std::setw(datwidth) << "        SECONDARY MAG VEL";
+	     log << std::setw(datwidth) << "        SECONDARY RAD VEL";
+	     log << std::setw(datwidth) << "        SECONDARY ANG VEL";
+#if (BL_SPACEDIM == 3)
+	     log << std::setw(datwidth) << "          SECONDARY X VEL";
+	     log << std::setw(datwidth) << "          SECONDARY Y VEL";
+	     log << std::setw(datwidth) << "          SECONDARY Z VEL";
+#else
+	     log << std::setw(datwidth) << "          SECONDARY R VEL";
+	     log << std::setw(datwidth) << "          SECONDARY Z VEL";
+#endif
+	     log << std::setw(datwidth) << "     SECONDARY T_FREEFALL";
+	     for (int i = 0; i <= 6; ++i)
+	       log << "     SECONDARY 1E" << i << " RADIUS";
+
+	     log << std::endl;
+
+	   }
+
+	   log << std::fixed;
+
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+
+	   log << std::scientific;
+
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << mass_s;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << mdot_s;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s_mag;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[1];
+#if (BL_SPACEDIM == 3)
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_s[2];
+#endif
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_mag;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_rad;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s_phi;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[1];
+#if (BL_SPACEDIM == 3)
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << vel_s[2];
+#endif
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << t_ff_s;
+	   for (int i = 0; i <= 6; ++i)
+	       log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_s[i];
+
+	   log << std::endl;
 
 	 }
 
