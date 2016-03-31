@@ -5,7 +5,8 @@ subroutine problem_checkpoint(int_dir_name, len)
   ! called by the IO processor during checkpoint
 
   use bl_IO_module
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S, &
+                             T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
 
@@ -25,18 +26,19 @@ subroutine problem_checkpoint(int_dir_name, len)
   un = unit_new()
   open (unit=un, file=trim(dir)//"/COM", status="unknown")
 
-100 format(1x, g30.20, 1x, g30.20)
-200 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
+100 format(1x, g30.20)
+200 format(1x, g30.20, 1x, g30.20)
+300 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
 
-  write (un,200) center(1), center(2), center(3)
-  write (un,100) mass_P,   mass_S
-  write (un,100) com_P(1), com_S(1)
-  write (un,100) com_P(2), com_S(2)
-  write (un,100) com_P(3), com_S(3)
-  write (un,100) vel_P(1), vel_S(1)
-  write (un,100) vel_P(2), vel_S(2)
-  write (un,100) vel_P(3), vel_S(3)
-  write (un,100) t_ff_P,   t_ff_S
+  write (un,300) center(1), center(2), center(3)
+  write (un,200) mass_P,   mass_S
+  write (un,200) com_P(1), com_S(1)
+  write (un,200) com_P(2), com_S(2)
+  write (un,200) com_P(3), com_S(3)
+  write (un,200) vel_P(1), vel_S(1)
+  write (un,200) vel_P(2), vel_S(2)
+  write (un,200) vel_P(3), vel_S(3)
+  write (un,200) t_ff_P,   t_ff_S
 
   close (un)
 
@@ -45,6 +47,15 @@ subroutine problem_checkpoint(int_dir_name, len)
   open (unit=un, file=trim(dir)//"/Rotation", status="unknown")
 
   write (un,100) rot_period
+
+  close (un)
+
+
+
+  open (unit=un, file=trim(dir)//"/Extrema", status="unknown")
+
+  write (un,100) T_global_max
+  write (un,100) rho_global_max
 
   close (un)
 
@@ -57,7 +68,8 @@ subroutine problem_restart(int_dir_name, len)
   ! called by ALL processors during restart 
 
   use bl_IO_module
-  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S, problem
+  use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S, problem, &
+                             T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
 
@@ -77,18 +89,19 @@ subroutine problem_restart(int_dir_name, len)
   un = unit_new()
   open (unit=un, file=trim(dir)//"/COM", status="old")
 
-100 format(1x, g30.20, 1x, g30.20)
-200 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
+100 format(1x, g30.20)
+200 format(1x, g30.20, 1x, g30.20)
+300 format(1x, g30.20, 1x, g30.20, 1x, g30.20)
 
-  read (un,200) center(1), center(2), center(3)
-  read (un,100) mass_P,   mass_S
-  read (un,100) com_P(1), com_S(1)
-  read (un,100) com_P(2), com_S(2)
-  read (un,100) com_P(3), com_S(3)
-  read (un,100) vel_P(1), vel_S(1)
-  read (un,100) vel_P(2), vel_S(2)
-  read (un,100) vel_P(3), vel_S(3)
-  read (un,100) t_ff_P,   t_ff_S
+  read (un,300) center(1), center(2), center(3)
+  read (un,200) mass_P,   mass_S
+  read (un,200) com_P(1), com_S(1)
+  read (un,200) com_P(2), com_S(2)
+  read (un,200) com_P(3), com_S(3)
+  read (un,200) vel_P(1), vel_S(1)
+  read (un,200) vel_P(2), vel_S(2)
+  read (un,200) vel_P(3), vel_S(3)
+  read (un,200) t_ff_P,   t_ff_S
 
   close (un)
 
@@ -103,6 +116,15 @@ subroutine problem_restart(int_dir_name, len)
      close (un)
 
   endif
+
+
+
+  open (unit=un, file=trim(dir)//"/Extrema", status="old")
+
+  read (un,100) T_global_max
+  read (un,100) rho_global_max
+
+  close(un)
 
 end subroutine problem_restart
 
@@ -717,3 +739,21 @@ subroutine get_omega_vec(omega_in, time) bind(C,name='get_omega_vec')
   omega_in = get_omega(time)
 
 end subroutine get_omega_vec
+
+
+
+! Updates the global extrema.
+
+subroutine set_extrema(T_max, rho_max, ts_te_max) bind(C,name='set_extrema')
+
+  use probdata_module, only: T_global_max, rho_global_max, ts_te_global_max
+
+  implicit none
+
+  double precision :: T_max, rho_max, ts_te_max
+
+  T_global_max     = T_max
+  rho_global_max   = rho_max
+  ts_te_global_max = ts_te_max
+
+end subroutine set_extrema

@@ -65,3 +65,15 @@ Real rad_s[7];
 
 Real mdot_p;
 Real mdot_s;
+
+// Global extrema of various quantities over the whole simulation
+
+Real T_global_max;
+Real rho_global_max;
+Real ts_te_global_max;
+
+// Current values of the above extrema
+
+Real T_curr_max;
+Real rho_curr_max;
+Real ts_te_curr_max;

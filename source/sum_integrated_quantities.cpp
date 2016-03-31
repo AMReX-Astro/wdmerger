@@ -58,18 +58,6 @@ Castro::sum_integrated_quantities ()
 
     get_omega_vec(omega, time);
 
-    // Maximum temperature on the grid.
-
-    Real T_max = 0.0;
-
-    // Maximum density on the grid.
-
-    Real rho_max = 0.0;
-
-    // Maximum t_sound / t_enuc on finest level.
-
-    Real ts_te_max = 0.0;
-
     // Mass transfer rate
 
     Real mdot = 0.5 * (std::abs(mdot_p) + std::abs(mdot_s));
@@ -225,19 +213,6 @@ Castro::sum_integrated_quantities ()
 
       MultiFab& S_new = ca_lev.get_new_data(State_Type);
 
-      // Extrema
-
-      T_max = std::max(T_max, S_new.max(Temp, 0, local_flag));
-      rho_max = std::max(rho_max, S_new.max(Density, 0, local_flag));
-
-      if (lev == finest_level) {
-
-        MultiFab* ts_te_MF = ca_lev.derive("t_sound_t_enuc", time, 0);
-	ts_te_max = std::max(ts_te_max, ts_te_MF->max(0,0,local_flag));
-	delete ts_te_MF;
-
-      }
-
     }
 
     // Return to the original level.
@@ -301,20 +276,6 @@ Castro::sum_integrated_quantities ()
     for (int i = 0; i < NumSpec; i++) {
       species_mass[i] = foo_sum[i + 24];
     }
-
-    int nfoo_max = 3;
-
-    Array<Real> foo_max(nfoo_max);
-
-    foo_max[0] = T_max;
-    foo_max[1] = rho_max;
-    foo_max[2] = ts_te_max;
-
-    ParallelDescriptor::ReduceRealMax(foo_max.dataPtr(), nfoo_max);
-
-    T_max     = foo_max[0];
-    rho_max   = foo_max[1];
-    ts_te_max = foo_max[2];
 
     // Complete calculations for energy and momenta
 
@@ -512,9 +473,6 @@ Castro::sum_integrated_quantities ()
 #if (BL_SPACEDIM == 3)
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << com_vel[2];
 #endif
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << T_max;
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_max;
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << ts_te_max;
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_1;
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_cross_1;
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << h_plus_2;
@@ -882,6 +840,59 @@ Castro::sum_integrated_quantities ()
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << t_ff_s;
 	   for (int i = 0; i <= 6; ++i)
 	       log << std::setw(datwidth) << std::setprecision(dataprecision) << rad_s[i];
+
+	   log << std::endl;
+
+	 }
+
+      }
+
+      // Extrema over time of various quantities
+
+      if (parent->NumDataLogs() > 7) {
+
+	 std::ostream& log = parent->DataLog(7);
+
+	 if ( log.good() ) {
+
+	   if (time == 0.0) {
+
+	     // Output the git commit hashes used to build the executable.
+
+	     const char* castro_hash   = buildInfoGetGitHash(1);
+	     const char* boxlib_hash   = buildInfoGetGitHash(2);
+	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
+
+	     log << "# Castro   git hash: " << castro_hash   << std::endl;
+	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+
+	     log << std::setw(intwidth) << "#   TIMESTEP";
+	     log << std::setw(fixwidth) << "                     TIME";
+	     log << std::setw(datwidth) << "               MAX T CURR";
+	     log << std::setw(datwidth) << "             MAX RHO CURR";
+	     log << std::setw(datwidth) << "           MAX TS_TE CURR";
+	     log << std::setw(datwidth) << "           MAX T ALL TIME";
+	     log << std::setw(datwidth) << "         MAX RHO ALL TIME";
+	     log << std::setw(datwidth) << "       MAX TS_TE ALL TIME";
+
+	     log << std::endl;
+
+	   }
+
+	   log << std::fixed;
+
+	   log << std::setw(intwidth)                                     << timestep;
+	   log << std::setw(fixwidth) << std::setprecision(dataprecision) << time;
+
+	   log << std::scientific;
+
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << T_curr_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_curr_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << ts_te_curr_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << T_global_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << rho_global_max;
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << ts_te_global_max;
 
 	   log << std::endl;
 

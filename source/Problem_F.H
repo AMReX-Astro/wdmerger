@@ -96,4 +96,6 @@ extern "C"
 
   void get_frame_choice(int* accurate_IC_frame);
 
+  void set_extrema(const Real* T_max, const Real* rho_max, const Real* ts_te_max);
+
 }

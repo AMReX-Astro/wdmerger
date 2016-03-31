@@ -224,6 +224,10 @@ module probdata_module
 
   double precision, save :: t_ff_P, t_ff_S
 
+  ! Global extrema
+
+  double precision, save :: T_global_max, rho_global_max, ts_te_global_max
+
 
 
   namelist /fortin/ &

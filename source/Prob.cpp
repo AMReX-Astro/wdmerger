@@ -55,6 +55,8 @@ Castro::problem_post_timestep()
     Real t_ff_p       = 0.0;
     Real t_ff_s       = 0.0;
 
+    bool local_flag = true;
+
 
 
     // Get the current stellar data
@@ -97,48 +99,71 @@ Castro::problem_post_timestep()
 
     // Compute white dwarf centers of mass
 
-    Castro::wdCOM(time, mass_p, mass_s, com_p, com_s, vel_p, vel_s, true);
+    Castro::wdCOM(time, mass_p, mass_s, com_p, com_s, vel_p, vel_s, local_flag);
 
     // Compute effective radii of stars at various density cutoffs
 
     for (int i = 0; i <= 6; ++i)
-        Castro::volInBoundary(time, vol_p[i], vol_s[i], pow(10.0,i), true);
+        Castro::volInBoundary(time, vol_p[i], vol_s[i], pow(10.0,i), local_flag);
+
+    // Compute extrema
+
+    T_curr_max     = 0.0;
+    rho_curr_max   = 0.0;
+    ts_te_curr_max = 0.0;
+
+    for (int lev = 0; lev <= finest_level; lev++) {
+
+      MultiFab& S_new = parent->getLevel(lev).get_new_data(State_Type);
+
+      T_curr_max = std::max(T_curr_max, S_new.max(Temp, 0, local_flag));
+      rho_curr_max = std::max(rho_curr_max, S_new.max(Density, 0, local_flag));
+
+      if (lev == finest_level) {
+
+        MultiFab* ts_te_MF = parent->getLevel(lev).derive("t_sound_t_enuc", time, 0);
+	ts_te_curr_max = std::max(ts_te_curr_max, ts_te_MF->max(0,0,local_flag));
+	delete ts_te_MF;
+
+      }
+
+    }
 
     // Do all of the reductions in a single step.
 
-    const int nfoo = 28;
-    Real foo[nfoo] = { 0.0 };
+    const int nfoo_sum = 28;
+    Real foo_sum[nfoo_sum] = { 0.0 };
 
     for (int i = 0; i <= 6; ++i) {
-      foo[i  ] = vol_p[i];
-      foo[i+7] = vol_s[i];
+      foo_sum[i  ] = vol_p[i];
+      foo_sum[i+7] = vol_s[i];
     }
 
-    foo[14] = mass_p;
-    foo[15] = mass_s;
+    foo_sum[14] = mass_p;
+    foo_sum[15] = mass_s;
 
     for (int i = 0; i <= 2; ++i) {
-      foo[i+16] = com_p[i];
-      foo[i+19] = com_s[i];
-      foo[i+22] = vel_p[i];
-      foo[i+25] = vel_s[i];
+      foo_sum[i+16] = com_p[i];
+      foo_sum[i+19] = com_s[i];
+      foo_sum[i+22] = vel_p[i];
+      foo_sum[i+25] = vel_s[i];
     }
 
-    ParallelDescriptor::ReduceRealSum(foo, nfoo);
+    ParallelDescriptor::ReduceRealSum(foo_sum, nfoo_sum);
 
     for (int i = 0; i <= 6; ++i) {
-      vol_p[i] = foo[i  ];
-      vol_s[i] = foo[i+7];
+      vol_p[i] = foo_sum[i  ];
+      vol_s[i] = foo_sum[i+7];
     }
 
-    mass_p = foo[14];
-    mass_s = foo[15];
+    mass_p = foo_sum[14];
+    mass_s = foo_sum[15];
 
     for (int i = 0; i <= 2; ++i) {
-      com_p[i] = foo[i+16];
-      com_s[i] = foo[i+19];
-      vel_p[i] = foo[i+22];
-      vel_s[i] = foo[i+25];
+      com_p[i] = foo_sum[i+16];
+      com_s[i] = foo_sum[i+19];
+      vel_p[i] = foo_sum[i+22];
+      vel_s[i] = foo_sum[i+25];
     }
 
     if (mass_p > 0.0 && dt > 0.0)
@@ -150,6 +175,30 @@ Castro::problem_post_timestep()
       mdot_s = (mass_s - old_mass_s) / dt;
     else
       mdot_s = 0.0;
+
+    // Max reductions
+
+    const int nfoo_max = 3;
+
+    Real foo_max[3];
+
+    foo_max[0] = T_curr_max;
+    foo_max[1] = rho_curr_max;
+    foo_max[2] = ts_te_curr_max;
+
+    ParallelDescriptor::ReduceRealSum(foo_max, nfoo_max);
+
+    T_curr_max     = foo_max[0];
+    rho_curr_max   = foo_max[1];
+    ts_te_curr_max = foo_max[2];
+
+    T_global_max     = std::max(T_global_max, T_curr_max);
+    rho_global_max   = std::max(rho_global_max, rho_curr_max);
+    ts_te_global_max = std::max(ts_te_global_max, ts_te_curr_max);
+
+    // Send extrema data to Fortran
+
+    set_extrema(&T_global_max, &rho_global_max, &ts_te_global_max);
 
     // Compute effective WD radii
 
@@ -737,6 +786,10 @@ void Castro::problem_post_init() {
 
   // Execute the post timestep diagnostics here,
   // so that the results at t = 0 and later are smooth.
+
+  T_global_max     = 0.0;
+  rho_global_max   = 0.0;
+  ts_te_global_max = 0.0;
 
   problem_post_timestep();
 
