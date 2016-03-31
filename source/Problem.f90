@@ -56,6 +56,7 @@ subroutine problem_checkpoint(int_dir_name, len)
 
   write (un,100) T_global_max
   write (un,100) rho_global_max
+  write (un,100) ts_te_global_max
 
   close (un)
 
@@ -79,7 +80,7 @@ subroutine problem_restart(int_dir_name, len)
   integer :: int_dir_name(len)
   character (len=len) :: dir
 
-  integer :: i, un
+  integer :: i, un, stat
 
   ! dir will be the string name of the checkpoint directory
   do i = 1, len
@@ -109,22 +110,41 @@ subroutine problem_restart(int_dir_name, len)
 
   if (problem .eq. 3) then
 
-     open (unit=un, file=trim(dir)//"/Rotation", status="old")
+     open (unit=un, file=trim(dir)//"/Rotation", status="old", IOSTAT = stat)
 
-     read (un,100) rot_period
+     if (stat .eq. 0) then
 
-     close (un)
+        read (un,100) rot_period
+
+        close (un)
+
+     else
+
+        rot_period = -1.0d0
+
+     endif
 
   endif
 
 
 
-  open (unit=un, file=trim(dir)//"/Extrema", status="old")
+  open (unit=un, file=trim(dir)//"/Extrema", status="old", IOSTAT = stat)
 
-  read (un,100) T_global_max
-  read (un,100) rho_global_max
+  if (stat .eq. 0) then
 
-  close(un)
+     read (un,100) T_global_max
+     read (un,100) rho_global_max
+     read (un,100) ts_te_global_max
+
+     close(un)
+
+  else
+
+     T_global_max = 0.0d0
+     rho_global_max = 0.0d0
+     ts_te_global_max = 0.0d0
+
+  endif
 
 end subroutine problem_restart
 
