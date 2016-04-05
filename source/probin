@@ -92,7 +92,7 @@
   eos_do_acc = T
   eos_acc_cutoff = 128
 
-  jacobian = 2
+  jacobian = 1
   burning_mode = 1
 
   do_constant_volume_burn = T
