@@ -101,6 +101,9 @@ amr.blocking_factor = 16
 # What constitutes an efficient grid
 amr.grid_eff = 0.9
 
+# Limiting on state data interpolation (preserve linear combinations)
+castro.lin_limit_state_interp = 1
+
 ############################################################################################
 # Physics to include
 ############################################################################################
