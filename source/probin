@@ -110,4 +110,6 @@
   retry_burn = T
 
   renormalize_abundances = T
+
+  use_chemical_potential = 1
 /
