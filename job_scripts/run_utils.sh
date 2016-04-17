@@ -455,7 +455,7 @@ function archive {
       if [ -d $1 ]; then
 	  echo "Archiving contents of directory "$1"."
       else
-	  echo "Archiving location " $1"."
+	  echo "Archiving location "$1"."
       fi
   else
       echo "No file to archive; exiting."
@@ -469,8 +469,9 @@ function archive {
   d=$(dirname $1)
 
   # Get the absolute path to this directory, and then 
-  # remove everything from the directory up to the username. The assumption here is that
-  # everything after that was created by the user, and that's the directory structure we want
+  # remove everything from the directory up to the username.
+  # The assumption here is that everything after that was 
+  # created by the user, and that's the directory structure we want
   # to preserve when moving things over to the storage system.
 
   cd $d 
@@ -487,12 +488,23 @@ function archive {
 
   if   [ $archive_method == "htar" ]; then
 
-      $HTAR ${d}/${f}.tar $d/$f
+      # htar will give us the path to the file in the 
+      # tar file if we do it from outside the local
+      # directory, so let's jump in first and avoid that.
+
+      cd $d
+
+      src=$f
+      dst=$storage_path/$f.tar
+
+      $HTAR $dst $src
+
+      cd - > /dev/null
 
   elif [ $archive_method == "globus" ]; then
 
       src=$globus_src_endpoint/$local_path/$f
-      dst=$globus_dst_endpoint/$storage_dir/$f
+      dst=$globus_dst_endpoint/$storage_path/$f
 
       if [ -d $d/$f ]; then
           # If we're transferring a directory, Globus needs to explicitly know
@@ -1040,7 +1052,7 @@ function create_job_script {
 	  fi
       done
 
-      if [ $MACHINE == "BLUE_WATERS" ]; then
+      if [ $MACHINE == "TITAN" ]; then
 	  if [ $max_level_grid_size -lt "64" ]; then
 	      OMP_NUM_THREADS=2
 	  elif [ $max_level_grid_size -lt "128" ]; then
@@ -1064,6 +1076,7 @@ function create_job_script {
 
   fi
 
+  OMP_NUM_THREADS=8
   # If the number of processors is less than the number of processors per node,
   # there are scaling tests where this is necessary; we'll assume the user understands
   # what they are doing and set it up accordingly.
@@ -1603,14 +1616,6 @@ function compute_num_nodes {
 
 shell_list=$(compgen -v)
 
-# Get current machine and set preferences accordingly.
-# Note: workdir is the name of the directory you submit 
-# jobs from (usually scratch directories).
-
-MACHINE=$(get_machine)
-
-set_machine_params
-
 job_name="wdmerger"
 job_script="run_script"
 
@@ -1642,6 +1647,14 @@ fi
 if [ -z $probin ]; then
     probin=probin
 fi
+
+# Get current machine and set preferences accordingly.
+# Note: workdir is the name of the directory you submit 
+# jobs from (usually scratch directories).
+
+MACHINE=$(get_machine)
+
+set_machine_params
 
 # Set parameters for our archiving scripts.
 if   [ $archive_method == "htar" ]; then
