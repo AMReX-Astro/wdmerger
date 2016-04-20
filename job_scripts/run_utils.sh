@@ -1076,7 +1076,6 @@ function create_job_script {
 
   fi
 
-  OMP_NUM_THREADS=8
   # If the number of processors is less than the number of processors per node,
   # there are scaling tests where this is necessary; we'll assume the user understands
   # what they are doing and set it up accordingly.
