@@ -324,6 +324,52 @@ def timing(output_filename):
 
 
 
+# Extract timing data from a series of output files 
+# and save it in a file using the BoxLib convention.
+# See, e.g., MAESTRO/Docs/managing_jobs/scaling.
+
+def boxlib_timing(output_filenames, data_filename):
+
+    data = open(data_filename, 'w')
+
+    data.write("    PROC     AVG     MIN     MAX\n")
+
+    for output_filename in output_filenames:
+
+        # Read in the file and return the following data in arrays:
+        # - The coarse timestep time for each step
+        # - The plotfile time for each step
+        # For the sake of generality, we will count up how many
+        # steps we have taken after the fact.
+
+        output = open(output_filename, 'r')
+        lines = output.readlines()
+        coarseSteps = filter(lambda s: "Coarse" in s, lines)
+        coarseSteps = [float(s.split('Coarse TimeStep time:')[1]) for s in coarseSteps] # Extract out the time only
+
+        max_timestep = np.max(coarseSteps)
+        avg_timestep = np.average(coarseSteps)
+        min_timestep = np.min(coarseSteps)
+
+        mpi = filter(lambda s: "MPI initialized" in s, lines)
+        mpi = int(mpi[0].split()[3])
+
+        omp = filter(lambda s: "OMP initialized" in s, lines)
+        omp = int(omp[0].split()[3])
+
+        nprocs = mpi * omp
+
+        data.write("{:8d}".format(nprocs))
+        data.write("{:8.1f}".format(avg_timestep))
+        data.write("{:8.1f}".format(min_timestep))
+        data.write("{:8.1f}".format(max_timestep))
+        data.write("\n")
+
+    data.write("\n")
+    data.close()
+
+
+
 #
 # Add up all the energy and momentum losses reported from castro.print_energy_diagnostics.
 #
