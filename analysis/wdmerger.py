@@ -1,6 +1,5 @@
 import os
 import numpy as np
-#import yt
 import string
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import AxesGrid
@@ -461,6 +460,8 @@ def get_plotfiles(dir, prefix='plt'):
 
 def get_star_locs(plotfile):
 
+    import yt
+
     ds = yt.load(plotfile)
 
     # Get a numpy array corresponding to the density.
@@ -610,6 +611,8 @@ def get_time_from_plotfile(pltfile):
 
 def rho_T_scatterplot(output_filename, pltfile):
 
+    import yt
+
     ds = yt.load(pltfile)
 
     grid = ds.covering_grid(level=0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
@@ -707,6 +710,8 @@ def rho_T_scatterplot(output_filename, pltfile):
 
 def rho_T_sliceplot(output_filename, pltfile):
 
+    import yt
+
     fig = plt.figure()
 
     grid_padding = 0.01
@@ -772,6 +777,8 @@ def rho_T_sliceplot(output_filename, pltfile):
 # A routine for doing axis-aligned slice plots over a given field.
 
 def slice_plot(field, output_filename, pltfile, dir=3):
+
+    import yt
 
     ds = yt.load(pltfile)
 
