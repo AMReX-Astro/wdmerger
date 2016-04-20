@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import yt
+#import yt
 import string
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import AxesGrid
@@ -758,6 +758,67 @@ def rho_T_sliceplot(output_filename, pltfile):
 
     sp._setup_plots()
     grid[0].invert_xaxis()
+
+    plt.savefig(output_filename)
+
+    insert_commits_into_eps(output_filename, pltfile, 'plot')
+
+    plt.savefig(output_filename[:-4] + '.png')
+
+    plt.close()
+
+
+
+# A routine for doing axis-aligned slice plots over a given field.
+
+def slice_plot(field, output_filename, pltfile, dir=3):
+
+    ds = yt.load(pltfile)
+
+    dim = ds.dimensionality
+
+    fields = [field]
+
+    if dim == 1:
+
+        print "This slice plot routine is not implemented in one dimension."
+        exit
+
+    elif dim == 2:
+
+        if dir == 1:
+            axis = 'r'
+        elif dir == 2:
+            axis = 'z'
+        elif dir == 3:
+            axis = 'theta'
+        else:
+            print "Unknown direction for slicing in slice_plot."
+            exit
+
+
+    elif dim == 3:
+
+        if dir == 1:
+            axis = 'x'
+        elif dir == 2:
+            axis = 'y'
+        elif dir == 3:
+            axis = 'z'
+        else:
+            print "Unknown direction for slicing in slice_plot."
+
+
+    sp = yt.SlicePlot(ds, 'z', fields=fields)
+
+    sp.set_cmap(field, 'hot')
+
+    plot = sp.plots[field]
+
+    cb = plot.cb
+    cb.solids.set_rasterized(True)
+
+    sp._setup_plots()
 
     plt.savefig(output_filename)
 
