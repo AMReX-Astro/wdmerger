@@ -270,6 +270,140 @@ end subroutine ca_derinertialangmomz
 
 
 
+! Derive radial momentum, given input vector of the grid momenta.
+
+subroutine ca_derinertialradmomx(R,R_lo,R_hi,ncomp_R, &
+                                 u,u_lo,u_hi,ncomp_u, &
+                                 lo,hi,domlo,domhi, &
+                                 dx,xlo,time,dt,bc,level,grid_no) &
+                                 bind(C,name='ca_derinertialradmomx')
+
+  use bl_constants_module, only: HALF, ONE
+  use wdmerger_util_module, only: inertial_velocity
+  use prob_params_module, only: center
+
+  implicit none
+
+  integer          :: R_lo(3), R_hi(3), ncomp_R ! == 1
+  integer          :: u_lo(3), u_hi(3), ncomp_u ! == 4
+  integer          :: lo(3), hi(3), domlo(3), domhi(3)
+  double precision :: R(R_lo(1):R_hi(1),R_lo(2):R_hi(2),R_lo(3):R_hi(3),ncomp_R)
+  double precision :: u(u_lo(1):u_hi(1),u_lo(2):u_hi(2),u_lo(3):u_hi(3),ncomp_u)
+  double precision :: dx(3), xlo(3), time, dt
+  integer          :: bc(3,2,ncomp_u), level, grid_no
+
+  integer          :: i, j, k
+  double precision :: loc(3), mom(3), radInv
+
+  do k = lo(3), hi(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
+     do j = lo(2), hi(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
+        do i = lo(1), hi(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
+
+           mom = inertial_velocity(loc, u(i,j,k,2:4), time)
+
+           radInv = ONE / sqrt( loc(2)**2 + loc(3)**2 )
+
+           R(i,j,k,1) = loc(2) * radInv * mom(2) + loc(3) * radInv * mom(3)
+
+        enddo
+     enddo
+  enddo
+
+end subroutine ca_derinertialradmomx
+
+
+
+subroutine ca_derinertialradmomy(R,R_lo,R_hi,ncomp_R, &
+                                 u,u_lo,u_hi,ncomp_u, &
+                                 lo,hi,domlo,domhi, &
+                                 dx,xlo,time,dt,bc,level,grid_no) &
+                                 bind(C,name='ca_derinertialradmomy')
+
+  use bl_constants_module, only: HALF, ONE
+  use wdmerger_util_module, only: inertial_velocity
+  use prob_params_module, only: center
+
+  implicit none
+
+  integer          :: R_lo(3), R_hi(3), ncomp_R ! == 1
+  integer          :: u_lo(3), u_hi(3), ncomp_u ! == 4
+  integer          :: lo(3), hi(3), domlo(3), domhi(3)
+  double precision :: R(R_lo(1):R_hi(1),R_lo(2):R_hi(2),R_lo(3):R_hi(3),ncomp_R)
+  double precision :: u(u_lo(1):u_hi(1),u_lo(2):u_hi(2),u_lo(3):u_hi(3),ncomp_u)
+  double precision :: dx(3), xlo(3), time, dt
+  integer          :: bc(3,2,ncomp_u), level, grid_no
+
+  integer          :: i, j, k
+  double precision :: loc(3), mom(3), radInv
+
+  do k = lo(3), hi(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
+     do j = lo(2), hi(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
+        do i = lo(1), hi(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
+
+           mom = inertial_velocity(loc, u(i,j,k,2:4), time)
+
+           radInv = ONE / sqrt( loc(1)**2 + loc(3)**2 )
+
+           R(i,j,k,1) = loc(1) * radInv * mom(1) + loc(3) * radInv * mom(3)
+
+        enddo
+     enddo
+  enddo
+
+end subroutine ca_derinertialradmomy
+
+
+
+subroutine ca_derinertialradmomz(R,R_lo,R_hi,ncomp_R, &
+                                 u,u_lo,u_hi,ncomp_u, &
+                                 lo,hi,domlo,domhi, &
+                                 dx,xlo,time,dt,bc,level,grid_no) &
+                                 bind(C,name='ca_derinertialradmomz')
+
+  use bl_constants_module, only: HALF, ONE
+  use wdmerger_util_module, only: inertial_velocity
+  use prob_params_module, only: center
+
+  implicit none
+
+  integer          :: R_lo(3), R_hi(3), ncomp_R ! == 1
+  integer          :: u_lo(3), u_hi(3), ncomp_u ! == 4
+  integer          :: lo(3), hi(3), domlo(3), domhi(3)
+  double precision :: R(R_lo(1):R_hi(1),R_lo(2):R_hi(2),R_lo(3):R_hi(3),ncomp_R)
+  double precision :: u(u_lo(1):u_hi(1),u_lo(2):u_hi(2),u_lo(3):u_hi(3),ncomp_u)
+  double precision :: dx(3), xlo(3), time, dt
+  integer          :: bc(3,2,ncomp_u), level, grid_no
+
+  integer          :: i, j, k
+  double precision :: loc(3), mom(3), radInv
+
+  do k = lo(3), hi(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3) - center(3)
+     do j = lo(2), hi(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2) - center(2)
+        do i = lo(1), hi(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1) - center(1)
+
+           mom = inertial_velocity(loc, u(i,j,k,2:4), time)
+
+           radInv = ONE / sqrt( loc(1)**2 + loc(2)**2 )
+
+           R(i,j,k,1) = loc(1) * radInv * mom(1) + loc(2) * radInv * mom(2)
+
+        enddo
+     enddo
+  enddo
+
+end subroutine ca_derinertialradmomz
+
+
+
 ! Derive the effective potential phiEff = phiGrav + phiRot
 
 subroutine ca_derphieff(phi,phi_lo,phi_hi,ncomp_phi, &
