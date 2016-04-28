@@ -40,7 +40,7 @@ USE_ROTATION ?= TRUE
 
 DIMENSION_AGNOSTIC ?= TRUE
 
-USE_HYBRID_MOMENTUM ?= FALSE
+USE_HYBRID_MOMENTUM ?= TRUE
 
 # Override default compiler for certain machines.
 
