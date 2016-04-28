@@ -34,7 +34,7 @@ Castro::sum_integrated_quantities ()
     Real mass                 = 0.0;
     Real momentum[3]          = { 0.0 };
     Real angular_momentum[3]  = { 0.0 };
-    Real hybrid_momentum[3]   = { 0.0 };
+    Real radial_momentum[3]   = { 0.0 };
     Real rho_E                = 0.0;
     Real rho_e                = 0.0;
     Real rho_K                = 0.0;
@@ -117,18 +117,18 @@ Castro::sum_integrated_quantities ()
     Real h_cross_3 = 0.0;
 
     // Number of species.
-    
+
     int NumSpec;
-    get_num_spec(&NumSpec);    
+    get_num_spec(&NumSpec);
 
     // Species names and total masses on the domain.
 
     Real M_solar = 1.9884e33;
-    
+
     Real species_mass[NumSpec];
     std::vector<std::string> species_names(NumSpec);
-    
-    std::string name1; 
+
+    std::string name1;
     std::string name2;
 
     int index1;
@@ -149,21 +149,21 @@ Castro::sum_integrated_quantities ()
 
     wd_dist_init[axis_1 - 1] = 1.0;
 
-    // Determine the names of the species in the simulation.    
+    // Determine the names of the species in the simulation.
 
     for (int i = 0; i < NumSpec; i++) {
       species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
       species_names[i] = species_names[i].substr(4,std::string::npos);
-      species_mass[i]  = 0.0;	
+      species_mass[i]  = 0.0;
     }
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
       // Update the local level we're on.
-      
+
       set_amr_info(lev, -1, -1, -1.0, -1.0);
-      
+
       // Get the current level from Castro
 
       Castro& ca_lev = getLevel(lev);
@@ -184,11 +184,9 @@ Castro::sum_integrated_quantities ()
       angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time, local_flag);
       angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time, local_flag);
 
-#ifdef HYBRID_MOMENTUM
-      hybrid_momentum[0] += ca_lev.volWgtSum("rmom", time, local_flag);
-      hybrid_momentum[1] += ca_lev.volWgtSum("lmom", time, local_flag);
-      hybrid_momentum[2] += ca_lev.volWgtSum("pmom", time, local_flag);
-#endif
+      radial_momentum[0] += ca_lev.volWgtSum("inertial_radial_momentum_x", time, local_flag);
+      radial_momentum[1] += ca_lev.volWgtSum("inertial_radial_momentum_y", time, local_flag);
+      radial_momentum[2] += ca_lev.volWgtSum("inertial_radial_momentum_z", time, local_flag);
 
       rho_E += ca_lev.volWgtSum("rho_E", time, local_flag);
       rho_K += ca_lev.volWgtSum("kineng",time, local_flag);
@@ -202,12 +200,12 @@ Castro::sum_integrated_quantities ()
 #ifdef ROTATION
       if (do_rotation)
 	rho_phirot += ca_lev.volProductSum("density", "phiRot", time, local_flag);
-#endif            
-      
+#endif
+
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
       ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, local_flag);
 
-      // Integrated mass of all species on the domain.      
+      // Integrated mass of all species on the domain.
       for (int i = 0; i < NumSpec; i++)
 	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time, local_flag) / M_solar;
 
@@ -216,8 +214,8 @@ Castro::sum_integrated_quantities ()
     }
 
     // Return to the original level.
-    
-    set_amr_info(level, -1, -1, -1.0, -1.0);    
+
+    set_amr_info(level, -1, -1, -1.0, -1.0);
 
     // Do the reductions.
 
@@ -231,9 +229,9 @@ Castro::sum_integrated_quantities ()
       foo_sum[i+1]  = com[i];
       foo_sum[i+4]  = momentum[i];
       foo_sum[i+7]  = angular_momentum[i];
-      foo_sum[i+10] = hybrid_momentum[i];
+      foo_sum[i+10] = radial_momentum[i];
     }
-    
+
     foo_sum[13] = rho_E;
     foo_sum[14] = rho_K;
     foo_sum[15] = rho_e;
@@ -258,7 +256,7 @@ Castro::sum_integrated_quantities ()
       com[i]              = foo_sum[i+1];
       momentum[i]         = foo_sum[i+4];
       angular_momentum[i] = foo_sum[i+7];
-      hybrid_momentum[i]  = foo_sum[i+10];
+      radial_momentum[i]  = foo_sum[i+10];
     }
 
     rho_E      = foo_sum[13];
@@ -288,7 +286,7 @@ Castro::sum_integrated_quantities ()
     rotational_energy = rho_phirot;
     total_E_grid = gravitational_energy + rho_E;
     total_energy = total_E_grid + rotational_energy;
-    
+
     // Complete calculations for center of mass quantities
 
     for ( int i = 0; i < 3; i++ ) {
@@ -328,12 +326,12 @@ Castro::sum_integrated_quantities ()
 #endif
 
     if (mass_p > 0.0 && mass_s > 0.0) {
-      
+
       // Calculate the distance between the primary and secondary.
 
       for ( int i = 0; i < 3; i++ ) 
 	wd_dist[i] = com_s[i] - com_p[i];
-    
+
       separation = norm(wd_dist);
 
       // Calculate the angle between the initial stellar axis and
@@ -344,9 +342,9 @@ Castro::sum_integrated_quantities ()
                      wd_dist[axis_1 - 1] - wd_dist_init[axis_1 - 1] ) * 180.0 / M_PI;
 
       // Now let's transform from [-180, 180] to [0, 360].
-      
+
       if (angle < 0.0) angle += 360.0;
-      
+
     }
 
     // Write data out to the log.
@@ -390,11 +388,9 @@ Castro::sum_integrated_quantities ()
 	     log << std::setw(datwidth) << "                     XMOM";
 	     log << std::setw(datwidth) << "                     YMOM";
 	     log << std::setw(datwidth) << "                     ZMOM";
-#ifdef HYBRID_MOMENTUM
-	     log << std::setw(datwidth) << "              HYB. MOM. R";
-	     log << std::setw(datwidth) << "              HYB. MOM. L";
-	     log << std::setw(datwidth) << "              HYB. MOM. P";
-#endif
+	     log << std::setw(datwidth) << "              RAD. MOM. X";
+	     log << std::setw(datwidth) << "              RAD. MOM. Y";
+	     log << std::setw(datwidth) << "              RAD. MOM. Z";
 	     log << std::setw(datwidth) << "              ANG. MOM. X";
 	     log << std::setw(datwidth) << "              ANG. MOM. Y";
 	     log << std::setw(datwidth) << "              ANG. MOM. Z";
@@ -452,11 +448,9 @@ Castro::sum_integrated_quantities ()
 #if (BL_SPACEDIM == 3)
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[2];
 #endif
-#ifdef HYBRID_MOMENTUM
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[0];
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[1];
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[2];
-#endif
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << radial_momentum[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << radial_momentum[1];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << radial_momentum[2];
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[0];
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[1];
 #if (BL_SPACEDIM == 3)
