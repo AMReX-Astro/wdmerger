@@ -89,8 +89,6 @@
 &extern
   use_eos_coulomb = T
   eos_input_is_constant = T
-  eos_do_acc = T
-  eos_acc_cutoff = 128
 
   jacobian = 1
   burning_mode = 1
