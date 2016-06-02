@@ -414,9 +414,6 @@ Castro::sum_integrated_quantities ()
 	     log << std::setw(datwidth) << "                R COM VEL";
 	     log << std::setw(datwidth) << "                Z COM VEL";
 #endif
-	     log << std::setw(datwidth) << "                    T MAX";
-	     log << std::setw(datwidth) << "                  RHO MAX";
-	     log << std::setw(datwidth) << "            T_S / T_E MAX";
 	     log << std::setw(datwidth) << "             h_+ (axis 1)";
 	     log << std::setw(datwidth) << "             h_x (axis 1)";
 	     log << std::setw(datwidth) << "             h_+ (axis 2)";
