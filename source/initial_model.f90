@@ -101,10 +101,6 @@ contains
 
     logical :: converged_hse, fluff, mass_converged
 
-    double precision :: smallx, smallt
-
-    double precision :: max_hse_error, dpdr, rhog
-
     ! Note that if central_density > 0, then this initial model generator will use it in calculating
     ! the model. If mass is also provided in this case, we assume it is an estimate used for the purpose of 
     ! determining the envelope mass boundary. 

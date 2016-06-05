@@ -131,9 +131,6 @@ Castro::sum_integrated_quantities ()
     std::string name1;
     std::string name2;
 
-    int index1;
-    int index2;
-
     int dataprecision = 16; // Number of digits after the decimal point, for float data
 
     int datwidth      = 25; // Floating point data in scientific notation
@@ -208,8 +205,6 @@ Castro::sum_integrated_quantities ()
       // Integrated mass of all species on the domain.
       for (int i = 0; i < NumSpec; i++)
 	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time, local_flag) / M_solar;
-
-      MultiFab& S_new = ca_lev.get_new_data(State_Type);
 
     }
 

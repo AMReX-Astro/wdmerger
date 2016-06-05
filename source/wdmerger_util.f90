@@ -400,10 +400,9 @@ contains
 
   subroutine binary_setup
 
-    use meth_params_module, only: do_rotation, rot_period
+    use meth_params_module, only: rot_period
     use initial_model_module, only: initialize_model, establish_hse
     use prob_params_module, only: center, problo, probhi, dim
-    use meth_params_module, only: rot_axis
     use rotation_frequency_module, only: get_omega
     use math_module, only: cross_product
     use binary_module, only: get_roche_radii
@@ -412,7 +411,6 @@ contains
     implicit none
 
     double precision :: v_ff, collision_offset
-    double precision :: mu
     double precision :: omega(3)
 
     omega = get_omega(ZERO)
@@ -1037,7 +1035,7 @@ contains
 
     use problem_io_module, only: ioproc
     use sponge_module, only: sponge_timescale
-    use meth_params_module, only: rot_period, do_rotation, rotation_include_coriolis
+    use meth_params_module, only: rotation_include_coriolis
 
     implicit none
 

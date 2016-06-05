@@ -8,7 +8,7 @@
        use prob_params_module,  only: center
        use bl_constants_module, only: ZERO, HALF, ONE, TWO
        use probdata_module,     only: problem, relaxation_damping_factor, radial_damping_factor, &
-                                      t_ff_P, t_ff_S, axis_1, axis_2, axis_3, com_P, com_S
+                                      t_ff_P, t_ff_S, axis_1, axis_2, axis_3
        use castro_util_module,  only: position
        use wdmerger_util_module, only: inertial_velocity
 
@@ -29,7 +29,7 @@
        double precision :: dynamical_timescale, damping_factor
        double precision :: loc(3), R_prp, sinTheta, cosTheta, v_rad, Sr(3)
        integer          :: i, j, k
-       double precision :: new_mom(3), old_mom(3), mag_mom, new_ke, old_ke, rhoInv, dtInv
+       double precision :: new_mom(3), old_mom(3), rhoInv, dtInv
 
        ! Note that this function exists in a tiling region so we should only 
        ! modify the zones between lo and hi. 

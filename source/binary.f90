@@ -56,7 +56,6 @@ contains
 
     use bl_constants_module
     use prob_params_module, only: dx_level
-    use amrinfo_module, only: amr_level
 
     implicit none
 

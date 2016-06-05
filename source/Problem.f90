@@ -286,7 +286,6 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi, &
                                       bind(C,name='ca_volumeindensityboundary')
 
   use bl_constants_module
-  use prob_params_module, only: problo
 
   implicit none
 
@@ -352,7 +351,7 @@ subroutine get_critical_roche_potential(phiEff,p_lo,p_hi,lo,hi,L1,potential) &
   double precision :: L1(3), potential
 
   double precision :: r(3), dx(3)
-  integer          :: i, j, k, n
+  integer          :: i, j, k
 
   dx = dx_level(:,amr_level)
 
@@ -433,7 +432,7 @@ subroutine quadrupole_tensor_double_dot(rho, r_lo, r_hi, &
                                         lo, hi, dx, time, Qtt) bind(C,name='quadrupole_tensor_double_dot')
 
   use bl_constants_module, only: ZERO, THIRD, HALF, ONE, TWO, M_PI
-  use prob_params_module, only: center, problo, probhi, physbc_lo, physbc_hi, Symmetry, dim
+  use prob_params_module, only: center, dim
   use wdmerger_util_module, only: inertial_rotation, inertial_velocity
   use castro_util_module, only: position
 
@@ -571,7 +570,6 @@ subroutine gw_strain_tensor(h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, 
   use bl_constants_module, only: ZERO, HALF, ONE, TWO
   use fundamental_constants_module, only: Gconst, c_light, parsec
   use probdata_module, only: gw_dist, axis_1, axis_2, axis_3
-  use meth_params_module, only: rot_axis
   use prob_params_module, only: dim
 
   implicit none

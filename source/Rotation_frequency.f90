@@ -10,7 +10,6 @@ contains
 
   function get_omega(time) result(omega)
 
-    use prob_params_module, only: coord_type
     use meth_params_module, only: rot_period, rot_axis
     use bl_constants_module, only: ZERO, TWO, M_PI
     use fundamental_constants_module, only: Gconst
@@ -19,8 +18,6 @@ contains
 
     double precision :: time
     double precision :: omega(3)
-
-    double precision :: curr_period, a
 
     ! If rot_period is less than zero, that means rotation is disabled, and so we should effectively
     ! shut off the source term by setting omega = 0. Note that by default rot_axis == 3 for Cartesian
@@ -36,9 +33,7 @@ contains
 
   function get_domegadt(time) result(domegadt)
 
-    use prob_params_module, only: coord_type
-    use meth_params_module, only: rot_period, rot_period_dot, rot_axis
-    use bl_constants_module, only: ZERO, TWO, M_PI
+    use bl_constants_module, only: ZERO
 
     implicit none
 
