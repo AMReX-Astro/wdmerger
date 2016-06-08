@@ -683,6 +683,29 @@ function archive_all {
 
 
 
+function get_safety_factor {
+
+  if [ -z $1 ]; then
+      echo "No walltime total passed to get_safety_factor; exiting."
+      return
+  else
+      tot_time=$1
+  fi
+
+  twoHours=$(hours_to_seconds 2:00:00)
+
+  if [ $tot_time -le $twoHours ]; then
+      safety_factor=0.2
+  else
+      safety_factor=0.1
+  fi
+
+  echo $safety_factor
+
+}
+
+
+
 function check_to_stop {
 
   job_number=$(get_last_submitted_job)
@@ -703,6 +726,7 @@ function check_to_stop {
 
   # Now we'll plan to stop when (1 - safety_factor) of the time has been used up.
 
+  safety_factor=$(get_safety_factor $total_time)
   time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
 
   sleep $time_remaining
@@ -848,6 +872,7 @@ function submit_job {
 
       date_diff=$(( $current_date - $old_date ))
 
+      safety_factor=$(get_safety_factor $old_walltime)
       submit_flag=$( echo "$date_diff > (1.0 - $safety_factor) * $old_walltime" | bc -l )
 
       if [ $submit_flag -eq 0 ]; then
@@ -1633,11 +1658,6 @@ results_dir="results"
 # Directory for placing plots from analysis routines
 
 plots_dir="plots"
-
-# This factor determines the amount of time we want to 
-# use as a safety factor in ending jobs.
-
-safety_factor=0.1
 
 if [ -z $inputs ]; then
     inputs=inputs
