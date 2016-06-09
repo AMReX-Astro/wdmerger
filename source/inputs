@@ -68,7 +68,7 @@ castro.hard_cfl_limit = 0
 amr.compute_new_dt_on_regrid = 1
 
 # Use a retry if an advance violated our stability criteria
-castro.use_retry = 1
+castro.use_retry = 0
 
 # Disable retries based on negative density resets
 castro.retry_neg_dens_factor = -1.0
