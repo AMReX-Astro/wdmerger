@@ -148,40 +148,43 @@ function get_last_checkpoint {
 
   # Doing a search this way will treat first any checkpoint files 
   # with seven digits, and then will fall back to ones with six and then five digits.
-  # On recent versions of GNU sort, one can simplify this with sort -V.
 
-  checkpoint=$(find $dir -type d -name "*chk???????" | sort | tail -1)
+  checkpointList7=$(find $dir -type d -name "*chk???????")
+  checkpointNums7=$(find $dir -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)
 
-  if [ -z $checkpoint ]; then
+  checkpointList6=$(find $dir -type d -name "*chk??????")
+  checkpointNums6=$(find $dir -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)
 
-      checkpoint=$(find $dir -type d -name "*chk??????" | sort | tail -1)
+  checkpointList5=$(find $dir -type d -name "*chk?????")
+  checkpointNums5=$(find $dir -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)
 
-      if [ -z $checkpoint ]; then
+  # Match up the last checkpoint number with the actual file path location. 
 
-          checkpoint=$(find $dir -type d -name "*chk?????"  | sort | tail -1)
+  for chkNum in $checkpointNums7 $checkpointNums6 $checkpointNums5
+  do
 
+      for chkFile in $checkpointList7 $checkpointList6 $checkpointList5
+      do
+	  currBaseName=$(echo $chkFile | awk -F/ '{ print $NF }')
+
+	  if [ "$currBaseName" == "$chkNum" ]; then
+
+	      # The Header is the last thing written -- check if it's there, otherwise,
+	      # we can skip this iteration, because it means the latest checkpoint file 
+	      # is still being written.
+
+	      if [ -f ${chkFile}/Header ]; then
+		  checkpoint=$chkFile
+		  break
+	      fi
+	  fi
+      done
+
+      if [ ! -z $checkpoint ]; then
+	  break
       fi
 
-  fi
-
-  # The Header is the last thing written -- check if it's there, otherwise,
-  # fall back to the second-to-last check file written, because it means 
-  # the latest checkpoint file is still being written.
-
-  if [ ! -f ${checkpoint}/Header ]; then
-
-      # How many *chk?????? files are there? if only one, then skip,
-      # as there are no valid and complete checkpoint files.
-
-      nl=$(find $dir -type d -name "*chk??????" -print | sort | wc -l)
-
-      if [ $nl -gt 1 ]; then
-	  checkpoint=$(find $dir -type d -name "*chk??????" -print | sort | tail -2 | head -1)    
-      else
-	  checkpoint=""
-      fi
-      
-  fi
+  done
 
   # Extract out the search directory from the result.
 
@@ -565,15 +568,25 @@ function archive_all {
       fi
   done
 
+  lastCheckpoint=$(get_last_checkpoint $directory)
+
   for file in $chklist
   do
-      if [ -e $file/Header ]; then
-	  if [ -e output/$file ]; then
-	      rm -rf output/$file
+      # We need to be careful with checkpoints because we do not want 
+      # to move a checkpoint that is being read to restart the next 
+      # run. So we will skip the last checkpoint under the assumption 
+      # that this is the only one needed to perform a restart.
+
+      f=$(basename $file)
+
+      if [ "$f" != "$lastCheckpoint" ]; then
+	  if [ -e $file/Header ]; then
+	      if [ -e output/$file ]; then
+		  rm -rf output/$file
+	      fi
+	      mv $file $directory/output/
+	      archivelist=$archivelist" "$f
 	  fi
-	  mv $file $directory/output/
-	  f=$(basename $file)
-	  archivelist=$archivelist" "$f
       fi
   done
 
@@ -694,7 +707,10 @@ function get_safety_factor {
 
   twoHours=$(hours_to_seconds 2:00:00)
 
-  if [ $tot_time -le $twoHours ]; then
+  # For small enough jobs we need to introduce a little extra buffer 
+  # if we archiving during this run.
+
+  if [ $tot_time -le $twoHours ] && [ -z $archive_queue ]; then
       safety_factor=0.2
   else
       safety_factor=0.1
@@ -1244,11 +1260,74 @@ function create_job_script {
 
       # Run the archive script at the end of the simulation.
 
-      if [ $do_storage -ne 1 ]; then
-	  echo "do_storage=$do_storage" >> $dir/$job_script
+      if [ ! -z $archive_queue ]; then
+
+	  echo "$exec $archive_script" >> $dir/$job_script
+
+      else
+
+	  if [ $do_storage -ne 1 ]; then
+	      echo "do_storage=$do_storage" >> $dir/$job_script
+	  fi
+	  echo "archive_all" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+
       fi
-      echo "archive_all" >> $dir/$job_script
-      echo "" >> $dir/$job_script
+
+
+
+      # Now write the archive script, if this is a system that 
+      # has a data transfer queue.
+
+      if [ ! -z $archive_queue ]; then
+
+	  echo "#!/bin/bash" > $dir/$archive_script
+
+          # Select the project allocation we're charging this job to
+	  if [ ! -z $allocation ]; then
+	      echo "#PBS -A $allocation" >> $dir/$archive_script
+	  fi
+
+           # Set the name of the job
+	  echo "#PBS -N archive" >> $dir/$archive_script
+
+           # Combine standard error into the standard out file
+	  echo "#PBS -j oe" >> $dir/$archive_script
+
+          # Amount of wall time for the simulation
+	  echo "#PBS -l walltime=$archive_wclimit" >> $dir/$archive_script
+
+          # Number of nodes, the number of MPI tasks per node, and the node type to use
+	  echo "#PBS -l nodes=1" >> $dir/$archive_script
+
+          # Queue to submit to.
+	  echo "#PBS -q $archive_queue" >> $dir/$archive_script
+
+	  echo "" >> $dir/$archive_script
+
+	  # Set the location of some variables.
+
+	  echo "WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$archive_script
+	  echo "MACHINE=$MACHINE" >> $dir/$archive_script
+	  echo "" >> $dir/$archive_script
+
+          # We assume that the directory we submitted from is eligible to 
+          # work in, so cd to that directory.
+
+	  echo "cd \$PBS_O_WORKDIR" >> $dir/$archive_script
+	  echo "" >> $dir/$archive_script
+
+          # Load up our helper functions.
+
+	  echo "source job_scripts/run_utils.sh" >> $dir/$archive_script
+	  echo "" >> $dir/$archive_script
+
+          # Main job execution.
+
+	  echo "archive_all >> archive_log.out" >> $dir/$archive_script
+	  echo "" >> $dir/$archive_script
+
+      fi
 
   elif [ $batch_system == "COBALT" ]; then
 
@@ -1642,6 +1721,7 @@ shell_list=$(compgen -v)
 
 job_name="wdmerger"
 job_script="run_script"
+archive_script="archive_script"
 
 archive_method="none"
 

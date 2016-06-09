@@ -86,8 +86,11 @@ function set_machine_params {
 	threads_per_task="8"
 	run_ext=".OU"
 	batch_system="PBS"
+	queue="batch"
 	launcher="aprun"
 	archive_method="htar"
+	archive_queue="dtn"
+	archive_wclimit="24:00:00"
 
     # Hopper at NERSC
 
