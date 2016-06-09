@@ -929,9 +929,9 @@ function submit_job {
   # If we made it to this point, now actually submit the job.
 
   if [ $batch_system == "PBS" ]; then
-      job_number=`qsub $job_script`
+      job_number=`$exec $job_script`
   elif [ $batch_system == "COBALT" ]; then
-      job_number=`qsub -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
+      job_number=`$exec -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
   fi
 
   # Some systems like Blue Waters include the system name
@@ -1262,7 +1262,9 @@ function create_job_script {
 
       if [ ! -z $archive_queue ]; then
 
-	  echo "$exec $archive_script" >> $dir/$job_script
+	  echo "archive_job_number=\`$exec $archive_script\`" >> $dir/$job_script
+	  echo "echo \"\"" >> $dir/$job_script
+	  echo "echo \"Submitted an archive job with job number \$archive_job_number.\"" >> $dir/$job_script
 
       else
 
