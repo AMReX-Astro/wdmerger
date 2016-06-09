@@ -1570,12 +1570,6 @@ function run {
 
       rm -f $dir/dump_and_stop
 
-      # Archive any files that have not yet been saved to the storage system.
-
-      cwd=$(pwd)
-
-      archive_all $cwd/$dir
-
       done_flag=$(is_dir_done)
 
       if [ $done_flag -eq 0 ]; then
