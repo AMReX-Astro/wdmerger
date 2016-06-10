@@ -42,6 +42,10 @@ DIMENSION_AGNOSTIC ?= TRUE
 
 USE_HYBRID_MOMENTUM ?= TRUE
 
+# Set the default integrator for the burner.
+
+INTEGRATOR_DIR ?= BS
+
 # Override default compiler for certain machines.
 
 ifeq ($(findstring titan, $(UNAMEN)), titan)
