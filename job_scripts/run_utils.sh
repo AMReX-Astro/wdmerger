@@ -751,7 +751,16 @@ function get_safety_factor {
 
 function check_to_stop {
 
-  job_number=$(get_last_submitted_job)
+  # Get the job number if we are not on a system that
+  # provides the job ID through a runtime variable.
+
+  if [ -z "$job_number" ]; then
+      job_number=$(get_last_submitted_job)
+
+      # Clean out any extraneous information.
+
+      job_number=${job_number%%.*}
+  fi
 
   # Get the current UNIX time in seconds.
 
@@ -1261,6 +1270,11 @@ function create_job_script {
 	  echo "probin=$probin" >> $dir/$job_script
 	  echo "" >> $dir/$job_script
       fi
+
+      # Store the job number.
+
+      echo "job_number=\$PBS_JOBID" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
       # We assume that the directory we submitted from is eligible to 
       # work in, so cd to that directory.
