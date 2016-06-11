@@ -45,7 +45,7 @@
      use prob_params_module, only: center, dim
      use eos_module
      use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UTEMP, &
-          UEDEN, UEINT, UFS, do_rotation
+                                   UEDEN, UEINT, UFS, do_rotation, state_in_rotating_frame
      use network, only: nspec
      use bl_constants_module
      use model_parser_module, only: idens_model, itemp_model, ipres_model, ispec_model
@@ -168,7 +168,8 @@
               ! coordinate, whose unit vector is tangent to the unit circle, so we should
               ! have the same velocity everywhere along that coordinate to begin with.
 
-              if ( (do_rotation .ne. 1) .and. (problem .eq. 1 .or. problem .eq. 2 .or. problem .eq. 3) ) then
+              if ( ( (do_rotation .ne. 1) .or. ( (do_rotation .eq. 1) .and. (state_in_rotating_frame .ne. 1) ) ) .and. &
+                   (problem .eq. 1 .or. problem .eq. 2 .or. problem .eq. 3) ) then
 
                  vel = cross_product(omega, loc)
 

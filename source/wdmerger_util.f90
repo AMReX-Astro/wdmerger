@@ -959,7 +959,7 @@ contains
 
   function inertial_velocity(loc, vel, time) result (vel_i)
 
-    use meth_params_module, only: do_rotation
+    use meth_params_module, only: do_rotation, state_in_rotating_frame
     use rotation_frequency_module, only: get_omega
     use math_module, only: cross_product
 
@@ -974,7 +974,7 @@ contains
 
     vel_i = vel
 
-    if (do_rotation .eq. 1) then
+    if (do_rotation .eq. 1 .and. state_in_rotating_frame .eq. 1) then
        vel_i = vel_i + cross_product(omega, loc)
     endif
 
