@@ -737,6 +737,11 @@ function check_to_stop {
 
   job_number=$(get_last_submitted_job)
 
+  # Get the current UNIX time in seconds.
+
+  start_wall_time=$(date +%s)
+  curr_wall_time=$start_wall_time
+
   # Determine how much time the job has, in seconds.
   
   total_time=$(get_remaining_walltime $job_number)
@@ -756,7 +761,24 @@ function check_to_stop {
   safety_factor=$(get_safety_factor $total_time)
   time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
 
-  sleep $time_remaining
+  end_wall_time=$(echo "$start_wall_time + $time_remaining" | bc)
+
+  # We'll subdivide the remaining interval into a given number of chunks,
+  # and periodically wake up to check if we're past the time limit. This
+  # is intended to deal with potential issues where the function doesn't
+  # wake up on time, which I have seen in the past when a system is overloaded.
+
+  numSleepIntervals=100
+
+  intervalsElapsed=0
+  intervalLength=$(echo "$time_remaining / numSleepIntervals" | bc)
+
+  while [ $intervalsElapsed -lt $numSleepIntervals ] && [ $curr_wall_time -lt $end_wall_time ]
+  do
+      sleep $intervalLength
+      curr_wall_time=$(date +%s)
+      intervalsElapsed=$(echo "intervalsElapsed + 1" | bc)
+  done
 
   # BoxLib's framework requires a particular file name to exist in the local directory, 
   # to trigger a checkpoint and quit.
