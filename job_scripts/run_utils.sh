@@ -148,15 +148,26 @@ function get_last_checkpoint {
 
   # Doing a search this way will treat first any checkpoint files 
   # with seven digits, and then will fall back to ones with six and then five digits.
+  # We want to be smart about this and list the ones in the current directory first,
+  # before checking any output directories where the data is archived, because
+  # the former are the most likely to be recently created checkpoints.
+  # Bash can be pretty slow when looping through a large number of variables,
+  # so the added complication is justified.
 
-  checkpointList7=$(find $dir -type d -name "*chk???????")
-  checkpointNums7=$(find $dir -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)
+  checkpointList7="$(find $dir -maxdepth 1 -type d -name "*chk???????" | sort -r)"
+  checkpointList7+=" $(find $dir ! -path $dir -type d -name "*chk???????" | sort -r)"
+  checkpointNums7="$(find $dir -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums7+=" $(find $dir ! -path $dir -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
 
-  checkpointList6=$(find $dir -type d -name "*chk??????")
-  checkpointNums6=$(find $dir -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)
+  checkpointList6="$(find $dir -maxdepth 1 -type d -name "*chk??????" | sort -r)"
+  checkpointList6+=" $(find $dir ! -path $dir -type d -name "*chk??????" | sort -r)"
+  checkpointNums6="$(find $dir -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums6+=" $(find $dir ! -path $dir -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
 
-  checkpointList5=$(find $dir -type d -name "*chk?????")
-  checkpointNums5=$(find $dir -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)
+  checkpointList5="$(find $dir -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+  checkpointList5+=" $(find $dir ! -path $dir -type d -name "*chk?????" | sort -r)"
+  checkpointNums5="$(find $dir -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums5+=" $(find $dir ! -path $dir -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
 
   # Match up the last checkpoint number with the actual file path location. 
 
