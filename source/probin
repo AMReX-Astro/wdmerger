@@ -87,6 +87,8 @@
 /
 
 &extern
+  small_x = 1.d-12
+
   use_eos_coulomb = T
   eos_input_is_constant = T
 

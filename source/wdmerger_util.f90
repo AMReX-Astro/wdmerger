@@ -191,7 +191,7 @@ contains
 
   subroutine set_wd_composition(model)
 
-    use meth_params_module, only: small_x
+    use extern_probin_module, only: small_x
     use network, only: network_species_index
 
     implicit none

@@ -202,9 +202,6 @@ castro.dual_energy_eta2 = 1.0e-4
 # Reactions/Network
 ############################################################################################
 
-# Minimum allowable mass fraction on the grid
-castro.small_x = 1.0e-12
-
 # Limit timestep based on nuclear burning considerations (changes in internal energy)
 castro.dtnuc_e = 0.1
 
