@@ -320,6 +320,9 @@ amr.small_plot_per = 1.0
 # Number of timesteps between small plotfiles
 amr.small_plot_int = -1
 
+# Do not write plotfiles when we dump checkpoints
+amr.write_plotfile_with_checkpoint = 0
+
 # How often to check whether the run script asked for a checkpoint dump
 amr.message_int = 1
 
