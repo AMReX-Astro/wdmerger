@@ -172,7 +172,7 @@ function get_last_checkpoint {
   checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
   checkpointNums+=" $(find $dir ! -path $dir -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
 
-  if [ -z $checkpointList ]; then
+  if [ -z "$checkpointList" ]; then
 
       echo ""
       return
@@ -421,11 +421,15 @@ function is_dir_done {
 
   done_status=0
 
-  if [ -e $directory/$checkpoint/Header ]; then
+  if [ -e "$directory/$checkpoint/Header" ]; then
 
       # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
       chk_time=$(awk 'NR==3' $directory/$checkpoint/Header)
+
+      # Convert to floating point, since it might be in exponential format.
+
+      chk_time=$(printf "%f" $chk_time)
 
       # Extract the current timestep. We can get it from the 
       # name of the checkpoint file. cut will do the trick;
@@ -441,7 +445,7 @@ function is_dir_done {
 	  step_flag=$(echo "$chk_step >= $max_step" | bc)
       fi
 
-  elif [ ! -z $last_output ] && [ -e $directory/$last_output ]; then
+  elif [ ! -z "$last_output" ] && [ -e "$directory/$last_output" ]; then
 
       output_time=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $6}')
       output_step=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $3}')
@@ -458,10 +462,12 @@ function is_dir_done {
   # If we don't have valid variables for checking against the timestep and max_time
   # criteria, we assume that we're not done because we just haven't run the job yet.
 
-  if [ -z $time_flag ] || [ -z $step_flag ]; then
-      done_status=0
-  elif [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
+  done_status=0
+
+  if [ ! -z $time_flag ] && [ ! -z $step_flag ]; then
+    if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
       done_status=1
+    fi
   fi
 
   echo $done_status
@@ -775,7 +781,7 @@ function check_to_stop {
 
   # Round to nearest integer.
 
-  end_wall_time=$(printf "%.0f" $end_walltime)
+  end_wall_time=$(printf "%.0f" $end_wall_time)
 
   # We'll subdivide the remaining interval into a given number of chunks,
   # and periodically wake up to check if we're past the time limit. This
@@ -785,17 +791,21 @@ function check_to_stop {
   numSleepIntervals=1000
 
   intervalsElapsed=0
-  sleepInterval=$(echo "$time_remaining / numSleepIntervals" | bc)
+  sleepInterval=$(echo "$time_remaining / $numSleepIntervals" | bc -l)
 
   numCheckpointIntervals=10
   checkpointInterval=$(echo "$time_remaining / $numCheckpointIntervals" | bc)
+
   nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
 
   while [ $intervalsElapsed -lt $numSleepIntervals ] && [ $curr_wall_time -lt $end_wall_time ]
   do
+
       sleep $sleepInterval
+
       curr_wall_time=$(date +%s)
-      intervalsElapsed=$(echo "intervalsElapsed + 1" | bc)
+
+      intervalsElapsed=$(echo "$intervalsElapsed + 1" | bc)
 
       # Periodically dump checkpoints as a safeguard against system crashes.
       # Obviously for this to work properly, we need sleepInterval << checkpointInterval.
@@ -804,6 +814,7 @@ function check_to_stop {
 	  touch "dump_and_continue"
 	  nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
       fi
+
   done
 
   # BoxLib's framework requires a particular file name to exist in the local directory, 
