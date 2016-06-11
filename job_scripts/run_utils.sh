@@ -768,16 +768,28 @@ function check_to_stop {
   # is intended to deal with potential issues where the function doesn't
   # wake up on time, which I have seen in the past when a system is overloaded.
 
-  numSleepIntervals=100
+  numSleepIntervals=1000
 
   intervalsElapsed=0
-  intervalLength=$(echo "$time_remaining / numSleepIntervals" | bc)
+  sleepInterval=$(echo "$time_remaining / numSleepIntervals" | bc)
+
+  numCheckpointIntervals=10
+  checkpointInterval=$(echo "$time_remaining / $numCheckpointIntervals" | bc)
+  nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
 
   while [ $intervalsElapsed -lt $numSleepIntervals ] && [ $curr_wall_time -lt $end_wall_time ]
   do
-      sleep $intervalLength
+      sleep $sleepInterval
       curr_wall_time=$(date +%s)
       intervalsElapsed=$(echo "intervalsElapsed + 1" | bc)
+
+      # Periodically dump checkpoints as a safeguard against system crashes.
+      # Obviously for this to work properly, we need sleepInterval << checkpointInterval.
+
+      if [ $curr_wall_time -gt $nextCheckpointTime ]; then
+	  touch "dump_and_continue"
+	  nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
+      fi
   done
 
   # BoxLib's framework requires a particular file name to exist in the local directory, 
