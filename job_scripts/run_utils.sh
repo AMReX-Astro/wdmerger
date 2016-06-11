@@ -763,6 +763,10 @@ function check_to_stop {
 
   end_wall_time=$(echo "$start_wall_time + $time_remaining" | bc)
 
+  # Round to nearest integer.
+
+  end_wall_time=$(printf "%.0f" $end_walltime)
+
   # We'll subdivide the remaining interval into a given number of chunks,
   # and periodically wake up to check if we're past the time limit. This
   # is intended to deal with potential issues where the function doesn't
