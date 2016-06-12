@@ -805,12 +805,14 @@ void Castro::problem_post_init() {
 
 void Castro::writeGitHashes(std::ostream& log) {
 
-  const char* castro_hash   = buildInfoGetGitHash(1);
-  const char* boxlib_hash   = buildInfoGetGitHash(2);
-  const char* wdmerger_hash = buildInfoGetBuildGitHash();
+  const char* castro_hash       = buildInfoGetGitHash(1);
+  const char* boxlib_hash       = buildInfoGetGitHash(2);
+  const char* microphysics_hash = buildInfoGetGitHash(3);
+  const char* wdmerger_hash     = buildInfoGetBuildGitHash();
 
-  log << "# Castro   git hash: " << castro_hash   << std::endl;
-  log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-  log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+  log << "# Castro      git hash: " << castro_hash       << std::endl;
+  log << "# BoxLib      git hash: " << boxlib_hash       << std::endl;
+  log << "# Microphysis git hash: " << microphysics_hash << std::endl;
+  log << "# wdmerger    git hash: " << wdmerger_hash     << std::endl;
 
 }
