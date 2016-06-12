@@ -843,17 +843,17 @@ function copy_files {
   if [ -z $dir ]; then
       echo "No directory passed to copy_files; exiting."
   fi
-  
-  if [ ! -e $dir/$CASTRO ]; then
+
+  if [ ! -e $dir/$CASTRO ] && [ -z "$inputs_only" ]; then
       cp $compile_dir/$CASTRO $dir
   fi
 
-  if [ ! -e "$dir/helm_table.dat" ]; then
+  if [ ! -e "$dir/helm_table.dat" ] && [ -z "$inputs_only" ]; then
       if [ -e "$compile_dir/helm_table.dat" ]; then
 	  cp $compile_dir/helm_table.dat $dir
       fi
   fi
-  
+
   new_inputs="F"
 
   if [ ! -e "$dir/$inputs" ]; then
@@ -891,12 +891,14 @@ function copy_files {
   # Copy over all the helper scripts, so that these are 
   # fixed in time for this run and don't change if we update the repository.
 
-  if [ ! -e "$dir/job_scripts/run_utils.sh" ]; then
+  if [ ! -e "$dir/job_scripts/run_utils.sh" ] && [ -z "$inputs_only" ]; then
       mkdir -p "$dir/job_scripts"
       cp -r $WDMERGER_HOME/job_scripts/*.sh $dir/job_scripts/
   fi
 
-  touch "$dir/jobs_submitted.txt"
+  if [ -z "$inputs_only" ]; then
+      touch "$dir/jobs_submitted.txt"
+  fi
 
   if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
       convert_to_2D
@@ -1632,7 +1634,11 @@ function run {
 
   if [ ! -d $dir ]; then
 
-    echo "Submitting job in directory "$dir"."
+    if [ -z "$no_submit" ] && [ -z "$inputs_only" ]; then
+	echo "Creating directory "$dir" and submitting job."
+    else
+	echo "Creating directory "$dir" without submitting the job."
+    fi
 
     mkdir -p $dir
 
@@ -1680,13 +1686,16 @@ function run {
   if [ $do_job -eq 1 ]; then
 
     copy_files $dir
-    create_job_script $dir $nprocs $walltime
+
+    if [ -z "$inputs_only" ]; then
+	create_job_script $dir $nprocs $walltime
+    fi
 
     # Sometimes we'll want to set up the run directories but not submit them,
     # e.g. for testing purposes, so if the user creates a no_submit variable,
     # we won't actually submit this job.
 
-    if [ -z $no_submit ]; then
+    if [ -z "$no_submit" ] && [ -z "$inputs_only" ]; then
 
 	cd $dir
 
