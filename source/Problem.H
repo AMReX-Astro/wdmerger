@@ -48,6 +48,9 @@ void problem_post_init();
 
 void problem_post_timestep();
 
+// Write out the git hashes for the various parts of the code.
+
+void writeGitHashes(std::ostream& log);
 
 
 

@@ -6,6 +6,8 @@
 
 #include "ParmParse.H"
 
+#include "buildInfo.H"
+
 bool Castro::relaxation_is_done = false;
 int Castro::problem = -1;
 
@@ -798,3 +800,17 @@ void Castro::problem_post_init() {
 #endif
 #endif
 #endif
+
+
+
+void Castro::writeGitHashes(std::ostream& log) {
+
+  const char* castro_hash   = buildInfoGetGitHash(1);
+  const char* boxlib_hash   = buildInfoGetGitHash(2);
+  const char* wdmerger_hash = buildInfoGetBuildGitHash();
+
+  log << "# Castro   git hash: " << castro_hash   << std::endl;
+  log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
+  log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+
+}
