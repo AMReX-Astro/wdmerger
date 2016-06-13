@@ -118,11 +118,11 @@ contains
 
              do n = 1, dim
 
-                if ((physbc_lo(n) .ne. Symmetry) .and. (loc(n) .lt. problo(n) + TWO * dx(1))) then
+                if ((physbc_lo(n) .ne. Symmetry) .and. (loc(n) .lt. problo(n) + TWO * dx(n))) then
                    outer_boundary_test(n) = .true.
                 endif
 
-                if ((physbc_hi(n) .ne. Symmetry) .and. (loc(n) .gt. probhi(n) - TWO * dx(1))) then
+                if ((physbc_hi(n) .ne. Symmetry) .and. (loc(n) .gt. probhi(n) - TWO * dx(n))) then
                    outer_boundary_test(n) = .true.
                 endif
 
