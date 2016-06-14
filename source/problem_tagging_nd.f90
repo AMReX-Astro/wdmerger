@@ -14,7 +14,8 @@ contains
 
     use bl_constants_module, only: ZERO, HALF, TWO
     use meth_params_module, only: NVAR, URHO, UTEMP
-    use prob_params_module, only: center, probhi, dim, Symmetry, physbc_lo, physbc_hi
+    use prob_params_module, only: center, probhi, dim, Symmetry, physbc_lo, physbc_hi, &
+                                  n_error_buf, ref_ratio, blocking_factor, domlo_level, domhi_level
     use probdata_module, only: max_tagging_radius, &
                                max_stellar_tagging_level, &
                                max_temperature_tagging_level, &
@@ -39,6 +40,7 @@ contains
     double precision :: loc(3), r, r_P, r_S
 
     logical          :: outer_boundary_test(3)
+    integer          :: boundary_buf(3), idx(3)
 
     do k = lo(3), hi(3)
        loc(3) = problo(3) + (dble(k) + HALF) * dx(3)
@@ -109,20 +111,32 @@ contains
 
              ! We must ensure that the outermost zones are untagged
              ! due to the Poisson equation boundary conditions.
-             ! This is necessary in addition to the above step
-             ! because the problem center doesn't always coincide
-             ! with the geometric center. However we can avoid this
-             ! restriction on symmetric boundaries.
+             ! We currently do not know how to fill the boundary conditions
+             ! for fine levels that touch the physical boundary.
+             ! (Note that this does not apply for interior/symmetry boundaries.)
+             ! To do this properly we need to be aware of BoxLib's strategy
+             ! for tagging, which is not cell-based, but rather chunk-based.
+             ! The size of the chunk on the coarse grid is given by
+             ! blocking_factor / ref_ratio -- the idea here being that
+             ! blocking_factor is the smallest possible group of cells on a
+             ! given level, so the smallest chunk of cells possible on the
+             ! coarse grid is given by that number divided by the refinement ratio.
+             ! So we cannot tag anything within that distance from the boundary.
+             ! Additionally we need to stay a further amount n_error_buf away,
+             ! since n_error_buf zones are always added as padding around
+             ! tagged zones.
 
              outer_boundary_test = .false.
+             boundary_buf = n_error_buf(level) + blocking_factor(level+1) / ref_ratio(:, level)
+             idx = [i, j, k]
 
              do n = 1, dim
 
-                if ((physbc_lo(n) .ne. Symmetry) .and. (loc(n) .lt. problo(n) + TWO * dx(n))) then
+                if ((physbc_lo(n) .ne. Symmetry) .and. (idx(n) .le. domlo_level(n, level) + boundary_buf(n))) then
                    outer_boundary_test(n) = .true.
                 endif
 
-                if ((physbc_hi(n) .ne. Symmetry) .and. (loc(n) .gt. probhi(n) - TWO * dx(n))) then
+                if ((physbc_hi(n) .ne. Symmetry) .and. (idx(n) .ge. domhi_level(n, level) - boundary_buf(n))) then
                    outer_boundary_test(n) = .true.
                 endif
 
