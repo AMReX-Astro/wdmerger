@@ -1276,6 +1276,7 @@ function create_job_script {
       # Store the job number.
 
       echo "job_number=\$PBS_JOBID" >> $dir/$job_script
+      echo "job_number=\${job_number%%.*}" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # We assume that the directory we submitted from is eligible to 
