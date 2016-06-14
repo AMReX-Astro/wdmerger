@@ -83,8 +83,8 @@ Castro::sum_integrated_quantities ()
     Real com_p_mag = 0.0;
     Real com_s_mag = 0.0;
 
-    Real com_p[3]     = { 0.0 };
-    Real com_s[3]     = { 0.0 };
+    Real com_p[3] = { 0.0 };
+    Real com_s[3] = { 0.0 };
 
     Real vel_p_mag = 0.0;
     Real vel_s_mag = 0.0;
@@ -122,11 +122,11 @@ Castro::sum_integrated_quantities ()
     // Species names and total masses on the domain.
 
     Real M_solar = 1.9884e33;
-    
+
     Real species_mass[NumSpec];
     std::vector<std::string> species_names(NumSpec);
-    
-    std::string name1; 
+
+    std::string name1;
     std::string name2;
 
     int index1;
@@ -147,21 +147,21 @@ Castro::sum_integrated_quantities ()
 
     wd_dist_init[axis_1 - 1] = 1.0;
 
-    // Determine the names of the species in the simulation.    
+    // Determine the names of the species in the simulation.
 
     for (int i = 0; i < NumSpec; i++) {
       species_names[i] = desc_lst[State_Type].name(FirstSpec+i);
       species_names[i] = species_names[i].substr(4,std::string::npos);
-      species_mass[i]  = 0.0;	
+      species_mass[i]  = 0.0;
     }
 
     for (int lev = 0; lev <= finest_level; lev++)
     {
 
       // Update the local level we're on.
-      
+
       set_amr_info(lev, -1, -1, -1.0, -1.0);
-      
+
       // Get the current level from Castro
 
       Castro& ca_lev = getLevel(lev);
@@ -200,12 +200,12 @@ Castro::sum_integrated_quantities ()
 #ifdef ROTATION
       if (do_rotation)
 	rho_phirot += ca_lev.volProductSum("density", "phiRot", time, local_flag);
-#endif            
-      
+#endif
+
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
       ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, local_flag);
 
-      // Integrated mass of all species on the domain.      
+      // Integrated mass of all species on the domain.
       for (int i = 0; i < NumSpec; i++)
 	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time, local_flag) / M_solar;
 
@@ -214,8 +214,8 @@ Castro::sum_integrated_quantities ()
     }
 
     // Return to the original level.
-    
-    set_amr_info(level, -1, -1, -1.0, -1.0);    
+
+    set_amr_info(level, -1, -1, -1.0, -1.0);
 
     // Do the reductions.
 
@@ -231,7 +231,7 @@ Castro::sum_integrated_quantities ()
       foo_sum[i+7]  = angular_momentum[i];
       foo_sum[i+10] = hybrid_momentum[i];
     }
-    
+
     foo_sum[13] = rho_E;
     foo_sum[14] = rho_K;
     foo_sum[15] = rho_e;
@@ -286,7 +286,7 @@ Castro::sum_integrated_quantities ()
     rotational_energy = rho_phirot;
     total_E_grid = gravitational_energy + rho_E;
     total_energy = total_E_grid + rotational_energy;
-    
+
     // Complete calculations for center of mass quantities
 
     for ( int i = 0; i < 3; i++ ) {
@@ -326,12 +326,12 @@ Castro::sum_integrated_quantities ()
 #endif
 
     if (mass_p > 0.0 && mass_s > 0.0) {
-      
+
       // Calculate the distance between the primary and secondary.
 
-      for ( int i = 0; i < 3; i++ ) 
+      for ( int i = 0; i < 3; i++ )
 	wd_dist[i] = com_s[i] - com_p[i];
-    
+
       separation = norm(wd_dist);
 
       // Calculate the angle between the initial stellar axis and
@@ -342,9 +342,9 @@ Castro::sum_integrated_quantities ()
                      wd_dist[axis_1 - 1] - wd_dist_init[axis_1 - 1] ) * 180.0 / M_PI;
 
       // Now let's transform from [-180, 180] to [0, 360].
-      
+
       if (angle < 0.0) angle += 360.0;
-      
+
     }
 
     // Write data out to the log.
