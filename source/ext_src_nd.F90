@@ -11,6 +11,10 @@
                                       t_ff_P, t_ff_S, axis_1, axis_2, axis_3
        use castro_util_module,  only: position
        use wdmerger_util_module, only: inertial_velocity
+#ifdef HYBRID_MOMENTUM
+       use hybrid_advection_module, only: linear_to_hybrid
+       use meth_params_module, only: UMR, UMP
+#endif
 
        implicit none
 
@@ -52,11 +56,17 @@
 
                    rhoInv = ONE / new_state(i,j,k,URHO)
 
+                   loc = position(i,j,k) - center
+
                    new_mom = new_state(i,j,k,UMX:UMZ)
 
                    Sr = -new_mom * damping_factor
 
                    src(i,j,k,UMX:UMZ) = src(i,j,k,UMX:UMZ) + Sr
+
+#ifdef HYBRID_MOMENTUM
+                   src(i,j,k,UMR:UMP) = src(i,j,k,UMR:UMP) + linear_to_hybrid(loc, Sr)
+#endif
 
                    ! Do the same thing for the kinetic energy update.
 
@@ -116,6 +126,10 @@
                    Sr(axis_3) = ZERO
 
                    src(i,j,k,UMX:UMZ) = src(i,j,k,UMX:UMZ) + Sr
+
+#ifdef HYBRID_MOMENTUM
+                   src(i,j,k,UMR:UMP) = src(i,j,k,UMR:UMP) + linear_to_hybrid(loc, Sr)
+#endif
 
                    ! The kinetic energy source term is v . Sr:
 
