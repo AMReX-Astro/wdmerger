@@ -127,7 +127,7 @@ contains
              ! tagged zones.
 
              outer_boundary_test = .false.
-             boundary_buf = n_error_buf(level) + blocking_factor(level+1) / ref_ratio(:, level)
+             boundary_buf(1:dim) = n_error_buf(level) + blocking_factor(level+1) / ref_ratio(1:dim, level)
              idx = [i, j, k]
 
              do n = 1, dim
