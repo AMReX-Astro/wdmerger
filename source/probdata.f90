@@ -207,7 +207,7 @@ module probdata_module
 
   ! Relaxation parameters for problem 3
 
-  double precision, save :: relaxation_damping_factor = -1.0d2
+  double precision, save :: relaxation_damping_timescale = -1.0d0
   double precision, save :: relaxation_density_cutoff = 1.0d3
 
   ! Radial damping parameters for problem 3
@@ -239,7 +239,7 @@ module probdata_module
        collision_separation, &
        collision_impact_parameter, &
        interp_temp, &
-       relaxation_damping_factor, &
+       relaxation_damping_timescale, &
        relaxation_density_cutoff, &
        initial_radial_velocity_factor, &
        radial_damping_factor, &

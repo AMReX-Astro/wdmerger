@@ -118,7 +118,7 @@ contains
 
     ! Disable the Coriolis term if we're doing a relaxation.
 
-    if (problem .eq. 3 .and. relaxation_damping_factor > ZERO) then
+    if (problem .eq. 3 .and. relaxation_damping_timescale > ZERO) then
        rotation_include_coriolis = 0
     endif
 
@@ -1041,7 +1041,7 @@ contains
 
     double precision :: time
 
-    relaxation_damping_factor = -ONE
+    relaxation_damping_timescale = -ONE
     sponge_timescale = -ONE
     rotation_include_coriolis = 1
 
@@ -1139,6 +1139,14 @@ contains
 
           acc_p = acc_p - rotational_acceleration(com_p, vel_p, time)
           acc_s = acc_s - rotational_acceleration(com_s, vel_s, time)
+
+          ! We also need to take account of the damping force. Note that we
+          ! are using the *rotating frame* velocities for this correction.
+
+          if (problem == 3 .and. relaxation_damping_timescale > ZERO) then
+             acc_p = acc_p + HALF * (vel_p + vel_p_in) / relaxation_damping_timescale
+             acc_s = acc_s + HALF * (vel_s + vel_s_in) / relaxation_damping_timescale
+          endif
 
        endif
 

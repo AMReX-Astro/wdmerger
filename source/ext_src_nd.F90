@@ -7,7 +7,7 @@
        use meth_params_module,  only: NVAR, URHO, UMX, UMZ, UEDEN
        use prob_params_module,  only: center
        use bl_constants_module, only: ZERO, HALF, ONE, TWO
-       use probdata_module,     only: problem, relaxation_damping_factor, radial_damping_factor, &
+       use probdata_module,     only: problem, relaxation_damping_timescale, radial_damping_factor, &
                                       t_ff_P, t_ff_S, axis_1, axis_2, axis_3
        use castro_util_module,  only: position
        use wdmerger_util_module, only: inertial_velocity
@@ -29,7 +29,7 @@
 
        ! Local variables
 
-       double precision :: radial_damping_timescale, relaxation_damping_timescale
+       double precision :: radial_damping_timescale
        double precision :: dynamical_timescale, damping_factor
        double precision :: loc(3), R_prp, sinTheta, cosTheta, v_rad, Sr(3)
        integer          :: i, j, k
@@ -48,9 +48,7 @@
 
        ! First do any relaxation source terms.
 
-       if (problem == 3 .and. relaxation_damping_factor > ZERO) then
-
-          relaxation_damping_timescale = relaxation_damping_factor * dynamical_timescale
+       if (problem == 3 .and. relaxation_damping_timescale > ZERO) then
 
           damping_factor = ONE / relaxation_damping_timescale
 
