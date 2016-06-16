@@ -334,6 +334,15 @@ Castro::problem_post_timestep()
 
     }
 
+    // Is the job done? If so, signal this to BoxLib.
+
+    int jobDoneStatus = 0;
+
+    get_job_status(&jobDoneStatus);
+
+    if (jobDoneStatus == 1)
+      stopJob();
+
 }
 #endif
 

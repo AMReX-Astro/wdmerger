@@ -271,4 +271,10 @@ module probdata_module
        gw_dist, &
        fill_ambient_bc
 
+
+  ! Stores whether we assert that the simulation has completed.
+
+  logical, save :: jobIsDone = .false.
+  logical, save :: signalJobIsNotDone = .false.
+
 end module probdata_module

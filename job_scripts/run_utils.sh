@@ -416,12 +416,24 @@ function is_dir_done {
 
   # Assume we're not done, by default.
 
-  time_flag=0
-  step_flag=0
+  time_flag=""
+  step_flag=""
 
   done_status=0
 
-  if [ -e "$directory/$checkpoint/Header" ]; then
+  if [ -e "$directory/$checkpoint/jobIsDone" ]; then
+
+      # The problem has explicitly signalled that the simulation is complete; we can stop here.
+
+      done_status=1
+
+  elif [ -e "$directory/$checkpoint/jobIsNotDone" ]; then
+
+      # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
+
+      done_status=0
+
+  elif [ -e "$directory/$checkpoint/Header" ]; then
 
       # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
@@ -462,12 +474,14 @@ function is_dir_done {
   # If we don't have valid variables for checking against the timestep and max_time
   # criteria, we assume that we're not done because we just haven't run the job yet.
 
-  done_status=0
-
   if [ ! -z $time_flag ] && [ ! -z $step_flag ]; then
+
+    # If the variables are valid, check if either one indicates that we are done.
+
     if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
       done_status=1
     fi
+
   fi
 
   echo $done_status

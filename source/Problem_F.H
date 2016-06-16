@@ -98,4 +98,6 @@ extern "C"
 
   void set_extrema(const Real* T_max, const Real* rho_max, const Real* ts_te_max);
 
+  void get_job_status(int* job_status);
+
 }

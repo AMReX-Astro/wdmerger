@@ -9,6 +9,7 @@ subroutine problem_checkpoint(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
+  use probdata_module, only: jobIsDone, signalJobIsNotDone
 
   implicit none
 
@@ -60,6 +61,25 @@ subroutine problem_checkpoint(int_dir_name, len)
 
   close (un)
 
+
+  ! If the job is done, write a file in the checkpoint indicating this.
+
+  if (jobIsDone) then
+
+     open  (unit=un, file=trim(dir)//"/jobIsDone", status="unknown")
+     close (un)
+
+  else
+
+     if (signalJobIsNotDone .and. .not. jobIsDone) then
+
+        open  (unit=un, file=trim(dir)//"/jobIsNotDone", status="unknown")
+        close (un)
+
+     endif
+
+  endif
+
 end subroutine problem_checkpoint
 
 
@@ -73,6 +93,7 @@ subroutine problem_restart(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
+  use probdata_module, only: jobIsDone
 
   implicit none
 
@@ -81,6 +102,7 @@ subroutine problem_restart(int_dir_name, len)
   character (len=len) :: dir
 
   integer :: i, un, stat
+  logical :: fileExists
 
   ! dir will be the string name of the checkpoint directory
   do i = 1, len
@@ -143,6 +165,27 @@ subroutine problem_restart(int_dir_name, len)
      T_global_max = 0.0d0
      rho_global_max = 0.0d0
      ts_te_global_max = 0.0d0
+
+  endif
+
+
+  ! Pick up whether the job has been completed.
+
+  inquire(file=trim(dir)//"/jobIsDone", EXIST = fileExists)
+
+  if (fileExists) then
+
+     jobIsDone = .true.
+
+  else
+
+     inquire(file=trim(dir)//"/jobIsNotDone", EXIST = fileExists)
+
+     if (fileExists) then
+
+        jobIsDone = .false.
+
+     endif
 
   endif
 
