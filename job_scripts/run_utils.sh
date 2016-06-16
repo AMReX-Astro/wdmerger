@@ -1689,7 +1689,9 @@ function run {
     copy_files $dir
 
     if [ -z "$inputs_only" ]; then
-	create_job_script $dir $nprocs $walltime
+	if [ ! -e "$dir/$job_script" ]; then
+	    create_job_script $dir $nprocs $walltime
+	fi
     fi
 
     # Sometimes we'll want to set up the run directories but not submit them,
