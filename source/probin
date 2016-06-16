@@ -1,4 +1,5 @@
 &fortin 
+
   mass_P = 0.90
   mass_S = 0.90
 
@@ -74,6 +75,7 @@
   onemg_wd_o_frac  = 0.60d0
   onemg_wd_ne_frac = 0.35d0
   onemg_wd_mg_frac = 0.05d0
+
 /
 
 &tagging 
@@ -81,12 +83,24 @@
 /
 
 &sponge
+
   sponge_lower_radius = 3.840d9
   sponge_upper_radius = 4.352d9
   sponge_timescale    = 0.01d0
+
 /
 
 &extern
+
+  ! Note that some of the parameters in this
+  ! namelist are specific to the default EOS,
+  ! network, and/or integrator used in the 
+  ! makefile. If you try a different set of 
+  ! microphysics routines be sure to check that
+  ! the parameters in here are consistent, as
+  ! Fortran does not like seeing unknown variables
+  ! in the namelist.
+
   small_x = 1.d-12
 
   use_eos_coulomb = T
@@ -110,4 +124,7 @@
   retry_burn = T
 
   renormalize_abundances = T
+
+  scaling_method = 2
+
 /
