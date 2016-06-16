@@ -810,9 +810,9 @@ void Castro::writeGitHashes(std::ostream& log) {
   const char* microphysics_hash = buildInfoGetGitHash(3);
   const char* wdmerger_hash     = buildInfoGetBuildGitHash();
 
-  log << "# Castro      git hash: " << castro_hash       << std::endl;
-  log << "# BoxLib      git hash: " << boxlib_hash       << std::endl;
-  log << "# Microphysis git hash: " << microphysics_hash << std::endl;
-  log << "# wdmerger    git hash: " << wdmerger_hash     << std::endl;
+  log << "# Castro       git hash: " << castro_hash       << std::endl;
+  log << "# BoxLib       git hash: " << boxlib_hash       << std::endl;
+  log << "# Microphysics git hash: " << microphysics_hash << std::endl;
+  log << "# wdmerger     git hash: " << wdmerger_hash     << std::endl;
 
 }
