@@ -226,6 +226,12 @@ castro.react_T_min = 1.0e8
 # Maximum temperature for allowing nuclear burning
 castro.react_T_max = 1.0e12
 
+# Minimum density for allowing nuclear burning
+castro.react_rho_min = 1.0e6
+
+# Maximum density for allowing nuclear burning
+castro.react_rho_max = 1.0e12
+
 ############################################################################################
 # Gravity
 ############################################################################################
