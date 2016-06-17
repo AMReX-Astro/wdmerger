@@ -1,9 +1,13 @@
 // Preprocessor directive for allowing us to do a post-initialization update.
 
-#if (BL_SPACEDIM==3)
 #ifndef do_problem_post_init
 #define do_problem_post_init
 #endif
+
+// Same for post-restart.
+
+#ifndef do_problem_post_restart
+#define do_problem_post_restart
 #endif
 
 // Preprocessor directive for allowing us to do a post-timestep update.
@@ -43,6 +47,10 @@ Real norm(const Real a[]);
 // Problem post-initialization routine.
 
 void problem_post_init();
+
+// Problem post-restart routine.
+
+void problem_post_restart();
 
 // End of timestep analytics on the white dwarf properties.
 

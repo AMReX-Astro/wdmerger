@@ -818,3 +818,42 @@ subroutine set_extrema(T_max, rho_max, ts_te_max) bind(C,name='set_extrema')
   ts_te_global_max = ts_te_max
 
 end subroutine set_extrema
+
+
+! Returns whether the simulation is done.
+
+subroutine get_job_status(jobDoneStatus) bind(C,name='get_job_status')
+
+  use probdata_module, only: jobIsDone
+
+  implicit none
+
+  integer, intent(inout) :: jobDoneStatus
+
+  if (jobIsDone) then
+     jobDoneStatus = 1
+  else
+     jobDoneStatus = 0
+  endif
+
+end subroutine get_job_status
+
+
+
+! Sets whether the simulation is done.
+
+subroutine set_job_status(jobDoneStatus) bind(C,name='set_job_status')
+
+  use probdata_module, only: jobIsDone
+
+  implicit none
+
+  integer, intent(in) :: jobDoneStatus
+
+  if (jobDoneStatus == 1) then
+     jobIsDone = .true.
+  else
+     jobIsDone = .false.
+  endif
+
+end subroutine set_job_status

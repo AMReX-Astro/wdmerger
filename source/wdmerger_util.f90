@@ -1160,22 +1160,4 @@ contains
 
   end subroutine set_stellar_acceleration
 
-
-
-  subroutine get_job_status(jobDoneStatus) bind(C,name='get_job_status')
-
-    use probdata_module, only: jobIsDone
-
-    implicit none
-
-    integer, intent(inout) :: jobDoneStatus
-
-    if (jobIsDone) then
-       jobDoneStatus = 1
-    else
-       jobDoneStatus = 0
-    endif
-
-  end subroutine get_job_status
-
 end module wdmerger_util_module

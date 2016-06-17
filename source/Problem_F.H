@@ -100,4 +100,6 @@ extern "C"
 
   void get_job_status(int* job_status);
 
+  void set_job_status(int* job_status);
+
 }

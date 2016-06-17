@@ -18,6 +18,8 @@ Castro::problem_post_timestep()
 
     if (level != 0) return;
 
+    int jobDoneStatus;
+
     int finest_level = parent->finestLevel();
     Real time = state[State_Type].curTime();
     Real dt = parent->dtLevel(0);
@@ -60,6 +62,8 @@ Castro::problem_post_timestep()
     bool local_flag = true;
 
 
+    // Get the current job done status.
+    get_job_status(&jobDoneStatus);
 
     // Get the current stellar data
     get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
@@ -334,9 +338,71 @@ Castro::problem_post_timestep()
 
     }
 
-    // Is the job done? If so, signal this to BoxLib.
+    // Some of the problems might have stopping conditions that depend on
+    // the state of the simulation; those are checked here.
 
-    int jobDoneStatus = 0;
+    // For the collision problem, we know we are done when the total energy
+    // is positive (indicating that we have become unbound due to nuclear
+    // energy release) and when it is decreasing in magnitude (indicating
+    // all of the excitement is done and fluid is now just streaming off
+    // the grid). We don't need to be super accurate for this, so let's check
+    // on the coarse grid only. It is possible that a collision could not
+    // generate enough energy to become unbound, so possibly this criterion
+    // should be expanded in the future to cover that case.
+
+    if (problem == 0) {
+
+      Real rho_E_old = 0.0;
+      Real rho_E_new = 0.0;
+
+      Real rho_phi_old = 0.0;
+      Real rho_phi_new = 0.0;
+
+      // Note that we'll define the total energy using only
+      // gas energy + gravitational. Rotation is never on
+      // for the collision problem so we can ignore it.
+
+      Real E_tot_old = 0.0;
+      Real E_tot_new = 0.0;
+
+      Real prevTime  = state[State_Type].prevTime();
+      Real curTime   = state[State_Type].curTime();
+
+      bool local_flag = true;
+
+      rho_E_old += volWgtSum("rho_E", prevTime, local_flag);
+      rho_E_new += volWgtSum("rho_E", curTime,  local_flag);
+
+#ifdef GRAVITY
+      if (do_grav) {
+        rho_phi_old += volProductSum("density", "phiGrav", prevTime, local_flag);
+        rho_phi_new += volProductSum("density", "phiGrav", curTime,  local_flag);
+      }
+#endif
+
+      E_tot_old = rho_E_old - 0.5 * rho_phi_old;
+      E_tot_new = rho_E_new - 0.5 * rho_phi_new;
+
+      Array<Real> foo(2);
+      foo[0] = E_tot_old;
+      foo[1] = E_tot_new;
+
+      ParallelDescriptor::ReduceRealSum(foo.dataPtr(), 2);
+
+      E_tot_old = foo[0];
+      E_tot_new = foo[1];
+
+      if (E_tot_new > 0.0 && E_tot_new < E_tot_old) {
+
+	jobDoneStatus = 1;
+
+	set_job_status(&jobDoneStatus);
+
+      }
+
+    }
+
+    // Is the job done? If so, signal this to BoxLib.
 
     get_job_status(&jobDoneStatus);
 
@@ -785,8 +851,6 @@ Real Castro::norm(const Real a[]) {
 
 
 
-#ifdef GRAVITY
-#ifdef ROTATION
 #ifdef do_problem_post_init
 
 void Castro::problem_post_init() {
@@ -807,7 +871,19 @@ void Castro::problem_post_init() {
 }
 
 #endif
-#endif
+
+
+
+#ifdef do_problem_post_restart
+
+void Castro::problem_post_restart() {
+
+  // Get the problem number from Fortran.
+
+  get_problem_number(&problem);
+
+}
+
 #endif
 
 
