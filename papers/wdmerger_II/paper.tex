@@ -110,7 +110,7 @@ In this paper we focus our discussion on our implementation of the nuclear
 reaction network and integrator. There are three main areas of concern: first,
 specifying what nuclides are in the network and what reaction rates link the
 various nuclides; second, once the system of ODEs governing the evolution of
-the nuclear species has been written down, how to append to them ODEs governing
+the nuclear species has been written down, how to couple them to ODEs governing
 the evolution of the thermodynamics, in particular the temperature; third,
 coupling the nuclear reaction updates to the evolution of the hydrodynamical
 system. We will deal with each of these in turn in the following subsections.
@@ -158,8 +158,7 @@ appropriate makefile variable.
 \label{sec:burner}
 
 Given a set of nuclides and the reaction links between them, we now consider
-how a burning step is performed in our software. The integration of the stiff,
-implicit system is performed by \vode\ \citep{vode}, a copy of which is
+how a burning step is performed in our software. 
 provided with \castro. To \vode\ we provide an integration state containing
 the molar abundances $Y_{n} = X_{n} / A_{n}$, where $X$ is the mass fraction
 of the abundance in the zone and $A$ is the number of nucleons. The integration
@@ -180,21 +179,42 @@ In a hydrostatic burn, we keep $\rho$ and $T$ fixed throughout, and use
 the energy released at the end to compute a final temperature that is
 thermodynamically consistent with the new internal energy. By contrast,
 in a self-heating burn, we allow the temperature to evolve in response
-to the burning (see \citet{maestro3}):
+to the burning (see\footnote{In the cited paper, a term based on the
+thermodynamic chemical potential was included; we now believe
+that it is incorrect to include such a term in the burn, since it
+automatically sums to zero analytically.} \citet{maestro3}):
 \begin{equation}
-  \frac{dT}{dt} = \frac{1}{c_V}\left(\frac{\partial e}{\partial t} - \sum_n \frac{\partial e}{\partial X_n}\frac{\partial X_n}{\partial t}\right)
+  \frac{dT}{dt} = \frac{1}{c_V}\frac{\partial e}{\partial t}
 \end{equation}
-Here $c_V$ is the specific heat at constant volume, and $(\partial e/\partial X_n)$
-is the derivative of the internal energy with respect to the mass fraction of a given
-species (with other thermodynamic variables held constant). Both quantities are provided by the
-equation of state. During this burn, we can keep these thermodynamic
-derivatives constant using their value at the beginning of the run, or at each step we
+(Although $T$ evolves during the burn so that the integration is physically
+accurate, as for the hydrostatic method we discard the final value
+for $T$ at the end of the burn and recompute a temperature for the zone that is
+consistent with its new internal energy.) Here $c_V$ is the specific heat at
+constant volume, which is provided by the equation of state.  During this burn,
+we can keep $c_V$ constant using its initial value, or at each step we
 can choose to re-evaluate the equation of state using the latest value of $(\rho, T)$.
 The latter is more expensive but also more accurate, and we use it in this paper.
+In practice we find that the cost is negligible in comparison to the more expensive
+parts of the calculation, and it can significantly speed up convergence near NSE.
 A third option presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
 In this mode, by default we do a hydrostatic burn. If that burn fails, or if the net
 energy change is negative, we do the burn again in self-heating mode. All three options
-are implemented in our burner software.
+are implemented in our burner software. The simulations shown in this work all
+use the self-heating mode unless otherwise specified.
+
+In our \microphysics\ repository we provide several software options for
+solving a set of coupled stiff ODEs. For this work we use an implementation of
+the well known variable-order Richardson extrapolation method presented by Stoer and
+Bulirsch \cite{stoer:1980}, that is similar to the integrator which ships with
+the original versions of the networks mentioned above. Previous work using the \boxlib\
+codes typically used the classic \vode\ integrator \cite{vode}. We do maintain a version
+of the software that is compatible with our software interfaces in the \microphysics\
+repository, but we have largely shifted to integrators which are written in modern
+Fortran as a consequence of our efforts to run our codes on GPUs. The Stoer and Bulirsch
+integrator we provide satisfies this criterion; we also provide a rewrite of the VODE
+BDF algorithm that uses modern Fortran features. The Stoer and Bulirsch algorithm
+relies on a uniform relative error tolerance for all of the ODEs in the system, which
+we set at $10^{-6}$ for all simulations described here.
 
 \subsection{Coupling to the Hydrodynamics}
 \label{sec:hydrocoupling}
@@ -247,7 +267,7 @@ However, there are alternative methods of constructing this derivative estimate,
 and we have found that these different methods have measurable consequences.
 We define four separate methods for calculating the time derivative, with 
 the above being method 4. Method 3 is similar to method 4 but replaces the
-denominator in Equation \ref{eq:burning_mode_4} with the change in 
+denominator in \autoref{eq:burning_mode_4} with the change in 
 internal energy over the last timestep only from the nuclear reactions.
 Method 2 is the same as method 3 but we only use the change in internal 
 energy from the most recent nuclear burning step, that is, the second-half
@@ -304,7 +324,7 @@ broader literature, especially iterative methods such as
 deferred corrections that allow each of these operators to 
 feel the lagged effects of the other operators. For example,
 in the context of low Mach number flows, \cite{nonaka:2012} have
-used the method of spectral deferred corrections \cite{SDC} to
+used the method of spectral deferred corrections \citep{SDC} to
 couple their advection-diffusion-reaction equation set. In our
 context this would involve using the advection as a source term
 for the burning network, and symmetrically including a source
@@ -319,38 +339,16 @@ $\Delta t \leq f_{X_k} \tau_{X_k}$ when the estimates for
 $\dot{e}$ and $\dot{X_k}$ we generate are at least as large
 as the actual rate of change of energy and mass fractions
 over the timestep. However, this can assumption can fail
-quite radically during periods of runaway burning when
-the rate of change of these quantities is highly nonlinear.
-We do not want to neglect the errors caused by this approximation
+during periods of runaway burning when the rate of change
+of these quantities is highly nonlinear. We may not want
+to neglect the errors caused by this approximation
 because they may build up over an extended period of nonlinear
 evolution and perhaps substantially change the final results.
 To this end, we have implemented a timestep retry option in
-\castro. The retry option works by first saving a copy of the
-full state, and then doing the advance. We then explicitly
-check whether the timestep criteria were violated during the advance,
-using the time-centered energy and mass fractions and a
-time-centered differencing of the old and new states to
-calculate the evolution timescale. If so, we reject this
-advance and restore the original state data. We then perform
-a subcycled update, with the maximum timestep chosen so that
-the criterion is satisfied in each subcycle. Note that this
-occurs entirely on a single level and is separate from the
-subcycling that is used by \boxlib\ to advance the different
-AMR levels in time; the full AMR algorithm does not ever
-know that the retry subcycling took place. This can help
-substantially to mollify the problem described above, where
-the time derivative estimation methods proposed were not
-sufficient to obtain the desired limiting. Thus we strongly
-recommend that hydrodynamics codes implement such an approach,
-which ensures that the coupling actually does stay at the
-level requested. The most significant drawback is that saving
-a copy of the old state effectively doubles the memory footprint
-of the code, so this option should be disabled when not needed.
-However, it may be crucial in determining the evolution of
-systems such as white dwarf collisions, where even a short
-period of incorrect advances can significantly pollute the
-final answer, and the additional memory expense is justified
-by obtaining a more accurate solution.
+\castro, which re-computes an advance if it violated the
+stability criteria as judged from the end of the timestep.
+However we have found that the benefits for this problem are
+small and thus we do not use it for the simulations here.
 
 One other point worth noting for the coupling of the reactions
 and the hydrodynamics relates to the dual-energy formalism used
@@ -429,7 +427,11 @@ Fortunately, the regions where this criterion is not satisfied
 are fairly localized on the grid, so the amount of additional 
 computational work is not insurmountable for a single simulation.
 However, this level of accuracy may make a parameter study of
-the problem unfeasible, given current computational resources.
+the problem challenging given current computational resources.
+When resources are limited, one can still use this method and set a
+limit on the number of levels of refinement possible in the simulation,
+so that the refinement will still go in the right places but may not
+refine all of the way to the regime of guaranteed stability. 
 
 
 
