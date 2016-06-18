@@ -1551,6 +1551,39 @@ function cancel {
 
 
 
+# Cancel the last submitted job, but do it gracefully using
+# a checkpoint dump.
+
+function soft_cancel {
+
+  if [ -z $dir ]; then
+      echo "No directory given to soft_cancel; exiting."
+      return
+  fi
+
+  if [ -d $dir ]; then
+
+      cd $dir
+
+      job_number=$(get_last_submitted_job)
+
+      if [ $job_number -gt 0 ]; then
+
+	  echo "Cancelling job number $job_number in directory $dir."
+
+	  touch "no_submit"
+	  touch "dump_and_stop"
+
+      fi
+
+      cd - > /dev/null
+
+  fi
+
+}
+
+
+
 # Pause the last submitted job in the directory.
 
 function pause {
