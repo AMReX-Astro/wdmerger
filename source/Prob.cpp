@@ -398,6 +398,11 @@ Castro::problem_post_timestep()
 
 	set_job_status(&jobDoneStatus);
 
+	if (ParallelDescriptor::IOProcessor())
+	  std::cout << std::endl 
+                    << "Ending simulation because total energy is positive and decreasing." 
+		    << std::endl;
+
       }
 
     } else if (problem == 1) {
