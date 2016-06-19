@@ -1842,8 +1842,13 @@ function compile_in_job_directory {
 
   fi
 
-  mkdir $1/$compile_dir
-  cp $WDMERGER_HOME/source/GNUmakefile $1/$compile_dir
+  if [ ! -d $1/$compile_dir ]; then
+      mkdir $1/$compile_dir
+  fi
+
+  if [ ! -e $1/$compile_dir/GNUmakefile ]; then
+      cp $WDMERGER_HOME/source/GNUmakefile $1/$compile_dir
+  fi
 
   cd $1/$compile_dir
 
