@@ -859,7 +859,13 @@ function copy_files {
   fi
 
   if [ ! -e $dir/$CASTRO ] && [ -z "$inputs_only" ]; then
-      cp $compile_dir/$CASTRO $dir
+      if [ ! -z "$force_recompile" ] && [ "$force_recompile" -eq "1" ]; then
+	  if [ -e $dir/$compile_dir/$CASTRO ]; then
+	      cp $dir/$compile_dir/$CASTRO $dir
+	  fi
+      elif [ -e $compile_dir/$CASTRO ]; then
+	  cp $compile_dir/$CASTRO $dir
+      fi
   fi
 
   if [ ! -e "$dir/helm_table.dat" ] && [ -z "$inputs_only" ]; then
@@ -1683,16 +1689,16 @@ function run {
   if [ ! -d $dir ]; then
 
     if [ -z "$no_submit" ] && [ -z "$inputs_only" ]; then
-	echo "Creating directory "$dir" and submitting job."
+  	echo "Creating directory "$dir" and submitting job."
     else
-	echo "Creating directory "$dir" without submitting the job."
+  	echo "Creating directory "$dir" without submitting the job."
     fi
 
     mkdir -p $dir
 
     do_job=1
 
-  else
+  elif [ -z "$inputs_only" ] && [ -z "$no_submit" ]; then
 
     # First as a sanity check, make sure the desired job isn't already running.
 
@@ -1700,7 +1706,7 @@ function run {
 
     if [ $job_running_status -eq 1 ]; then
 
-	echo "Job currently in process or queued in directory $dir."
+  	echo "Job currently in process or queued in directory $dir."
 
     else
 
@@ -1712,18 +1718,19 @@ function run {
 
       if [ $done_flag -eq 0 ]; then
 
-	  echo "Continuing job in directory $dir."
+  	  echo "Continuing job in directory $dir."
 
-	  do_job=1
+  	  do_job=1
 
       else
 
-	  # If we make it here, then we've already reached either stop_time
-	  # or max_step, so we should conclude that the run is done.
+  	  # If we make it here, then we've already reached either stop_time
+  	  # or max_step, so we should conclude that the run is done.
 
-	  echo "Job has already been completed in directory $dir."
+  	  echo "Job has already been completed in directory $dir."
 
       fi
+
     fi
 
   fi
@@ -1733,12 +1740,21 @@ function run {
 
   if [ $do_job -eq 1 ]; then
 
+    # Optionally, the user can force a recompile from the run script.
+
+    if [ ! -z "$force_recompile" ] && [ -z "$inputs_only" ]; then
+  	if [ "$force_recompile" -eq "1" ]; then
+  	    echo "Re-compiling the executable at the user's request."
+  	    compile_in_job_directory $dir
+  	fi
+    fi
+
     copy_files $dir
 
     if [ -z "$inputs_only" ]; then
-	if [ ! -e "$dir/$job_script" ]; then
-	    create_job_script $dir $nprocs $walltime
-	fi
+  	if [ ! -e "$dir/$job_script" ]; then
+  	    create_job_script $dir $nprocs $walltime
+  	fi
     fi
 
     # Sometimes we'll want to set up the run directories but not submit them,
@@ -1747,15 +1763,15 @@ function run {
 
     if [ -z "$no_submit" ] && [ -z "$inputs_only" ]; then
 
-	cd $dir
+  	cd $dir
 
         # Run the job, and capture the job number for output.
 
-	submit_job
+  	submit_job
 
-	echo "The job number is $(get_last_submitted_job)."
+  	echo "The job number is $(get_last_submitted_job)."
 
-	cd - > /dev/null
+  	cd - > /dev/null
 
     fi
 
@@ -1779,23 +1795,7 @@ function set_up_problem_dir {
 	state_arr=()
 	walltime_arr=()
 
-        # Build the executable if we haven't yet. Optionally,
-	# the user can force a recompile from the run script.
-
-	if [ ! -z $force_recompile ]; then
-
-	    if [ $force_recompile -eq 1 ]; then
-
-		echo "Re-compiling the executable at the user's request."
-
-		cd $compile_dir
-		make realclean &> compile.out
-		make -j8 $(compile_options) &> compile.out
-		cd - > /dev/null
-
-	    fi
-
-	fi
+        # Build the main executable if we haven't yet.
 
 	if [ ls $compile_dir/*"$DIM"d*.ex 1> /dev/null 2>&1 ]; then
 
@@ -1825,6 +1825,30 @@ function set_up_problem_dir {
 
 
     fi
+
+}
+
+
+
+# Compile the executable locally in the job directory.
+# This is used if you want to compile with non-standard
+# make options, like a different network or EOS.
+
+function compile_in_job_directory {
+
+  if [ -z $1 ]; then
+
+      echo "Error: no directory given to function compile_in_job_directory."
+
+  fi
+
+  mkdir $1/$compile_dir
+  cp $WDMERGER_HOME/source/GNUmakefile $1/$compile_dir
+
+  cd $1/$compile_dir
+
+  make -j8 $(compile_options) &> compile.out
+  cd - > /dev/null
 
 }
 
