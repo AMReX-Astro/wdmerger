@@ -105,7 +105,7 @@ supernovae, using the code \castro\ \cite{castro}.
 \section{Numerical Methods}
 \label{sec:numericalmethods}
 
-The hydrodynamical equations solved in this paper were presented in \citet{wdmergerI}.
+The hydrodynamical equations solved in this paper were presented in \citet{wdmergerI} (hereafter, Paper I).
 In this paper we focus our discussion on our implementation of the nuclear
 reaction network and integrator. There are three main areas of concern: first,
 specifying what nuclides are in the network and what reaction rates link the
@@ -158,18 +158,17 @@ appropriate makefile variable.
 \label{sec:burner}
 
 Given a set of nuclides and the reaction links between them, we now consider
-how a burning step is performed in our software. 
-provided with \castro. To \vode\ we provide an integration state containing
-the molar abundances $Y_{n} = X_{n} / A_{n}$, where $X$ is the mass fraction
-of the abundance in the zone and $A$ is the number of nucleons. The integration
-of
+how a burning step is performed in our software. The goal is to integrate the
+vector ${\bm{Y}} = (Y_1, Y_2, \ldots, Y_n, e, T)$, where $Y_{n} = X_{n} / A_{n}$
+is the molar fraction of species $n$, with $X_n$ the mass fraction and $A_n$ the
+mass number of that species, $e$ is the energy released during the burn, and
+$T$ is the temperature. The equation describing its evolution is given by
 \begin{equation}
-  \frac{d\bm{Y}}{dt} = f(\mathbf{Y})
+  \frac{d\bm{Y}}{dt} = f(\mathbf{Y}),
 \end{equation}
-is determined using a right-hand-side provided by the nuclear burning network.
-When it comes to the thermodynamical evolution, the internal energy $e$ of the zone
-will change when the nuclear abundances evolve. During the integration we track
-the energy release from the system using
+where the components of the right-hand-side for the species come from the particular
+nuclear burning network we are using. The energy release $e$ of the zone's burn
+will change when the nuclear abundances evolve, according to
 \begin{equation}
   \frac{\partial e}{\partial t} = N_A \sum_{n} \frac{\partial Y_{n}}{\partial t} m_{n} c^2,
 \end{equation}
@@ -376,6 +375,7 @@ caused by subtracting kinetic from total energy. This is also
 the value that was used by \cite{hawley:2012}.
 
 \subsection{Numerically Unstable Burning}
+\label{sec:unstable_burning}
 
 \citet{kushnir:2013} point out that an inappropriate timestep is 
 not the only way for the numerical discretization to cause 
@@ -442,9 +442,54 @@ refine all of the way to the regime of guaranteed stability.
 \label{sec:problemsetup}
 
 We implement the white dwarf collision problem in \castro\ using our \wdmerger\
-package. The white dwarf centers of mass are separated by a distance of four times
-the (secondary) white dwarf radius. Their initial velocity is that of
-two point-masses in free-fall towards each other, at the appropriate distance.
+package. We load the grid in the way most previous papers have done so:
+the white dwarf centers of mass are initially separated by a distance of four times
+the (secondary) white dwarf radius. Note that the radius of the white dwarf, and
+consequently the initial distance, depends on the equation of state used, and this
+can vary somewhat depending on the relevant physics used, such as Coulomb corrections
+in the Helmholtz equation of state. However, the results do not really depend on the
+exact initial distance as long as there is enough time for the WDs to distort in
+response to tidal forces as they approach. Their initial velocity is that of
+two point-masses in free-fall towards each other coming in from infinity, such that
+the contact point is at the origin, and they approach each other on the $x$-axis.
+The composition of the WDs is as described in Paper I: low-mass WDs are helium-dominated,
+intermediate-mass WDs are carbon and oxygen dominated, and high-mass WDs contain
+oxygen, neon, and magnesium. By default the WDs approach each other head-on, with
+their respective centers lying on the $x$-axis, but we have also added an option
+to have the WDs approach each other at a non-zero impact parameter $b$, where the
+offset is perpendicular to the $x$-axis in the $y$ direction. We measure
+$b$ in units of the secondary WD's radius, so that the default head-on case
+corresponds to $b = 0$ and the case where the two WDs just graze past each other
+corresponds to $b = 1$ (in practice it happens slightly differently because
+of the WDs responding to each other's gravitational fields).
+
+For all the 3D simulations to follow, we use the same coarse grid as in Paper I:
+there are 256 zones per dimension, and the width of each axis is $1.024 \times 10^{10}$
+cm, yielding a base resolution of 400 km. When we use adaptive-mesh refinement, we will
+use the refinement scheme described in \autoref{sec:unstable_burning}. This is
+acceptable because the outcome of the collision problem is chiefly a function
+of the propagation of burning front through the WDs, so for this problem one
+can take some liberties in other parts of the algorithm for the purpose of
+computational efficiency, which can always be turned back on later if a more
+accurate answer is desired. So, for example, we do not need to add refinement
+everywhere in the WDs in the interest of getting the collision dynamics to be
+slightly more accurate. Additionally, we choose to solve the Poisson equation
+for the self-gravity of the system only on the coarse grid. The gravitational
+potential and acceleration on the finer levels are interpolated from the coarse
+grid.
+
+We have also added to \wdmerger\ the ability to use the 2D cylindrical ($R-z$)
+coordinate system evolution in \castro. In this coordinate system, we align
+the WDs along the $z$-axis (which is analogous to our $x$-axis in the Cartesian
+evolution) at the usual distance, with the center of the WDs at $R = 0$. The
+un-simulated $\phi$ dimension then would extend the WDs through a $2\pi$ revolution.
+The nature of the axisymmetry inherent to the cylindrical coordinate system
+means that we can only run head-on collisions with $b = 0$. The coarse grid
+is the same resolution as the 3D case: the width of the $z$ axis is $1.024 \times 10^{10}$
+cm and the width of the $R$ axis is $5.012 \times 10^{10}$ cm, with twice as
+many zones along the $z$ axis as the $R$ axis so that the equal 400 km
+resolution is maintained.
+
 
 
 %==========================================================================
@@ -453,21 +498,25 @@ two point-masses in free-fall towards each other, at the appropriate distance.
 \section{Two-Dimensional Simulations}
 \label{sec:2D}
 
-Though the main focus of this work is fully three-dimensional simulations,
-there is much to be learned from simpler, and much computationally cheaper,
-two-dimensional axisymmetric collision simulations. These are implemented
-in a cylindrical ($R-z$) coordinate system. We use these for three purposes.
-First, in the regime where the 2D and 3D simulations can be usefully compared, 
-zero-impact parameter simulations, to understand to what extent the
-reduced-dimensionality approach can reproduce the 3D results and thus to
-conclude whether 2D simulations can be used for obtaining scientific data
-such as nucleosynthesis yields. Second, for testing the effect of various
-code choices such as the number of isotopes in the nuclear network. A third
-effect which comes for free with the others is that we can benchmark existing
-and new code tools such as our nuclear postprocessing analysis. Prepared
-with these choices and a better understanding of how reliable our approximations
-are, we can then proceed to performing 3D simulations with our code choices
-already made and with confidence in our analysis software.
+While white dwarf collisions are three-dimensional events, there is much to
+be learned from simpler, and much computationally cheaper, two-dimensional
+axisymmetric collision simulations. These are implemented in the cylindrical
+coordinate system described in \autoref{sec:problemsetup}.
+We simulate collisions in 2D cylindrical coordinates for three purposes.
+First, we can quickly get up to speed on the nature of the problem and then
+benchmark existing and new code tools such as our nuclear postprocessing analysis.
+Second, in the regime where the 2D and 3D simulations can be usefully compared, 
+zero-impact parameter head-on simulations ($b = 0$), we can understand to
+what extent the reduced-dimensionality approach can reproduce the 3D results
+and thus determine whether 2D simulations can be used for obtaining scientific
+predictions, including nucleosynthesis yields and observable quantities.
+Third, we can cheaply test the effect of various code choices such as the number
+of isotopes in the nuclear network; we can afford to run the same problem many
+times while tweaking parameters one by one to learn their effects. 
+Prepared with these results and a better understanding of how reliable our
+approximations are, we can then proceed to performing 3D simulations with
+our code choices already made and with confidence that we understand the
+uncertainty resulting from these choices.
 
 \subsection{Dynamics}
 \label{sec:2D:dynamics}
@@ -475,9 +524,14 @@ already made and with confidence in our analysis software.
 First we briefly consider whether the dynamical evolution of the system
 is consistent with simple physics we understand. We ask two questions.
 First, is the time it takes for the white dwarfs to collide consistent with
-basic kinematics. Second, is the amount of energy released in the
+basic kinematics? Second, is the amount of energy released in the
 collision by the nuclear reactions comparable to the amount of kinetic
-energy we infer from observations of Type Ia supernovae?
+energy we infer from observations of Type Ia supernovae? We must ensure
+that we are getting these basics right before we can advance to more
+complicated questions. This is not necessarily a trivial matter. We have
+observed, for example, that at low resolution, the WDs take longer to
+collide than at higher resolution, because the gravitational field is
+much less accurate.
 
 \subsection{Timestep Limiting}
 \label{sec:2D:timestep}
