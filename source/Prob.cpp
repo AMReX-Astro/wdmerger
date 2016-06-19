@@ -369,14 +369,15 @@ Castro::problem_post_timestep()
       Real curTime   = state[State_Type].curTime();
 
       bool local_flag = true;
+      bool fine_mask = false;
 
-      rho_E_old += volWgtSum("rho_E", prevTime, local_flag);
-      rho_E_new += volWgtSum("rho_E", curTime,  local_flag);
+      rho_E_old += volWgtSum("rho_E", prevTime, local_flag, fine_mask);
+      rho_E_new += volWgtSum("rho_E", curTime,  local_flag, fine_mask);
 
 #ifdef GRAVITY
       if (do_grav) {
-        rho_phi_old += volProductSum("density", "phiGrav", prevTime, local_flag);
-        rho_phi_new += volProductSum("density", "phiGrav", curTime,  local_flag);
+        rho_phi_old += volWgtSum("rho_phiGrav", prevTime, local_flag, fine_mask);
+        rho_phi_new += volWgtSum("rho_phiGrav", curTime,  local_flag, fine_mask);
       }
 #endif
 
