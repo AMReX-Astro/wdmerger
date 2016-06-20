@@ -270,6 +270,9 @@ castro.rotational_dPdt = -0.0
 # Enable the implicit rotation update
 castro.implicit_rotation_update = 1
 
+# Whether to evolve state variables in the inertial or rotating frame
+castro.state_in_rotating_frame = 1
+
 ############################################################################################
 # Load balancing
 ############################################################################################
