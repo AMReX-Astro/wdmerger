@@ -102,7 +102,7 @@ amr.blocking_factor = 16
 amr.grid_eff = 0.9
 
 # Order of reconstruction for interpolation
-castro.state_interp_order = 1
+castro.state_interp_order = 0
 
 # Limiting on state data interpolation (preserve linear combinations)
 castro.lin_limit_state_interp = 1
