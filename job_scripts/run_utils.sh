@@ -89,13 +89,17 @@ function get_submitted_jobs {
 
   # Store it as an array.
 
-  num_jobs=$(cat $job_file | wc -l)
+  if [ -e $job_file ]; then
+
+      num_jobs=$(cat $job_file | wc -l)
       
-  for i in $(seq 0 $(($num_jobs-1)))
-  do
-      line=$(awk "NR == $i+1" $job_file)
-      job_arr[$i]=$(echo $line | awk '{ print $1 }')
-  done
+      for i in $(seq 0 $(($num_jobs-1)))
+      do
+	  line=$(awk "NR == $i+1" $job_file)
+	  job_arr[$i]=$(echo $line | awk '{ print $1 }')
+      done
+
+  fi
 
 }
 
