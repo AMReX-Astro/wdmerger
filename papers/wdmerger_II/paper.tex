@@ -490,6 +490,14 @@ cm and the width of the $R$ axis is $5.012 \times 10^{10}$ cm, with twice as
 many zones along the $z$ axis as the $R$ axis so that the equal 400 km
 resolution is maintained.
 
+The simulation is terminated when the total energy is positive, indicating that
+the system has become unbound due to nuclear energy release, and has been
+constant or decreasing for the last five timesteps, indicating that no further
+meaningful nuclear energy generation is occurring and material is now beginning
+to stream off the simulation domain. As all simulations in this paper are of
+WD collisions that generate enough energy to unbind the system, this stopping
+criterion is applied throughout all simulations shown here.
+
 
 
 %==========================================================================

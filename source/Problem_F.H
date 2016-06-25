@@ -102,4 +102,8 @@ extern "C"
 
   void set_job_status(int* job_status);
 
+  void get_total_ener_array(const Real* ener_array);
+
+  void set_total_ener_array(const Real* const ener_array);
+
 }

@@ -9,7 +9,7 @@ subroutine problem_checkpoint(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
-  use probdata_module, only: jobIsDone, signalJobIsNotDone
+  use probdata_module, only: jobIsDone, signalJobIsNotDone, num_previous_ener_timesteps, total_ener_array
 
   implicit none
 
@@ -62,6 +62,17 @@ subroutine problem_checkpoint(int_dir_name, len)
   close (un)
 
 
+
+  open(unit=un, file=trim(dir)//"/Energy", status="unknown")
+
+  do i = 1, num_previous_ener_timesteps
+
+     write (un,100) total_ener_array(i)
+
+  enddo
+
+
+
   ! If the job is done, write a file in the checkpoint indicating this.
 
   if (jobIsDone) then
@@ -93,7 +104,7 @@ subroutine problem_restart(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
-  use probdata_module, only: jobIsDone
+  use probdata_module, only: jobIsDone, num_previous_ener_timesteps, total_ener_array
 
   implicit none
 
@@ -167,6 +178,25 @@ subroutine problem_restart(int_dir_name, len)
      ts_te_global_max = 0.0d0
 
   endif
+
+
+
+  open (unit=un, file=trim(dir)//"/Energy", status="old", IOSTAT = stat)
+
+  if (stat .eq. 0) then
+
+     do i = 1, num_previous_ener_timesteps
+
+        read (un,100) total_ener_array(i)
+
+     enddo
+
+  else
+
+     total_ener_array(:) = -1.d200
+
+  endif
+
 
 
   ! Pick up whether the job has been completed.
@@ -857,3 +887,35 @@ subroutine set_job_status(jobDoneStatus) bind(C,name='set_job_status')
   endif
 
 end subroutine set_job_status
+
+
+
+! Retrieve the total energy array.
+
+subroutine get_total_ener_array(ener_array_in) bind(C,name='get_total_ener_array')
+
+  use probdata_module, only: num_previous_ener_timesteps, total_ener_array
+
+  implicit none
+
+  double precision, intent(inout) :: ener_array_in(num_previous_ener_timesteps)
+
+  ener_array_in(:) = total_ener_array(:)
+
+end subroutine get_total_ener_array
+
+
+
+! Set the total energy array.
+
+subroutine set_total_ener_array(ener_array_in) bind(C,name='set_total_ener_array')
+
+  use probdata_module, only: num_previous_ener_timesteps, total_ener_array
+
+  implicit none
+
+  double precision, intent(in) :: ener_array_in(num_previous_ener_timesteps)
+
+  total_ener_array(:) = ener_array_in(:)
+
+end subroutine set_total_ener_array

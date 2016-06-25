@@ -277,4 +277,9 @@ module probdata_module
   logical, save :: jobIsDone = .false.
   logical, save :: signalJobIsNotDone = .false.
 
+  ! Auxiliary data for determining whether the job is done.
+
+  integer, parameter :: num_previous_ener_timesteps = 5
+  double precision :: total_ener_array(num_previous_ener_timesteps)
+
 end module probdata_module

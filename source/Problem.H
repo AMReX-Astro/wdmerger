@@ -88,3 +88,8 @@ Real ts_te_global_max;
 Real T_curr_max;
 Real rho_curr_max;
 Real ts_te_curr_max;
+
+// Value of the total energy on the domain over the last several timesteps
+
+static const int num_previous_ener_timesteps = 5;
+Real total_ener_array[num_previous_ener_timesteps];
