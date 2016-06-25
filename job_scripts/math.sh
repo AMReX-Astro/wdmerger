@@ -47,6 +47,68 @@ function median {
 
 
 
+# Determine the maximum of a space-separated list of floating point numbers.
+
+function maximum {
+
+    if [ ! -z "$1" ]; then
+	numbers=$1
+    else
+	return
+    fi
+
+    # Determine the number of values we have.
+
+    Nvals=0
+
+    for num in $numbers
+    do
+      Nvals=$((Nvals+1))
+    done
+
+    # Sort them numerically. To use sort, we have to 
+    # convert the space-separated list into a newline-separated list.
+    # Then, take the last one.
+
+    maximum=$(echo $numbers | tr " " "\n" | sort -n | tail -1)
+
+    echo $maximum
+
+}
+
+
+
+# Determine the minimum of a space-separated list of floating point numbers.
+
+function minimum {
+
+    if [ ! -z "$1" ]; then
+	numbers=$1
+    else
+	return
+    fi
+
+    # Determine the number of values we have.
+
+    Nvals=0
+
+    for num in $numbers
+    do
+      Nvals=$((Nvals+1))
+    done
+
+    # Sort them numerically. To use sort, we have to 
+    # convert the space-separated list into a newline-separated list.
+    # Then, take the first one.
+
+    minimum=$(echo $numbers | tr " " "\n" | sort -n | head -1)
+
+    echo $minimum
+
+}
+
+
+
 # Convert a time in (-)DD:HH:MM:SS format to a number of seconds.
 
 function hours_to_seconds {

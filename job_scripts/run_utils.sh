@@ -263,6 +263,95 @@ function get_median_timestep {
 
 
 
+# Predict the next timestep wall time based on the trend of recent steps.
+
+function predict_next_timestep {
+
+  # First argument is the name of the file.
+
+  if [ -z $1 ]; then
+
+      # No file was passed to the function, so exit.
+
+      echo "-1"
+      return
+
+  else
+
+      file=$1
+
+  fi
+
+  # Second argument is the number of most recent timesteps to use.
+  # If it doesn't exist, default to using the last ten timesteps.
+
+  if [ -z $2 ]; then
+      nsteps=10
+  else
+      nsteps=$2
+  fi
+
+  # Use grep to get all lines containing the coarse timestep time;
+  # then, use awk to extract the actual times.
+
+  timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }' | tail -$nsteps)
+
+  if [ -z "$timesteps" ]; then
+      echo "-1"
+      return
+  fi
+
+  # Sort them numerically.
+
+  timesteps=$(echo $timesteps | tr " " "\n" | sort -n)
+  last_timestep=$(echo $timesteps | tr " " "\n" | tail -1)
+
+  # Calculate the minimum and maximum.
+
+  maximum_timestep=$(maximum "$timesteps")
+  minimum_timestep=$(minimum "$timesteps")
+
+  # Fit a line that matches these extrema.
+
+  pos1=0
+  pos2=0
+
+  for timestep in $timesteps
+  do
+      pos1=$((pos1+1))
+      if [ "$minimum_timestep" == "$timestep" ]; then
+	  break
+      fi
+  done
+
+  for timestep in $timesteps
+  do
+      pos2=$((pos2+1))
+      if [ "$maximum_timestep" == "$timestep" ]; then
+	  break
+      fi
+  done
+
+  # Get a "slope". We want a conservative choice here.
+
+  if [ "$maximum_timestep" == "$minimum_timestep" ]; then
+      slope=0.0
+  else
+      slope=$(echo "($maximum_timestep - $minimum_timestep) / ($pos2 - $pos1)" | bc -l)
+  fi
+
+  # Number of timesteps to predict forward by (one, in this case).
+
+  dx=1
+
+  next_timestep=$(echo "$last_timestep + $slope * $dx" | bc -l)
+
+  echo $next_timestep
+
+}
+
+
+
 # Obtain the length of walltime remaining on the current job.
 
 function get_remaining_walltime {
@@ -833,6 +922,30 @@ function check_to_stop {
       curr_wall_time=$(date +%s)
 
       intervalsElapsed=$(echo "$intervalsElapsed + 1" | bc)
+
+      # We also use a safety check based on the length of the recent timesteps.
+      # If we predict that we're close to the end, break out of here and stop the run.
+
+      num_safety_timesteps=5
+      file_to_check=$(get_last_output .)
+      predicted_timestep=$(predict_next_timestep $file_to_check 10)
+
+      # Make sure that we round up to the nearest second.
+      # This relies on the trick that bc will truncate an integer
+      # if you don't use the floating point extension with -l.
+
+      if [ "$predicted_timestep" != "-1" ]; then
+
+	  time_to_stop=$(echo "$curr_wall_time + ($num_safety_timesteps * $predicted_timestep + 1) / 1" | bc)
+
+	  if [ "$time_to_stop" -ge $end_wall_time ]; then
+	      echo ""
+	      echo "Stopping run since we are possibly within "$num_safety_timesteps" timesteps of the end."
+	      echo ""
+	      break
+	  fi
+
+      fi
 
       # Periodically dump checkpoints as a safeguard against system crashes.
       # Obviously for this to work properly, we need sleepInterval << checkpointInterval.
@@ -1437,6 +1550,9 @@ function create_job_script {
 
           # Main job execution.
 
+	  if [ $do_storage -ne 1 ]; then
+	      echo "do_storage=$do_storage" >> $dir/$archive_script
+	  fi
 	  echo "archive_all >> archive_log.out" >> $dir/$archive_script
 	  echo "" >> $dir/$archive_script
 
