@@ -917,6 +917,12 @@ function check_to_stop {
   while [ $intervalsElapsed -lt $numSleepIntervals ] && [ $curr_wall_time -lt $end_wall_time ]
   do
 
+      if [ ! -z $pid ]; then
+	  if [ $(ps -p $pid | wc -l) -eq 1 ]; then
+	      break
+	  fi
+      fi
+
       sleep $sleepInterval
 
       curr_wall_time=$(date +%s)
