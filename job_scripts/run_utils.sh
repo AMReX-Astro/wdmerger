@@ -962,6 +962,72 @@ function check_to_stop {
 
   touch "dump_and_stop"
 
+  # Now handle the case where the job is running on one timestep so long that dump_and_stop
+  # was not sufficient. What we will do is send a hard kill to the job if we get halfway to the
+  # distance between the safety factor and the end.
+
+  numSleepIntervals=1000
+
+  end_wall_time=$(echo "$start_wall_time + (1.0 - $safety_factor / 2.0) * $total_time" | bc -l)
+  end_wall_time=$(printf "%.0f" $end_wall_time)
+  time_remaining=$(echo "$end_wall_time - $curr_wall_time" | bc -l)
+  sleepInterval=$(echo "$time_remaining / $numSleepIntervals" | bc -l)
+
+  while [ $curr_wall_time -lt $end_wall_time ]
+  do
+
+      if [ ! -z $pid ]; then
+	  if [ $(ps -p $pid | wc -l) -eq 1 ]; then
+	      break
+	  fi
+      fi
+
+      sleep $sleepInterval
+
+      curr_wall_time=$(date +%s)
+
+  done
+
+  # Check to make sure we are done, and if not, re-submit the job.
+
+  if [ -z "$no_continue" ]; then
+
+      if [ ! -e no_submit ]; then
+	  dir_done_status=$(is_dir_done)
+	  if [ "$dir_done_status" != "1" ]; then
+	     submit_job
+	  fi
+      else
+	  rm -f no_submit
+      fi
+
+  fi
+
+  # Run the archive script at the end of the simulation.
+
+  if [ ! -z $archive_queue ]; then
+
+      archive_job_number=`$exec $archive_script`
+      echo "Submitted an archive job with job number $archive_job_number."
+
+  else
+
+      if [ $do_storage -ne 0 ]; then
+	  archive_all
+      fi
+
+  fi
+
+  rm -f dump_and_stop
+  rm -f dump_and_continue
+
+  if [ ! -z "$job_number" ] && [ ! -z "$cancel_job" ]; then
+      if [ ! -z "$pid" ] && [ $(ps -p $pid | wc -l) -ne 1 ]; then
+	  echo "Implementing a hard termination of the job since we are too close to the time limit."
+	  $cancel_job $job_number
+      fi
+  fi
+
 }
 
 
@@ -1146,17 +1212,17 @@ function submit_job {
   # If we made it to this point, now actually submit the job.
 
   if [ $batch_system == "PBS" ]; then
-      job_number=`$exec $job_script`
+      submitted_job_number=`$exec $job_script`
   elif [ $batch_system == "COBALT" ]; then
-      job_number=`$exec -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
+      submitted_job_number=`$exec -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
   fi
 
   # Some systems like Blue Waters include the system name
   # at the end of the number, so remove any appended text.
 
-  job_number=${job_number%%.*}
+  submitted_job_number=${submitted_job_number%%.*}
 
-  echo "$job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
+  echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
 
 }
 
@@ -1409,6 +1475,20 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi
 
+      # Indicate if we don't want to continue the run.
+
+      if [ ! -z $no_continue ]; then
+	  echo "no_continue=$no_continue" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to archive the data.
+
+      if [ ! -z $do_storage ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
       # Store the job number.
 
       echo "job_number=\$PBS_JOBID" >> $dir/$job_script
@@ -1424,12 +1504,6 @@ function create_job_script {
       # Load up our helper functions.
 
       echo "source job_scripts/run_utils.sh" >> $dir/$job_script
-      echo "" >> $dir/$job_script
-
-      # Call the function that determines when we're going to stop the run.
-      # It should run in the background, to allow the main job to execute.
-
-      echo "check_to_stop &" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Number of OpenMP threads
@@ -1453,7 +1527,19 @@ function create_job_script {
 
       # Main job execution.
 
-      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect" >> $dir/$job_script
+      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "pid=\$!" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
+
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "wait" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # With mpirun we redirect the output to a file; let's move that to a file 
@@ -1463,39 +1549,6 @@ function create_job_script {
 
 	echo "mv $job_name.OU \$(get_last_submitted_job).out" >> $dir/$job_script
 	echo "" >> $dir/$job_script
-
-      fi
-
-      # Check to make sure we are done, and if not, re-submit the job.
-
-      if [ -z $no_continue ]; then
-
-        echo "if [ ! -e no_submit ]; then" >> $dir/$job_script
-	echo "  if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
-	echo "    submit_job" >> $dir/$job_script
-	echo "  fi" >> $dir/$job_script
-        echo "else" >> $dir/$job_script
-	echo "  rm -f no_submit" >> $dir/$job_script
-	echo "fi" >> $dir/$job_script
-	echo "" >> $dir/$job_script
-
-      fi
-
-      # Run the archive script at the end of the simulation.
-
-      if [ ! -z $archive_queue ]; then
-
-	  echo "archive_job_number=\`$exec $archive_script\`" >> $dir/$job_script
-	  echo "echo \"\"" >> $dir/$job_script
-	  echo "echo \"Submitted an archive job with job number \$archive_job_number.\"" >> $dir/$job_script
-
-      else
-
-	  if [ $do_storage -ne 1 ]; then
-	      echo "do_storage=$do_storage" >> $dir/$job_script
-	  fi
-	  echo "archive_all" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
 
       fi
 
@@ -1583,15 +1636,23 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi
 
+      # Indicate if we don't want to continue the run.
+
+      if [ ! -z $no_continue ]; then
+	  echo "no_continue=$no_continue" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to archive the data.
+
+      if [ ! -z $do_storage ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
       # Load up our helper functions.
 
       echo "source job_scripts/run_utils.sh" >> $dir/$job_script
-      echo "" >> $dir/$job_script
-
-      # Call the function that determines when we're going to stop the run.
-      # It should run in the background, to allow the main job to execute.
-
-      echo "check_to_stop &" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       if [ $launcher == "runjob" ]; then
@@ -1605,30 +1666,16 @@ function create_job_script {
       echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
-      echo "mv $job_name.OU \$(get_last_submitted_job).out" >> $dir/$job_script
+      echo "pid=\$!" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
-      # Check to make sure we are done, and if not, re-submit the job.
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
 
-      if [ -z $no_continue ]; then
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
-        echo "if [ ! -e no_submit ]; then" >> $dir/$job_script
-	echo "  if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
-	echo "    submit_job" >> $dir/$job_script
-	echo "  fi" >> $dir/$job_script
-        echo "else" >> $dir/$job_script
-	echo "  rm -f no_submit" >> $dir/$job_script
-	echo "fi"
-	echo "" >> $dir/$job_script
-
-      fi
-
-      # Run the archive script at the end of the simulation.
-
-      if [ $do_storage -ne 1 ]; then
-	  echo "do_storage=$do_storage" >> $dir/$job_script
-      fi
-      echo "archive_all" >> $dir/$job_script
+      echo "wait" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
