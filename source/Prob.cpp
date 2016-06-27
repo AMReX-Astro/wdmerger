@@ -125,6 +125,7 @@ Castro::problem_post_timestep()
       T_curr_max = std::max(T_curr_max, S_new.max(Temp, 0, local_flag));
       rho_curr_max = std::max(rho_curr_max, S_new.max(Density, 0, local_flag));
 
+#ifdef REACTIONS
       if (lev == finest_level) {
 
         MultiFab* ts_te_MF = parent->getLevel(lev).derive("t_sound_t_enuc", time, 0);
@@ -132,6 +133,7 @@ Castro::problem_post_timestep()
 	delete ts_te_MF;
 
       }
+#endif
 
     }
 
