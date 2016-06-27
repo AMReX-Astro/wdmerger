@@ -1093,9 +1093,8 @@ function submit_job {
   # resubmitting the job and then crashing again soon after,
   # which is liable to make system administrators mad at us.
   # Let's protect against this by putting in a safeguard.
-  # Normally the job should never end before (1.0 - safety_factor) 
-  # of the walltime, so if it has, we know that the job exited 
-  # abnormally (or, say, it completed) and so we don't want to
+  # If the job stops within the first 25% of its requested runtime,
+  # it is a safe bet that we are crashing and we don't want to
   # submit a new job.
 
   old_date=$(tail -1 jobs_submitted.txt | awk '{print $2}')
@@ -1107,7 +1106,7 @@ function submit_job {
       date_diff=$(( $current_date - $old_date ))
 
       safety_factor=$(get_safety_factor $old_walltime)
-      submit_flag=$( echo "$date_diff > (1.0 - $safety_factor) * $old_walltime" | bc -l )
+      submit_flag=$(echo "$date_diff > 0.25 * $old_walltime" | bc -l)
 
       if [ $submit_flag -eq 0 ]; then
 	  echo "Refusing to submit job because the last job ended too soon."
