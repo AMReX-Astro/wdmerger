@@ -71,6 +71,8 @@ subroutine problem_checkpoint(int_dir_name, len)
 
   enddo
 
+  close (un)
+
 
 
   ! If the job is done, write a file in the checkpoint indicating this.
@@ -188,6 +190,8 @@ subroutine problem_restart(int_dir_name, len)
      do i = 1, num_previous_ener_timesteps
 
         read (un,100) total_ener_array(i)
+
+        close (un)
 
      enddo
 
