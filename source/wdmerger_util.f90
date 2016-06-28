@@ -118,7 +118,7 @@ contains
 
     ! Disable the Coriolis term if we're doing a relaxation.
 
-    if (problem .eq. 3 .and. relaxation_damping_factor > ZERO) then
+    if (problem .eq. 3 .and. relaxation_damping_timescale > ZERO) then
        rotation_include_coriolis = 0
     endif
 
@@ -191,7 +191,7 @@ contains
 
   subroutine set_wd_composition(model)
 
-    use meth_params_module, only: small_x
+    use extern_probin_module, only: small_x
     use network, only: network_species_index
 
     implicit none
@@ -959,7 +959,7 @@ contains
 
   function inertial_velocity(loc, vel, time) result (vel_i)
 
-    use meth_params_module, only: do_rotation
+    use meth_params_module, only: do_rotation, state_in_rotating_frame
     use rotation_frequency_module, only: get_omega
     use math_module, only: cross_product
 
@@ -974,7 +974,7 @@ contains
 
     vel_i = vel
 
-    if (do_rotation .eq. 1) then
+    if (do_rotation .eq. 1 .and. state_in_rotating_frame .eq. 1) then
        vel_i = vel_i + cross_product(omega, loc)
     endif
 
@@ -1041,7 +1041,7 @@ contains
 
     double precision :: time
 
-    relaxation_damping_factor = -ONE
+    relaxation_damping_timescale = -ONE
     sponge_timescale = -ONE
     rotation_include_coriolis = 1
 
@@ -1139,6 +1139,14 @@ contains
 
           acc_p = acc_p - rotational_acceleration(com_p, vel_p, time)
           acc_s = acc_s - rotational_acceleration(com_s, vel_s, time)
+
+          ! We also need to take account of the damping force. Note that we
+          ! are using the *rotating frame* velocities for this correction.
+
+          if (problem == 3 .and. relaxation_damping_timescale > ZERO) then
+             acc_p = acc_p + HALF * (vel_p + vel_p_in) / relaxation_damping_timescale
+             acc_s = acc_s + HALF * (vel_s + vel_s_in) / relaxation_damping_timescale
+          endif
 
        endif
 

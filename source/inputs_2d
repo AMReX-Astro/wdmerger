@@ -102,7 +102,7 @@ amr.blocking_factor = 16
 amr.grid_eff = 0.9
 
 # Order of reconstruction for interpolation
-castro.state_interp_order = 1
+castro.state_interp_order = 0
 
 # Limiting on state data interpolation (preserve linear combinations)
 castro.lin_limit_state_interp = 1
@@ -176,6 +176,12 @@ castro.transverse_reset_rhoe = 1
 # Reset rho if it goes negative in the transverse terms
 castro.transverse_reset_density = 1
 
+# Choose the method used on a negative density reset
+castro.density_reset_method = 2
+
+# Explicitly limit fluxes to avoid hitting a negative density
+castro.limit_fluxes_on_small_dens = 1
+
 ############################################################################################
 # Thermodynamics
 ############################################################################################
@@ -202,14 +208,14 @@ castro.dual_energy_eta2 = 1.0e-4
 # Reactions/Network
 ############################################################################################
 
-# Minimum allowable mass fraction on the grid
-castro.small_x = 1.0e-12
-
 # Limit timestep based on nuclear burning considerations (changes in internal energy)
 castro.dtnuc_e = 0.1
 
 # Limit timestep based on nuclear burning considerations (changes in species)
 castro.dtnuc_X = 0.1
+
+# Which method to use for estimating de/dt and dX/dt
+castro.dtnuc_mode = 1
 
 # Limit zone size based on nuclear burning considerations
 castro.dxnuc = 0.1
@@ -322,6 +328,9 @@ amr.small_plot_per = 1.0
 
 # Number of timesteps between small plotfiles
 amr.small_plot_int = -1
+
+# Do not write plotfiles when we dump checkpoints
+amr.write_plotfile_with_checkpoint = 0
 
 # How often to check whether the run script asked for a checkpoint dump
 amr.message_int = 1

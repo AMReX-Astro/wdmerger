@@ -2,4 +2,6 @@
 
 WDMERGER_HOME=../../
 
+INTEGRATOR_DIR=VODE
+
 include $(WDMERGER_HOME)/source/GNUmakefile

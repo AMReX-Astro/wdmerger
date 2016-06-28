@@ -538,3 +538,67 @@ subroutine ca_derphieffpm_s(phi,phi_lo,phi_hi,ncomp_phi, &
   enddo
 
 end subroutine ca_derphieffpm_s
+
+
+
+subroutine ca_derrhophiGrav(rhophi,p_lo,p_hi,nk, &
+                            dat,d_lo,d_hi,nc, &
+                            lo,hi,domlo,domhi,delta, &
+                            xlo,time,dt,bc,level,grid_no) &
+                            bind(C, name="ca_derrhophiGrav")
+
+  implicit none
+
+  integer          :: lo(3), hi(3)
+  integer          :: p_lo(3), p_hi(3), nk
+  integer          :: d_lo(3), d_hi(3), nc
+  integer          :: domlo(3), domhi(3)
+  integer          :: bc(3,2,nc)
+  double precision :: delta(3), xlo(3), time, dt
+  double precision :: rhophi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3),nk)
+  double precision ::    dat(d_lo(1):d_hi(1),d_lo(2):d_hi(2),d_lo(3):d_hi(3),nc)
+  integer          :: level, grid_no
+
+  integer          :: i, j, k
+
+  do k = lo(3), hi(3)
+     do j = lo(2), hi(2)
+        do i = lo(1), hi(1)
+           rhophi(i,j,k,1) = dat(i,j,k,1) * dat(i,j,k,2)
+        end do
+     end do
+  end do
+
+end subroutine ca_derrhophiGrav
+
+
+
+subroutine ca_derrhophiRot(rhophi,p_lo,p_hi,nk, &
+                           dat,d_lo,d_hi,nc, &
+                           lo,hi,domlo,domhi,delta, &
+                           xlo,time,dt,bc,level,grid_no) &
+                           bind(C, name="ca_derrhophiRot")
+
+  implicit none
+
+  integer          :: lo(3), hi(3)
+  integer          :: p_lo(3), p_hi(3), nk
+  integer          :: d_lo(3), d_hi(3), nc
+  integer          :: domlo(3), domhi(3)
+  integer          :: bc(3,2,nc)
+  double precision :: delta(3), xlo(3), time, dt
+  double precision :: rhophi(p_lo(1):p_hi(1),p_lo(2):p_hi(2),p_lo(3):p_hi(3),nk)
+  double precision ::    dat(d_lo(1):d_hi(1),d_lo(2):d_hi(2),d_lo(3):d_hi(3),nc)
+  integer          :: level, grid_no
+
+  integer          :: i, j, k
+
+  do k = lo(3), hi(3)
+     do j = lo(2), hi(2)
+        do i = lo(1), hi(1)
+           rhophi(i,j,k,1) = dat(i,j,k,1) * dat(i,j,k,2)
+        end do
+     end do
+  end do
+
+end subroutine ca_derrhophiRot

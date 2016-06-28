@@ -89,13 +89,17 @@ function get_submitted_jobs {
 
   # Store it as an array.
 
-  num_jobs=$(cat $job_file | wc -l)
+  if [ -e $job_file ]; then
+
+      num_jobs=$(cat $job_file | wc -l)
       
-  for i in $(seq 0 $(($num_jobs-1)))
-  do
-      line=$(awk "NR == $i+1" $job_file)
-      job_arr[$i]=$(echo $line | awk '{ print $1 }')
-  done
+      for i in $(seq 0 $(($num_jobs-1)))
+      do
+	  line=$(awk "NR == $i+1" $job_file)
+	  job_arr[$i]=$(echo $line | awk '{ print $1 }')
+      done
+
+  fi
 
 }
 
@@ -148,22 +152,43 @@ function get_last_checkpoint {
 
   # Doing a search this way will treat first any checkpoint files 
   # with seven digits, and then will fall back to ones with six and then five digits.
+  # We want to be smart about this and list the ones in the current directory first,
+  # before checking any output directories where the data is archived, because
+  # the former are the most likely to be recently created checkpoints.
+  # Bash can be pretty slow when looping through a large number of variables,
+  # so the added complication is justified.
 
-  checkpointList7=$(find $dir -type d -name "*chk???????")
-  checkpointNums7=$(find $dir -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)
+  checkpointList=""
+  checkpointNums=""
 
-  checkpointList6=$(find $dir -type d -name "*chk??????")
-  checkpointNums6=$(find $dir -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)
+  checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk???????" | sort -r)"
+  checkpointList+=" $(find $dir ! -path $dir -type d -name "*chk???????" | sort -r)"
+  checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find $dir ! -path $dir -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
 
-  checkpointList5=$(find $dir -type d -name "*chk?????")
-  checkpointNums5=$(find $dir -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)
+  checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk??????" | sort -r)"
+  checkpointList+=" $(find $dir ! -path $dir -type d -name "*chk??????" | sort -r)"
+  checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find $dir ! -path $dir -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+
+  checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+  checkpointList+=" $(find $dir ! -path $dir -type d -name "*chk?????" | sort -r)"
+  checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find $dir ! -path $dir -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+
+  if [ -z "$checkpointList" ]; then
+
+      echo ""
+      return
+      
+  fi
 
   # Match up the last checkpoint number with the actual file path location. 
 
-  for chkNum in $checkpointNums7 $checkpointNums6 $checkpointNums5
+  for chkNum in $checkpointNums
   do
 
-      for chkFile in $checkpointList7 $checkpointList6 $checkpointList5
+      for chkFile in $checkpointList
       do
 	  currBaseName=$(echo $chkFile | awk -F/ '{ print $NF }')
 
@@ -233,6 +258,95 @@ function get_median_timestep {
   median_timestep=$(median "$timesteps")
 
   echo $median_timestep
+
+}
+
+
+
+# Predict the next timestep wall time based on the trend of recent steps.
+
+function predict_next_timestep {
+
+  # First argument is the name of the file.
+
+  if [ -z $1 ]; then
+
+      # No file was passed to the function, so exit.
+
+      echo "-1"
+      return
+
+  else
+
+      file=$1
+
+  fi
+
+  # Second argument is the number of most recent timesteps to use.
+  # If it doesn't exist, default to using the last ten timesteps.
+
+  if [ -z $2 ]; then
+      nsteps=10
+  else
+      nsteps=$2
+  fi
+
+  # Use grep to get all lines containing the coarse timestep time;
+  # then, use awk to extract the actual times.
+
+  timesteps=$(grep "Coarse" $file | awk -F "Coarse TimeStep time: " '{ print $2 }' | tail -$nsteps)
+
+  if [ -z "$timesteps" ]; then
+      echo "-1"
+      return
+  fi
+
+  # Sort them numerically.
+
+  timesteps=$(echo $timesteps | tr " " "\n" | sort -n)
+  last_timestep=$(echo $timesteps | tr " " "\n" | tail -1)
+
+  # Calculate the minimum and maximum.
+
+  maximum_timestep=$(maximum "$timesteps")
+  minimum_timestep=$(minimum "$timesteps")
+
+  # Fit a line that matches these extrema.
+
+  pos1=0
+  pos2=0
+
+  for timestep in $timesteps
+  do
+      pos1=$((pos1+1))
+      if [ "$minimum_timestep" == "$timestep" ]; then
+	  break
+      fi
+  done
+
+  for timestep in $timesteps
+  do
+      pos2=$((pos2+1))
+      if [ "$maximum_timestep" == "$timestep" ]; then
+	  break
+      fi
+  done
+
+  # Get a "slope". We want a conservative choice here.
+
+  if [ "$maximum_timestep" == "$minimum_timestep" ]; then
+      slope=0.0
+  else
+      slope=$(echo "($maximum_timestep - $minimum_timestep) / ($pos2 - $pos1)" | bc -l)
+  fi
+
+  # Number of timesteps to predict forward by (one, in this case).
+
+  dx=1
+
+  next_timestep=$(echo "$last_timestep + $slope * $dx" | bc -l)
+
+  echo $next_timestep
 
 }
 
@@ -395,16 +509,32 @@ function is_dir_done {
 
   # Assume we're not done, by default.
 
-  time_flag=0
-  step_flag=0
+  time_flag=""
+  step_flag=""
 
   done_status=0
 
-  if [ -e $directory/$checkpoint/Header ]; then
+  if [ -e "$directory/$checkpoint/jobIsDone" ]; then
+
+      # The problem has explicitly signalled that the simulation is complete; we can stop here.
+
+      done_status=1
+
+  elif [ -e "$directory/$checkpoint/jobIsNotDone" ]; then
+
+      # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
+
+      done_status=0
+
+  elif [ -e "$directory/$checkpoint/Header" ]; then
 
       # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
       chk_time=$(awk 'NR==3' $directory/$checkpoint/Header)
+
+      # Convert to floating point, since it might be in exponential format.
+
+      chk_time=$(printf "%f" $chk_time)
 
       # Extract the current timestep. We can get it from the 
       # name of the checkpoint file. cut will do the trick;
@@ -420,7 +550,7 @@ function is_dir_done {
 	  step_flag=$(echo "$chk_step >= $max_step" | bc)
       fi
 
-  elif [ ! -z $last_output ] && [ -e $directory/$last_output ]; then
+  elif [ ! -z "$last_output" ] && [ -e "$directory/$last_output" ]; then
 
       output_time=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $6}')
       output_step=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $3}')
@@ -437,10 +567,14 @@ function is_dir_done {
   # If we don't have valid variables for checking against the timestep and max_time
   # criteria, we assume that we're not done because we just haven't run the job yet.
 
-  if [ -z $time_flag ] || [ -z $step_flag ]; then
-      done_status=0
-  elif [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
+  if [ ! -z $time_flag ] && [ ! -z $step_flag ]; then
+
+    # If the variables are valid, check if either one indicates that we are done.
+
+    if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
       done_status=1
+    fi
+
   fi
 
   echo $done_status
@@ -724,7 +858,21 @@ function get_safety_factor {
 
 function check_to_stop {
 
-  job_number=$(get_last_submitted_job)
+  # Get the job number if we are not on a system that
+  # provides the job ID through a runtime variable.
+
+  if [ -z "$job_number" ]; then
+      job_number=$(get_last_submitted_job)
+
+      # Clean out any extraneous information.
+
+      job_number=${job_number%%.*}
+  fi
+
+  # Get the current UNIX time in seconds.
+
+  start_wall_time=$(date +%s)
+  curr_wall_time=$start_wall_time
 
   # Determine how much time the job has, in seconds.
   
@@ -745,12 +893,146 @@ function check_to_stop {
   safety_factor=$(get_safety_factor $total_time)
   time_remaining=$(echo "(1.0 - $safety_factor) * $total_time" | bc -l)
 
-  sleep $time_remaining
+  end_wall_time=$(echo "$start_wall_time + $time_remaining" | bc)
+
+  # Round to nearest integer.
+
+  end_wall_time=$(printf "%.0f" $end_wall_time)
+
+  # We'll subdivide the remaining interval into a given number of chunks,
+  # and periodically wake up to check if we're past the time limit. This
+  # is intended to deal with potential issues where the function doesn't
+  # wake up on time, which I have seen in the past when a system is overloaded.
+
+  numSleepIntervals=1000
+
+  intervalsElapsed=0
+  sleepInterval=$(echo "$time_remaining / $numSleepIntervals" | bc -l)
+
+  numCheckpointIntervals=10
+  checkpointInterval=$(echo "$time_remaining / $numCheckpointIntervals" | bc)
+
+  nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
+
+  while [ $intervalsElapsed -lt $numSleepIntervals ] && [ $curr_wall_time -lt $end_wall_time ]
+  do
+
+      if [ ! -z $pid ]; then
+	  if [ $(ps -p $pid | wc -l) -eq 1 ]; then
+	      break
+	  fi
+      fi
+
+      sleep $sleepInterval
+
+      curr_wall_time=$(date +%s)
+
+      intervalsElapsed=$(echo "$intervalsElapsed + 1" | bc)
+
+      # We also use a safety check based on the length of the recent timesteps.
+      # If we predict that we're close to the end, break out of here and stop the run.
+
+      num_safety_timesteps=5
+      file_to_check=$(get_last_output .)
+      predicted_timestep=$(predict_next_timestep $file_to_check 10)
+
+      # Make sure that we round up to the nearest second.
+      # This relies on the trick that bc will truncate an integer
+      # if you don't use the floating point extension with -l.
+
+      if [ "$predicted_timestep" != "-1" ]; then
+
+	  time_to_stop=$(echo "$curr_wall_time + ($num_safety_timesteps * $predicted_timestep + 1) / 1" | bc)
+
+	  if [ "$time_to_stop" -ge $end_wall_time ]; then
+	      echo ""
+	      echo "Stopping run since we are possibly within "$num_safety_timesteps" timesteps of the end."
+	      echo ""
+	      break
+	  fi
+
+      fi
+
+      # Periodically dump checkpoints as a safeguard against system crashes.
+      # Obviously for this to work properly, we need sleepInterval << checkpointInterval.
+
+      if [ $curr_wall_time -gt $nextCheckpointTime ]; then
+	  touch "dump_and_continue"
+	  nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
+      fi
+
+  done
 
   # BoxLib's framework requires a particular file name to exist in the local directory, 
   # to trigger a checkpoint and quit.
 
   touch "dump_and_stop"
+
+  # Now handle the case where the job is running on one timestep so long that dump_and_stop
+  # was not sufficient. What we will do is send a hard kill to the job if we get halfway to the
+  # distance between the safety factor and the end.
+
+  numSleepIntervals=1000
+
+  end_wall_time=$(echo "$start_wall_time + (1.0 - $safety_factor / 2.0) * $total_time" | bc -l)
+  end_wall_time=$(printf "%.0f" $end_wall_time)
+  time_remaining=$(echo "$end_wall_time - $curr_wall_time" | bc -l)
+  sleepInterval=$(echo "$time_remaining / $numSleepIntervals" | bc -l)
+
+  while [ $curr_wall_time -lt $end_wall_time ]
+  do
+
+      if [ ! -z $pid ]; then
+	  if [ $(ps -p $pid | wc -l) -eq 1 ]; then
+	      break
+	  fi
+      fi
+
+      sleep $sleepInterval
+
+      curr_wall_time=$(date +%s)
+
+  done
+
+  # Check to make sure we are done, and if not, re-submit the job.
+
+  if [ -z "$no_continue" ]; then
+
+      if [ ! -e no_submit ]; then
+	  dir_done_status=$(is_dir_done)
+	  if [ "$dir_done_status" != "1" ]; then
+	     submit_job
+	  fi
+      else
+	  rm -f no_submit
+      fi
+
+  fi
+
+  # Run the archive script at the end of the simulation.
+
+  if [ ! -z $archive_queue ]; then
+
+      archive_job_number=`$exec $archive_script`
+      echo "Submitted an archive job with job number $archive_job_number."
+
+  else
+
+      if [ $do_storage -ne 0 ]; then
+	  archive_all
+      fi
+
+  fi
+
+  rm -f dump_and_stop
+  rm -f dump_and_continue
+
+  if [ ! -z "$job_number" ] && [ ! -z "$cancel_job" ]; then
+      if [ ! -z "$pid" ] && [ $(ps -p $pid | wc -l) -ne 1 ]; then
+	  echo "Implementing a hard termination of the job since we are too close to the time limit."
+	  $cancel_job $job_number
+      fi
+  fi
 
 }
 
@@ -764,17 +1046,23 @@ function copy_files {
   if [ -z $dir ]; then
       echo "No directory passed to copy_files; exiting."
   fi
-  
-  if [ ! -e $dir/$CASTRO ]; then
-      cp $compile_dir/$CASTRO $dir
+
+  if [ ! -e $dir/$CASTRO ] && [ -z "$inputs_only" ]; then
+      if [ ! -z "$force_recompile" ] && [ "$force_recompile" -eq "1" ]; then
+	  if [ -e $dir/$compile_dir/$CASTRO ]; then
+	      cp $dir/$compile_dir/$CASTRO $dir
+	  fi
+      elif [ -e $compile_dir/$CASTRO ]; then
+	  cp $compile_dir/$CASTRO $dir
+      fi
   fi
 
-  if [ ! -e "$dir/helm_table.dat" ]; then
+  if [ ! -e "$dir/helm_table.dat" ] && [ -z "$inputs_only" ]; then
       if [ -e "$compile_dir/helm_table.dat" ]; then
 	  cp $compile_dir/helm_table.dat $dir
       fi
   fi
-  
+
   new_inputs="F"
 
   if [ ! -e "$dir/$inputs" ]; then
@@ -812,12 +1100,14 @@ function copy_files {
   # Copy over all the helper scripts, so that these are 
   # fixed in time for this run and don't change if we update the repository.
 
-  if [ ! -e "$dir/job_scripts/run_utils.sh" ]; then
+  if [ ! -e "$dir/job_scripts/run_utils.sh" ] && [ -z "$inputs_only" ]; then
       mkdir -p "$dir/job_scripts"
       cp -r $WDMERGER_HOME/job_scripts/*.sh $dir/job_scripts/
   fi
 
-  touch "$dir/jobs_submitted.txt"
+  if [ -z "$inputs_only" ]; then
+      touch "$dir/jobs_submitted.txt"
+  fi
 
   if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
       convert_to_2D
@@ -875,9 +1165,8 @@ function submit_job {
   # resubmitting the job and then crashing again soon after,
   # which is liable to make system administrators mad at us.
   # Let's protect against this by putting in a safeguard.
-  # Normally the job should never end before (1.0 - safety_factor) 
-  # of the walltime, so if it has, we know that the job exited 
-  # abnormally (or, say, it completed) and so we don't want to
+  # If the job stops within the first 25% of its requested runtime,
+  # it is a safe bet that we are crashing and we don't want to
   # submit a new job.
 
   old_date=$(tail -1 jobs_submitted.txt | awk '{print $2}')
@@ -889,7 +1178,7 @@ function submit_job {
       date_diff=$(( $current_date - $old_date ))
 
       safety_factor=$(get_safety_factor $old_walltime)
-      submit_flag=$( echo "$date_diff > (1.0 - $safety_factor) * $old_walltime" | bc -l )
+      submit_flag=$(echo "$date_diff > 0.25 * $old_walltime" | bc -l)
 
       if [ $submit_flag -eq 0 ]; then
 	  echo "Refusing to submit job because the last job ended too soon."
@@ -929,17 +1218,17 @@ function submit_job {
   # If we made it to this point, now actually submit the job.
 
   if [ $batch_system == "PBS" ]; then
-      job_number=`$exec $job_script`
+      submitted_job_number=`$exec $job_script`
   elif [ $batch_system == "COBALT" ]; then
-      job_number=`$exec -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
+      submitted_job_number=`$exec -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
   fi
 
   # Some systems like Blue Waters include the system name
   # at the end of the number, so remove any appended text.
 
-  job_number=${job_number%%.*}
+  submitted_job_number=${submitted_job_number%%.*}
 
-  echo "$job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
+  echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
 
 }
 
@@ -1192,6 +1481,26 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi
 
+      # Indicate if we don't want to continue the run.
+
+      if [ ! -z $no_continue ]; then
+	  echo "no_continue=$no_continue" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to archive the data.
+
+      if [ ! -z $do_storage ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Store the job number.
+
+      echo "job_number=\$PBS_JOBID" >> $dir/$job_script
+      echo "job_number=\${job_number%%.*}" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
       # We assume that the directory we submitted from is eligible to 
       # work in, so cd to that directory.
 
@@ -1201,12 +1510,6 @@ function create_job_script {
       # Load up our helper functions.
 
       echo "source job_scripts/run_utils.sh" >> $dir/$job_script
-      echo "" >> $dir/$job_script
-
-      # Call the function that determines when we're going to stop the run.
-      # It should run in the background, to allow the main job to execute.
-
-      echo "check_to_stop &" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Number of OpenMP threads
@@ -1230,7 +1533,19 @@ function create_job_script {
 
       # Main job execution.
 
-      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect" >> $dir/$job_script
+      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "pid=\$!" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
+
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "wait" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # With mpirun we redirect the output to a file; let's move that to a file 
@@ -1240,39 +1555,6 @@ function create_job_script {
 
 	echo "mv $job_name.OU \$(get_last_submitted_job).out" >> $dir/$job_script
 	echo "" >> $dir/$job_script
-
-      fi
-
-      # Check to make sure we are done, and if not, re-submit the job.
-
-      if [ -z $no_continue ]; then
-
-        echo "if [ ! -e no_submit ]; then" >> $dir/$job_script
-	echo "  if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
-	echo "    submit_job" >> $dir/$job_script
-	echo "  fi" >> $dir/$job_script
-        echo "else" >> $dir/$job_script
-	echo "  rm -f no_submit" >> $dir/$job_script
-	echo "fi" >> $dir/$job_script
-	echo "" >> $dir/$job_script
-
-      fi
-
-      # Run the archive script at the end of the simulation.
-
-      if [ ! -z $archive_queue ]; then
-
-	  echo "archive_job_number=\`$exec $archive_script\`" >> $dir/$job_script
-	  echo "echo \"\"" >> $dir/$job_script
-	  echo "echo \"Submitted an archive job with job number \$archive_job_number.\"" >> $dir/$job_script
-
-      else
-
-	  if [ $do_storage -ne 1 ]; then
-	      echo "do_storage=$do_storage" >> $dir/$job_script
-	  fi
-	  echo "archive_all" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
 
       fi
 
@@ -1326,6 +1608,9 @@ function create_job_script {
 
           # Main job execution.
 
+	  if [ $do_storage -ne 1 ]; then
+	      echo "do_storage=$do_storage" >> $dir/$archive_script
+	  fi
 	  echo "archive_all >> archive_log.out" >> $dir/$archive_script
 	  echo "" >> $dir/$archive_script
 
@@ -1357,15 +1642,23 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi
 
+      # Indicate if we don't want to continue the run.
+
+      if [ ! -z $no_continue ]; then
+	  echo "no_continue=$no_continue" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to archive the data.
+
+      if [ ! -z $do_storage ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
       # Load up our helper functions.
 
       echo "source job_scripts/run_utils.sh" >> $dir/$job_script
-      echo "" >> $dir/$job_script
-
-      # Call the function that determines when we're going to stop the run.
-      # It should run in the background, to allow the main job to execute.
-
-      echo "check_to_stop &" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       if [ $launcher == "runjob" ]; then
@@ -1379,30 +1672,16 @@ function create_job_script {
       echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
-      echo "mv $job_name.OU \$(get_last_submitted_job).out" >> $dir/$job_script
+      echo "pid=\$!" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
-      # Check to make sure we are done, and if not, re-submit the job.
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
 
-      if [ -z $no_continue ]; then
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
 
-        echo "if [ ! -e no_submit ]; then" >> $dir/$job_script
-	echo "  if [ \$(is_dir_done) -ne 1 ]; then" >> $dir/$job_script
-	echo "    submit_job" >> $dir/$job_script
-	echo "  fi" >> $dir/$job_script
-        echo "else" >> $dir/$job_script
-	echo "  rm -f no_submit" >> $dir/$job_script
-	echo "fi"
-	echo "" >> $dir/$job_script
-
-      fi
-
-      # Run the archive script at the end of the simulation.
-
-      if [ $do_storage -ne 1 ]; then
-	  echo "do_storage=$do_storage" >> $dir/$job_script
-      fi
-      echo "archive_all" >> $dir/$job_script
+      echo "wait" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
    elif [ $batch_system == "batch" ]; then
@@ -1439,6 +1718,39 @@ function cancel {
 	  echo "Cancelling job number $job_number in directory $dir."
 
 	  $cancel_job $job_number
+
+      fi
+
+      cd - > /dev/null
+
+  fi
+
+}
+
+
+
+# Cancel the last submitted job, but do it gracefully using
+# a checkpoint dump.
+
+function soft_cancel {
+
+  if [ -z $dir ]; then
+      echo "No directory given to soft_cancel; exiting."
+      return
+  fi
+
+  if [ -d $dir ]; then
+
+      cd $dir
+
+      job_number=$(get_last_submitted_job)
+
+      if [ $job_number -gt 0 ]; then
+
+	  echo "Cancelling job number $job_number in directory $dir."
+
+	  touch "no_submit"
+	  touch "dump_and_stop"
 
       fi
 
@@ -1548,13 +1860,17 @@ function run {
 
   if [ ! -d $dir ]; then
 
-    echo "Submitting job in directory "$dir"."
+    if [ -z "$no_submit" ] && [ -z "$inputs_only" ]; then
+  	echo "Creating directory "$dir" and submitting job."
+    else
+  	echo "Creating directory "$dir" without submitting the job."
+    fi
 
     mkdir -p $dir
 
     do_job=1
 
-  else
+  elif [ -z "$inputs_only" ] && [ -z "$no_submit" ]; then
 
     # First as a sanity check, make sure the desired job isn't already running.
 
@@ -1562,7 +1878,7 @@ function run {
 
     if [ $job_running_status -eq 1 ]; then
 
-	echo "Job currently in process or queued in directory $dir."
+  	echo "Job currently in process or queued in directory $dir."
 
     else
 
@@ -1574,18 +1890,19 @@ function run {
 
       if [ $done_flag -eq 0 ]; then
 
-	  echo "Continuing job in directory $dir."
+  	  echo "Continuing job in directory $dir."
 
-	  do_job=1
+  	  do_job=1
 
       else
 
-	  # If we make it here, then we've already reached either stop_time
-	  # or max_step, so we should conclude that the run is done.
+  	  # If we make it here, then we've already reached either stop_time
+  	  # or max_step, so we should conclude that the run is done.
 
-	  echo "Job has already been completed in directory $dir."
+  	  echo "Job has already been completed in directory $dir."
 
       fi
+
     fi
 
   fi
@@ -1595,24 +1912,38 @@ function run {
 
   if [ $do_job -eq 1 ]; then
 
+    # Optionally, the user can force a recompile from the run script.
+
+    if [ ! -z "$force_recompile" ] && [ -z "$inputs_only" ]; then
+  	if [ "$force_recompile" -eq "1" ]; then
+  	    echo "Re-compiling the executable at the user's request."
+  	    compile_in_job_directory $dir
+  	fi
+    fi
+
     copy_files $dir
-    create_job_script $dir $nprocs $walltime
+
+    if [ -z "$inputs_only" ]; then
+  	if [ ! -e "$dir/$job_script" ]; then
+  	    create_job_script $dir $nprocs $walltime
+  	fi
+    fi
 
     # Sometimes we'll want to set up the run directories but not submit them,
     # e.g. for testing purposes, so if the user creates a no_submit variable,
     # we won't actually submit this job.
 
-    if [ -z $no_submit ]; then
+    if [ -z "$no_submit" ] && [ -z "$inputs_only" ]; then
 
-	cd $dir
+  	cd $dir
 
         # Run the job, and capture the job number for output.
 
-	submit_job
+  	submit_job
 
-	echo "The job number is $(get_last_submitted_job)."
+  	echo "The job number is $(get_last_submitted_job)."
 
-	cd - > /dev/null
+  	cd - > /dev/null
 
     fi
 
@@ -1636,23 +1967,7 @@ function set_up_problem_dir {
 	state_arr=()
 	walltime_arr=()
 
-        # Build the executable if we haven't yet. Optionally,
-	# the user can force a recompile from the run script.
-
-	if [ ! -z $force_recompile ]; then
-
-	    if [ $force_recompile -eq 1 ]; then
-
-		echo "Re-compiling the executable at the user's request."
-
-		cd $compile_dir
-		make realclean &> compile.out
-		make -j8 $(compile_options) &> compile.out
-		cd - > /dev/null
-
-	    fi
-
-	fi
+        # Build the main executable if we haven't yet.
 
 	if [ ls $compile_dir/*"$DIM"d*.ex 1> /dev/null 2>&1 ]; then
 
@@ -1682,6 +1997,35 @@ function set_up_problem_dir {
 
 
     fi
+
+}
+
+
+
+# Compile the executable locally in the job directory.
+# This is used if you want to compile with non-standard
+# make options, like a different network or EOS.
+
+function compile_in_job_directory {
+
+  if [ -z $1 ]; then
+
+      echo "Error: no directory given to function compile_in_job_directory."
+
+  fi
+
+  if [ ! -d $1/$compile_dir ]; then
+      mkdir $1/$compile_dir
+  fi
+
+  if [ ! -e $1/$compile_dir/GNUmakefile ]; then
+      cp $WDMERGER_HOME/source/GNUmakefile $1/$compile_dir
+  fi
+
+  cd $1/$compile_dir
+
+  make -j8 $(compile_options) &> compile.out
+  cd - > /dev/null
 
 }
 

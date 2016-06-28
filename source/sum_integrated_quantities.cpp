@@ -14,8 +14,6 @@
 #include <Gravity.H>
 #include <Gravity_F.H>
 
-#include "buildInfo.H"
-
 void
 Castro::sum_integrated_quantities ()
 {
@@ -34,7 +32,7 @@ Castro::sum_integrated_quantities ()
     Real mass                 = 0.0;
     Real momentum[3]          = { 0.0 };
     Real angular_momentum[3]  = { 0.0 };
-    Real radial_momentum[3]   = { 0.0 };
+    Real hybrid_momentum[3]   = { 0.0 };
     Real rho_E                = 0.0;
     Real rho_e                = 0.0;
     Real rho_K                = 0.0;
@@ -85,8 +83,8 @@ Castro::sum_integrated_quantities ()
     Real com_p_mag = 0.0;
     Real com_s_mag = 0.0;
 
-    Real com_p[3]     = { 0.0 };
-    Real com_s[3]     = { 0.0 };
+    Real com_p[3] = { 0.0 };
+    Real com_s[3] = { 0.0 };
 
     Real vel_p_mag = 0.0;
     Real vel_s_mag = 0.0;
@@ -117,9 +115,9 @@ Castro::sum_integrated_quantities ()
     Real h_cross_3 = 0.0;
 
     // Number of species.
-
+    
     int NumSpec;
-    get_num_spec(&NumSpec);
+    get_num_spec(&NumSpec);    
 
     // Species names and total masses on the domain.
 
@@ -130,6 +128,9 @@ Castro::sum_integrated_quantities ()
 
     std::string name1;
     std::string name2;
+
+    int index1;
+    int index2;
 
     int dataprecision = 16; // Number of digits after the decimal point, for float data
 
@@ -181,9 +182,11 @@ Castro::sum_integrated_quantities ()
       angular_momentum[1] += ca_lev.volWgtSum("inertial_angular_momentum_y", time, local_flag);
       angular_momentum[2] += ca_lev.volWgtSum("inertial_angular_momentum_z", time, local_flag);
 
-      radial_momentum[0] += ca_lev.volWgtSum("inertial_radial_momentum_x", time, local_flag);
-      radial_momentum[1] += ca_lev.volWgtSum("inertial_radial_momentum_y", time, local_flag);
-      radial_momentum[2] += ca_lev.volWgtSum("inertial_radial_momentum_z", time, local_flag);
+#ifdef HYBRID_MOMENTUM
+      hybrid_momentum[0] += ca_lev.volWgtSum("rmom", time, local_flag);
+      hybrid_momentum[1] += ca_lev.volWgtSum("lmom", time, local_flag);
+      hybrid_momentum[2] += ca_lev.volWgtSum("pmom", time, local_flag);
+#endif
 
       rho_E += ca_lev.volWgtSum("rho_E", time, local_flag);
       rho_K += ca_lev.volWgtSum("kineng",time, local_flag);
@@ -206,6 +209,8 @@ Castro::sum_integrated_quantities ()
       for (int i = 0; i < NumSpec; i++)
 	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time, local_flag) / M_solar;
 
+      MultiFab& S_new = ca_lev.get_new_data(State_Type);
+
     }
 
     // Return to the original level.
@@ -224,7 +229,7 @@ Castro::sum_integrated_quantities ()
       foo_sum[i+1]  = com[i];
       foo_sum[i+4]  = momentum[i];
       foo_sum[i+7]  = angular_momentum[i];
-      foo_sum[i+10] = radial_momentum[i];
+      foo_sum[i+10] = hybrid_momentum[i];
     }
 
     foo_sum[13] = rho_E;
@@ -251,7 +256,7 @@ Castro::sum_integrated_quantities ()
       com[i]              = foo_sum[i+1];
       momentum[i]         = foo_sum[i+4];
       angular_momentum[i] = foo_sum[i+7];
-      radial_momentum[i]  = foo_sum[i+10];
+      hybrid_momentum[i]  = foo_sum[i+10];
     }
 
     rho_E      = foo_sum[13];
@@ -324,7 +329,7 @@ Castro::sum_integrated_quantities ()
 
       // Calculate the distance between the primary and secondary.
 
-      for ( int i = 0; i < 3; i++ ) 
+      for ( int i = 0; i < 3; i++ )
 	wd_dist[i] = com_s[i] - com_p[i];
 
       separation = norm(wd_dist);
@@ -362,13 +367,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                     TIME";
@@ -383,9 +382,11 @@ Castro::sum_integrated_quantities ()
 	     log << std::setw(datwidth) << "                     XMOM";
 	     log << std::setw(datwidth) << "                     YMOM";
 	     log << std::setw(datwidth) << "                     ZMOM";
-	     log << std::setw(datwidth) << "              RAD. MOM. X";
-	     log << std::setw(datwidth) << "              RAD. MOM. Y";
-	     log << std::setw(datwidth) << "              RAD. MOM. Z";
+#ifdef HYBRID_MOMENTUM
+	     log << std::setw(datwidth) << "              HYB. MOM. R";
+	     log << std::setw(datwidth) << "              HYB. MOM. L";
+	     log << std::setw(datwidth) << "              HYB. MOM. P";
+#endif
 	     log << std::setw(datwidth) << "              ANG. MOM. X";
 	     log << std::setw(datwidth) << "              ANG. MOM. Y";
 	     log << std::setw(datwidth) << "              ANG. MOM. Z";
@@ -409,6 +410,9 @@ Castro::sum_integrated_quantities ()
 	     log << std::setw(datwidth) << "                R COM VEL";
 	     log << std::setw(datwidth) << "                Z COM VEL";
 #endif
+	     log << std::setw(datwidth) << "                    T MAX";
+	     log << std::setw(datwidth) << "                  RHO MAX";
+	     log << std::setw(datwidth) << "            T_S / T_E MAX";
 	     log << std::setw(datwidth) << "             h_+ (axis 1)";
 	     log << std::setw(datwidth) << "             h_x (axis 1)";
 	     log << std::setw(datwidth) << "             h_+ (axis 2)";
@@ -440,9 +444,11 @@ Castro::sum_integrated_quantities ()
 #if (BL_SPACEDIM == 3)
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << momentum[2];
 #endif
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << radial_momentum[0];
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << radial_momentum[1];
-	   log << std::setw(datwidth) << std::setprecision(dataprecision) << radial_momentum[2];
+#ifdef HYBRID_MOMENTUM
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[0];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[1];
+	   log << std::setw(datwidth) << std::setprecision(dataprecision) << hybrid_momentum[2];
+#endif
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[0];
 	   log << std::setw(datwidth) << std::setprecision(dataprecision) << angular_momentum[1];
 #if (BL_SPACEDIM == 3)
@@ -480,13 +486,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                     TIME";
@@ -530,13 +530,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                  TIME";
@@ -582,13 +576,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                     TIME";
@@ -624,13 +612,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                     TIME";
@@ -675,13 +657,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                     TIME";
@@ -760,13 +736,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                     TIME";
@@ -845,13 +815,7 @@ Castro::sum_integrated_quantities ()
 
 	     // Output the git commit hashes used to build the executable.
 
-	     const char* castro_hash   = buildInfoGetGitHash(1);
-	     const char* boxlib_hash   = buildInfoGetGitHash(2);
-	     const char* wdmerger_hash = buildInfoGetBuildGitHash();
-
-	     log << "# Castro   git hash: " << castro_hash   << std::endl;
-	     log << "# BoxLib   git hash: " << boxlib_hash   << std::endl;
-	     log << "# wdmerger git hash: " << wdmerger_hash << std::endl;
+	     writeGitHashes(log);
 
 	     log << std::setw(intwidth) << "#   TIMESTEP";
 	     log << std::setw(fixwidth) << "                     TIME";

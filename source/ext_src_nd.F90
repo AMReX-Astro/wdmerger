@@ -7,10 +7,14 @@
        use meth_params_module,  only: NVAR, URHO, UMX, UMZ, UEDEN
        use prob_params_module,  only: center
        use bl_constants_module, only: ZERO, HALF, ONE, TWO
-       use probdata_module,     only: problem, relaxation_damping_factor, radial_damping_factor, &
+       use probdata_module,     only: problem, relaxation_damping_timescale, radial_damping_factor, &
                                       t_ff_P, t_ff_S, axis_1, axis_2, axis_3
        use castro_util_module,  only: position
        use wdmerger_util_module, only: inertial_velocity
+#ifdef HYBRID_MOMENTUM
+       use hybrid_advection_module, only: linear_to_hybrid
+       use meth_params_module, only: UMR, UMP
+#endif
 
        implicit none
 
@@ -25,26 +29,28 @@
 
        ! Local variables
 
-       double precision :: relaxation_timescale, radial_damping_timescale
+       double precision :: radial_damping_timescale
        double precision :: dynamical_timescale, damping_factor
        double precision :: loc(3), R_prp, sinTheta, cosTheta, v_rad, Sr(3)
        integer          :: i, j, k
-       double precision :: new_mom(3), old_mom(3), rhoInv, dtInv
+       double precision :: new_mom(3), old_mom(3), rhoInv
 
        ! Note that this function exists in a tiling region so we should only 
        ! modify the zones between lo and hi. 
 
        src(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
 
+       ! The relevant dynamical timescale for determining our source term timescales should be
+       ! the larger of the two WD timescales. Generally this should be the secondary, but we'll
+       ! be careful just in case.
+
+       dynamical_timescale = max(t_ff_P, t_ff_S)
+
        ! First do any relaxation source terms.
 
-       if (problem == 3 .and. relaxation_damping_factor > ZERO) then
+       if (problem == 3 .and. relaxation_damping_timescale > ZERO) then
 
-          relaxation_timescale = relaxation_damping_factor * dt
-
-          damping_factor = ONE / relaxation_timescale
-
-          dtInv = ONE / dt
+          damping_factor = ONE / relaxation_damping_timescale
 
           do k = lo(3), hi(3)
              do j = lo(2), hi(2)
@@ -52,11 +58,17 @@
 
                    rhoInv = ONE / new_state(i,j,k,URHO)
 
+                   loc = position(i,j,k) - center
+
                    new_mom = new_state(i,j,k,UMX:UMZ)
 
                    Sr = -new_mom * damping_factor
 
                    src(i,j,k,UMX:UMZ) = src(i,j,k,UMX:UMZ) + Sr
+
+#ifdef HYBRID_MOMENTUM
+                   src(i,j,k,UMR:UMP) = src(i,j,k,UMR:UMP) + linear_to_hybrid(loc, Sr)
+#endif
 
                    ! Do the same thing for the kinetic energy update.
 
@@ -74,17 +86,9 @@
 
        if (problem == 3 .and. radial_damping_factor > ZERO) then
 
-          ! The relevant dynamical timescale for determining our source term timescales should be
-          ! the larger of the two WD timescales. Generally this should be the secondary, but we'll
-          ! be careful just in case.
-
-          dynamical_timescale = max(t_ff_P, t_ff_S)
-
           radial_damping_timescale = radial_damping_factor * dynamical_timescale
 
           damping_factor = ONE / radial_damping_timescale
-
-          dtInv = ONE / dt
 
           do k = lo(3), hi(3)
              do j = lo(2), hi(2)
@@ -116,6 +120,10 @@
                    Sr(axis_3) = ZERO
 
                    src(i,j,k,UMX:UMZ) = src(i,j,k,UMX:UMZ) + Sr
+
+#ifdef HYBRID_MOMENTUM
+                   src(i,j,k,UMR:UMP) = src(i,j,k,UMR:UMP) + linear_to_hybrid(loc, Sr)
+#endif
 
                    ! The kinetic energy source term is v . Sr:
 

@@ -207,7 +207,7 @@ module probdata_module
 
   ! Relaxation parameters for problem 3
 
-  double precision, save :: relaxation_damping_factor = -1.0d2
+  double precision, save :: relaxation_damping_timescale = -1.0d0
   double precision, save :: relaxation_density_cutoff = 1.0d3
 
   ! Radial damping parameters for problem 3
@@ -239,7 +239,7 @@ module probdata_module
        collision_separation, &
        collision_impact_parameter, &
        interp_temp, &
-       relaxation_damping_factor, &
+       relaxation_damping_timescale, &
        relaxation_density_cutoff, &
        initial_radial_velocity_factor, &
        radial_damping_factor, &
@@ -270,5 +270,16 @@ module probdata_module
        initial_model_hse_tol, &
        gw_dist, &
        fill_ambient_bc
+
+
+  ! Stores whether we assert that the simulation has completed.
+
+  logical, save :: jobIsDone = .false.
+  logical, save :: signalJobIsNotDone = .false.
+
+  ! Auxiliary data for determining whether the job is done.
+
+  integer, parameter :: num_previous_ener_timesteps = 5
+  double precision :: total_ener_array(num_previous_ener_timesteps)
 
 end module probdata_module

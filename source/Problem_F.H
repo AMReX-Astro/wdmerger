@@ -98,4 +98,12 @@ extern "C"
 
   void set_extrema(const Real* T_max, const Real* rho_max, const Real* ts_te_max);
 
+  void get_job_status(int* job_status);
+
+  void set_job_status(int* job_status);
+
+  void get_total_ener_array(const Real* ener_array);
+
+  void set_total_ener_array(const Real* const ener_array);
+
 }

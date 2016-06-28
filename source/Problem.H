@@ -1,9 +1,13 @@
 // Preprocessor directive for allowing us to do a post-initialization update.
 
-#if (BL_SPACEDIM==3)
 #ifndef do_problem_post_init
 #define do_problem_post_init
 #endif
+
+// Same for post-restart.
+
+#ifndef do_problem_post_restart
+#define do_problem_post_restart
 #endif
 
 // Preprocessor directive for allowing us to do a post-timestep update.
@@ -44,10 +48,17 @@ Real norm(const Real a[]);
 
 void problem_post_init();
 
+// Problem post-restart routine.
+
+void problem_post_restart();
+
 // End of timestep analytics on the white dwarf properties.
 
 void problem_post_timestep();
 
+// Write out the git hashes for the various parts of the code.
+
+void writeGitHashes(std::ostream& log);
 
 
 
@@ -77,3 +88,8 @@ Real ts_te_global_max;
 Real T_curr_max;
 Real rho_curr_max;
 Real ts_te_curr_max;
+
+// Value of the total energy on the domain over the last several timesteps
+
+static const int num_previous_ener_timesteps = 5;
+Real total_ener_array[num_previous_ener_timesteps];

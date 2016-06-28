@@ -6,6 +6,8 @@
 
 #include "ParmParse.H"
 
+#include "buildInfo.H"
+
 bool Castro::relaxation_is_done = false;
 int Castro::problem = -1;
 
@@ -15,6 +17,8 @@ Castro::problem_post_timestep()
 {
 
     if (level != 0) return;
+
+    int jobDoneStatus;
 
     int finest_level = parent->finestLevel();
     Real time = state[State_Type].curTime();
@@ -58,6 +62,8 @@ Castro::problem_post_timestep()
     bool local_flag = true;
 
 
+    // Get the current job done status.
+    get_job_status(&jobDoneStatus);
 
     // Get the current stellar data
     get_star_data(com_p, com_s, vel_p, vel_s, &mass_p, &mass_s, &t_ff_p, &t_ff_s);
@@ -119,6 +125,7 @@ Castro::problem_post_timestep()
       T_curr_max = std::max(T_curr_max, S_new.max(Temp, 0, local_flag));
       rho_curr_max = std::max(rho_curr_max, S_new.max(Density, 0, local_flag));
 
+#ifdef REACTIONS
       if (lev == finest_level) {
 
         MultiFab* ts_te_MF = parent->getLevel(lev).derive("t_sound_t_enuc", time, 0);
@@ -126,6 +133,7 @@ Castro::problem_post_timestep()
 	delete ts_te_MF;
 
       }
+#endif
 
     }
 
@@ -331,6 +339,117 @@ Castro::problem_post_timestep()
       set_stellar_acceleration(&time, &dt, old_com_p, old_com_s, old_vel_p, old_vel_s);
 
     }
+
+    // Some of the problems might have stopping conditions that depend on
+    // the state of the simulation; those are checked here.
+
+    // For the collision problem, we know we are done when the total energy
+    // is positive (indicating that we have become unbound due to nuclear
+    // energy release) and when it is decreasing in magnitude (indicating
+    // all of the excitement is done and fluid is now just streaming off
+    // the grid). We don't need to be super accurate for this, so let's check
+    // on the coarse grid only. It is possible that a collision could not
+    // generate enough energy to become unbound, so possibly this criterion
+    // should be expanded in the future to cover that case.
+
+    if (problem == 0) {
+
+      Real rho_E = 0.0;
+      Real rho_phi = 0.0;
+
+      // Note that we'll define the total energy using only
+      // gas energy + gravitational. Rotation is never on
+      // for the collision problem so we can ignore it.
+
+      Real E_tot = 0.0;
+
+      Real curTime   = state[State_Type].curTime();
+
+      bool local_flag = true;
+      bool fine_mask = false;
+
+      rho_E += volWgtSum("rho_E", curTime,  local_flag, fine_mask);
+
+#ifdef GRAVITY
+      if (do_grav) {
+        rho_phi += volWgtSum("rho_phiGrav", curTime,  local_flag, fine_mask);
+      }
+#endif
+
+      E_tot = rho_E - 0.5 * rho_phi;
+
+      ParallelDescriptor::ReduceRealSum(E_tot);
+
+      // Put this on the end of the energy array.
+
+      for (int i = num_previous_ener_timesteps - 1; i > 0; --i)
+	total_ener_array[i] = total_ener_array[i - 1];
+
+      total_ener_array[0] = E_tot;
+
+      // Send the data to Fortran.
+
+      set_total_ener_array(total_ener_array);
+
+      bool stop_flag = false;
+
+      int i = 0;
+
+      // Check if energy is positive and has been decreasing for at least the last few steps.
+
+      while (i < num_previous_ener_timesteps - 1) {
+
+	if (total_ener_array[i] < 0.0)
+	  break;
+	else if (total_ener_array[i] > total_ener_array[i + 1])
+	  break;
+
+	  ++i;
+
+      }
+
+      if (i == num_previous_ener_timesteps - 1)
+	stop_flag = true;
+
+      if (stop_flag) {
+
+	jobDoneStatus = 1;
+
+	set_job_status(&jobDoneStatus);
+
+	if (ParallelDescriptor::IOProcessor())
+	  std::cout << std::endl 
+                    << "Ending simulation because total energy is positive and decreasing." 
+		    << std::endl;
+
+      }
+
+    } else if (problem == 1) {
+
+      // We can work out the stopping time using the formula
+      // t_freefall = rotational_period / (4 * sqrt(2)).
+      // We'll stop 90% of the way there because that's about
+      // when the stars start coming into contact, and the
+      // assumption of spherically symmetric stars breaks down.
+
+      Real stopping_time = 0.90 * rotational_period / (4.0 * std::sqrt(2));
+
+      if (time >= stopping_time) {
+
+	jobDoneStatus = 1;
+
+	set_job_status(&jobDoneStatus);
+
+      }
+
+    }
+
+    // Is the job done? If so, signal this to BoxLib.
+
+    get_job_status(&jobDoneStatus);
+
+    if (jobDoneStatus == 1)
+      stopJob();
 
 }
 #endif
@@ -774,8 +893,6 @@ Real Castro::norm(const Real a[]) {
 
 
 
-#ifdef GRAVITY
-#ifdef ROTATION
 #ifdef do_problem_post_init
 
 void Castro::problem_post_init() {
@@ -784,17 +901,60 @@ void Castro::problem_post_init() {
 
   get_problem_number(&problem);
 
-  // Execute the post timestep diagnostics here,
-  // so that the results at t = 0 and later are smooth.
+  // Initialize global extrema.
 
   T_global_max     = 0.0;
   rho_global_max   = 0.0;
   ts_te_global_max = 0.0;
+
+  // Initialize the energy storage array.
+
+  for (int i = 0; i < num_previous_ener_timesteps; ++i)
+    total_ener_array[i] = -1.e200;
+
+  set_total_ener_array(total_ener_array);
+
+  // Execute the post timestep diagnostics here,
+  // so that the results at t = 0 and later are smooth.
+  // This should generally be the last operation
+  // in this function.
 
   problem_post_timestep();
 
 }
 
 #endif
+
+
+
+#ifdef do_problem_post_restart
+
+void Castro::problem_post_restart() {
+
+  // Get the problem number from Fortran.
+
+  get_problem_number(&problem);
+
+  // Get the energy data from Fortran.
+
+  get_total_ener_array(total_ener_array);
+
+}
+
 #endif
-#endif
+
+
+
+void Castro::writeGitHashes(std::ostream& log) {
+
+  const char* castro_hash       = buildInfoGetGitHash(1);
+  const char* boxlib_hash       = buildInfoGetGitHash(2);
+  const char* microphysics_hash = buildInfoGetGitHash(3);
+  const char* wdmerger_hash     = buildInfoGetBuildGitHash();
+
+  log << "# Castro       git hash: " << castro_hash       << std::endl;
+  log << "# BoxLib       git hash: " << boxlib_hash       << std::endl;
+  log << "# Microphysics git hash: " << microphysics_hash << std::endl;
+  log << "# wdmerger     git hash: " << wdmerger_hash     << std::endl;
+
+}

@@ -9,6 +9,7 @@ subroutine problem_checkpoint(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
+  use probdata_module, only: jobIsDone, signalJobIsNotDone, num_previous_ener_timesteps, total_ener_array
 
   implicit none
 
@@ -60,6 +61,38 @@ subroutine problem_checkpoint(int_dir_name, len)
 
   close (un)
 
+
+
+  open(unit=un, file=trim(dir)//"/Energy", status="unknown")
+
+  do i = 1, num_previous_ener_timesteps
+
+     write (un,100) total_ener_array(i)
+
+  enddo
+
+  close (un)
+
+
+
+  ! If the job is done, write a file in the checkpoint indicating this.
+
+  if (jobIsDone) then
+
+     open  (unit=un, file=trim(dir)//"/jobIsDone", status="unknown")
+     close (un)
+
+  else
+
+     if (signalJobIsNotDone .and. .not. jobIsDone) then
+
+        open  (unit=un, file=trim(dir)//"/jobIsNotDone", status="unknown")
+        close (un)
+
+     endif
+
+  endif
+
 end subroutine problem_checkpoint
 
 
@@ -73,6 +106,7 @@ subroutine problem_restart(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
+  use probdata_module, only: jobIsDone, num_previous_ener_timesteps, total_ener_array
 
   implicit none
 
@@ -81,6 +115,7 @@ subroutine problem_restart(int_dir_name, len)
   character (len=len) :: dir
 
   integer :: i, un, stat
+  logical :: fileExists
 
   ! dir will be the string name of the checkpoint directory
   do i = 1, len
@@ -143,6 +178,48 @@ subroutine problem_restart(int_dir_name, len)
      T_global_max = 0.0d0
      rho_global_max = 0.0d0
      ts_te_global_max = 0.0d0
+
+  endif
+
+
+
+  open (unit=un, file=trim(dir)//"/Energy", status="old", IOSTAT = stat)
+
+  if (stat .eq. 0) then
+
+     do i = 1, num_previous_ener_timesteps
+
+        read (un,100) total_ener_array(i)
+
+        close (un)
+
+     enddo
+
+  else
+
+     total_ener_array(:) = -1.d200
+
+  endif
+
+
+
+  ! Pick up whether the job has been completed.
+
+  inquire(file=trim(dir)//"/jobIsDone", EXIST = fileExists)
+
+  if (fileExists) then
+
+     jobIsDone = .true.
+
+  else
+
+     inquire(file=trim(dir)//"/jobIsNotDone", EXIST = fileExists)
+
+     if (fileExists) then
+
+        jobIsDone = .false.
+
+     endif
 
   endif
 
@@ -775,3 +852,74 @@ subroutine set_extrema(T_max, rho_max, ts_te_max) bind(C,name='set_extrema')
   ts_te_global_max = ts_te_max
 
 end subroutine set_extrema
+
+
+! Returns whether the simulation is done.
+
+subroutine get_job_status(jobDoneStatus) bind(C,name='get_job_status')
+
+  use probdata_module, only: jobIsDone
+
+  implicit none
+
+  integer, intent(inout) :: jobDoneStatus
+
+  if (jobIsDone) then
+     jobDoneStatus = 1
+  else
+     jobDoneStatus = 0
+  endif
+
+end subroutine get_job_status
+
+
+
+! Sets whether the simulation is done.
+
+subroutine set_job_status(jobDoneStatus) bind(C,name='set_job_status')
+
+  use probdata_module, only: jobIsDone
+
+  implicit none
+
+  integer, intent(in) :: jobDoneStatus
+
+  if (jobDoneStatus == 1) then
+     jobIsDone = .true.
+  else
+     jobIsDone = .false.
+  endif
+
+end subroutine set_job_status
+
+
+
+! Retrieve the total energy array.
+
+subroutine get_total_ener_array(ener_array_in) bind(C,name='get_total_ener_array')
+
+  use probdata_module, only: num_previous_ener_timesteps, total_ener_array
+
+  implicit none
+
+  double precision, intent(inout) :: ener_array_in(num_previous_ener_timesteps)
+
+  ener_array_in(:) = total_ener_array(:)
+
+end subroutine get_total_ener_array
+
+
+
+! Set the total energy array.
+
+subroutine set_total_ener_array(ener_array_in) bind(C,name='set_total_ener_array')
+
+  use probdata_module, only: num_previous_ener_timesteps, total_ener_array
+
+  implicit none
+
+  double precision, intent(in) :: ener_array_in(num_previous_ener_timesteps)
+
+  total_ener_array(:) = ener_array_in(:)
+
+end subroutine set_total_ener_array

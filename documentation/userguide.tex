@@ -598,16 +598,24 @@ and \texttt{probin} files from the root \texttt{wdmerger} source directory; thes
 files \texttt{CASTRO} needs to determine what your problem setup will be. They contain the default 
 parameters for merger runs. It also copies any auxiliary files one might need, like the 
 table for the equation of state, as well as the actual \texttt{CASTRO} executable you just built in the 
-\texttt{compile/} directory. Finally, it builds a script that you'll use for actually submitting 
-the job to the batch submission system on the machine you're on, and then submits that job. 
-Thus for a typical setup, your run directory will contain the following files when you submit:
+\texttt{compile/} directory, and a copy of the run utilities that manage the job itself (so that the 
+run doesn't change if you make local edits to the job management system). Finally, it builds a script 
+that you'll use for actually submitting the job to the batch submission system on the machine you're on, 
+and then submits that job. Thus for a typical setup, your run directory will contain at least the following 
+files when you submit:
 \begin{itemize}
   \item \texttt{Castro3d*.ex}
   \item \texttt{helm\_table.dat}
   \item \texttt{inputs}
   \item \texttt{probin}
   \item \texttt{run\_script}
+  \item \texttt{job\_scripts/}
 \end{itemize}
+Note that if you want to set up this directory as above but \textit{not} actually submit the job, 
+set the \texttt{no\_submit} variable to any value in your run script. Similarly, if you want to 
+set up the directory to contain the inputs and probin file but none of the machine-dependent 
+scripts or the executable, set the \texttt{inputs\_only} variable to any value in your run script.
+
 Typically you'll want to run multiple jobs at once, that vary things like the number of processors 
 or the runtime parameters. For example, suppose we want to run the same problem but we want to 
 explore what happens when we change the rotational period of the system. The main helper functions 
