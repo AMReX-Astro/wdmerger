@@ -64,10 +64,10 @@ else
 	FCOMP ?= gfortran
 endif
 
-# This sets the EOS directory in $(MICROPHYSICS_DIR)/eos
+# This sets the EOS directory in $(MICROPHYSICS_HOME)/eos
 EOS_dir ?= helmholtz
 
-# This sets the network directory in $(MICROPHYSICS_DIR)/networks
+# This sets the network directory in $(MICROPHYSICS_HOME)/networks
 Network_dir ?= aprox13
 
 # Location where our source files are coming from.
