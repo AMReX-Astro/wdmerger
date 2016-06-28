@@ -1,6 +1,6 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-TEST_DIR=$CASTRO_DIR/Exec/evrard_collapse
+TEST_DIR=$CASTRO_HOME/Exec/evrard_collapse
 
 cp $TEST_DIR/inputs $compile_dir/
 cp $TEST_DIR/probin $compile_dir/

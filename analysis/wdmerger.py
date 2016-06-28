@@ -26,8 +26,8 @@ def get_wdmerger_git_commit_hash():
 #
 
 def get_castro_dir():
-    CASTRO_DIR = os.getenv('CASTRO_DIR')
-    return CASTRO_DIR
+    CASTRO_HOME = os.getenv('CASTRO_HOME')
+    return CASTRO_HOME
 
 
 
@@ -596,9 +596,9 @@ def get_star_locs(plotfile):
 
 def get_castro_const(var_name):
 
-    CASTRO_DIR = get_castro_dir()
+    CASTRO_HOME = get_castro_dir()
 
-    file  = open(CASTRO_DIR + '/constants/constants_cgs.f90')
+    file  = open(CASTRO_HOME + '/constants/constants_cgs.f90')
     lines = file.readlines()
 
     const = None

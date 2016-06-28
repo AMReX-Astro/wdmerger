@@ -1,3 +1,3 @@
 # Pull in CASTRO makefile for the Evrard collapse.
 
-include $(CASTRO_DIR)/Exec/evrard_collapse/GNUmakefile
+include $(CASTRO_HOME)/Exec/evrard_collapse/GNUmakefile

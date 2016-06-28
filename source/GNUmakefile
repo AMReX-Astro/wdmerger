@@ -90,7 +90,7 @@ ifeq ($(MAKECMDGOALS),cleanall)
 	MAKECMDGOALS = realclean
 endif
 
-include $(CASTRO_DIR)/Exec/Make.Castro
+include $(CASTRO_HOME)/Exec/Make.Castro
 
 # Clean executable up with make clean;
 # clean up all build files including objects with make realclean;

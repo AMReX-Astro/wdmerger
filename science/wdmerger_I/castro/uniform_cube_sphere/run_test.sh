@@ -1,6 +1,6 @@
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
-TEST_DIR=$CASTRO_DIR/Exec/uniform_cube_sphere
+TEST_DIR=$CASTRO_HOME/Exec/uniform_cube_sphere
 
 cp $TEST_DIR/inputs $compile_dir/
 cp $TEST_DIR/probin $compile_dir/

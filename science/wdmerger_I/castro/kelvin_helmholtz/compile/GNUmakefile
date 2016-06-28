@@ -2,4 +2,4 @@
 
 USE_MPI=TRUE
 
-include $(CASTRO_DIR)/Exec/KH/GNUmakefile
+include $(CASTRO_HOME)/Exec/KH/GNUmakefile

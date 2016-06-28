@@ -31,8 +31,8 @@ function compile_options {
 
   compile_opts=''
 
-  if [ ! -z $CASTRO_DIR ]; then
-      compile_opts=$compile_opts' CASTRO_DIR='$CASTRO_DIR
+  if [ ! -z $CASTRO_HOME ]; then
+      compile_opts=$compile_opts' CASTRO_HOME='$CASTRO_HOME
   fi
 
   if [ ! -z $DIM ]; then
