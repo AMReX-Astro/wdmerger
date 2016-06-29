@@ -191,9 +191,9 @@ subroutine problem_restart(int_dir_name, len)
 
         read (un,100) total_ener_array(i)
 
-        close (un)
-
      enddo
+
+     close (un)
 
   else
 
