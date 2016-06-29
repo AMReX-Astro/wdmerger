@@ -840,6 +840,23 @@ def is_dir_done(directory):
 
 
 
+def get_parameter_list(directory):
+    """Return the list of parameters used in a directory.
+
+    Skip all directories that do not contain a completed simulation.
+    """
+
+    param_list = []
+    dirList = os.listdir(directory)
+
+    for sub_directory in dirList:
+        if is_dir_done(directory + '/' + sub_directory):
+            param_list.append(sub_directory)
+
+    return param_list
+
+
+
 # Make a scatter-plot in the rho-T plane of all of the zones 
 # in a plotfile, optionally coloring the points by the dominant
 # species in that zone. We'll use a yt covering grid defined at 
