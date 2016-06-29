@@ -33,19 +33,19 @@ def get_castro_dir():
 
 # Return the last inputs file in a directory.
 
-def get_inputs_filename(dir):
+def get_inputs_filename(directory):
 
     # If there's a file named 'inputs', then this was a standard run.
 
-    if (os.path.isfile(dir + '/inputs')):
+    if (os.path.isfile(directory + '/inputs')):
 
         return 'inputs'
 
     # If there are files named inputs_*, corresponding to a chain, return the last one.
 
-    elif (os.path.isfile(dir + '/inputs_1')):
+    elif (os.path.isfile(directory + '/inputs_1')):
         
-        inputs_list = filter(lambda s: s[0:6] == "inputs", os.listdir(dir))
+        inputs_list = filter(lambda s: s[0:6] == "inputs", os.listdir(directory))
 
         # Now sort them numerically
         
@@ -266,25 +266,99 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
 
 
 
-
 #
-# Return the name of the latest wdmerger output file in the directory dir.
+# Return the name of the latest wdmerger output file in a directory.
 #
 
-def get_last_output(dir):
+def get_last_output(directory):
 
     # Open up the standard output for analysis. It will be the numerically last file
     # starting with the designated output string.
 
-    files = os.listdir(dir)
+    files = os.listdir(directory)
 
     files = sorted(filter(lambda s: s[0:9] == "wdmerger.",files))
 
     if (len(files) == 0):
-        print "Error: No wdmerger output files in directory " + dir
+        print "Error: No wdmerger output files in directory " + directory
         exit()
 
-    return dir + "/" + files[len(files)-1]
+    return directory + "/" + files[len(files)-1]
+
+
+
+#
+# Return the name of the latest checkpoint in a directory.
+#
+
+def get_last_checkpoint(directory):
+
+    if (not os.path.isdir(directory)):
+        print "Error: directory " + directory + " does not exist in get_last_checkpoint()."
+        raise
+
+    # Doing a search this way will treat first any checkpoint files 
+    # with seven digits, and then will fall back to ones with six and then five digits.
+    # We want to be smart about this and list the ones in the current directory first,
+    # before checking any output directories where the data is archived, because
+    # the former are the most likely to be recently created checkpoints.
+
+    checkpointList=[]
+    checkpointNums=[]
+
+    dirList = os.listdir(directory)
+
+    from glob import glob
+
+    def add_to_list(chkList, chkNums, chk_string):
+        tempList = glob(chk_string)
+        chkList += [temp_dir for temp_dir in tempList]
+        chkNums += [temp_dir.split('/')[-1] for temp_dir in tempList]
+
+    add_to_list(checkpointList, checkpointNums, directory + '/*chk???????')
+    add_to_list(checkpointList, checkpointNums, directory + '/*/*chk???????')
+    add_to_list(checkpointList, checkpointNums, directory + '/*chk??????')
+    add_to_list(checkpointList, checkpointNums, directory + '/*/*chk??????')
+    add_to_list(checkpointList, checkpointNums, directory + '/*chk?????')
+    add_to_list(checkpointList, checkpointNums, directory + '/*/*chk?????')
+
+    if not checkpointList or not checkpointNums:
+        print "Error: no checkpoints found in directory " + directory
+        raise
+
+    # Match up the last checkpoint number with the actual file path location. 
+
+    checkpoint = ""
+
+    for chkNum in checkpointNums:
+
+        for chkFile in checkpointList:
+
+            currBaseName = chkFile.split('/')[-1]
+
+            if currBaseName == chkNum:
+
+                # The Header is the last thing written -- check if it's there, otherwise,
+                # we can skip this iteration, because it means the latest checkpoint file 
+                # is still being written.
+
+                if os.path.isfile(chkFile + '/Header'):
+                    checkpoint = chkFile
+                    break
+
+        if checkpoint:
+            break
+
+    if not checkpoint:
+        print "Error: no completed checkpoint found in directory " + directory
+        raise
+
+    # Extract out the search directory from the result.
+
+    checkpoint = checkpoint.split('/')[-1]
+
+    return checkpoint
+
 
 
 #
@@ -476,20 +550,20 @@ def energy_momentum_diagnostics(output_filename):
 
 
 #
-# Get a sorted list of all the plotfiles in directory dir.
+# Get a sorted list of all the plotfiles in a directory.
 #
 
-def get_plotfiles(dir, prefix='plt'):
+def get_plotfiles(directory, prefix='plt'):
 
     # Check to make sure the directory exists.
 
-    if (not os.path.isdir(dir)):
-        print "Error: Directory " + dir + " does not exist, exiting."
+    if (not os.path.isdir(directory)):
+        print "Error: Directory " + directory + " does not exist, exiting."
         exit()
 
     # List all of the files in the directory.
 
-    dir_contents = os.listdir(dir)
+    dir_contents = os.listdir(directory)
 
     # Strip out non-plotfiles.
 
@@ -659,6 +733,110 @@ def get_time_from_plotfile(pltfile):
     time = float(line[:-1])
 
     return time
+
+
+# Given a run directory, determine whether the simulation has completed.
+
+def is_dir_done(directory):
+
+    if not os.path.isdir(directory):
+        print "Error: directory " + directory + " does not exist in is_dir_done()."
+        raise
+
+    # If the directory already exists, check to see if we've reached the desired stopping point.
+    # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
+
+    checkpoint = ""
+    try:
+        checkpoint = get_last_checkpoint(directory)
+    except:
+        pass
+
+    last_output = ""
+    try:
+        last_output = get_last_output(directory)
+    except:
+        pass
+
+    if not checkpoint and not last_output:
+        print "Error: no checkpoint or stdout in directory " + directory
+        done_status = 0
+        return done_status
+
+    # Get the desired stopping time and max step from the inputs file in the directory.
+    # Alternatively, we may have set this from the calling script, so prefer that.
+
+    inputs_filename = get_inputs_filename(directory)
+
+    stop_time = -1.0
+    max_step = -1
+
+    if os.path.isfile(inputs_filename):
+        stop_time = get_inputs_var(inputs_filename, "stop_time")
+        max_step = get_inputs_var(inputs_filename, "max_step")
+
+    # Assume we're not done, by default.
+
+    time_flag = 0
+    step_flag = 0
+
+    done_status = 0
+
+    if os.path.isfile(directory + '/' + checkpoint + '/jobIsDone'):
+
+        # The problem has explicitly signalled that the simulation is complete; we can stop here.
+
+        done_status = 1
+
+    elif os.path.isfile(directory + '/' + checkpoint + '/jobIsNotDone'):
+
+        # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
+
+        done_status = 0
+
+    elif os.path.isfile(directory + '/' + checkpoint + '/Header'):
+
+        # Extract the checkpoint time. It is stored in row 3 of the Header file.
+
+        chk_file = open(directory + '/' + checkpoint + '/Header')
+
+        for i in range(3):
+            line = chk_file.readline()
+
+        # Convert to floating point, since it might be in exponential format.
+
+        chk_time = float(line)
+
+        # Extract the current timestep number.
+
+        chk_step = checkpoint.split('chk')[-1]
+
+        if stop_time >= 0.0:
+            time_flag = chk_time >= stop_time
+
+        if max_step >= 0:
+            step_flag = chk_step >= max_step
+
+    elif last_output and os.path.isfile(directory + '/' + last_output):
+
+        # Get the details of the last finished timestep.
+
+        for line in reversed(open(directory + '/' + last_output)):
+            if "STEP =" in line:
+                output_time = float(line.split(' ')[5])
+                output_step = int(line.split(' ')[2])
+                break
+
+        time_flag = output_time >= stop_time
+        step_flag = output_step >= max_step
+
+
+
+    if time_flag and step_flag:
+
+        done_status = 1
+
+    return done_status
 
 
 
@@ -836,7 +1014,7 @@ def rho_T_sliceplot(output_filename, pltfile):
 
 # A routine for doing axis-aligned slice plots over a given field.
 
-def slice_plot(field, output_filename, pltfile, dir=3):
+def slice_plot(field, output_filename, pltfile, idir=3):
 
     import yt
 
@@ -853,11 +1031,11 @@ def slice_plot(field, output_filename, pltfile, dir=3):
 
     elif dim == 2:
 
-        if dir == 1:
+        if idir == 1:
             axis = 'r'
-        elif dir == 2:
+        elif idir == 2:
             axis = 'z'
-        elif dir == 3:
+        elif idir == 3:
             axis = 'theta'
         else:
             print "Unknown direction for slicing in slice_plot."
@@ -866,11 +1044,11 @@ def slice_plot(field, output_filename, pltfile, dir=3):
 
     elif dim == 3:
 
-        if dir == 1:
+        if idir == 1:
             axis = 'x'
-        elif dir == 2:
+        elif idir == 2:
             axis = 'y'
-        elif dir == 3:
+        elif idir == 3:
             axis = 'z'
         else:
             print "Unknown direction for slicing in slice_plot."
