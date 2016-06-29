@@ -148,6 +148,7 @@ def get_git_commits_from_plotfile(plotfile):
     castro_hash   = ""
     boxlib_hash   = ""
     wdmerger_hash = ""
+    microphysics_hash = ""
     for line in lines:
         if (len(line) == 4):
             if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
@@ -156,10 +157,12 @@ def get_git_commits_from_plotfile(plotfile):
                 boxlib_hash = line[3]
             elif (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
                 wdmerger_hash = line[3]
+            elif (line[0] == "Microphysics" and line[1] == "git" and line[2] == "hash:"):
+                microphysics_hash = line[3]
 
     job_info.close()
 
-    return [castro_hash, boxlib_hash, wdmerger_hash]
+    return [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash]
 
 
 
@@ -173,6 +176,7 @@ def get_git_commits_from_diagfile(diagfile):
     castro_hash   = ""
     boxlib_hash   = ""
     wdmerger_hash = ""
+    microphysics_hash = ""
 
     line = diagfile.readline().split()
 
@@ -186,12 +190,17 @@ def get_git_commits_from_diagfile(diagfile):
 
     line = diagfile.readline().split()
 
+    if (line[1] == "Microphysics" and line[2] == "git" and line[3] == "hash:"):
+        microphysics_hash = line[4]
+
+    line = diagfile.readline().split()
+
     if (line[1] == "wdmerger" and line[2] == "git" and line[3] == "hash:"):
         wdmerger_hash = line[4]
 
     diagfile.close()
 
-    return [castro_hash, boxlib_hash, wdmerger_hash]
+    return [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash]
 
 
 
@@ -206,6 +215,7 @@ def get_git_commits_from_infofile(infofile):
     castro_hash   = ""
     boxlib_hash   = ""
     wdmerger_hash = ""
+    microphysics_hash = ""
     for line in lines:
         if (len(line) == 4):
             if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
@@ -214,10 +224,12 @@ def get_git_commits_from_infofile(infofile):
                 boxlib_hash = line[3]
             elif (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
                 wdmerger_hash = line[3]
+            elif (line[0] == "Microphysics" and line[1] == "git" and line[2] == "hash:"):
+                microphysics_hash = line[4]
 
     infofile.close()
 
-    return [castro_hash, boxlib_hash, wdmerger_hash]
+    return [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash]
 
 
 
@@ -234,11 +246,11 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
     import fileinput
 
     if (data_file_type == 'plot'):
-        [castro_hash, boxlib_hash, wdmerger_hash] = get_git_commits_from_plotfile(data_file)
+        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_plotfile(data_file)
     elif (data_file_type == 'diag'):
-        [castro_hash, boxlib_hash, wdmerger_hash] = get_git_commits_from_diagfile(data_file)
+        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_diagfile(data_file)
     elif (data_file_type == 'info'):
-        [castro_hash, boxlib_hash, wdmerger_hash] = get_git_commits_from_infofile(data_file)
+        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
     else:
         print "Error: Data file type not recognized."
 
@@ -249,7 +261,9 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
         if line.startswith('%%CreationDate:'):
             print "%%CASTRO git hash: " + castro_hash + "\n" + \
                   "%%BoxLib git hash: " + boxlib_hash + "\n" + \
+                  "%%Microphysics git hash: " + microphysics_hash + "\n" + \
                   "%%wdmerger git hash: " + wdmerger_hash
+
 
 
 
