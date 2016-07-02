@@ -55,7 +55,6 @@ contains
                                  L1, L2, L3) bind(C, name="get_lagrange_points")
 
     use bl_constants_module
-    use prob_params_module, only: dx_level
 
     implicit none
 

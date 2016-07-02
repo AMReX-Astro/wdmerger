@@ -129,9 +129,6 @@ Castro::sum_integrated_quantities ()
     std::string name1;
     std::string name2;
 
-    int index1;
-    int index2;
-
     int dataprecision = 16; // Number of digits after the decimal point, for float data
 
     int datwidth      = 25; // Floating point data in scientific notation
