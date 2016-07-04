@@ -1110,6 +1110,7 @@ contains
     use prob_params_module, only: center
     use meth_params_module, only: rot_period, do_rotation
     use rotation_module, only: rotational_acceleration
+    use problem_io_module, only: ioproc
 
     implicit none
 
@@ -1144,8 +1145,13 @@ contains
           ! are using the *rotating frame* velocities for this correction.
 
           if (problem == 3 .and. relaxation_damping_timescale > ZERO) then
-             acc_p = acc_p + HALF * (vel_p + vel_p_in) / relaxation_damping_timescale
-             acc_s = acc_s + HALF * (vel_s + vel_s_in) / relaxation_damping_timescale
+             if (relaxation_implicit) then
+                acc_p = acc_p + HALF * (vel_p + vel_p_in) * (ONE - ONE / (ONE + dt / relaxation_damping_timescale)) / dt
+                acc_s = acc_s + HALF * (vel_s + vel_s_in) * (ONE - ONE / (ONE + dt / relaxation_damping_timescale)) / dt
+             else
+                acc_p = acc_p + HALF * (vel_p + vel_p_in) / relaxation_damping_timescale
+                acc_s = acc_s + HALF * (vel_s + vel_s_in) / relaxation_damping_timescale
+             endif
           endif
 
        endif
@@ -1155,6 +1161,12 @@ contains
        omega = HALF * ( sqrt( sqrt( sum(acc_p**2) ) / a_p ) + sqrt( sqrt( sum(acc_s**2) ) / a_s ) )
 
        rot_period = TWO * M_PI / omega
+
+       if (ioproc) then
+          print *, ""
+          print *, "  Updating the rotational period to ", rot_period
+          print *, ""
+       endif
 
     endif
 
