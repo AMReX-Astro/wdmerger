@@ -1048,7 +1048,7 @@ function copy_files {
   fi
 
   if [ ! -e $dir/$CASTRO ] && [ -z "$inputs_only" ]; then
-      if [ ! -z "$force_recompile" ] && [ "$force_recompile" -eq "1" ]; then
+      if [ ! -z "$local_compile" ] && [ "$local_compile" -eq "1" ]; then
 	  if [ -e $dir/$compile_dir/$CASTRO ]; then
 	      cp $dir/$compile_dir/$CASTRO $dir
 	  fi
@@ -1182,7 +1182,7 @@ function submit_job {
 
       if [ $submit_flag -eq 0 ]; then
 	  echo "Refusing to submit job because the last job ended too soon."
-	  return
+	  return 1
       fi
 
   fi
@@ -1194,7 +1194,7 @@ function submit_job {
 	  walltime=$old_walltime
       else
 	  echo "Don't know what the walltime request is in submit_job; aborting."
-	  return
+	  return 1
       fi
   fi
 
@@ -1209,7 +1209,7 @@ function submit_job {
 	  nprocs=$old_nprocs
       else
 	  echo "Don't know how many processors this job needs; aborting."
-	  return
+	  return 1
       fi
   fi
 
@@ -1914,9 +1914,8 @@ function run {
 
     # Optionally, the user can force a recompile from the run script.
 
-    if [ ! -z "$force_recompile" ] && [ -z "$inputs_only" ]; then
-  	if [ "$force_recompile" -eq "1" ]; then
-  	    echo "Re-compiling the executable at the user's request."
+    if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
+  	if [ "$local_compile" -eq "1" ]; then
   	    compile_in_job_directory $dir
   	fi
     fi
@@ -1941,7 +1940,11 @@ function run {
 
   	submit_job
 
-  	echo "The job number is $(get_last_submitted_job)."
+	return_value=$?
+
+	if [ $return_value -eq 0 ]; then
+  	    echo "The job number is $(get_last_submitted_job)."
+	fi
 
   	cd - > /dev/null
 
@@ -2022,10 +2025,15 @@ function compile_in_job_directory {
       cp $WDMERGER_HOME/source/GNUmakefile $1/$compile_dir
   fi
 
-  cd $1/$compile_dir
+  if [ ! -e $1/$compile_dir/$CASTRO ]; then
 
-  make -j8 $(compile_options) &> compile.out
-  cd - > /dev/null
+      echo "Locally compiling the executable in directory " $compile_dir"."
+
+      cd $1/$compile_dir
+      make -j8 $(compile_options) &> compile.out
+      cd - > /dev/null
+
+  fi
 
 }
 
