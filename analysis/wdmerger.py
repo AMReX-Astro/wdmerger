@@ -92,6 +92,8 @@ def get_inputs_var(inputs, var):
     except:
         pass
 
+    inputs_file.close()
+
     return var
 
 
@@ -132,6 +134,8 @@ def get_probin_var(probin, var):
             var = np.array(var,dtype='int')
     except:
         pass
+
+    probin_file.close()
 
     return var
 
@@ -235,7 +239,7 @@ def get_git_commits_from_infofile(infofile):
 
 #
 # Given CASTRO and BoxLib hashes that were used to create the plot for a given plotfile,
-# insert these and the current wdmerger hash into the EPS file.
+# insert these and the current Microphysics and wdmerger hashes into an EPS file.
 # Credit: http://stackoverflow.com/questions/1325905/inserting-line-at-specified-position-of-a-text-file-in-python
 # A comma in a print statement effectively prevents a newline from being appended to the print. This is valid in Python 2.x,
 # but is not valid in Python 3.x. Instead, one should use the print() function in that case.
@@ -243,6 +247,8 @@ def get_git_commits_from_infofile(infofile):
 #
 
 def insert_commits_into_eps(eps_file, data_file, data_file_type):
+    """Insert git commit hashes into an EPS file."""
+
     import fileinput
 
     if (data_file_type == 'plot'):
@@ -263,6 +269,40 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
                   "%%BoxLib git hash: " + boxlib_hash + "\n" + \
                   "%%Microphysics git hash: " + microphysics_hash + "\n" + \
                   "%%wdmerger git hash: " + wdmerger_hash
+
+
+
+#
+# Given CASTRO and BoxLib hashes that were used to create the plot for a given plotfile,
+# insert these and the current Microphysics and wdmerger hashes into a text file.
+# We will append these to the end of the file, so that the code calling this should wait
+# until just before it wants the commit hashes to appear to call it, and should probably
+# not have the file actively open at the time.
+#
+# The default comment character will be chosen for use in LaTeX but can be changed if
+# another comment character is needed.
+#
+
+def insert_commits_into_txt(txt_file, data_file, data_file_type, comment_char='%'):
+    """Insert git commit hashes into a text file."""
+
+    if (data_file_type == 'plot'):
+        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_plotfile(data_file)
+    elif (data_file_type == 'diag'):
+        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_diagfile(data_file)
+    elif (data_file_type == 'info'):
+        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
+    else:
+        print "Error: Data file type not recognized."
+
+    string = comment_char + " CASTRO git hash: " + castro_hash + "\n" + \
+             comment_char + " BoxLib git hash: " + boxlib_hash + "\n" + \
+             comment_char + " Microphysics git hash: " + microphysics_hash + "\n" + \
+             comment_char + " wdmerger git hash: " + wdmerger_hash + "\n"
+
+    in_file = open(txt_file, 'a')
+    in_file.write(string)
+    in_file.close()
 
 
 
@@ -408,6 +448,8 @@ def timing(output_filename):
 
     med_timestep_no_grav = np.median(coarseSteps)
 
+    output.close()
+
     return [med_timestep, med_timestep_no_grav]
 
 
@@ -544,6 +586,8 @@ def energy_momentum_diagnostics(output_filename):
     print "zmom added = " + str(zmom_added_flux + zmom_added_grav + zmom_added_rot)
 
     print ""
+
+    output.close()
 
 #    return [avg_timestep, avg_timestep_no_grav]
 
@@ -735,6 +779,7 @@ def get_time_from_plotfile(pltfile):
     return time
 
 
+
 # Given a run directory, determine whether the simulation has completed.
 
 def is_dir_done(directory):
@@ -816,6 +861,8 @@ def is_dir_done(directory):
 
         if max_step >= 0:
             step_flag = chk_step >= max_step
+
+        chk_file.close()
 
     elif last_output and os.path.isfile(directory + '/' + last_output):
 
