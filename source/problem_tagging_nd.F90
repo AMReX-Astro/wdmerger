@@ -22,7 +22,8 @@ contains
                                roche_tagging_factor, &
                                stellar_density_threshold, &
                                temperature_tagging_threshold, &
-                               com_P, com_S, roche_rad_P, roche_rad_S
+                               com_P, com_S, roche_rad_P, roche_rad_S, &
+                               problem
 
     implicit none
 
@@ -53,32 +54,48 @@ contains
 
              if (level < max_stellar_tagging_level) then
 
-                if (level == 0) then
+                if (problem .eq. 0 .or. problem .eq. 4) then
 
-                   ! On the coarse grid, tag all regions within the Roche radii of each star.
-                   ! We'll add a buffer around each star to double the Roche
-                   ! radius to ensure there aren't any sharp gradients in regions of
-                   ! greater than ambient density.
-
-                   r_P = ( sum((loc-com_P)**2) )**HALF
-                   r_S = ( sum((loc-com_S)**2) )**HALF
-
-                   if (r_P <= roche_tagging_factor * roche_rad_P) then
-                      tag(i,j,k) = set
-                   endif
-
-                   if (r_S <= roche_tagging_factor * roche_rad_S) then
-                      tag(i,j,k) = set
-                   endif
-
-                else if (level >= 1) then
-
-                   ! On more refined levels, tag all regions within the stars themselves (defined as 
-                   ! areas where the density is greater than some threshold).
+                   ! For the collision and free-fall problems, we just want to tag every
+                   ! zone that meets the density criterion; we don't want to bother with
+                   ! the Roche lobe radius as that doesn't mean much in these cases.
 
                    if (state(i,j,k,URHO) > stellar_density_threshold) then
 
                       tag(i,j,k) = set
+
+                   endif
+
+                else
+
+                   if (level == 0) then
+
+                      ! On the coarse grid, tag all regions within the Roche radii of each star.
+                      ! We'll add a buffer around each star to double the Roche
+                      ! radius to ensure there aren't any sharp gradients in regions of
+                      ! greater than ambient density.
+
+                      r_P = ( sum((loc-com_P)**2) )**HALF
+                      r_S = ( sum((loc-com_S)**2) )**HALF
+
+                      if (r_P <= roche_tagging_factor * roche_rad_P) then
+                         tag(i,j,k) = set
+                      endif
+
+                      if (r_S <= roche_tagging_factor * roche_rad_S) then
+                         tag(i,j,k) = set
+                      endif
+
+                   else if (level >= 1) then
+
+                      ! On more refined levels, tag all regions within the stars themselves (defined as 
+                      ! areas where the density is greater than some threshold).
+
+                      if (state(i,j,k,URHO) > stellar_density_threshold) then
+
+                         tag(i,j,k) = set
+
+                      endif
 
                    endif
 
