@@ -113,7 +113,7 @@ contains
     endif
 
     if (problem .eq. 1 .and. do_rotation .eq. 1) then
-       call bl_error("The free-fall problem does not make sense in a rotating referance frame.")
+       call bl_error("The free-fall problem does not make sense in a rotating reference frame.")
     endif
 
     ! Disable the Coriolis term if we're doing a relaxation.

@@ -49,9 +49,10 @@ module probdata_module
   ! Method for determining the initial problem setup.
   !
   ! 0 = Collision; distance determined by a multiple of the secondary WD radius
-  ! 1 = Free-fall; distance determined by a multiple of the secondary WD radius
-  ! 2 = Keplerian orbit; distance determined by the rotation period
+  ! 1 = Keplerian orbit; distance determined by the rotation period
+  ! 2 = Keplerian orbit; distance set so that the secondary exactly fills its Roche lobe radius
   ! 3 = Keplerian orbit; distance set based on the secondary radius as a multiple of its Roche lobe radius
+  ! 4 = Free-fall; distance determined by a multiple of the secondary WD radius
 
   integer, save :: problem = 2
 
