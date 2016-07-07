@@ -1877,22 +1877,6 @@ function run {
       walltime=1:00:00
   fi
 
-  # Optionally, the user can force a recompile from the run script.
-
-  if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
-      if [ "$local_compile" -eq "1" ]; then
-	  compile_in_job_directory $dir
-      fi
-  fi
-
-  copy_files $dir
-
-  if [ -z "$inputs_only" ]; then
-      if [ ! -e "$dir/$job_script" ]; then
-	  create_job_script $dir $nprocs $walltime
-      fi
-  fi
-
   do_job=0
 
   if [ ! -d $dir ]; then
@@ -1942,6 +1926,22 @@ function run {
 
     fi
 
+  fi
+
+  # Optionally, the user can force a recompile from the run script.
+
+  if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
+      if [ "$local_compile" -eq "1" ]; then
+	  compile_in_job_directory $dir
+      fi
+  fi
+
+  copy_files $dir
+
+  if [ -z "$inputs_only" ]; then
+      if [ ! -e "$dir/$job_script" ]; then
+	  create_job_script $dir $nprocs $walltime
+      fi
   fi
 
   # If we are continuing or starting a job, change into the run directory, 
