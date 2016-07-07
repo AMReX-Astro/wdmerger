@@ -1151,7 +1151,7 @@ function copy_files {
   for var in $input_vars
   do
 
-      if [ $new_inputs == "T" ]; then
+      if [ $new_inputs == "T" ] || (([ $var == "stop_time" ] || [ $var == "max_step" ]) && [ ! -z "$update_stopping_criteria" ]); then
 	  replace_inputs_var $var
       fi
 
@@ -1244,7 +1244,9 @@ function submit_job {
 
   submitted_job_number=${submitted_job_number%%.*}
 
-  echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
+  if [ ! -z "$submitted_job_number" ]; then
+      echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
+  fi
 
 }
 
@@ -1875,6 +1877,22 @@ function run {
       walltime=1:00:00
   fi
 
+  # Optionally, the user can force a recompile from the run script.
+
+  if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
+      if [ "$local_compile" -eq "1" ]; then
+	  compile_in_job_directory $dir
+      fi
+  fi
+
+  copy_files $dir
+
+  if [ -z "$inputs_only" ]; then
+      if [ ! -e "$dir/$job_script" ]; then
+	  create_job_script $dir $nprocs $walltime
+      fi
+  fi
+
   do_job=0
 
   if [ ! -d $dir ]; then
@@ -1930,22 +1948,6 @@ function run {
   # submit the job, then come back to the main directory.
 
   if [ $do_job -eq 1 ]; then
-
-    # Optionally, the user can force a recompile from the run script.
-
-    if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
-  	if [ "$local_compile" -eq "1" ]; then
-  	    compile_in_job_directory $dir
-  	fi
-    fi
-
-    copy_files $dir
-
-    if [ -z "$inputs_only" ]; then
-  	if [ ! -e "$dir/$job_script" ]; then
-  	    create_job_script $dir $nprocs $walltime
-  	fi
-    fi
 
     # Sometimes we'll want to set up the run directories but not submit them,
     # e.g. for testing purposes, so if the user creates a no_submit variable,
