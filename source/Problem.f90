@@ -298,10 +298,10 @@ subroutine wdcom(rho,  r_lo, r_hi, &
 
            ! Don't sum up material that is below the density threshold.
 
-           if (rho(i,j,k) < stellar_density_threshold) continue
+           if (rho(i,j,k) < stellar_density_threshold) cycle
 
-           ! We want the COM locations for the WDs to be absolute positions
-           ! on the grid, not relative to the center.
+           ! Our convention is that the COM locations for the WDs are 
+           ! absolute positions on the grid, not relative to the center.
 
            r = position(i,j,k)
 
