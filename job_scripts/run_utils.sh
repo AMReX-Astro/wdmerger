@@ -453,7 +453,7 @@ function is_job_running {
   # If not, check if there is an active job yet to be completed or started 
   # in the directory using the results of the queue information (showq, qstat, etc.).
 
-  if [ -e $dir/*$run_ext ]; then
+  if [ -e "$dir/*$run_ext" ]; then
 
       job_status=1
 
@@ -1013,7 +1013,19 @@ function check_to_stop {
 
   if [ ! -z $archive_queue ]; then
 
+      # We want to submit the archive job from the output/ directory.
+      # The point is that our job software gets confused if there are
+      # multiple jobs running in a directory at once, so we arbitrarily
+      # submit this job from a different location so that the other functions
+      # here don't see multiple outputs from separate runs.
+
+      if [ ! -d output/ ]; then
+	  mkdir output/
+      fi
+
+      cd output/
       archive_job_number=`$exec $archive_script`
+      cd - > /dev/null
       echo "Submitted an archive job with job number $archive_job_number."
 
   else
@@ -1045,6 +1057,10 @@ function copy_files {
 
   if [ -z $dir ]; then
       echo "No directory passed to copy_files; exiting."
+  fi
+
+  if [ ! -d "$dir/output/" ]; then
+      mkdir $dir/output/
   fi
 
   if [ ! -e $dir/$CASTRO ] && [ -z "$inputs_only" ]; then
@@ -1135,7 +1151,7 @@ function copy_files {
   for var in $input_vars
   do
 
-      if [ $new_inputs == "T" ]; then
+      if [ $new_inputs == "T" ] || (([ $var == "stop_time" ] || [ $var == "max_step" ]) && [ ! -z "$update_stopping_criteria" ]); then
 	  replace_inputs_var $var
       fi
 
@@ -1228,7 +1244,9 @@ function submit_job {
 
   submitted_job_number=${submitted_job_number%%.*}
 
-  echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
+  if [ ! -z "$submitted_job_number" ]; then
+      echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
+  fi
 
 }
 
@@ -1565,54 +1583,57 @@ function create_job_script {
 
       if [ ! -z $archive_queue ]; then
 
-	  echo "#!/bin/bash" > $dir/$archive_script
+	  echo "#!/bin/bash" > $dir/output/$archive_script
 
           # Select the project allocation we're charging this job to
 	  if [ ! -z $allocation ]; then
-	      echo "#PBS -A $allocation" >> $dir/$archive_script
+	      echo "#PBS -A $allocation" >> $dir/output/$archive_script
 	  fi
 
            # Set the name of the job
-	  echo "#PBS -N archive" >> $dir/$archive_script
+	  echo "#PBS -N archive" >> $dir/output/$archive_script
 
            # Combine standard error into the standard out file
-	  echo "#PBS -j oe" >> $dir/$archive_script
+	  echo "#PBS -j oe" >> $dir/output/$archive_script
 
           # Amount of wall time for the simulation
-	  echo "#PBS -l walltime=$archive_wclimit" >> $dir/$archive_script
+	  echo "#PBS -l walltime=$archive_wclimit" >> $dir/output/$archive_script
 
           # Number of nodes, the number of MPI tasks per node, and the node type to use
-	  echo "#PBS -l nodes=1" >> $dir/$archive_script
+	  echo "#PBS -l nodes=1" >> $dir/output/$archive_script
 
           # Queue to submit to.
-	  echo "#PBS -q $archive_queue" >> $dir/$archive_script
+	  echo "#PBS -q $archive_queue" >> $dir/output/$archive_script
 
-	  echo "" >> $dir/$archive_script
+	  echo "" >> $dir/output/$archive_script
 
 	  # Set the location of some variables.
 
-	  echo "WDMERGER_HOME=$WDMERGER_HOME" >> $dir/$archive_script
-	  echo "MACHINE=$MACHINE" >> $dir/$archive_script
-	  echo "" >> $dir/$archive_script
+	  echo "WDMERGER_HOME=$WDMERGER_HOME" >> $dir/output/$archive_script
+	  echo "MACHINE=$MACHINE" >> $dir/output/$archive_script
+	  echo "" >> $dir/output/$archive_script
 
           # We assume that the directory we submitted from is eligible to 
-          # work in, so cd to that directory.
+          # work in, so cd to that directory. We submit from the output
+	  # directory, so move up one level before actually executing the
+	  # scripts.
 
-	  echo "cd \$PBS_O_WORKDIR" >> $dir/$archive_script
-	  echo "" >> $dir/$archive_script
+	  echo "cd \$PBS_O_WORKDIR" >> $dir/output/$archive_script
+	  echo "cd ../" >> $dir/output/$archive_script
+	  echo "" >> $dir/output/$archive_script
 
           # Load up our helper functions.
 
-	  echo "source job_scripts/run_utils.sh" >> $dir/$archive_script
-	  echo "" >> $dir/$archive_script
+	  echo "source job_scripts/run_utils.sh" >> $dir/output/$archive_script
+	  echo "" >> $dir/output/$archive_script
 
           # Main job execution.
 
 	  if [ $do_storage -ne 1 ]; then
-	      echo "do_storage=$do_storage" >> $dir/$archive_script
+	      echo "do_storage=$do_storage" >> $dir/output/$archive_script
 	  fi
-	  echo "archive_all >> archive_log.out" >> $dir/$archive_script
-	  echo "" >> $dir/$archive_script
+	  echo "archive_all >> archive_log.out" >> $dir/output/$archive_script
+	  echo "" >> $dir/output/$archive_script
 
       fi
 
@@ -1907,26 +1928,26 @@ function run {
 
   fi
 
+  # Optionally, the user can force a recompile from the run script.
+
+  if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
+      if [ "$local_compile" -eq "1" ]; then
+	  compile_in_job_directory $dir
+      fi
+  fi
+
+  copy_files $dir
+
+  if [ -z "$inputs_only" ]; then
+      if [ ! -e "$dir/$job_script" ]; then
+	  create_job_script $dir $nprocs $walltime
+      fi
+  fi
+
   # If we are continuing or starting a job, change into the run directory, 
   # submit the job, then come back to the main directory.
 
   if [ $do_job -eq 1 ]; then
-
-    # Optionally, the user can force a recompile from the run script.
-
-    if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
-  	if [ "$local_compile" -eq "1" ]; then
-  	    compile_in_job_directory $dir
-  	fi
-    fi
-
-    copy_files $dir
-
-    if [ -z "$inputs_only" ]; then
-  	if [ ! -e "$dir/$job_script" ]; then
-  	    create_job_script $dir $nprocs $walltime
-  	fi
-    fi
 
     # Sometimes we'll want to set up the run directories but not submit them,
     # e.g. for testing purposes, so if the user creates a no_submit variable,
