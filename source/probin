@@ -128,4 +128,6 @@
 
   scaling_method = 2
 
+  ode_max_steps = 1000000
+
 /
