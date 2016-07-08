@@ -197,7 +197,10 @@ In practice we find that the cost is negligible in comparison to the more expens
 parts of the calculation, and it can significantly speed up convergence near NSE.
 A third option presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
 In this mode, by default we do a hydrostatic burn. If that burn fails, or if the net
-energy change is negative, we do the burn again in self-heating mode. All three options
+energy change is negative, we do the burn again in self-heating mode. A final option
+is a burn that limits the changes due to a burn to avoid numerically unstable burning.
+This mode is discussed in \autoref{sec:unstable_burning} and which we will call a
+``suppressed'' burn for the remainder of this work. All four options
 are implemented in our burner software. The simulations shown in this work all
 use the self-heating mode unless otherwise specified.
 
@@ -382,6 +385,13 @@ not the only way for the numerical discretization to cause
 severe errors in the burning. Another failure mode is when
 the energy injection timescale
 $t_e$ is shorter than the sound-crossing time $t_s$ in a zone.
+When the sound-crossing time is too long, energy is built up in
+a zone faster than it can be advected away by pressure waves.
+This is obviously a problem inherent to numerically discretized
+systems as the underlying fluid equations are continuous.
+This can lead to a numerically seeded detonation caused by the
+temperature building up too quickly in the zone; the detonation
+is spurious in this case and should be avoided if possible.
 The goal is to ensure that the following condition holds:
 \begin{equation}
   t_s \leq f_{s} t_e \label{eq:burning_limiter_2}
@@ -395,8 +405,33 @@ for their simulations, and we do too (this parameter can be set
 at runtime in \castro).
 
 \citet{kushnir:2013} implemented this criterion by artificially 
-limiting the magnitude of the energy release after a burn. As 
-this is not physical, we take a different approach. Since we 
+limiting the magnitude of the energy release after a burn. We
+too have developed an option for our burner to do this,
+the ``suppressed'' burning mode. In a suppressed burn, we limit
+the changes to the state so that \autoref{eq:burning_limiter_2}
+is always satisfied. To achieve this we directly multiply the
+right-hand-side vector in the integration by a constant factor $F$
+for all variables, where $F$ is the multiplicative factor needed to
+be applied to $\dot{e}$ such that the equality in \autoref{eq:burning_limiter_2}
+holds. (If the inequality is already satisfied, then the integration
+vector is not modified.) We fix $t_s$ to be the value of the sound
+crossing time at the beginning of the burn (that is, we do not
+update it as the sound speed changes) and we fix the energy $e$
+that goes into the estimate for $t_e$ to be the value of the
+internal energy of the zone at the beginning of the burn. If
+instead one allowed $c_s$ and $e$ to evolve with the burn, one
+would obtain a less conservative limiter in the case of explosive
+burning, as $c_s$ and $e$ are both increasing in this case.
+As the point of the limiter is to ensure that the changes to the
+\textit{original} energy are small enough so that the following
+hydrodynamics update can advect away newly generated energy
+quickly enough to avoid a nuerically seeded detonation,
+we desire the most conservative version of the limiter. We discuss
+our results with the suppressed burning mode in \autoref{sec:2D}.
+
+Regardless of whether the suppressed burning mode works for this
+particular problem, it is not physical, so in general we have
+taken a different approach. If we insist that we cannot
 cannot directly control the energy injection timescale, we 
 must find a way to alter the sound-crossing timescale. 
 We can achieve this by adding levels of refinement in 
