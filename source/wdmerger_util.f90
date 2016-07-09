@@ -102,7 +102,7 @@ contains
 
     ! Don't do a merger in 2D.
 
-    if (dim .eq. 2 .and. problem .eq. 3) then
+    if (dim .eq. 2 .and. (problem .eq. 2 .or. problem .eq. 3)) then
        call bl_error("2D simulations do not work for non-axisymmetric problems like mergers.")
     endif
 
@@ -617,15 +617,7 @@ contains
 
              ! Set the orbital distance, then calculate the rotational period.
 
-             if (problem == 2) then
-
-                a = model_S % radius / roche_rad_S
-
-             else if (problem == 3) then
-
-                a = roche_radius_factor * (model_S % radius / roche_rad_S)
-
-             endif
+             a = roche_radius_factor * (model_S % radius / roche_rad_S)
 
              rot_period = -ONE
 
