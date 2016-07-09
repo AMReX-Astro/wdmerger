@@ -424,7 +424,7 @@ Castro::problem_post_timestep()
 
       }
 
-    } else if (problem == 1) {
+    } else if (problem == 4) {
 
       // We can work out the stopping time using the formula
       // t_freefall = rotational_period / (4 * sqrt(2)).
