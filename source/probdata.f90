@@ -188,10 +188,12 @@ module probdata_module
 
   integer,          save :: max_stellar_tagging_level = 20
   integer,          save :: max_temperature_tagging_level = 20
-  double precision, save :: max_tagging_radius = 0.75d0
-  double precision, save :: roche_tagging_factor = 2.0d0
+  integer,          save :: max_center_tagging_level = 20
   double precision, save :: stellar_density_threshold = 1.0d0
   double precision, save :: temperature_tagging_threshold = 5.0d8
+  double precision, save :: center_tagging_radius = 0.0d0
+  double precision, save :: max_tagging_radius = 0.75d0
+  double precision, save :: roche_tagging_factor = 2.0d0
 
 
 
@@ -260,10 +262,12 @@ module probdata_module
        axis_1, axis_2, axis_3, &
        max_stellar_tagging_level, &
        max_temperature_tagging_level, &
-       max_tagging_radius, &
-       roche_tagging_factor, &
+       max_center_tagging_level, &
        stellar_density_threshold, &
        temperature_tagging_threshold, &
+       center_tagging_radius, &
+       max_tagging_radius, &
+       roche_tagging_factor, &
        bulk_velx, bulk_vely, bulk_velz, &
        smallu, &
        center_fracx, center_fracy, center_fracz, &
