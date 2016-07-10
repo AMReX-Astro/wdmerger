@@ -1203,6 +1203,14 @@ function submit_job {
 
   fi
 
+  # We can also test directly on whether the code crashed by looking
+  # for a BoxLib Backtrace file.
+
+  if ls Backtrace* 1> /dev/null 2>&1; then
+      echo "Refusing to submit job because a Backtrace file was found."
+      return 1
+  fi
+
   # Determine the requested walltime, in seconds.
 
   if [ -z $walltime ]; then
