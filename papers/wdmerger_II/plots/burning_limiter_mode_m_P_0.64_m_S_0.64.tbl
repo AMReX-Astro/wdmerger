@@ -1,0 +1,24 @@
+% CASTRO git hash: 00f15c01d852aa0abfe863460a2ad069791406b5
+% BoxLib git hash: 5873450c1470c09a0045fd61f1fd7d6fa3fb2ea2
+% Microphysics git hash: 674fed9c6f3dbd3f04c37fb8df392423363db6e4
+% wdmerger git hash: a50eca30c1cc56ba44d1758da5a2ee64c4db0c51
+%
+% Summary of the effect of the timestep limiting mode 
+% on 56Ni yield in a 2D white dwarf collision.
+% The first column is the limiter mode 
+% and the second is the final nickel 
+% mass produced, in solar masses.
+%
+\begin{deluxetable}{cc}
+  \tablecaption{ Burning Limiter Mode \label{table:burninglimitermode} }
+  \newlength{\tblburninglimitermodepad}
+  \setlength{\tblburninglimitermodepad}{0.425in}
+  \tablehead{ \colhead{ \hspace{\tblburninglimitermodepad}Mode\hspace{\tblburninglimitermodepad} } & \colhead{ \hspace{\tblburninglimitermodepad}Max. $^{56}$Ni (${M_{\odot}}$)\hspace{\tblburninglimitermodepad} } }
+  \startdata
+  \hspace{\tblburninglimitermodepad}1\hspace{\tblburninglimitermodepad} & \hspace{\tblburninglimitermodepad}0.193\hspace{\tblburninglimitermodepad} \\
+  \hspace{\tblburninglimitermodepad}2\hspace{\tblburninglimitermodepad} & \hspace{\tblburninglimitermodepad}0.193\hspace{\tblburninglimitermodepad} \\
+  \hspace{\tblburninglimitermodepad}3\hspace{\tblburninglimitermodepad} & \hspace{\tblburninglimitermodepad}0.194\hspace{\tblburninglimitermodepad} \\
+  \hspace{\tblburninglimitermodepad}4\hspace{\tblburninglimitermodepad} & \hspace{\tblburninglimitermodepad}0.194\hspace{\tblburninglimitermodepad}
+  \enddata
+  \tablecomments{ Maximum $^{56}$Ni mass produced as a function of the burning limiter mode used, which controls how $\dot{e}$ is estimated. Mode 1 uses an instantaneous estimate via an RHS call; Mode 2 uses the second half-timestep of burning in the last advance; Mode 3 uses both half-timesteps of burning in the last advance; and, Mode 4 uses the full change in internal energy over the last advance, including both reactions and hydrodynamics. }
+\end{deluxetable}
