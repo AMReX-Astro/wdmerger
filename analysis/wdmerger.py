@@ -1010,67 +1010,118 @@ def rho_T_scatterplot(output_filename, pltfile):
 
 
 
-def rho_T_sliceplot(output_filename, pltfile):
+def rho_T_sliceplot(output_filename, pltfile,
+                    negate_left = False, scale_exp = 9, npix = 2000,
+                    dens_range = [1.e-4, 1.e8], temp_range = [1.e7, 1.e10],
+                    n_dens_ticks = 4, n_temp_ticks = 4):
+    """Create a slice plot of rho and T using yt.
+
+    negate_left: use negative tick marks for the left panel.
+    scale_exp: the exponent (in base 10) used for scaling the axes.
+    npix: number of pixels to use in the buffer for generating the image.
+    dens_range: range of densities to plot.
+    temp_range: range of temperatures to plot.
+    n_dens_ticks: number of tick marks on the density colorbar.
+    n_temp_ticks: number of tick marks on the temperature colorbar.
+    """
 
     import yt
+    import matplotlib
+    from yt.visualization.api import get_multi_plot
+    from matplotlib.colors import LogNorm
 
-    fig = plt.figure()
-
-    grid_padding = 0.01
-    label_mode = 'L'
-
-    grid = AxesGrid(fig, (0.025, 0.1, 0.975, 0.8),
-                    nrows_ncols=(1, 2),
-                    axes_pad=grid_padding,
-                    label_mode=label_mode,
-                    cbar_location='top',
-                    cbar_mode='each',
-                    cbar_size='5%',
-                    cbar_pad='0%')
+    fig, axes, colorbars = get_multi_plot(2, 1, colorbar = 'horizontal', bw = 6)
 
     ds = yt.load(pltfile)
 
     dim = ds.dimensionality
 
+    buff = [npix, npix]
+
+    bounds = [ds.domain_left_edge[0], ds.domain_right_edge[0], ds.domain_left_edge[1], ds.domain_right_edge[1]]
+
     if dim == 1:
         print "This slice plot routine is not implemented in one dimension."
         exit
     elif dim == 2:
-        sp = yt.SlicePlot(ds, 'theta', fields=['density', 'Temp'])
+        slc = ds.slice(2, 0.0)
     elif dim == 3:
-        sp = yt.SlicePlot(ds, 'z', fields=['density', 'Temp'])
+        slc = ds.slice(2, 0.0)
 
-    sp.set_cmap('density', 'bone')
-    sp.set_cmap('Temp', 'hot')
+    frb = yt.visualization.fixed_resolution.FixedResolutionBuffer(slc, bounds=bounds, buff_size=buff)
 
-    sp.set_zlim('density', 0.0001, 100000000.0)
-    sp.set_zlim('Temp', 10000000.0, 10000000000.0)
+    dens_axis = axes[0][0]
+    temp_axis = axes[0][1]
 
-    plot_dens = sp.plots['density']
-    plot_dens.figure = fig
-    plot_dens.axes = grid[0].axes
-    plot_dens.cax = grid.cbar_axes[0]
+    if negate_left:
+        dens_axis.set_xticks([-4.0, -2.0])
+    else:
+        dens_axis.set_xticks([4.0, 2.0])
+    dens_axis.set_yticks([-4.0, -2.0, 0.0, 2.0, 4.0])
 
-    plot_temp = sp.plots['Temp']
-    plot_temp.figure = fig
-    plot_temp.axes = grid[1].axes
-    plot_temp.cax = grid.cbar_axes[1]
+    temp_axis.set_xticks([0.0, 2.0, 4.0])
+    temp_axis.set_yticks([-4.0, -2.0, 0.0, 2.0, 4.0])
 
-    cb_dens = plot_dens.cb
+    dens_axis.yaxis.tick_left()
+    dens_axis.yaxis.set_label_position("left")
+    temp_axis.yaxis.tick_right()
+    temp_axis.yaxis.set_label_position("right")
+
+    dens = np.array(frb['density'])
+    temp = np.array(frb['Temp'])
+
+    plots = []
+
+    aspect = 1.0
+
+    scale = 10**scale_exp
+
+    if negate_left:
+        left_bound = [ bounds[0] / scale, -bounds[1] / scale, bounds[2] / scale, bounds[3] / scale]
+    else:
+        left_bound = [ bounds[0] / scale, bounds[1] / scale, bounds[2] / scale, bounds[3] / scale]
+    plots.append(dens_axis.imshow(dens, norm=LogNorm(), extent=left_bound, aspect=aspect))
+    plots[-1].set_clim(dens_range[0], dens_range[1])
+    plots[-1].set_cmap('bone')
+
+    right_bound = [ bounds[0] / scale, bounds[1] / scale, bounds[2] / scale, bounds[3] / scale ]
+    plots.append(temp_axis.imshow(temp, norm=LogNorm(), extent=right_bound, aspect=aspect))
+    plots[-1].set_clim(temp_range[0], temp_range[1])
+    plots[-1].set_cmap("hot")
+
+    dens_ticks = np.logspace(np.log10(dens_range[0]), np.log10(dens_range[1]), num=n_dens_ticks)
+
+    cb_dens = fig.colorbar(plots[0], cax=colorbars[0], ax=dens_axis, orientation='horizontal', ticks=dens_ticks)
     cb_dens.solids.set_rasterized(True)
+    cb_dens.set_label(r'$\mathrm{Density}\ (\mathrm{g\ cm^{-3}})$')
 
-    cb_temp = plot_temp.cb
+    temp_ticks = np.logspace(np.log10(temp_range[0]), np.log10(temp_range[1]), num=n_temp_ticks)
+
+    cb_temp = fig.colorbar(plots[1], cax=colorbars[1], ax=temp_axis, orientation='horizontal', ticks=temp_ticks)
     cb_temp.solids.set_rasterized(True)
+    cb_temp.set_label(r'$\mathrm{Temperature}\ (\mathrm{K})$')
 
+    dens_axis.set_xlim(dens_axis.get_xlim()[::-1])
 
-    sp._setup_plots()
-    grid[0].invert_xaxis()
+    dens_axis.set_position([0.125+0.0575, 0.075, 0.375, 0.75])
+    temp_axis.set_position([0.500-0.0575, 0.075, 0.375, 0.75])
+
+    colorbars[0].set_position([0.275, 0.92, 0.2, 0.075])
+    colorbars[1].set_position([0.525, 0.92, 0.2, 0.075])
+
+    dens_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+    temp_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+
+    dens_axis.set_ylabel(r'$z\ (10^9\ \mathrm{cm})$')
+    temp_axis.set_ylabel(r'$z\ (10^9\ \mathrm{cm})$')
+
+    matplotlib.rcParams.update({'font.size': 20})
 
     plt.savefig(output_filename)
 
     insert_commits_into_eps(output_filename, pltfile, 'plot')
 
-    plt.savefig(output_filename[:-4] + '.png')
+    fig.savefig(output_filename[:-4] + '.png', bbox_inches='tight')
 
     plt.close()
 
@@ -1079,6 +1130,7 @@ def rho_T_sliceplot(output_filename, pltfile):
 # A routine for doing axis-aligned slice plots over a given field.
 
 def slice_plot(field, output_filename, pltfile, idir=3):
+    """Create an axis-aligned slice plot over a given field with yt."""
 
     import yt
 
