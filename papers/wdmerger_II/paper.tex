@@ -60,6 +60,7 @@
 \author{F. Douglas Swesty\altaffilmark{1}}
 \author{Ann S. Almgren\altaffilmark{3}}
 \author{Weiqun Zhang\altaffilmark{3}}
+\author{Frank X. Timmes\altaffilmark{4,5}}
 
 \altaffiltext{1}
 {
@@ -78,6 +79,18 @@
   Center for Computational Sciences and Engineering,
   Lawrence Berkeley National Laboratory, Berkeley, CA 94720
 }
+
+\altaffiltext{4}
+{
+  The Joint Institute for Nuclear Astrophysics, USA
+}
+
+\altaffiltext{5}
+{
+  School of Earth and Space Exploration, Arizona State University, Tempe, AZ, USA
+}
+
+
 
 %==========================================================================
 % Abstract
@@ -265,8 +278,8 @@ from nuclear burning, and $\dot{X_k}$ is an estimate of the time rate of change
 of the mass fraction of the species with index $k$, we define burning-limited 
 timesteps $\Delta t_{be}$ and $\Delta t_{bX_k}$:
 \begin{align}
-  \Delta t_{be} &= f_{e}\, \tau_e \\
-  \Delta t_{bX_k} &= f_{X}\, \tau_{X_k}.
+  \Delta t_{be} &= f_{e}\, \tau_e \label{eq:timestep_e}\\
+  \Delta t_{bX_k} &= f_{X}\, \tau_{X_k}. \label{eq:timestep_X}
 \end{align}
 Given an estimate for $\dot{e}$, the factor $f_{e}$ determines by what 
 fraction we would like to allow the internal energy to change
@@ -278,7 +291,7 @@ between the reactions and the hydro. We choose by default $f_{X} = f_{e} = 0.1$,
 a choice which is slightly smaller than others in the literature. (Note that previous 
 collision papers we are aware of only limited based on changes in internal energy, 
 not on cahnges in species.)  The sensitivity of results to this choice will be discussed in 
-\autoref{sec:2D:timestep}. The factors $f_{e}$ and $f_{X}$ can be set at runtime in \castro.
+\autoref{sec:parameters:timestepping}. The factors $f_{e}$ and $f_{X}$ can be set at runtime in \castro.
 
 At the start of each advance, we limit the size of the timestep to be the smaller
 of the minimum hydro timestep (limited by the CFL condition), and the minimum of all the
@@ -452,7 +465,7 @@ As the point of the limiter is to ensure that the changes to the
 hydrodynamics update can advect away newly generated energy
 quickly enough to avoid a nuerically seeded detonation,
 we desire the most conservative version of the limiter. We discuss
-our results with the suppressed burning mode in \autoref{sec:2D}.
+our results with the suppressed burning mode in \autoref{sec:parameters}.
 
 Regardless of whether the suppressed burning mode works for this
 particular problem, it is not physical, so in general we have
@@ -536,7 +549,10 @@ everywhere in the WDs in the interest of getting the collision dynamics to be
 slightly more accurate. Additionally, we choose to solve the Poisson equation
 for the self-gravity of the system only on the coarse grid. The gravitational
 potential and acceleration on the finer levels are interpolated from the coarse
-grid.
+grid. This grants enhanced computational speed without a serious effect on the
+accuracy of the simulation (for the case where the fine grids cover the stars,
+we have checked that the more accurate gravitational forcing would only modify
+slightly the time to impact and the subsequent detonation process).
 
 We have also added to \wdmerger\ the ability to use the 2D cylindrical ($R-z$)
 coordinate system evolution in \castro. In this coordinate system, we align
@@ -558,84 +574,194 @@ to stream off the simulation domain. As all simulations in this paper are of
 WD collisions that generate enough energy to unbind the system, this stopping
 criterion is applied throughout all simulations shown here.
 
+As in Paper I, the region outside the WDs is filled with a low-density ambient
+material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition is the
+same as that of the WDs (which is equal carbon and oxygen by mass, unless
+stated otherwise). Reactions in this region are unimportant, so for
+computational efficiency, we disable all nuclear burning for zones that have
+$\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. The initial ambient
+temperature is $10^7\ \text{K}$, which is the same as the initial temperature
+everywhere throughout the WDs, and we set the temperature floor to the same
+value (any zone that reaches below this temperature will be reset).
+
+\castro\ uses the dual energy formalism of \cite{bryan:1995,ENZO}, where we evolve equations
+for both the total energy $E$ and the internal energy $e$, using one or the other to
+determine the pressure in the hydrodynamics step (if we are using the total energy, we
+compute the corresponding internal energy by subtracting the kinetic energy $K$). The switching
+parameter is $\eta_1 = 10^{-3}$, and if $(E - K) / E < \eta_1$, we use the internal energy variable $e$
+in the equation of state call that obtains the pressure. Otherwise we use $(E - K)$. The
+idea behind this is that in high Mach number flows where the kinetic energy dominates the
+total energy, we do not want to risk generating a negative estimate of the internal energy
+due to roundoff error. Similarly, at regular intervals when we enforce consistency of the
+internal energy variable (which occurs a few times per timestep), we sync the internal energy
+variable so that it is equal to $E - K$, skipping this step only if $(E - K) / E < \eta_2$.
+We adopt by default $\eta_2 = 10^{-4}$. This choice can matter much more for reacting
+hydrodynamics than non-reacting hydrodynamics. For example, a collision can only lead to a
+detonation if there is sufficient conversion of kinetic to thermal energy. Obviously
+this happens physically, but if the parameter $\eta_2$ is set high enough then it could
+in principle interfere by not allowing the simulation to efficiently convert kinetic energy
+to thermal energy. (This does not end up mattering much for our simulations because the
+kinetic energy does not strongly dominate the internal energy for colliding WDs.) And on
+a similar note, when using this formalism it is ambiguous which variable to use ($(E - K)$
+or $e$) when calculating the initial temperature that goes into the reaction step. We
+have introduced a new parameter $\eta_3$ that uses the same logic as the first two: if
+$(E - K) / E < \eta_3$, we use $(E - K)$ in the equation of state call that obtains the
+temperature; otherwise, we use $e$. However, unlike the other two, the \castro\ default
+is $\eta_3 = 1.0$, meaning that we normally use the internal energy variable.
+
 
 
 %==========================================================================
-% 2D simulations
+% Parameter Study
 %==========================================================================
-\section{Two-Dimensional Simulations}
-\label{sec:2D}
+\section{Parameter Study}
+\label{sec:parameters}
 
-While white dwarf collisions are three-dimensional events, there is much to
-be learned from simpler, and much computationally cheaper, two-dimensional
-axisymmetric collision simulations. These are implemented in the cylindrical
-coordinate system described in \autoref{sec:problemsetup}.
-We simulate collisions in 2D cylindrical coordinates for three purposes.
-First, we can quickly get up to speed on the nature of the problem and then
-benchmark existing and new code tools such as our nuclear postprocessing analysis.
-Second, in the regime where the 2D and 3D simulations can be usefully compared, 
-zero-impact parameter head-on simulations ($b = 0$), we can understand to
-what extent the reduced-dimensionality approach can reproduce the 3D results
-and thus determine whether 2D simulations can be used for obtaining scientific
-predictions, including nucleosynthesis yields and observable quantities.
-Third, we can cheaply test the effect of various code choices such as the number
-of isotopes in the nuclear network; we can afford to run the same problem many
-times while tweaking parameters one by one to learn their effects. 
-Prepared with these results and a better understanding of how reliable our
-approximations are, we can then proceed to performing 3D simulations with
-our code choices already made and with confidence that we understand the
-uncertainty resulting from these choices.
+Before turning to the effect that adaptive mesh refinement has on WD collisions,
+we will first examine the effect of a number of other code parameters. For most
+of the following we will use two-dimensional axisymmetric simulations which have
+impact parameter $b = 0$, unless otherwise specified, and we will stick to a
+moderate resolution (we use only the coarse grid described in \autoref{sec:problemsetup}).
+For all simulations in this section, we use a pair of $0.64\ \msolar$ WDs, a binary
+system that has been studied in most of the collision papers to date. This allows
+us to cheaply test how the collision responds to many effects. One limitation of
+this is that we will not find out exactly how a simulation differs in the case of a
+high-resolution 3D run when these parameters changed. Another is that we will not
+perform a full parameter study where we consider the full non-linear dependence of
+all parameters on all other parameters; here we are merely interested in qualitative
+trends that will help to understand the limitations of WD collision simulations.
 
-\subsection{Dynamics}
-\label{sec:2D:dynamics}
+With those caveats in mind, let us consider the tests and the results we obtained.
+Our primary metric for the following tests will be the amount of $^{56}$Ni generated
+in the collision, as this is the parameter most directly related to the observable
+quantities of interest for Type Ia supernovae. Specifically, we collect information
+at the end of every timestep about the total amount of nickel on the grid (in solar
+masses), and we will use the maximum value of this nickel mass. When the stopping
+criterion described in \autoref{sec:problemsetup} is used, this nickel mass is generally
+constant or decreasing by the end of the run. The typical amount of nickel mass generated
+for our runs at low resolution is $0.2\ \msolar$, which is significantly lower than
+that obtained by \cite{raskin:2010} and \cite{kushnir:2013} for the same problem.
+We will discuss this in \autoref{sec:resolution}.
 
-First we briefly consider whether the dynamical evolution of the system
-is consistent with simple physics we understand. We ask two questions.
-First, is the time it takes for the white dwarfs to collide consistent with
-basic kinematics? Second, is the amount of energy released in the
-collision by the nuclear reactions comparable to the amount of kinetic
-energy we infer from observations of Type Ia supernovae? We must ensure
-that we are getting these basics right before we can advance to more
-complicated questions. This is not necessarily a trivial matter. We have
-observed, for example, that at low resolution, the WDs take longer to
-collide than at higher resolution, because the gravitational field is
-much less accurate.
+\subsection{Timestepping}
+\label{sec:parameters:timestepping}
 
-\subsection{Timestep Limiting}
-\label{sec:2D:timestep}
+For the standard self-heating burns that we use, the most important parameters we
+examined come from the timestep limiting scheme described in \autoref{sec:hydrocoupling}.
+The parameters $f_{be}$ (from \autoref{eq:timestep_e}) and $f_{bX}$ (from
+\autoref{eq:timestep_X}) control the size of the timestep as a function of the
+burning rate. As the timestep gets smaller, the error due to the Strang splitting
+scheme coupling the reactions and the burning also gets smaller, and we expect
+that the results become more accurate.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.425]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
+  \caption{Nickel production as a function of the timestep factors $f_{be}$
+           (solid blue, limiting the timestep on changes in internal energy) and
+           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
+           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
+           the timestep by at least an order of magnitude more.
+           \label{fig:timestep_factor}}
+\end{figure}
+\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
+production. As either $f$ becomes small, the restriction on the timestep becomes quite
+severe: for $f_{bX} = 0.01$, the minimum timestep in the simulation is smaller than
+$2 \times 10^{-9}\ \text{s}$ and the full simulation requires over 750,000 timesteps.
+Yet it is clear that even for this steep value of the limiter, which is much stricter
+than the limiter used in, e.g., \cite{hawley:2012} and \cite{raskin:2010}, the
+simulation has not fully converged in nickel production. These limiters are somewhat
+redundant in the sense that a given $f_{bX}$ corresponds to another (higher) $f_{be}$,
+as is evident by the fact that on the graph the curves look similar in shape but with
+a horizontal offset.
 
-Here we discuss the effect of limiting the hydrodynamic timestep based on
-changes in the internal energy in the nuclear reaction network.
+We also examined the effect of the method used to enforce the limiting, using the
+four limiting modes discussed in \autoref{sec:hydrocoupling}. The results are shown
+in \autoref{table:burninglimitermode} for the case $f_{be} = 0.3$ (we did not use
+limiting with $f_{bX}$ for this test). The two modes that use the full last timestep's
+worth of information to estimate $\dot{e}$ yield a slightly larger nickel mass than the
+two modes that only use more recent information, but the difference is negligible.
+
+\input{plots/burning_limiter_mode_m_P_0.64_m_S_0.64.tbl}
+
+%TODO: add a ``Nonaka plot''
+
+For all remaining tests in this section, unless otherwise stated, we take $f_{be} = 10^2$
+and disable limiting with $f_{bX}$ by setting it to a large number. This choice is a balance
+between accuracy and efficiency: we avoid the obviously wrong answers that occur for $f_{be} > 10^3$
+while ensuring that the timesteps are long enough that the following tests are computationally
+inexpensive.
+
+
 
 \subsection{Nuclear Network}
-\label{sec:2D:network}
+\label{sec:parameters:network}
 
 Now we move to a discussion of the effect of including various isotopes
-in the nuclear reaction network. In particular we compare the \aproxthirteen,
-\aproxnineteen, and \aproxtwentyone reaction networks.
+in the nuclear reaction network. In particular we compare the \isoseven, \aproxthirteen,
+\aproxnineteen, and \aproxtwentyone\ reaction networks. In all cases we run
+the same problem setup, and the unused isotopes (everything but carbon and oxygen)
+have their mass fractions in every zone set to a negligibly small number at initialization.
 
-\subsection{Nucleosynthetic Postprocessing}
-\label{sec:2D:postprocessing}
 
-We consider also the results of our postprocessing step for nucleosynthesis
-yields, to understand whether the results for the isotopes not included in
-our networks make sense.
+
+\subsection{Burning Mode}
+\label{sec:parameters:burningmode}
+
+
+
+\subsection{Other Parameters}
+
+We tested a few other parameters that ended up having no serious effect on the outcome.
+The dual energy parameter $\eta_2$ described in \autoref{sec:problemsetup} can have a
+minor effect on the nickel production, yielding variations on the order of a few percent,
+but there is no clear pattern. The dual energy parameter $\eta_3$ has no effect on the
+outcome: the answer is the same for $\eta_3 = 0$ and $\eta_3 = 1$, which makes sense
+because all of the reacting regions have a low enough kinetic energy relative to their
+total energy such that the internal energy variable is always kept in sync with $(E - K)$.
+(We did not look at $\eta_1$ because that has a direct effect only on the hydrodynamics,
+not the reactions.) We also tested whether our choice for the temperature floor mattered
+by lowering it to $10^6\ \text{K}$ and $10^5\ \text{K}$, and this had no effect on nickel
+production. It does allow parts of the WDs to become colder as they move, due to numerical
+errors in the advecting flow (the Helmholtz equation of state is very insensitive to
+temperature, so even small changes in the internal energy can create very large changes
+in the implied temperature), but the amount of energy injected by the collision is so
+large that the final result is insensitive to whatever the initial temperature of the
+WDs were. We also checked whether there was any consequence of our choice to disable the
+burning for small enough $\rho$ and $T$. Lowering the minimum $\rho$ for reactions to
+$10^0\ \text{g / cm}^{-3}$ from $10^6\ \text{g / cm}^{-3}$ had a negligible effect,
+and varying the minimum $T$ for reactions from $2 \times 10^{7}\ \text{K}$ to
+$4 \times 10^{8}\ \text{K}$ also had no meaningful effect.
+
+%TODO: maybe show an image of the temperature field in the WDs before colliding to demonstrate the point about numerical error?
+
+The choice of the WD composition to be equal carbon and oxygen by mass is a common
+choice in the literature and is broadly comparable to what stellar evolution codes
+yield for WDs of this mass. Still, it is an arbitrary approximation, especially the
+insistence that the composition is uniform throughout the WD. In \autoref{table:co}
+we list the nickel production as a function of the initial carbon mass fraction.
+This can have a few percent impact on the outcome for the plausible values we tested.
+In future work we may look at the effect of a more realistic progenitor structure,
+including the effects of a helium shell on the surface of the WDs \citep{holcomb:2015}
+and a non-uniform interior structure.
+
+\input{plots/co_frac_m_P_0.64_m_S_0.64.tbl}
 
 
 
 %==========================================================================
-% 3D simulations
+% Resolution Dependence
 %==========================================================================
-\section{Three-Dimensional Simulations}
-\label{sec:3D}
+\section{Resolution Dependence}
+\label{sec:resolution}
 
-Now that we have analyzed the various parts of our simulation software and
-discussed our code choices, we consider full 3D simulations to understand
-the potential for white dwarf collisions to be progenitors of Type Ia
-supernovae. We focus on two main quantities of interest: the total amount of
-nickel produced in the explosion, which directly powers the light curve
-observed in SNe Ia; and, the gravitational wave signature produced by
-these events.
+
+
+%==========================================================================
+% Gravitational Wave Signature
+%==========================================================================
+\section{Gravitational Wave Signature}
+\label{sec:gwsignature}
+
 
 
 %==========================================================================
@@ -643,6 +769,7 @@ these events.
 %==========================================================================
 \section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
 \label{sec:conclusion}
+
 
 
 \acknowledgments
