@@ -12,7 +12,7 @@
 \begin{deluxetable}{cc}
   \tablecaption{ Carbon Mass Fraction \label{table:co} }
   \newlength{\tblcopad}
-  \setlength{\tblcopad}{0.425in}
+  \setlength{\tblcopad}{0.325in}
   \tablehead{ \colhead{ \hspace{\tblcopad}$C$\hspace{\tblcopad} } & \colhead{ \hspace{\tblcopad}Max. $^{56}$Ni (${M_{\odot}}$)\hspace{\tblcopad} } }
   \startdata
   \hspace{\tblcopad}0.30\hspace{\tblcopad} & \hspace{\tblcopad}0.192\hspace{\tblcopad} \\

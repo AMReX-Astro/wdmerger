@@ -735,13 +735,14 @@ In contrast, the suppressed burning mode (modelled after \citet{kushnir:2013}) p
 $5 \times 10^{-4}\ \msolar$ of $^{56}$Ni. In a suppressed burn, we ensure that at every evaluation
 of the right-hand-side vector for the nuclear network integration, all quantities are scaled by the
 same factor, with this factor ensuring that the energy release is not large enough to permit a
-spurious detonation. This seems to be equivalent to the method used in \citet{kushnir:2013}. Yet
-we do not reproduce their claim that this fix is sufficient to ensure that the detonation occurs
-at the proper and time and place; indeed, the burning is quenched until very late in the collision,
-and the detonation barely forms at all. The suppression used therefore seems to be far too strong
-to permit an actual detonation when one should occur. We have also checked the same method at higher
-resolution and found that the nickel produced is significantly smaller than for a self-heating
-calculation at the same resolution.
+spurious detonation. This seems to be equivalent to the method used in \citet{kushnir:2013}. We
+reproduce their claim that this suppresses the detonation until later in the collision, after more
+material has approached the stalled shock. We also observe that, for a given resolution, the simultaneous
+detonations occur slightly outside the initial contact point, near the edges of the stalled shock. They
+establish as the main source of error in simulations that produce too little nickel. However, we find
+that the resulting detonations are not strong enough to convert a significant amount of material to NSE
+conditions; instead, only QSE conditions are reached near the center of the collision, leaving a significant
+amount of silicon and sulfur on the domain that is not further processed.
 
 
 
