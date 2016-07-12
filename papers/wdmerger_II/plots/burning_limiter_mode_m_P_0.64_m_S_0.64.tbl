@@ -12,7 +12,7 @@
 \begin{deluxetable}{cc}
   \tablecaption{ Burning Limiter Mode \label{table:burninglimitermode} }
   \newlength{\tblburninglimitermodepad}
-  \setlength{\tblburninglimitermodepad}{0.425in}
+  \setlength{\tblburninglimitermodepad}{0.325in}
   \tablehead{ \colhead{ \hspace{\tblburninglimitermodepad}Mode\hspace{\tblburninglimitermodepad} } & \colhead{ \hspace{\tblburninglimitermodepad}Max. $^{56}$Ni (${M_{\odot}}$)\hspace{\tblburninglimitermodepad} } }
   \startdata
   \hspace{\tblburninglimitermodepad}1\hspace{\tblburninglimitermodepad} & \hspace{\tblburninglimitermodepad}0.193\hspace{\tblburninglimitermodepad} \\

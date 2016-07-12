@@ -237,7 +237,7 @@ A third option presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
 In this mode, by default we do a hydrostatic burn. If that burn fails, or if the net
 energy change is negative, we do the burn again in self-heating mode. A final option
 is a burn that limits the changes due to a burn to avoid numerically unstable burning.
-This mode is discussed in \autoref{sec:unstable_burning} and which we will call a
+This mode is discussed in \autoref{sec:unstable_burning} and we will call it a
 ``suppressed'' burn for the remainder of this work. All four options
 are implemented in our burner software. The simulations shown in this work all
 use the self-heating mode unless otherwise specified.
@@ -298,7 +298,7 @@ of the minimum hydro timestep (limited by the CFL condition), and the minimum of
 burning timesteps across all zones. To do this, we need a method for determining 
 $\dot{e}$ and $\dot{X_k}$. A typical choice in the literature has been to set, for example,
 \begin{equation}
-  \dot{e} = \frac{e^{n} - e^{n-1}}{\Delta t^{n-1}}, \label{eq:burning_mode_4}
+  \dot{e} = \frac{e^{n} - e^{n-1}}{\Delta t^{n-1}}, \label{eq:burning_limiter_mode_4}
 \end{equation}
 where is $e^n$ is the internal energy at the start of the current timestep and
 $e^{n-1}$ is the internal energy at the start of the previous timestep. 
@@ -306,13 +306,13 @@ The obvious analogue is used for constructing the species rate of change.
 However, there are alternative methods of constructing this derivative estimate, 
 and we have found that these different methods have measurable consequences.
 We define four separate methods for calculating the time derivative, with 
-the above being method 4. Method 3 is similar to method 4 but replaces the
-denominator in \autoref{eq:burning_mode_4} with the change in 
+the above being mode 4. Mode 3 is similar to mode 4 but replaces the
+denominator in \autoref{eq:burning_limiter_mode_4} with the change in 
 internal energy over the last timestep only from the nuclear reactions.
-Method 2 is the same as method 3 but we only use the change in internal 
+Mode 2 is the same as mode 3 but we only use the change in internal 
 energy from the most recent nuclear burning step, that is, the second-half
 of the Strang-split burning from the last timestep (the denominator 
-then becomes $\Delta t / 2$). In method 1, the most accurate option and 
+then becomes $\Delta t / 2$). In mode 1, the most accurate option and 
 the current default in \castro, we evaluate the right-hand-side of the 
 burning network given the current state to explicitly obtain the 
 instantaneous value of $\dot{e}$ and $\dot{X_k}$. 
@@ -341,8 +341,8 @@ rather separate discrete burning and hydro steps, and the nature of
 the burning evolution will be quite different. Furthermore, by the 
 time we return to Step 1 and estimate the next timestep size, all 
 of the burning rates will be small again, and the instantaneous 
-timestep limiter of method 1 may actually substantially overestimate 
-the needed timestep. The other methods will see that the energy/species  
+timestep limiter of mode 1 may actually substantially overestimate 
+the needed timestep. The other modes will see that the energy/species  
 substantially changed over the last timestep, but will still 
 overestimate the needed timestep because the burning was quiescent
 for at least some portion of the last advance. In particular, our 
@@ -465,7 +465,9 @@ As the point of the limiter is to ensure that the changes to the
 hydrodynamics update can advect away newly generated energy
 quickly enough to avoid a nuerically seeded detonation,
 we desire the most conservative version of the limiter. We discuss
-our results with the suppressed burning mode in \autoref{sec:parameters}.
+our results with the suppressed burning mode in \autoref{sec:parameters:burningmode}.
+Note that we have found that with this option enabled, it typically takes
+many more timesteps to complete a burn than in self-heating mode.
 
 Regardless of whether the suppressed burning mode works for this
 particular problem, it is not physical, so in general we have
@@ -706,6 +708,45 @@ have their mass fractions in every zone set to a negligibly small number at init
 
 \subsection{Burning Mode}
 \label{sec:parameters:burningmode}
+
+In \autoref{sec:burner} we observed that there are several alternatives to the traditional
+self-heating approach in a burn. These alternatives are relevant to a collision problem because,
+as pointed out by \cite{raskin:2010} and \cite{kushnir:2013}, it is possible for a typical
+zone in our simulation to release a very large amount of energy in a burn before it is cooled
+off by a subsequent hydrodynamic expansion step, leading to the numerically unstable burning
+problem described in \autoref{sec:unstable_burning}. \autoref{table:burningmode} lists nickel
+production for the four burning modes described earlier. The hydrostatic burn does produces
+slightly more nickel than the self-heating burn, consistent with the idea that by limiting the
+energy release from early carbon burning, we can forestall a detonation which is numerically
+spurious. Yet the difference is only about 5\%. The reason is that the hydrostatic burn controls
+the energy release during the burn, but \textit{not} what happens in the rest of the hydrodynamics
+step. And in the hydrodynamics step, the \castro\ algorithm performs multiple EOS calls to ensure
+that the temperature is synchronized with the internal energy at various points in the update.
+So in practice there is a temperature change due to the burn for our problem. This seems inevitable
+for any hydro code unless the hydrodynamics update includes an explicit equation for $T$ that is
+independent of what is happening for the internal energy. Similarly, the hybrid burn does not
+affect the total nickel production relative to the hydrostatic burn. The hybrid burn only changes
+the behavior for zones that have a net negative energy release from the hydrostatic burn, which
+occurs only after we have burned to NSE.
+
+\input{plots/burning_mode_m_P_0.64_m_S_0.64.tbl}
+
+In contrast, the suppressed burning mode (modelled after \citet{kushnir:2013}) produces only about
+$5 \times 10^{-4}\ \msolar$ of $^{56}$Ni. In a suppressed burn, we ensure that at every evaluation
+of the right-hand-side vector for the nuclear network integration, all quantities are scaled by the
+same factor, with this factor ensuring that the energy release is not large enough to permit a
+spurious detonation. This seems to be equivalent to the method used in \citet{kushnir:2013}. Yet
+we do not reproduce their claim that this fix is sufficient to ensure that the detonation occurs
+at the proper and time and place; indeed, the burning is quenched until very late in the collision,
+and the detonation barely forms at all. The suppression used therefore seems to be far too strong
+to permit an actual detonation when one should occur. We have also checked the same method at higher
+resolution and found that the nickel produced is significantly smaller than for a self-heating
+calculation at the same resolution.
+
+
+
+\subsection{Impact Parameter}
+\label{sec:parameters:impactparameter}
 
 
 
