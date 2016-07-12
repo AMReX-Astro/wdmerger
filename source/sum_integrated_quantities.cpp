@@ -394,7 +394,7 @@ Castro::sum_integrated_quantities ()
 	     log << std::setw(datwidth) << "              ANG. MOM. Z";
 #endif
 	     log << std::setw(datwidth) << "                     MASS";
-#if (BL_SPACEDIM == 3 )
+#if (BL_SPACEDIM == 3)
 	     log << std::setw(datwidth) << "                    X COM";
 	     log << std::setw(datwidth) << "                    Y COM";
 	     log << std::setw(datwidth) << "                    Z COM";
@@ -402,14 +402,11 @@ Castro::sum_integrated_quantities ()
 	     log << std::setw(datwidth) << "                Y COM VEL";
 	     log << std::setw(datwidth) << "                Z COM VEL";
 #else
-	     log << std::setw(datwidth) << "                R COM    ";
-	     log << std::setw(datwidth) << "                Z COM    ";
+	     log << std::setw(datwidth) << "                    R COM";
+	     log << std::setw(datwidth) << "                    Z COM";
 	     log << std::setw(datwidth) << "                R COM VEL";
 	     log << std::setw(datwidth) << "                Z COM VEL";
 #endif
-	     log << std::setw(datwidth) << "                    T MAX";
-	     log << std::setw(datwidth) << "                  RHO MAX";
-	     log << std::setw(datwidth) << "            T_S / T_E MAX";
 	     log << std::setw(datwidth) << "             h_+ (axis 1)";
 	     log << std::setw(datwidth) << "             h_x (axis 1)";
 	     log << std::setw(datwidth) << "             h_+ (axis 2)";
