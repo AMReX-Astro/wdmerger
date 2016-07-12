@@ -60,7 +60,9 @@ void problem_post_timestep();
 
 void writeGitHashes(std::ostream& log);
 
+// Input parameters
 
+static int use_stopping_criterion;
 
 // Data we want to store, for interfacing with the Fortran
 

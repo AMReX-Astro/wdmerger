@@ -10,6 +10,7 @@
 
 bool Castro::relaxation_is_done = false;
 int Castro::problem = -1;
+int Castro::use_stopping_criterion = 1;
 
 #ifdef do_problem_post_timestep
 void
@@ -343,102 +344,106 @@ Castro::problem_post_timestep()
     // Some of the problems might have stopping conditions that depend on
     // the state of the simulation; those are checked here.
 
-    // For the collision problem, we know we are done when the total energy
-    // is positive (indicating that we have become unbound due to nuclear
-    // energy release) and when it is decreasing in magnitude (indicating
-    // all of the excitement is done and fluid is now just streaming off
-    // the grid). We don't need to be super accurate for this, so let's check
-    // on the coarse grid only. It is possible that a collision could not
-    // generate enough energy to become unbound, so possibly this criterion
-    // should be expanded in the future to cover that case.
+    if (use_stopping_criterion) {
 
-    if (problem == 0) {
+      if (problem == 0) {
 
-      Real rho_E = 0.0;
-      Real rho_phi = 0.0;
+	// For the collision problem, we know we are done when the total energy
+	// is positive (indicating that we have become unbound due to nuclear
+	// energy release) and when it is decreasing in magnitude (indicating
+	// all of the excitement is done and fluid is now just streaming off
+	// the grid). We don't need to be super accurate for this, so let's check
+	// on the coarse grid only. It is possible that a collision could not
+	// generate enough energy to become unbound, so possibly this criterion
+	// should be expanded in the future to cover that case.
 
-      // Note that we'll define the total energy using only
-      // gas energy + gravitational. Rotation is never on
-      // for the collision problem so we can ignore it.
+	Real rho_E = 0.0;
+	Real rho_phi = 0.0;
 
-      Real E_tot = 0.0;
+	// Note that we'll define the total energy using only
+	// gas energy + gravitational. Rotation is never on
+	// for the collision problem so we can ignore it.
 
-      Real curTime   = state[State_Type].curTime();
+	Real E_tot = 0.0;
 
-      bool local_flag = true;
-      bool fine_mask = false;
+	Real curTime   = state[State_Type].curTime();
 
-      rho_E += volWgtSum("rho_E", curTime,  local_flag, fine_mask);
+	bool local_flag = true;
+	bool fine_mask = false;
+
+	rho_E += volWgtSum("rho_E", curTime,  local_flag, fine_mask);
 
 #ifdef GRAVITY
-      if (do_grav) {
-        rho_phi += volWgtSum("rho_phiGrav", curTime,  local_flag, fine_mask);
-      }
+	if (do_grav) {
+	  rho_phi += volWgtSum("rho_phiGrav", curTime,  local_flag, fine_mask);
+	}
 #endif
 
-      E_tot = rho_E - 0.5 * rho_phi;
+	E_tot = rho_E - 0.5 * rho_phi;
 
-      ParallelDescriptor::ReduceRealSum(E_tot);
+	ParallelDescriptor::ReduceRealSum(E_tot);
 
-      // Put this on the end of the energy array.
+	// Put this on the end of the energy array.
 
-      for (int i = num_previous_ener_timesteps - 1; i > 0; --i)
-	total_ener_array[i] = total_ener_array[i - 1];
+	for (int i = num_previous_ener_timesteps - 1; i > 0; --i)
+	  total_ener_array[i] = total_ener_array[i - 1];
 
-      total_ener_array[0] = E_tot;
+	total_ener_array[0] = E_tot;
 
-      // Send the data to Fortran.
+	// Send the data to Fortran.
 
-      set_total_ener_array(total_ener_array);
+	set_total_ener_array(total_ener_array);
 
-      bool stop_flag = false;
+	bool stop_flag = false;
 
-      int i = 0;
+	int i = 0;
 
-      // Check if energy is positive and has been decreasing for at least the last few steps.
+	// Check if energy is positive and has been decreasing for at least the last few steps.
 
-      while (i < num_previous_ener_timesteps - 1) {
+	while (i < num_previous_ener_timesteps - 1) {
 
-	if (total_ener_array[i] < 0.0)
-	  break;
-	else if (total_ener_array[i] > total_ener_array[i + 1])
-	  break;
+	  if (total_ener_array[i] < 0.0)
+	    break;
+	  else if (total_ener_array[i] > total_ener_array[i + 1])
+	    break;
 
 	  ++i;
 
-      }
+	}
 
-      if (i == num_previous_ener_timesteps - 1)
-	stop_flag = true;
+	if (i == num_previous_ener_timesteps - 1)
+	  stop_flag = true;
 
-      if (stop_flag) {
+	if (stop_flag) {
 
-	jobDoneStatus = 1;
+	  jobDoneStatus = 1;
 
-	set_job_status(&jobDoneStatus);
+	  set_job_status(&jobDoneStatus);
 
-	if (ParallelDescriptor::IOProcessor())
-	  std::cout << std::endl 
-                    << "Ending simulation because total energy is positive and decreasing." 
-		    << std::endl;
+	  if (ParallelDescriptor::IOProcessor())
+	    std::cout << std::endl 
+		      << "Ending simulation because total energy is positive and decreasing." 
+		      << std::endl;
 
-      }
+	}
 
-    } else if (problem == 4) {
+      } else if (problem == 4) {
 
-      // We can work out the stopping time using the formula
-      // t_freefall = rotational_period / (4 * sqrt(2)).
-      // We'll stop 90% of the way there because that's about
-      // when the stars start coming into contact, and the
-      // assumption of spherically symmetric stars breaks down.
+	// We can work out the stopping time using the formula
+	// t_freefall = rotational_period / (4 * sqrt(2)).
+	// We'll stop 90% of the way there because that's about
+	// when the stars start coming into contact, and the
+	// assumption of spherically symmetric stars breaks down.
 
-      Real stopping_time = 0.90 * rotational_period / (4.0 * std::sqrt(2));
+	Real stopping_time = 0.90 * rotational_period / (4.0 * std::sqrt(2));
 
-      if (time >= stopping_time) {
+	if (time >= stopping_time) {
 
-	jobDoneStatus = 1;
+	  jobDoneStatus = 1;
 
-	set_job_status(&jobDoneStatus);
+	  set_job_status(&jobDoneStatus);
+
+	}
 
       }
 
@@ -897,6 +902,12 @@ Real Castro::norm(const Real a[]) {
 
 void Castro::problem_post_init() {
 
+  // Read in inputs.
+
+  ParmParse pp("castro");
+
+  pp.query("use_stopping_criterion", use_stopping_criterion);
+
   // Get the problem number fom Fortran.
 
   get_problem_number(&problem);
@@ -930,6 +941,12 @@ void Castro::problem_post_init() {
 #ifdef do_problem_post_restart
 
 void Castro::problem_post_restart() {
+
+  // Read in inputs.
+
+  ParmParse pp("castro");
+
+  pp.query("use_stopping_criterion", use_stopping_criterion);
 
   // Get the problem number from Fortran.
 
