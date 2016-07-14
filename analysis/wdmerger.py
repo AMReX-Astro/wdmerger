@@ -1117,11 +1117,24 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     matplotlib.rcParams.update({'font.size': 20})
 
+    # Save as EPS
+
     plt.savefig(output_filename)
 
     insert_commits_into_eps(output_filename, pltfile, 'plot')
 
-    fig.savefig(output_filename[:-4] + '.png', bbox_inches='tight')
+    # Save as PNG
+
+    file_base = output_filename[:-4]
+
+    fig.savefig(file_base + '.png', bbox_inches='tight')
+
+    # Convert to JPG
+
+    try:
+        os.system('convert ' + file_base + '.png ' + file_base + '.jpg')
+    except:
+        pass
 
     plt.close()
 
@@ -1188,3 +1201,52 @@ def slice_plot(field, output_filename, pltfile, idir=3):
     plt.savefig(output_filename[:-4] + '.png')
 
     plt.close()
+
+
+
+# Make a movie from the JPG files in a directory.
+
+def make_movie(output_dir, mpg_filename):
+    """Make an MPEG movie from the JPG files in a directory."""
+
+    import glob
+
+    curr_dir = os.getcwd()
+
+    os.chdir(output_dir)
+
+    # Assume that we can sort them chronologically with a standard
+    # alphanumeric sort.
+
+    jpg_list = sorted(glob.glob('*.jpg'))
+
+    # Exclude any existing symbolic links.
+
+    jpg_list = filter(lambda jpg: 'link' not in jpg, jpg_list)
+
+    # Make a list of files indexed by monotonically increasing integers.
+
+    idx = 0
+
+    for jpg in jpg_list:
+
+        idx_str = '{:05d}'.format(idx)
+        link_name = 'link_' + idx_str + '.jpg'
+
+        try:
+            os.system('rm -f ' + link_name)
+            os.system('ln -s ' + jpg + ' ' + link_name)
+        except:
+            pass
+
+        idx += 1
+
+    os.chdir(curr_dir)
+
+    try:
+        os.system('ffmpeg -i ' + output_dir + 'link_\%05d.jpg ' + mpg_filename)
+    except:
+        print "Error: could not successfully make a movie with ffmpeg."
+        pass
+
+    os.system('rm -f link_*.jpg')
