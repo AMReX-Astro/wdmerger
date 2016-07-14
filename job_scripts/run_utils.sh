@@ -2056,7 +2056,7 @@ function compile_in_job_directory {
 
   if [ ! -e $1/$compile_dir/$CASTRO ]; then
 
-      echo "Locally compiling the executable in directory " $compile_dir"."
+      echo "Locally compiling the executable in directory "$1/$compile_dir"."
 
       cd $1/$compile_dir
       make -j8 $(compile_options) &> compile.out
