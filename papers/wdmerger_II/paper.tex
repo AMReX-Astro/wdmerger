@@ -96,9 +96,20 @@
 % Abstract
 %==========================================================================
 \begin{abstract}
-We consider the collisions of white dwarfs as possible progenitors of Type Ia 
-supernovae.
-
+Collisions of white dwarfs are a subset of white dwarf mergers that occur
+when the stars approach each other nearly head-on. These have the potential
+for explosive nucleosynthesis, leading to a thermonuclear detonation that
+disrupts both stars, possibly causing a Type Ia supernova. Simulation of
+these events is challenging due to the rapid evolution of the nuclear burning,
+posing numerical challenges related to both spatial and temporal resolution.
+In this study we explore a number of the algorithms that affect the outcome
+of reacting hydrodynamics simulations that lead to explosive burning and
+address the question of what needs to be done to ensure that these simulations
+are properly converged. We find that achieving a converged simulation in the
+code \castro\ is non-trivial and requires demanding computational resources.
+We also discuss the quantities obtained from our simulations that bear relevance
+to observations of these events, particularly production of nickel-group
+elements and gravitational wave emission during the collision.
 \end{abstract}
 \keywords{supernovae: general - white dwarfs}
 
@@ -131,10 +142,30 @@ kushnir:2013,papish:2015,holcomb:2015}. Head-on collisions rapidly convert a sig
 amount of kinetic energy into thermal energy in a small region and thus set up the
 conditions for a thermonuclear detonation, and these previous simulations have indeed
 found that detonations occur and convert a large amount of carbon/oxygen material into
-iron-group elements.
+iron-group elements. These papers varied significantly in the hydrodynamic methods used
+(Lagrangian versus Eulerian methods), the methodology used for coupling nuclear
+reactions to the hydrodynamics (including variation in the number of isotopes in
+the nuclear network and in the evolution of the temperature), and the temporal and
+spatial resolution. Consequently they yielded estimates of production of nickel-group
+elements that varied significantly, leaving much uncertainty about how such an event
+would appear observationally and whether it bears any resemblance to a SN Ia.
 
-We consider the collisions of white dwarfs as possible progenitors of Type Ia 
-supernovae, using the code \castro\ \cite{castro}.
+In this paper we seek to add another view to the problem using the reactive hydrodynamics
+code \castro\ \citep{castro} and its underlying adaptive mesh refinement library \boxlib.
+This paper is a follow-up to \citet{wdmergerI} (hereafter, Paper I), which established
+the hydrodynamic methdology we are using to simulate mergers of white dwarfs.
+Paper I left out a discussion of the methodology we are using for nuclear reactions,
+and we fill out this information below in \autoref{sec:numericalmethods}. While it is
+our aim is to add information to the discussion about collisions of white dwarfs,
+we also view this work as a methodology study that asks to what extent we
+can trust the reliability of explosive thermonuclear reactions in Eulerian
+hydrodynamics simulations. As a corollary, to what extent does static and/or
+adaptive mesh refinement resolve the types of problems that occur in low resolution
+simulations? We discuss this in Section \autoref{sec:resolution}, though first
+we examine the response of the code to a number of user-specified parameters in
+\autoref{sec:parameters}. We then close with our thoughts on what our work implies
+for the broader astrophysical reacting hydrodynamics literature in \autoref{sec:conclusion}.
+
 
 
 %==========================================================================
@@ -171,7 +202,7 @@ by the effective loss or gain of seven $\alpha$-particles. This type of network
 was used by \citet{rosswog:2009} for their collision calculations in SPH.
 
 Next is \aproxthirteen\ \citep{timmes:1999,timmes:2000}. This includes
-all of the isotopes of \isoseven, and all of the $alpha$-chain particles between
+all of the isotopes of \isoseven, and all of the $\alpha$-chain particles between
 silicon and nickel (${}^{32}$S, ${}^{36}$Ar, ${}^{40}$Ca, ${}^{44}$Ti, ${}^{48}$Cr,
 and ${}^{52}$Fe). This network was used by \citet{hawley:2012} and \citet{raskin:2010}.
 \citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a very similar network
@@ -735,13 +766,14 @@ In contrast, the suppressed burning mode (modelled after \citet{kushnir:2013}) p
 $5 \times 10^{-4}\ \msolar$ of $^{56}$Ni. In a suppressed burn, we ensure that at every evaluation
 of the right-hand-side vector for the nuclear network integration, all quantities are scaled by the
 same factor, with this factor ensuring that the energy release is not large enough to permit a
-spurious detonation. This seems to be equivalent to the method used in \citet{kushnir:2013}. Yet
-we do not reproduce their claim that this fix is sufficient to ensure that the detonation occurs
-at the proper and time and place; indeed, the burning is quenched until very late in the collision,
-and the detonation barely forms at all. The suppression used therefore seems to be far too strong
-to permit an actual detonation when one should occur. We have also checked the same method at higher
-resolution and found that the nickel produced is significantly smaller than for a self-heating
-calculation at the same resolution.
+spurious detonation. This seems to be equivalent to the method used in \citet{kushnir:2013}. We
+reproduce their claim that this suppresses the detonation until later in the collision, after more
+material has approached the stalled shock. We also observe that, for a given resolution, the simultaneous
+detonations occur slightly outside the initial contact point, near the edges of the stalled shock. They
+establish as the main source of error in simulations that produce too little nickel. However, we find
+that the resulting detonations are not strong enough to convert a significant amount of material to NSE
+conditions; instead, only QSE conditions are reached near the center of the collision, leaving a significant
+amount of silicon and sulfur on the domain that is not further processed.
 
 
 
@@ -802,6 +834,33 @@ and a non-uniform interior structure.
 %==========================================================================
 \section{Gravitational Wave Signature}
 \label{sec:gwsignature}
+
+Paper I established our methodology for calculating the gravitational wave signature
+of a white dwarf merger using the post-Newtonian framework of \citet{blanchet:1990}.
+While a typical merger event has a characteristic profile including a chirp and ringdown,
+white dwarf collisions feature sharply different gravitational wave signatures, and
+hence may be interesting targets for observation for future low frequency gravitational
+wave detectors \citep{eLISA}. The main caveat for these events compared to events
+such as neutron star mergers is that due to the event being inherently less energetic,
+the typical distance scale on which we could observe a white dwarf merger or collision
+is the size of our own galaxy, with extragalactic events being unlikely to be
+detected, at least with the first generation of space-based gravitational wave
+detectors. \autoref{fig:gw_signal} is a plot of the gravitational wave strain for
+the representative case of \autoref{sec:parameters}. We use the convention that the
+absolute scale of the strain is normalized to a distance of 10 kpc (the strain scales
+inversely with the source distance). The shape of the profile agrees qualitatively
+with the gravitational wave signature predicted by \cite{loren-aguilar:2009:collisions},
+though because they used an unequal mass pair the results do not match exactly.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.425]{plots/gw_signal}
+  \caption{Gravitational wave strain for the head-on collision of two $0.64\ \msolar$
+           white dwarfs. The strain is normalized to a source distance of 10 kpc.
+           \label{fig:gw_signal}}
+\end{figure}
+
+%TODO: use a 3D collision for this?
 
 
 
