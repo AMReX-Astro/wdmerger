@@ -781,6 +781,25 @@ amount of silicon and sulfur on the domain that is not further processed.
 \subsection{Impact Parameter}
 \label{sec:parameters:impactparameter}
 
+As the impact parameter varies for a head-on collision, the cross-section of the contact
+zone between the two stars varies in size and geometry. In \autoref{fig:impact_parameter}, we
+see the dependence of the nickel production on the impact parameter $b$, measured in units
+of the WD radius. This test was performed using the 3D setup at our usual base resolution of
+400 km. For computational efficiency, timestep limiting based on burning was disabled.
+We sampled at $b = 0.0$, $0.01$, $0.02$, $0.03$, $0.04$, $0.05$, and then increasing
+in increments of $0.05$. There is no clear pattern in the data, with the nickel production varying
+significantly even for small changes in the impact parameter. The typical value is around $0.15\ \msolar$.
+It is worth nothing that for $b = 0.0$ the nickel production is a bit smaller for the 3D simulation
+than its equivalent 2D simulation, the default case described above.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.425]{plots/impact_parameter}
+  \caption[Nickel production dependence on the impact parameter]
+          {$^{56}$Ni generation as a function of the initial WD impact parameter for
+           a $0.64\ \msolar$ + $0.64\ \msolar$ WD collision.
+           \label{fig:impact_parameter}}
+\end{figure}
 
 
 \subsection{Other Parameters}
@@ -802,7 +821,7 @@ in the implied temperature), but the amount of energy injected by the collision 
 large that the final result is insensitive to whatever the initial temperature of the
 WDs were. We also checked whether there was any consequence of our choice to disable the
 burning for small enough $\rho$ and $T$. Lowering the minimum $\rho$ for reactions to
-$10^0\ \text{g / cm}^{-3}$ from $10^6\ \text{g / cm}^{-3}$ had a negligible effect,
+$10^0\ \text{g cm}^{-3}$ from $10^6\ \text{g cm}^{-3}$ had a negligible effect,
 and varying the minimum $T$ for reactions from $2 \times 10^{7}\ \text{K}$ to
 $4 \times 10^{8}\ \text{K}$ also had no meaningful effect.
 
