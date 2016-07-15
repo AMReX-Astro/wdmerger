@@ -787,11 +787,21 @@ subroutine update_center(time) bind(C,name='update_center')
      center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
      center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
 
-  else
+  else if (dim .eq. 2) then
 
      center(1) = problo(1)
      center(2) = problo(2) + center_fracz * (probhi(2) - problo(2))
      center(3) = ZERO
+
+  else if (dim .eq. 1) then
+
+     center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
+     center(2) = ZERO
+     center(3) = ZERO
+
+  else
+
+     call bl_error("Error: unknown dim in subroutine update_center.")
 
   endif
 

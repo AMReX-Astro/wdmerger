@@ -199,14 +199,16 @@ Castro::sum_integrated_quantities ()
 	rho_phirot += ca_lev.volProductSum("density", "phiRot", time, local_flag);
 #endif
 
+#ifdef GRAVITY
+#if (BL_SPACEDIM > 1)
       // Gravitational wave signal. This is designed to add to these quantities so we can send them directly.
       ca_lev.gwstrain(time, h_plus_1, h_cross_1, h_plus_2, h_cross_2, h_plus_3, h_cross_3, local_flag);
+#endif
+#endif
 
       // Integrated mass of all species on the domain.
       for (int i = 0; i < NumSpec; i++)
 	species_mass[i] += ca_lev.volWgtSum("rho_" + species_names[i], time, local_flag) / M_solar;
-
-      MultiFab& S_new = ca_lev.get_new_data(State_Type);
 
     }
 

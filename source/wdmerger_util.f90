@@ -18,11 +18,6 @@ contains
 
     integer :: init_in
 
-    ! Safety check: we can't run this problem in one dimension.
-    if (dim .eq. 1) then
-       call bl_error("Cannot run wdmerger problem in one dimension. Exiting.")
-    endif
-
     init = init_in
 
     ! Read in the namelist to set problem parameters.
@@ -98,6 +93,11 @@ contains
 
     if (collision_impact_parameter > 1.0) then
        call bl_error("Impact parameter must be less than one in our specified units.")
+    endif
+
+    ! Safety check: we can't run most problems in one dimension.
+    if (dim .eq. 1 .and. (.not. (problem .eq. 0 .or. problem .eq. 4))) then
+       call bl_error("Can only run a collision or freefall in 1D. Exiting.")
     endif
 
     ! Don't do a merger in 2D.
@@ -407,6 +407,7 @@ contains
     use math_module, only: cross_product
     use binary_module, only: get_roche_radii
     use problem_io_module, only: ioproc
+    use bl_error_module, only: bl_error
 
     implicit none
 
@@ -428,11 +429,21 @@ contains
        center(2) = problo(2) + center_fracy * (probhi(2) - problo(2))
        center(3) = problo(3) + center_fracz * (probhi(3) - problo(3))
 
-    else
+    else if (dim .eq. 2) then
 
        center(1) = problo(1)
        center(2) = problo(2) + center_fracz * (probhi(2) - problo(2))
        center(3) = ZERO
+
+    else if (dim .eq. 1) then
+
+       center(1) = problo(1) + center_fracx * (probhi(1) - problo(1))
+       center(2) = ZERO
+       center(3) = ZERO
+
+    else
+
+       call bl_error("Error: unknown value for dim in subroutine binary_setup.")
 
     endif
 
@@ -678,19 +689,19 @@ contains
 
     ! Safety check: make sure the stars are actually inside the computational domain.
 
-    if ( ( center_P_initial(1) - model_P % radius .lt. problo(1) .and. dim .eq. 3 ) .or. &
+    if ( ( center_P_initial(1) - model_P % radius .lt. problo(1) .and. dim .ne. 2 ) .or. &
          center_P_initial(1) + model_P % radius .gt. probhi(1) .or. &
-         center_P_initial(2) - model_P % radius .lt. problo(2) .or. &
-         center_P_initial(2) + model_P % radius .gt. probhi(2) .or. &
+         ( center_P_initial(2) - model_P % radius .lt. problo(2) .and. dim .ge. 2 ) .or. &
+         ( center_P_initial(2) + model_P % radius .gt. probhi(2) .and. dim .ge. 2 ) .or. &
          ( center_P_initial(3) - model_P % radius .lt. problo(3) .and. dim .eq. 3 ) .or. &
          ( center_P_initial(3) + model_P % radius .gt. probhi(3) .and. dim .eq. 3 ) ) then
        call bl_error("Primary does not fit inside the domain.")
     endif
 
-    if ( ( center_S_initial(1) - model_S % radius .lt. problo(1) .and. dim .eq. 3 ) .or. &
+    if ( ( center_S_initial(1) - model_S % radius .lt. problo(1) .and. dim .ne. 2 ) .or. &
          center_S_initial(1) + model_S % radius .gt. probhi(1) .or. &
-         center_S_initial(2) - model_S % radius .lt. problo(2) .or. &
-         center_S_initial(2) + model_S % radius .gt. probhi(2) .or. &
+         ( center_S_initial(2) - model_S % radius .lt. problo(2) .and. dim .ge. 2 ) .or. &
+         ( center_S_initial(2) + model_S % radius .gt. probhi(2) .and. dim .ge. 2 ) .or. &
          ( center_S_initial(3) - model_S % radius .lt. problo(3) .and. dim .eq. 3 ) .or. &
          ( center_S_initial(3) + model_S % radius .gt. probhi(3) .and. dim .eq. 3 ) ) then
        call bl_error("Secondary does not fit inside the domain.")

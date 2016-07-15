@@ -27,12 +27,6 @@ endif
 
 DIM ?= 3
 
-ifeq ($(DIM), 1)
-
-  $(error Error: wdmerger is not configured to run in only one dimension. Please use DIM = 2 or DIM = 3)
-
-endif
-
 USE_GRAV ?= TRUE
 USE_REACT ?= TRUE
 USE_MODELPARSER ?= TRUE

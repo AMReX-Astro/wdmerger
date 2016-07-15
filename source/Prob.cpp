@@ -175,16 +175,6 @@ Castro::problem_post_timestep()
       vel_s[i] = foo_sum[i+25];
     }
 
-    if (mass_p > 0.0 && dt > 0.0)
-      mdot_p = (mass_p - old_mass_p) / dt;
-    else
-      mdot_p = 0.0;
-
-    if (mass_s > 0.0 && dt > 0.0)
-      mdot_s = (mass_s - old_mass_s) / dt;
-    else
-      mdot_s = 0.0;
-
     // Max reductions
 
     const int nfoo_max = 3;
@@ -233,6 +223,23 @@ Castro::problem_post_timestep()
       }
 
     }
+
+    // For 1D we force the masses to remain constant
+
+#if (BL_SPACEDIM == 1)
+    mass_p = old_mass_p;
+    mass_s = old_mass_s;
+#endif
+
+    if (mass_p > 0.0 && dt > 0.0)
+      mdot_p = (mass_p - old_mass_p) / dt;
+    else
+      mdot_p = 0.0;
+
+    if (mass_s > 0.0 && dt > 0.0)
+      mdot_s = (mass_s - old_mass_s) / dt;
+    else
+      mdot_s = 0.0;
 
     // Free-fall timescale ~ 1 / sqrt(G * rho_avg}
 
@@ -344,6 +351,7 @@ Castro::problem_post_timestep()
     // Some of the problems might have stopping conditions that depend on
     // the state of the simulation; those are checked here.
 
+#if (BL_SPACEDIM > 1)
     if (use_stopping_criterion) {
 
       if (problem == 0) {
@@ -448,6 +456,7 @@ Castro::problem_post_timestep()
       }
 
     }
+#endif
 
     // Is the job done? If so, signal this to BoxLib.
 
