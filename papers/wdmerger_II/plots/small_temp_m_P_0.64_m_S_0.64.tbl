@@ -1,0 +1,23 @@
+% CASTRO git hash: 00f15c01d852aa0abfe863460a2ad069791406b5
+% BoxLib git hash: 5873450c1470c09a0045fd61f1fd7d6fa3fb2ea2
+% Microphysics git hash: 674fed9c6f3dbd3f04c37fb8df392423363db6e4
+% wdmerger git hash: a50eca30c1cc56ba44d1758da5a2ee64c4db0c51
+%
+% Summary of the effect of the temperature floor 
+% castro.small_temp on 56Ni yield in a 2D white 
+% dwarf collision.
+% The first column is the temperature floor and the 
+% second is the final nickel mass produced, in solar masses.
+%
+\begin{deluxetable}{cc}
+  \tablecaption{ Temperature Floor \label{table:smalltemp} }
+  \newlength{\tblsmalltemppad}
+  \setlength{\tblsmalltemppad}{0.325in}
+  \tablehead{ \colhead{ \hspace{\tblsmalltemppad}$T_{\text{floor}}$\hspace{\tblsmalltemppad} } & \colhead{ \hspace{\tblsmalltemppad}Max. $^{56}$Ni (${M_{\odot}}$)\hspace{\tblsmalltemppad} } }
+  \startdata
+  \hspace{\tblsmalltemppad}1.0e5\hspace{\tblsmalltemppad} & \hspace{\tblsmalltemppad}0.197\hspace{\tblsmalltemppad} \\
+  \hspace{\tblsmalltemppad}1.0e6\hspace{\tblsmalltemppad} & \hspace{\tblsmalltemppad}0.199\hspace{\tblsmalltemppad} \\
+  \hspace{\tblsmalltemppad}1.0e7\hspace{\tblsmalltemppad} & \hspace{\tblsmalltemppad}0.193\hspace{\tblsmalltemppad}
+  \enddata
+  \tablecomments{ Maximum $^{56}$Ni mass produced as a function of the temperature floor. }
+\end{deluxetable}
