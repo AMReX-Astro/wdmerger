@@ -185,7 +185,7 @@ Castro::problem_post_timestep()
     foo_max[1] = rho_curr_max;
     foo_max[2] = ts_te_curr_max;
 
-    ParallelDescriptor::ReduceRealSum(foo_max, nfoo_max);
+    ParallelDescriptor::ReduceRealMax(foo_max, nfoo_max);
 
     T_curr_max     = foo_max[0];
     rho_curr_max   = foo_max[1];
