@@ -149,6 +149,7 @@ the nuclear network and in the evolution of the temperature), and the temporal a
 spatial resolution. Consequently they yielded estimates of production of nickel-group
 elements that varied significantly, leaving much uncertainty about how such an event
 would appear observationally and whether it bears any resemblance to a SN Ia.
+See Table 4 of \cite{garcia-senz:2013} for a summary of the outcome of many of these studies.
 
 In this paper we seek to add another view to the problem using the reactive hydrodynamics
 code \castro\ \citep{castro} and its underlying adaptive mesh refinement library \boxlib.
@@ -838,25 +839,30 @@ and a non-uniform interior structure.
 Paper I established our methodology for calculating the gravitational wave signature
 of a white dwarf merger using the post-Newtonian framework of \citet{blanchet:1990}.
 While a typical merger event has a characteristic profile including a chirp and ringdown,
-white dwarf collisions feature sharply different gravitational wave signatures, and
+white dwarf collisions are noticeably distinct in their gravitational wave signatures, and
 hence may be interesting targets for observation for future low frequency gravitational
-wave detectors \citep{eLISA}. The main caveat for these events compared to events
+wave detectors \citep{eLISA}. The strain increases monotonically for a collision until impact,
+instead of oscillating back and forth at a characteristic frequency as for mergers.
+The main caveat for these events compared to events
 such as neutron star mergers is that due to the event being inherently less energetic,
 the typical distance scale on which we could observe a white dwarf merger or collision
 is the size of our own galaxy, with extragalactic events being unlikely to be
 detected, at least with the first generation of space-based gravitational wave
 detectors. \autoref{fig:gw_signal} is a plot of the gravitational wave strain for
-the representative case of \autoref{sec:parameters}. We use the convention that the
+the representative case of \autoref{sec:parameters}, where we disabled the normal stopping
+criterion and let the simulatin run until $t = 20$. We use the convention that the
 absolute scale of the strain is normalized to a distance of 10 kpc (the strain scales
 inversely with the source distance). The shape of the profile agrees qualitatively
-with the gravitational wave signature predicted by \cite{loren-aguilar:2009:collisions},
-though because they used an unequal mass pair the results do not match exactly.
+with the gravitational wave signatures predicted by \cite{loren-aguilar:2009:collisions}
+and \cite{garcia-senz:2013}.
 
 \begin{figure}
   \centering
   \includegraphics[scale=0.425]{plots/gw_signal}
-  \caption{Gravitational wave strain for the head-on collision of two $0.64\ \msolar$
-           white dwarfs. The strain is normalized to a source distance of 10 kpc.
+  \caption{Gravitational wave strain $h_+$ for the head-on collision of two $0.64\ \msolar$
+           white dwarfs. The strain is normalized to a source distance of 10 kpc. We do not
+           show the other polarization, $h_\times$, as for an equal-mass head-on collision it vanishes
+           identically.
            \label{fig:gw_signal}}
 \end{figure}
 
