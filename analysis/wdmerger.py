@@ -1,8 +1,6 @@
 import os
 import numpy as np
 import string
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import AxesGrid
 
 #
 # Returns the current git hash of the wdmerger repo.
@@ -920,6 +918,7 @@ def get_parameter_list(directory):
 def rho_T_scatterplot(output_filename, pltfile):
 
     import yt
+    import matplotlib.pyplot as plt
 
     ds = yt.load(pltfile)
 
@@ -1033,6 +1032,7 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     import yt
     import matplotlib
+    import matplotlib.pyplot as plt
     from yt.visualization.api import get_multi_plot
     from matplotlib.colors import LogNorm
 
@@ -1152,6 +1152,7 @@ def slice_plot(field, output_filename, pltfile, idir=3):
     """Create an axis-aligned slice plot over a given field with yt."""
 
     import yt
+    import matplotlib.pyplot as plt
 
     ds = yt.load(pltfile)
 
@@ -1256,3 +1257,69 @@ def make_movie(output_dir, mpg_filename):
         pass
 
     os.system('rm -f link_*.jpg')
+
+
+
+def vol_render_density(outfile, ds):
+    """Volume render the density given a yt dataset."""
+
+    import yt
+    import matplotlib
+    matplotlib.use('agg')
+    import numpy as np
+    from yt.visualization.volume_rendering.api import \
+        Scene, \
+        Camera, \
+        VolumeSource
+    import matplotlib.pyplot as plt
+
+    ds.periodicity = (True, True, True)
+
+    cm = "coolwarm"
+
+    field = ('boxlib', 'density')
+    ds._get_field_info(field).take_log = True
+
+    sc = Scene()
+
+
+    # add a volume: select a sphere
+    vol = VolumeSource(ds, field=field)
+    sc.add_source(vol)
+
+
+    # transfer function
+    vals = [-1, 0, 1, 2, 3, 4, 5, 6, 7]
+    sigma = 0.1
+
+    tf =  yt.ColorTransferFunction((min(vals), max(vals)))
+
+    tf.clear()
+    cm = "coolwarm"
+    cm = "spectral"
+    for v in vals:
+        if v < 3:
+            alpha = 0.1
+        else:
+            alpha = 0.5
+        tf.sample_colormap(v, sigma**2, colormap=cm, alpha=alpha)
+
+    sc.get_source(0).transfer_function = tf
+
+    cam = sc.add_camera(ds, lens_type="perspective")
+    cam.resolution = (1920, 1080)
+    cam.position = 1.5*ds.arr(np.array([0.0, 5.e9, 5.e9]), 'cm')
+
+    # look toward the center -- we are dealing with an octant
+    center = 0.5*(ds.domain_left_edge + ds.domain_right_edge)
+    normal = (center - cam.position)
+    normal /= np.sqrt(normal.dot(normal))
+
+    cam.switch_orientation(normal_vector=normal,
+                           north_vector=[0., 0., 1.])
+    cam.set_width(ds.domain_width)
+
+    sc.camera = cam
+
+    sc.render()
+    sc.save(outfile, sigma_clip=6.0)
