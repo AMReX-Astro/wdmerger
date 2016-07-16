@@ -827,7 +827,13 @@ def is_dir_done(directory):
 
     done_status = 0
 
-    if os.path.isfile(directory + '/' + checkpoint + '/jobIsDone'):
+    if os.path.isfile(directory + '/jobIsDone'):
+
+        # The user has explicitly signalled that the simulation is complete; we can stop here.
+
+        done_status = 1
+
+    elif os.path.isfile(directory + '/' + checkpoint + '/jobIsDone'):
 
         # The problem has explicitly signalled that the simulation is complete; we can stop here.
 

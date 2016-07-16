@@ -514,7 +514,13 @@ function is_dir_done {
 
   done_status=0
 
-  if [ -e "$directory/$checkpoint/jobIsDone" ]; then
+  if [ -e "$directory/jobIsDone" ]; then
+
+      # The user has explicitly signalled that the simulation is complete; we can stop here.
+
+      done_status=1
+
+  elif [ -e "$directory/$checkpoint/jobIsDone" ]; then
 
       # The problem has explicitly signalled that the simulation is complete; we can stop here.
 
