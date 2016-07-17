@@ -109,7 +109,6 @@
   use_eos_coulomb = T
   eos_input_is_constant = T
 
-  jacobian = 1
   burning_mode = 1
 
   do_constant_volume_burn = T
