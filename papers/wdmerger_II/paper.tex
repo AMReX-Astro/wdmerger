@@ -787,10 +787,17 @@ see the dependence of the nickel production on the impact parameter $b$, measure
 of the WD radius. This test was performed using the 3D setup at our usual base resolution of
 400 km. For computational efficiency, timestep limiting based on burning was disabled.
 We sampled at $b = 0.0$, $0.01$, $0.02$, $0.03$, $0.04$, $0.05$, and then increasing
-in increments of $0.05$. There is no clear pattern in the data, with the nickel production varying
-significantly even for small changes in the impact parameter. The typical value is around $0.15\ \msolar$.
+in increments of $0.05$. Relative to $b = 0$, there is a slight increase in nickel production for small
+but non-zero $b$, which then declines with increasing $b$ except for a bump at $b = 0.5$.
+For $b \ge 0.7$, no detonation forms at all, and the merged object remains a stable C/O WD
+with $M = 1.2\ \msolar$ at least until $t = 100$.
+
 It is worth nothing that for $b = 0.0$ the nickel production is a bit smaller for the 3D simulation
-than its equivalent 2D simulation, the default case described above.
+than its equivalent 2D simulation, the default case described above. There are differences both in
+the size of the timestep (which as we saw in \autoref{sec:parameters:timestepping} plays a role in
+the total nickel production) and in the discretized nature of the stars; the assumption of perfect
+azimuthal symmetry inherent to the 2D simulation breaks down for the 3D simulation, especially at
+low resolution, since the zones are rectangular.
 
 \begin{figure}
   \centering
