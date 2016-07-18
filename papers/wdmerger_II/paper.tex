@@ -735,6 +735,32 @@ in the nuclear reaction network. In particular we compare the \isoseven, \aproxt
 \aproxnineteen, and \aproxtwentyone\ reaction networks. In all cases we run
 the same problem setup, and the unused isotopes (everything but carbon and oxygen)
 have their mass fractions in every zone set to a negligibly small number at initialization.
+\autoref{table:networks} lists the $^{56}$Ni generation and total energy generation (determined
+by subtracting the initial energy from the final energy). The energy generated in the latter
+three cases agrees remarkably well, with a less than $0.5\%$ difference. \aproxthirteen\
+over-generates nickel at the $2\%$ level compared to the networks with more isotopes, a reasonably
+small difference. On the other hand, agreement with \isoseven\ is not very strong, as \isoseven\
+generates far too much nickel and far too little energy. Nevertheless while the quantitative
+agreement is not there, the collision looks qualitatively similar compared to the evolution with
+more complicated networks, so while \isoseven\ should not be used for predicting nucleosynthetic
+yields in production science runs, it may still be fair for use in proof-of-concept studies.
+
+\input{plots/networks_m_P_0.64_m_S_0.64.tbl}
+
+\isoseven\ also has the peculiar property that after the detonation had passed through the WDs,
+the region at the central contact point did not fully stop burning, yielding a quasistatic energy
+release that added a couple of million extra timesteps to the simulation (in addition to the few
+hundred it normally takes) before we manually terminated the run. The full effect of these additional
+timesteps only amounted to a $10^{-4}$ relative change in the nickel production. By examining the behavior
+of zones near the collision point, we discovered the reason for this. The zones in question have a composition that
+is approximately $98\%$ Ni and $2\%$ He by mass. For this combination, a direct evaluation of the RHS in
+comparison to, say, \aproxthirteen, reveals that $dX/dt$ for these isotopes is off by many orders of magnitude.
+This is a consequence of the choice inherent to the network to assume that the isotopes in between $^{28}$Si
+and $^{56}$Ni are in an effective equilibrium state. So an advective update that yields even a small change
+to the abundances in the zone will very strongly knock the zone out of equilibrium with respect to the burn
+step following the advective update. This then causes the burning timestep limiter to kick in and make the
+timestep very small so that the advective changes do not cause such strong effects on the burning equilibrium.
+This effect is an argument against the use of \isoseven\ for explosive, non-hydrostatic burning problems.
 
 
 

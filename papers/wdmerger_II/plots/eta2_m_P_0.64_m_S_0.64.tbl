@@ -17,10 +17,10 @@
   \startdata
   \hspace{\tbleta2pad}0.00\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.199\hspace{\tbleta2pad} \\
   \hspace{\tbleta2pad}0.0001\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.193\hspace{\tbleta2pad} \\
-  \hspace{\tbleta2pad}0.001\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.194\hspace{\tbleta2pad} \\
-  \hspace{\tbleta2pad}0.01\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.197\hspace{\tbleta2pad} \\
-  \hspace{\tbleta2pad}0.05\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.193\hspace{\tbleta2pad} \\
-  \hspace{\tbleta2pad}0.10\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.195\hspace{\tbleta2pad}
+  \hspace{\tbleta2pad}0.001\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.195\hspace{\tbleta2pad} \\
+  \hspace{\tbleta2pad}0.01\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.193\hspace{\tbleta2pad} \\
+  \hspace{\tbleta2pad}0.05\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.194\hspace{\tbleta2pad} \\
+  \hspace{\tbleta2pad}0.10\hspace{\tbleta2pad} & \hspace{\tbleta2pad}0.197\hspace{\tbleta2pad}
   \enddata
   \tablecomments{ Maximum $^{56}$Ni mass produced as a function of the dual energy formalism parameter $\eta_2$. }
 \end{deluxetable}
