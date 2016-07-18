@@ -502,8 +502,8 @@ Note that we have found that with this option enabled, it typically takes
 many more timesteps to complete a burn than in self-heating mode.
 
 Regardless of whether the suppressed burning mode works for this
-particular problem, it is not physical, so in general we have
-taken a different approach. If we insist that we cannot
+particular problem, it is not physical, so we include for
+consideration a different approach. If we insist that we cannot
 cannot directly control the energy injection timescale, we 
 must find a way to alter the sound-crossing timescale. 
 We can achieve this by adding levels of refinement in 
@@ -522,23 +522,31 @@ We choose a value of two for both the number of zones in the
 buffer region and the number of steps in between regrids,
 for all simulations in this paper.
 
-While this approach may add several AMR levels 
-to a simulation, we agree with \citet{kushnir:2013} that 
-solving this numerical instability is crucial to avoiding
-early, unphysical detonations, and so it is unavoidable
+We agree with \citet{kushnir:2013} that solving this numerical
+instability is crucial to avoiding unphysical detonations.
+A simulation that does not solve this problem will not obtain
+the correct amount and will not converge properly with resolution.
+This may justify the addition of many AMR levels to the domain
 if a correct evaluation of the burning phase is desired.
-A simulation that does not solve this problem in this way
-(or some analogous manner) will not obtain the correct amount 
-of burning, and will not converge properly with resolution. 
-Fortunately, the regions where this criterion is not satisfied 
-are fairly localized on the grid, so the amount of additional 
-computational work is not insurmountable for a single simulation.
-However, this level of accuracy may make a parameter study of
-the problem challenging given current computational resources.
-When resources are limited, one can still use this method and set a
-limit on the number of levels of refinement possible in the simulation,
-so that the refinement will still go in the right places but may not
-refine all of the way to the regime of guaranteed stability. 
+Even if one cannot afford the full resolution required by this
+AMR criterion, and chooses to limit the number of levels to some
+predetermined maximum based on a constraint of computing time,
+the added resolution will still go to the most-needed places.
+However, a significant drawback to this approach is that it
+does not turn on until after an unstable burning region has
+been generated, so this AMR criterion cannot help in the case
+where a spurious detonation begins in a single timestep on the coarse
+grid, though it will kick in immediately after that timestep
+to resolve the regions where the detonation has occurred.
+A possible remedy to be explored in future work is to add
+refinement pre-emptively in regions where the ratio $t_s / t_e$
+approaches $f_{s}$ but does not yet exceed it. Another
+possibility for this case would be to track how many levels
+would have been needed to prevent the numerical detonation,
+based on the stability criterion, and reject the timestep and
+retry it from the starting state using that many levels of refinement.
+The ability to reject a timestep and retry it is functionality that
+we have recently added to \castro, so we may try this in future work.
 
 
 
@@ -900,25 +908,39 @@ such as neutron star mergers is that due to the event being inherently less ener
 the typical distance scale on which we could observe a white dwarf merger or collision
 is the size of our own galaxy, with extragalactic events being unlikely to be
 detected, at least with the first generation of space-based gravitational wave
-detectors. \autoref{fig:gw_signal} is a plot of the gravitational wave strain for
-the representative case of \autoref{sec:parameters}, where we disabled the normal stopping
-criterion and let the simulatin run until $t = 20$. We use the convention that the
-absolute scale of the strain is normalized to a distance of 10 kpc (the strain scales
-inversely with the source distance). The shape of the profile agrees qualitatively
-with the gravitational wave signatures predicted by \cite{loren-aguilar:2009:collisions}
-and \cite{garcia-senz:2013}.
+detectors.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.425]{plots/gw_signal}
-  \caption{Gravitational wave strain $h_+$ for the head-on collision of two $0.64\ \msolar$
-           white dwarfs. The strain is normalized to a source distance of 10 kpc. We do not
-           show the other polarization, $h_\times$, as for an equal-mass head-on collision it vanishes
-           identically.
-           \label{fig:gw_signal}}
+  \includegraphics[scale=0.425]{plots/gw_signal_2D}
+  \caption{Gravitational wave strains for the head-on collision of two $0.64\ \msolar$
+           white dwarfs. The strain is normalized to a source distance of 10 kpc.
+           \label{fig:gw_signal_2D}}
 \end{figure}
 
-%TODO: use a 3D collision for this?
+\autoref{fig:gw_signal_2D} is a plot of the gravitational wave strain for
+the representative case of \autoref{sec:parameters} ($M_P = 0.64\ \msolar$, $M_S = 0.64\ \msolar$, $b = 0$),
+where we disabled the normal stopping criterion and let the simulation run until $t = 20$.
+We use the convention that the absolute scale of the strain is normalized to a distance
+of 10 kpc (the strain scales inversely with the source distance). We show the $+$ and $\times$
+polarizations for observers situated along the $x$, $y$, and $z$ axes (for the 2D case,
+this corresponds to the $z$, $R$, and $\phi$ axes, respectively, in the simulation).
+The shape of the profile agrees qualitatively with the gravitational wave signatures
+predicted by \cite{loren-aguilar:2009:collisions} and \cite{garcia-senz:2013}.
+\autoref{fig:gw_signal_3D} shows the strain prediction for a 3D collision event
+with $M_P = 0.8\ \msolar$, $M_S = 0.6\ \msolar$, and $b = 0.8$. This mass combination
+was chosen because \cite{loren-aguilar:2009:collisions} used the same combination for
+gravitational wave signal prediction, but we cannot replicate the large impact parameter
+they used on our simulation grid, so the detonation looks quite different than in their case.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.425]{plots/gw_signal_3D}
+  \caption{Gravitational wave strains for the off-center collision ($b = 0.8$) of
+           $0.8\ \msolar$ and $0.6\ \msolar$ WDs. The strain is normalized to a
+           source distance of 10 kpc.
+           \label{fig:gw_signal_3D}}
+\end{figure}
 
 
 
@@ -958,4 +980,3 @@ of the AstroBetter blog and wiki.
 \bibliography{../refs}
 
 \end{document}
-
