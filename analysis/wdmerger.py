@@ -1,13 +1,10 @@
-import os
-import numpy as np
-import string
-
 #
 # Returns the current git hash of the wdmerger repo.
 # Credit: http://stackoverflow.com/questions/14989858/get-the-current-git-hash-in-a-python-script
 #
 
 def get_wdmerger_git_commit_hash():
+    import os
     import subprocess
     cwd = os.getcwd()
     WDMERGER_HOME = os.getenv('WDMERGER_HOME')
@@ -24,6 +21,7 @@ def get_wdmerger_git_commit_hash():
 #
 
 def get_castro_dir():
+    import os
     CASTRO_HOME = os.getenv('CASTRO_HOME')
     return CASTRO_HOME
 
@@ -32,6 +30,8 @@ def get_castro_dir():
 # Return the last inputs file in a directory.
 
 def get_inputs_filename(directory):
+
+    import os
 
     # If there's a file named 'inputs', then this was a standard run.
 
@@ -56,6 +56,8 @@ def get_inputs_filename(directory):
 # Get a CASTRO variable value from an inputs file.
 
 def get_inputs_var(inputs, var):
+
+    import numpy as np
 
     # Read in all the inputs file lines and search for the one
     # that starts with the desired variable name.
@@ -99,6 +101,8 @@ def get_inputs_var(inputs, var):
 # Get a variable value from a probin file.
 
 def get_probin_var(probin, var):
+
+    import numpy as np
 
     # Read in all the probin file lines and search for the one
     # that starts with the desired variable name.
@@ -310,6 +314,8 @@ def insert_commits_into_txt(txt_file, data_file, data_file_type, comment_char='%
 
 def get_last_output(directory):
 
+    import os
+
     # Open up the standard output for analysis. It will be the numerically last file
     # starting with the designated output string.
 
@@ -330,6 +336,8 @@ def get_last_output(directory):
 #
 
 def get_last_checkpoint(directory):
+
+    import os
 
     if (not os.path.isdir(directory)):
         print "Error: directory " + directory + " does not exist in get_last_checkpoint()."
@@ -457,6 +465,8 @@ def get_column(col_name, diag_filename):
 
 def timing(output_filename):
 
+    import numpy as np
+
     # Read in the file and return the following data in arrays:
     # - The coarse timestep time for each step
     # - The plotfile time for each step
@@ -508,6 +518,8 @@ def timing(output_filename):
 # See, e.g., MAESTRO/Docs/managing_jobs/scaling.
 
 def boxlib_timing(output_filenames, data_filename):
+
+    import numpy as np
 
     data = open(data_filename, 'w')
 
@@ -648,6 +660,8 @@ def energy_momentum_diagnostics(output_filename):
 
 def get_plotfiles(directory, prefix='plt'):
 
+    import os
+
     # Check to make sure the directory exists.
 
     if (not os.path.isdir(directory)):
@@ -687,7 +701,9 @@ def get_plotfiles(directory, prefix='plt'):
 
 def get_star_locs(plotfile):
 
+    import numpy as np
     import yt
+    import string
 
     ds = yt.load(plotfile)
 
@@ -833,6 +849,8 @@ def get_time_from_plotfile(pltfile):
 
 def is_dir_done(directory):
 
+    import os
+
     if not os.path.isdir(directory):
         print "Error: directory " + directory + " does not exist in is_dir_done()."
         raise
@@ -948,6 +966,8 @@ def get_parameter_list(directory):
     Skip all directories that do not contain a completed simulation.
     """
 
+    import os
+
     param_list = []
     dirList = os.listdir(directory)
 
@@ -968,6 +988,7 @@ def get_parameter_list(directory):
 
 def rho_T_scatterplot(output_filename, pltfile):
 
+    import numpy as np
     import yt
     import matplotlib.pyplot as plt
 
@@ -1081,6 +1102,7 @@ def rho_T_sliceplot(output_filename, pltfile,
     n_temp_ticks: number of tick marks on the temperature colorbar.
     """
 
+    import numpy as np
     import yt
     import matplotlib
     import matplotlib.pyplot as plt
@@ -1176,22 +1198,13 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     # Save as EPS
 
-    plt.savefig(output_filename)
+    fig.savefig(output_filename, bbox_inches='tight')
 
     insert_commits_into_eps(output_filename, pltfile, 'plot')
 
-    # Save as PNG
+    # Save as JPG
 
-    file_base = output_filename[:-4]
-
-    fig.savefig(file_base + '.png', bbox_inches='tight')
-
-    # Convert to JPG
-
-    try:
-        os.system('convert ' + file_base + '.png ' + file_base + '.jpg')
-    except:
-        pass
+    fig.savefig(output_filename.replace('eps', 'jpg'), bbox_inches='tight')
 
     plt.close()
 
@@ -1264,60 +1277,45 @@ def slice_plot(field, output_filename, pltfile, idir=3):
 
 # Make a movie from the JPG files in a directory.
 
-def make_movie(output_dir, mpg_filename):
-    """Make an MPEG movie from the JPG files in a directory."""
+def make_movie(output_dir, jpg_list, mpg_filename):
+    """Make an MPEG movie from a list of JPG files."""
 
+    import os
+    import shutil
     import glob
 
-    curr_dir = os.getcwd()
+    cwd = os.getcwd()
 
-    os.chdir(output_dir)
+    # Copy them to a series of JPG files that are indexed by
+    # monotonically increasing integers (this is needed for ffmpeg).
 
-    # Assume that we can sort them chronologically with a standard
-    # alphanumeric sort.
+    in_list = [output_dir + '/temp_' + '{:05d}'.format(i) + '.jpg' for i, jpg in enumerate(jpg_list)]
 
-    jpg_list = sorted(glob.glob('*.jpg'))
-
-    # Exclude any existing symbolic links.
-
-    jpg_list = filter(lambda jpg: 'link' not in jpg, jpg_list)
-
-    # Make a list of files indexed by monotonically increasing integers.
-
-    idx = 0
-
-    for jpg in jpg_list:
-
-        idx_str = '{:05d}'.format(idx)
-        link_name = 'link_' + idx_str + '.jpg'
-
+    for jpg_new, jpg_old in zip(in_list, jpg_list):
         try:
-            os.system('rm -f ' + link_name)
-            os.system('ln -s ' + jpg + ' ' + link_name)
+            shutil.copyfile(jpg_old, jpg_new)
         except:
+            print "Error: source file " + jpg_old + " does not exist."
             pass
 
-        idx += 1
-
-    os.chdir(curr_dir)
-
     try:
-        os.system('ffmpeg -i ' + output_dir + 'link_\%05d.jpg ' + mpg_filename)
+        os.system('ffmpeg -i ' + output_dir + '/temp_\%05d.jpg -b:v 20M ' + mpg_filename)
     except:
         print "Error: could not successfully make a movie with ffmpeg."
         pass
 
-    os.system('rm -f link_*.jpg')
+    for jpg in in_list:
+        os.remove(jpg)
 
 
 
 def vol_render_density(outfile, ds):
     """Volume render the density given a yt dataset."""
 
+    import numpy as np
     import yt
     import matplotlib
     matplotlib.use('agg')
-    import numpy as np
     from yt.visualization.volume_rendering.api import \
         Scene, \
         Camera, \
