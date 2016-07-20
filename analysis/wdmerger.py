@@ -825,6 +825,7 @@ def get_castro_const(var_name):
 # Given a plotfile directory, return the simulation time.
 
 def get_time_from_plotfile(pltfile):
+    """Given a plotfile, return the simulation time."""
 
     f = open(pltfile + '/Header', 'r')
     
@@ -842,6 +843,22 @@ def get_time_from_plotfile(pltfile):
     time = float(line[:-1])
 
     return time
+
+
+
+# Given a list of plotfiles, return the plotfile whose simulation
+# time is closest to the desired time.
+
+def get_nearest_plotfile(pltfiles, time):
+    """Given a list of plotfiles, return the one whose time is nearest to a given target."""
+
+    import numpy as np
+
+    times = np.array([get_time_from_plotfile(pltfile) for pltfile in pltfiles])
+
+    idx = (np.abs(times - time)).argmin()
+
+    return pltfiles[idx]
 
 
 
