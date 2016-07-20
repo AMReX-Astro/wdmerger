@@ -1305,6 +1305,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
                           zlim = None, colormap = 'hot', scale_exp = 9,
                           nrows = 2, ncols = 2, axes_pad = 0.10,
                           zoom = 1.0,
+                          xticks = None, yticks = None,
                           rect = [0.03,0.075,0.92,0.90],
                           annotate_time = False):
     """Create an axis-aligned multi-panel slice plot over a given field with yt."""
@@ -1329,7 +1330,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
                     nrows_ncols = (nrows, ncols),
                     axes_pad = axes_pad,
                     label_mode = "L",
-                    share_all = True,
+                    share_all = False,
                     cbar_location = "right",
                     cbar_mode = "single",
                     cbar_size = "5%",
@@ -1357,7 +1358,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
             elif idir == 3:
                 axis = 'theta'
             else:
-                print "Unknown direction for slicing in slice_plot."
+                print "Unknown direction for slicing in multipanel_slice_plot."
                 exit
 
         elif dim == 3:
@@ -1369,12 +1370,12 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
             elif idir == 3:
                 axis = 'z'
             else:
-                print "Unknown direction for slicing in slice_plot."
+                print "Unknown direction for slicing in multipanel_slice_plot."
                 exit
 
         else:
 
-            print "Nonsense dataset dimensionality."
+            print "Error: Invalid dataset dimensionality."
             exit
 
         # Set up the SlicePlot
@@ -1404,11 +1405,15 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
 
         sp._setup_plots()
 
+        if xticks is not None:
+            grid.axes_all[i].set_xticks([xtick / 10.0**scale_exp for xtick in xticks])
+
+        if yticks is not None:
+            grid.axes_all[i].set_yticks([ytick / 10.0**scale_exp for ytick in yticks])
+
     plt.savefig(output_filename)
 
     insert_commits_into_eps(output_filename, pltfile, 'plot')
-
-    plt.savefig(output_filename[:-4] + '.png')
 
     plt.close()
 
