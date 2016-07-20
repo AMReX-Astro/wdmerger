@@ -1090,7 +1090,9 @@ def rho_T_scatterplot(output_filename, pltfile):
 def rho_T_sliceplot(output_filename, pltfile,
                     negate_left = False, scale_exp = 9, npix = 2000,
                     dens_range = [1.e-4, 1.e8], temp_range = [1.e7, 1.e10],
-                    n_dens_ticks = 4, n_temp_ticks = 4):
+                    x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9],
+                    n_dens_ticks = 4, n_temp_ticks = 4,
+                    domain_frac = 1.0):
     """Create a slice plot of rho and T using yt.
 
     negate_left: use negative tick marks for the left panel.
@@ -1117,7 +1119,8 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     buff = [npix, npix]
 
-    bounds = [ds.domain_left_edge[0], ds.domain_right_edge[0], ds.domain_left_edge[1], ds.domain_right_edge[1]]
+    bounds = [domain_frac * ds.domain_left_edge[0], domain_frac * ds.domain_right_edge[0], 
+              domain_frac * ds.domain_left_edge[1], domain_frac * ds.domain_right_edge[1]]
 
     if dim == 1:
         print "This slice plot routine is not implemented in one dimension."
@@ -1132,14 +1135,20 @@ def rho_T_sliceplot(output_filename, pltfile,
     dens_axis = axes[0][0]
     temp_axis = axes[0][1]
 
-    if negate_left:
-        dens_axis.set_xticks([-4.0, -2.0])
-    else:
-        dens_axis.set_xticks([4.0, 2.0])
-    dens_axis.set_yticks([-4.0, -2.0, 0.0, 2.0, 4.0])
+    scale = 10**scale_exp
 
-    temp_axis.set_xticks([0.0, 2.0, 4.0])
-    temp_axis.set_yticks([-4.0, -2.0, 0.0, 2.0, 4.0])
+    if negate_left:
+        dens_axis.set_xticks([-x_ticks[1] / scale, -x_ticks[0] / scale])
+    else:
+        dens_axis.set_xticks([x_ticks[1] / scale, x_ticks[0] / scale])
+    dens_axis.set_yticks([-y_ticks[1] / scale, -y_ticks[0] / scale, 
+                           0.0, 
+                           y_ticks[0] / scale,  y_ticks[1] / scale])
+
+    temp_axis.set_xticks([0.0, x_ticks[0] / scale, x_ticks[1] / scale])
+    temp_axis.set_yticks([-y_ticks[1] / scale, -y_ticks[0] / scale, 
+                           0.0, 
+                           y_ticks[0] / scale,  y_ticks[1] / scale])
 
     dens_axis.yaxis.tick_left()
     dens_axis.yaxis.set_label_position("left")
@@ -1152,8 +1161,6 @@ def rho_T_sliceplot(output_filename, pltfile,
     plots = []
 
     aspect = 1.0
-
-    scale = 10**scale_exp
 
     if negate_left:
         left_bound = [ bounds[0] / scale, -bounds[1] / scale, bounds[2] / scale, bounds[3] / scale]
@@ -1191,8 +1198,8 @@ def rho_T_sliceplot(output_filename, pltfile,
     dens_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
     temp_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
 
-    dens_axis.set_ylabel(r'$z\ (10^9\ \mathrm{cm})$')
-    temp_axis.set_ylabel(r'$z\ (10^9\ \mathrm{cm})$')
+    dens_axis.set_ylabel(r'$z\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+    temp_axis.set_ylabel(r'$z\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
 
     matplotlib.rcParams.update({'font.size': 20})
 
