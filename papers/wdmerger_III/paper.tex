@@ -116,21 +116,33 @@ so that singularities are avoided. Note that $v_R = (1 / R)(x u + y v)$, and
 $v_\phi = (1/R)(x v - y u)$. These equations can be straightforwardly derived from
 the Euler equations for linear momentum by appropriate multiplication of $x$, $y$,
 $x / R$, and $y/R$, and subsequent algebraic manipulation. We now rewrite this in the
-way that we actually discretize them for use in the code (by use of the product rule
-to rearrange the terms with derivatives in them):
+way that illustrates how the update is done in the code:
 \begin{align}
   \frac{\partial(s_R)}{\partial t} &= -\nabla \cdot (s_R \mathbf{u})
-    - \left(\frac{\partial(p (x/R))}{\partial x} + \frac{\partial(p (y/R))}{\partial y}\right) \notag \\
-    &\hspace{0.175in} + \frac{1}{\rho R^3}\left(\ell_z^2 + p\rho R^2\right) \label{eq:radial-momentum-rearranged}\\
+    - \frac{1}{R}\left(x \frac{\partial p}{\partial x} + y \frac{\partial p}{\partial y}\right)
+    + \frac{\ell_z^2}{\rho R^3} \label{eq:radial-momentum-rearranged}\\
     \frac{\partial(\ell_z)}{\partial t} &= -\nabla \cdot (\ell_z \mathbf{u}) - \left(\frac{\partial (-py)}{\partial x} + \frac{\partial(px)}{\partial y}\right).\label{eq:angular-momentum-rearranged}
 \end{align}
-It is clear that the second term on the right-hand-side in each case can be swept up
+The first term is the standard advective flux term for any variable that advects with
+the flow, and the state quantity inside this advective term can be derived on cell edges
+using the primitive hydrodynamic variables after a Riemann solver has been performed.
+The second term on the right-hand-side of \autoref{eq:angular-momentum-rearranged} can be swept up
 into the flux terms in the same way that the pressure term for the linear momenta
 is often added to the fluxes, to make the conservation form explicit. The remainder
-is the last term on the right-hand-side of the radial momentum equation, which
-exists as a cell-centered source term (which we deal with using a predictor-corrector
-method similar to how we implement external forcing like gravity and rotation; see
-\cite{castro} for details). It is important to observe that in this formulation
+are the last two terms on the right-hand-side of \autoref{eq:radial-momentum-rearranged}.
+While maintaining second-order accuracy in time, the last term can be treated as a
+cell-centered source term that we deal with using a predictor-corrector
+method (similar to how we implement external forcing like gravity and rotation; see
+\cite{castro} for details). The pressure gradients in the second-to-last term can be
+constructed using the Riemann-solved edge states, and they are multiplied by zone
+coordinates that are cell-centered. In principle this is second-order accurate in time
+because the edge states are too; however, as a drawback, the pressure is unaware of the
+source terms that are applied in the corrector step after a hydrodynamics update. The
+benefit of this approach is that we do not need to construct a general cell-centered
+gradient of the pressure using cell-centered state data, nor do we need to perform the
+equation of state call that entails.
+
+It is important to observe that in this formulation
 the radial momentum equation is \textit{not} a conserved quantity: it should and
 will in general change with time over the course of the simulation. The above form,
 absent of source terms, makes this clear. The angular momentum term in 
@@ -190,7 +202,7 @@ effect that does not change the core angular momentum conservation property. An
 analysis of the different mechanisms for implementing this update may be an interesting
 avenue for future research --- including various aspects like how to implement the
 source terms in the radial momentum equation. Of course, the answer will likely
-be problem-dependent. Indeed, we already faces this situation in general with the
+be problem-dependent. Indeed, we already face this situation in general with the
 gravitational and rotational source terms, even independent of the hybrid momentum
 discussion --- the velocity field seen by the new-time rotation source terms depends
 on whether we apply the gravitational force before or after the rotation force.
