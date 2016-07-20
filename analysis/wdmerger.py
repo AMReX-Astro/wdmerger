@@ -1282,10 +1282,10 @@ def slice_plot(field, output_filename, pltfile, idir=3):
 
 
 
-# Make a movie from the JPG files in a directory.
+# Make a movie from a list of input image files in a directory.
 
-def make_movie(output_dir, jpg_list, mpg_filename):
-    """Make an MPEG movie from a list of JPG files."""
+def make_movie(output_dir, img_list, mpg_filename):
+    """Make an MPEG movie from a list of image files."""
 
     import os
     import shutil
@@ -1293,26 +1293,30 @@ def make_movie(output_dir, jpg_list, mpg_filename):
 
     cwd = os.getcwd()
 
-    # Copy them to a series of JPG files that are indexed by
+    # Get file extension; assume all files have the same format.
+
+    file_format = '.' + img_list[0].split('.')[-1]
+
+    # Copy them to a series of files that are indexed by
     # monotonically increasing integers (this is needed for ffmpeg).
 
-    in_list = [output_dir + '/temp_' + '{:05d}'.format(i) + '.jpg' for i, jpg in enumerate(jpg_list)]
+    in_list = [output_dir + '/temp_' + '{:05d}'.format(i) + file_format for i, img in enumerate(img_list)]
 
-    for jpg_new, jpg_old in zip(in_list, jpg_list):
+    for img_new, img_old in zip(in_list, img_list):
         try:
-            shutil.copyfile(jpg_old, jpg_new)
+            shutil.copyfile(img_old, img_new)
         except:
-            print "Error: source file " + jpg_old + " does not exist."
+            print "Error: source file " + img_old + " does not exist."
             pass
 
     try:
-        os.system('ffmpeg -i ' + output_dir + '/temp_\%05d.jpg -b:v 20M ' + mpg_filename)
+        os.system('ffmpeg -i ' + output_dir + '/temp_\%05d' + file_format + ' -b:v 20M ' + mpg_filename)
     except:
         print "Error: could not successfully make a movie with ffmpeg."
         pass
 
-    for jpg in in_list:
-        os.remove(jpg)
+    for img in in_list:
+        os.remove(img)
 
 
 
