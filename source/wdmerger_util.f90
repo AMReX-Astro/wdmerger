@@ -96,14 +96,9 @@ contains
     endif
 
     ! Safety check: we can't run most problems in one dimension.
+
     if (dim .eq. 1 .and. (.not. (problem .eq. 0 .or. problem .eq. 4))) then
        call bl_error("Can only run a collision or freefall in 1D. Exiting.")
-    endif
-
-    ! Don't do a merger in 2D.
-
-    if (dim .eq. 2 .and. (problem .eq. 2 .or. problem .eq. 3)) then
-       call bl_error("2D simulations do not work for non-axisymmetric problems like mergers.")
     endif
 
     ! Don't do a collision or a free-fall in a rotating reference frame.
