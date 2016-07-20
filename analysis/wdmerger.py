@@ -1219,7 +1219,7 @@ def rho_T_sliceplot(output_filename, pltfile,
 
 # A routine for doing axis-aligned slice plots over a given field.
 
-def slice_plot(field, output_filename, pltfile, idir=3):
+def slice_plot(field, output_filename, pltfile, idir = 3):
     """Create an axis-aligned slice plot over a given field with yt."""
 
     import yt
@@ -1261,7 +1261,7 @@ def slice_plot(field, output_filename, pltfile, idir=3):
             print "Unknown direction for slicing in slice_plot."
 
 
-    sp = yt.SlicePlot(ds, 'z', fields=fields)
+    sp = yt.SlicePlot(ds, axis, fields=fields)
 
     sp.set_cmap(field, 'hot')
 
@@ -1271,6 +1271,119 @@ def slice_plot(field, output_filename, pltfile, idir=3):
     cb.solids.set_rasterized(True)
 
     sp._setup_plots()
+
+    plt.savefig(output_filename)
+
+    insert_commits_into_eps(output_filename, pltfile, 'plot')
+
+    plt.savefig(output_filename[:-4] + '.png')
+
+    plt.close()
+
+
+
+# A routine for doing axis-aligned multi-panel slice plots over a given field.
+
+def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
+                          zlim = None, colormap = 'hot', scale_exp = 9,
+                          nrows = 2, ncols = 2, axes_pad = 0.10,
+                          rect = [0.03,0.075,0.92,0.90],
+                          annotate_time = False):
+    """Create an axis-aligned multi-panel slice plot over a given field with yt."""
+
+    import yt
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1 import AxesGrid
+
+    # Sanity check: are there enough plots to fill the axes grid?
+
+    if nrows * ncols != len(pltfiles):
+        print "Error: not enough plots for the multipanel slice plot."
+        exit
+
+    fig = plt.figure()
+
+    # Set up the AxesGrid.
+
+    grid = AxesGrid(fig,
+                    rect,
+                    nrows_ncols = (nrows, ncols),
+                    axes_pad = axes_pad,
+                    label_mode = "L",
+                    share_all = True,
+                    cbar_location = "right",
+                    cbar_mode = "single",
+                    cbar_size = "5%",
+                    cbar_pad = "1%")
+
+    for i, pltfile in enumerate(pltfiles):
+
+        ds = yt.load(pltfile)
+
+        dim = ds.dimensionality
+
+        fields = [field]
+
+        if dim == 1:
+
+            print "This slice plot routine is not implemented in one dimension."
+            exit
+
+        elif dim == 2:
+
+            if idir == 1:
+                axis = 'r'
+            elif idir == 2:
+                axis = 'z'
+            elif idir == 3:
+                axis = 'theta'
+            else:
+                print "Unknown direction for slicing in slice_plot."
+                exit
+
+        elif dim == 3:
+
+            if idir == 1:
+                axis = 'x'
+            elif idir == 2:
+                axis = 'y'
+            elif idir == 3:
+                axis = 'z'
+            else:
+                print "Unknown direction for slicing in slice_plot."
+                exit
+
+        else:
+
+            print "Nonsense dataset dimensionality."
+            exit
+
+        # Set up the SlicePlot
+
+        sp = yt.SlicePlot(ds, axis, fields = fields, axes_unit = '1e' + str(scale_exp) + '*cm')
+        sp.set_xlabel(r'$\rm{{x}}\ (10^{}\ \rm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+        sp.set_ylabel(r'$\rm{{y}}\ (10^{}\ \rm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+        sp.set_minorticks(field, 'off')
+
+        sp.set_cmap(field, colormap)
+        sp.set_cbar_minorticks(field, 'off')
+
+        if zlim is not None:
+            sp.set_zlim(field, zlim[0], zlim[1])
+
+        if annotate_time:
+            sp.annotate_timestamp(corner='upper_left')
+
+        plot = sp.plots[field]
+        plot.figure = fig
+        plot.axes = grid[i].axes
+        plot.cax = grid.cbar_axes[i]
+
+        cb = plot.cb
+        cb.solids.set_rasterized(True)
+
+        sp._setup_plots()
 
     plt.savefig(output_filename)
 
