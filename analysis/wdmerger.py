@@ -1304,6 +1304,7 @@ def slice_plot(field, output_filename, pltfile, idir = 3):
 def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
                           zlim = None, colormap = 'hot', scale_exp = 9,
                           nrows = 2, ncols = 2, axes_pad = 0.10,
+                          zoom = 1.0,
                           rect = [0.03,0.075,0.92,0.90],
                           annotate_time = False):
     """Create an axis-aligned multi-panel slice plot over a given field with yt."""
@@ -1382,6 +1383,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
         sp.set_xlabel(r'$\rm{{x}}\ (10^{}\ \rm{{cm}})$'.format('{' + str(scale_exp) + '}'))
         sp.set_ylabel(r'$\rm{{y}}\ (10^{}\ \rm{{cm}})$'.format('{' + str(scale_exp) + '}'))
         sp.set_minorticks(field, 'off')
+        sp.zoom(zoom)
 
         sp.set_cmap(field, colormap)
         sp.set_cbar_minorticks(field, 'off')
