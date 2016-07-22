@@ -4,6 +4,8 @@
 
   problem = 2
 
+  roche_radius_factor = 1.0d0
+
   ambient_density = 1.0d-4
 
   stellar_temp = 1.0d7
