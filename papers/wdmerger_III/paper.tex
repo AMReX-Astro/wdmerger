@@ -142,18 +142,18 @@ benefit of this approach is that we do not need to construct a general cell-cent
 gradient of the pressure using cell-centered state data, nor do we need to perform the
 equation of state call that entails.
 
-It is important to observe that in this formulation
-the radial momentum equation is \textit{not} a conserved quantity: it should and
-will in general change with time over the course of the simulation. The above form,
-absent of source terms, makes this clear. The angular momentum term in 
-\autoref{eq:angular-momentum} can be thought of physically as expressing the fact
+It is important to observe that in this formulation the radial momentum equation
+is \textit{not} a conserved quantity: it should and will in general change with
+time over the course of the simulation if the system is not in perfect rotational
+equilibrium. The above form, absent of source terms, makes this clear. The angular momentum term in
+\autoref{eq:radial-momentum} can be thought of physically as expressing the fact
 that a particle with some initial angular momentum will have its radial momentum
 increase with time as it moves away from the origin, and can be thought of geometrically
 as expressing the curved nature of the underlying coordinates for the radial momentum
-\citep{motl:2002}. Note that while the version in \autoref{eq:radial-momentum-rearranged}
-is more convenient for our hydrodynamics methodology, the pressure-gradient terms
-in the first version are the ones appropriate for a radial field and so no physical meaning
-should be ascribed to the pressure term at the end of \autoref{eq:radial-momentum-rearranged}.
+\citep{motl:2002}. It is only the presence of a source term like gravity that can keep
+such a particle on an orbit at its original radius, and for such a case it may be helpful
+to think of the angular momentum source term as an outward centrifugal force that
+balances against the inward centripetal force provided by gravity.
 
 In the absence of source terms, the angular momentum \textit{is} conserved
 to machine precision (ignoring the effects of physical domain boundaries). In the

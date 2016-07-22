@@ -237,17 +237,19 @@ $T$ is the temperature. The equation describing its evolution is given by
   \frac{d\bm{Y}}{dt} = f(\mathbf{Y}),
 \end{equation}
 where the components of the right-hand-side for the species come from the particular
-nuclear burning network we are using. The energy release $e$ of the zone's burn
+nuclear burning network we are using. The energy $e$ of the zone
 will change when the nuclear abundances evolve, according to
 \begin{equation}
   \frac{\partial e}{\partial t} = N_A \sum_{n} \frac{\partial Y_{n}}{\partial t} m_{n} c^2,
 \end{equation}
 where $c$ is the speed of light and $m_n$ is the mass of each nuclide.
 
-In a hydrostatic burn, we keep $\rho$ and $T$ fixed throughout, and use
+We define several burning modes that determine how $T$ and $e$ are evolved
+during a nuclear burn. In a hydrostatic burn, which we call burning mode 0,
+we keep $\rho$ and $T$ fixed throughout, and use 
 the energy released at the end to compute a final temperature that is
 thermodynamically consistent with the new internal energy. By contrast,
-in a self-heating burn, we allow the temperature to evolve in response
+in a self-heating burn (mode 1), we allow the temperature to evolve in response
 to the burning (see\footnote{In the cited paper, a term based on the
 thermodynamic chemical potential was included; we now believe
 that it is incorrect to include such a term in the burn, since it
@@ -256,18 +258,18 @@ automatically sums to zero analytically.} \citet{maestro3}):
   \frac{dT}{dt} = \frac{1}{c_V}\frac{\partial e}{\partial t}
 \end{equation}
 (Although $T$ evolves during the burn so that the integration is physically
-accurate, as for the hydrostatic method we discard the final value
+accurate, as in the hydrostatic method we discard the final value
 for $T$ at the end of the burn and recompute a temperature for the zone that is
 consistent with its new internal energy.) Here $c_V$ is the specific heat at
 constant volume, which is provided by the equation of state.  During this burn,
 we can keep $c_V$ constant using its initial value, or at each step we
 can choose to re-evaluate the equation of state using the latest value of $(\rho, T)$.
 The latter is more expensive but also more accurate, and we use it in this paper.
-In practice we find that the cost is negligible in comparison to the more expensive
+In practice we find that the cost is small in comparison to the more expensive
 parts of the calculation, and it can significantly speed up convergence near NSE.
-A third option presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
+A third option (mode 2) presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
 In this mode, by default we do a hydrostatic burn. If that burn fails, or if the net
-energy change is negative, we do the burn again in self-heating mode. A final option
+energy change is negative, we do the burn again in self-heating mode. A final option (mode 3)
 is a burn that limits the changes due to a burn to avoid numerically unstable burning.
 This mode is discussed in \autoref{sec:unstable_burning} and we will call it a
 ``suppressed'' burn for the remainder of this work. All four options
@@ -276,10 +278,10 @@ use the self-heating mode unless otherwise specified.
 
 In our \microphysics\ repository we provide several software options for
 solving a set of coupled stiff ODEs. For this work we use an implementation of
-the well known variable-order Richardson extrapolation method presented by Stoer and
-Bulirsch \cite{stoer:1980}, that is similar to the integrator which ships with
+the well known variable-order Richardson extrapolation method presented by \citet{stoer:1980},
+that is similar to the integrator which ships with
 the original versions of the networks mentioned above. Previous work using the \boxlib\
-codes typically used the classic \vode\ integrator \cite{vode}. We do maintain a version
+codes typically used the classic \vode\ integrator \citep{vode}. We do maintain a version
 of the software that is compatible with our software interfaces in the \microphysics\
 repository, but we have largely shifted to integrators which are written in modern
 Fortran as a consequence of our efforts to run our codes on GPUs. The Stoer and Bulirsch
@@ -319,10 +321,10 @@ in the current timestep, under the assumption that $\dot{e}$ does not change fro
 timestep to timestep. Similarly, given an estimate for $\dot{X_k}$, the factor $f_{X}$ 
 determines the maximum change in the mass fraction of any species. By making 
 $f_{e}$ and $f_{X}$ smaller, we can control the magnitude of the decoupling 
-between the reactions and the hydro. We choose by default $f_{X} = f_{e} = 0.1$, 
-a choice which is slightly smaller than others in the literature. (Note that previous 
-collision papers we are aware of only limited based on changes in internal energy, 
-not on cahnges in species.)  The sensitivity of results to this choice will be discussed in 
+between the reactions and the hydro. A typical choice for $f_e$ parameter in the
+literature is in the range of 0.2 or 0.3, while to our knowledge a limiter based on
+$f_X$ has not been used by others performing these types of calculations. The sensitivity
+of results to the value of these timestep limiters will be discussed in 
 \autoref{sec:parameters:timestepping}. The factors $f_{e}$ and $f_{X}$ can be set at runtime in \castro.
 
 At the start of each advance, we limit the size of the timestep to be the smaller
@@ -375,18 +377,20 @@ time we return to Step 1 and estimate the next timestep size, all
 of the burning rates will be small again, and the instantaneous 
 timestep limiter of mode 1 may actually substantially overestimate 
 the needed timestep. The other modes will see that the energy/species  
-substantially changed over the last timestep, but will still 
+substantially changed over the last timestep, but will still
 overestimate the needed timestep because the burning was quiescent
-for at least some portion of the last advance. In particular, our 
-experience has shown that using only the energy change criterion
-is particularly susceptible to this phenomenon; silicon-group 
-material can build up without changing the internal energy by a 
-large fraction, so the timestep limiter is never triggered, and 
-then in a single step a substantial amount of iron-group elements 
-can be be generated. This can have non-trivial effects on the 
-total amount of iron-group elements generated over the course of
+for at least some portion of the last advance. Our experience has
+shown that none of these methods is flawless, and that limiting
+based on only changes in internal energy is particularly susceptible
+to this staggered burning phenomenon; silicon-group material can
+build up without changing the internal energy by a  large fraction,
+so the timestep limiter is never triggered, and then in a single step
+a substantial amount of iron-group elements can be be generated,
+perhaps forming a detonation. This can have non-trivial effects
+on the total amount of iron-group elements generated over the course of
 the simulation. We have found that the addition of the 
-limiter based on changes in species functionally precludes this.
+limiter based on changes in species functionally precludes this, and
+so the two methods can complement each other.
 
 With the timestep limited the way we advocate in this paper, 
 the timesteps are generally short enough so that the errors 
@@ -398,10 +402,12 @@ feel the lagged effects of the other operators. For example,
 in the context of low Mach number flows, \cite{nonaka:2012} have
 used the method of spectral deferred corrections \citep{SDC} to
 couple their advection-diffusion-reaction equation set. In our
-context this would involve using the advection as a source term
-for the burning network, and symmetrically including a source
-term to the hydrodynamics corresponding to the energy release
-from the burning. We are presently investigating such a method,
+context this would involve treating the full evolution equation
+for each of the state variables as an ODE with a directly coupled
+burning source term integrated at high order; the advective
+flux is evaluated at the standard second order accuracy
+and is included as an ODE source term.
+We are presently investigating such a method,
 and it may form the basis of further work on this subject.
 
 Now we return to a point we hinted at above. The timestep
@@ -434,7 +440,7 @@ to the total energy. Indeed, for the cosmological purpose for which
 this was originally developed, \cite{ENZO} choose a value $\eta_2 = 0.1$
 so that $e$ is only updated to be equal to $E - \mathbf{v}^2/2$ if
 $e > \eta_2\, E$. In other cases the evolved value of the internal
-energy variable is preserved. However, this choice does not work
+energy variable is preserved. However, this choice is somewhat unsafe
 for our application, because the ultimate cause of the nuclear
 burning in a white dwarf collision is the rapid conversion of
 kinetic energy from the white dwarf bulk motion to thermal energy
@@ -454,7 +460,7 @@ the value that was used by \cite{hawley:2012}.
 not the only way for the numerical discretization to cause 
 severe errors in the burning. Another failure mode is when
 the energy injection timescale
-$t_e$ is shorter than the sound-crossing time $t_s$ in a zone.
+$\tau_e$ is shorter than the sound-crossing time $\tau_s$ in a zone.
 When the sound-crossing time is too long, energy is built up in
 a zone faster than it can be advected away by pressure waves.
 This is obviously a problem inherent to numerically discretized
@@ -464,9 +470,9 @@ temperature building up too quickly in the zone; the detonation
 is spurious in this case and should be avoided if possible.
 The goal is to ensure that the following condition holds:
 \begin{equation}
-  t_s \leq f_{s} t_e \label{eq:burning_limiter_2}
+  \tau_s \leq f_{s}\, \tau_e \label{eq:burning_limiter_2}
 \end{equation}
-The sound crossing time, $t_s$, is given by $\Delta x / c_s$, 
+The sound crossing time, $\tau_s$, is given by $\Delta x / c_s$, 
 where $c_s$ is the sound speed and $\Delta x$ is the (minimum) 
 zone width. The parameter $f_{s}$ then determines the minimum
 ratio of the nuclear energy generation timescale to the 
@@ -484,10 +490,10 @@ right-hand-side vector in the integration by a constant factor $F$
 for all variables, where $F$ is the multiplicative factor needed to
 be applied to $\dot{e}$ such that the equality in \autoref{eq:burning_limiter_2}
 holds. (If the inequality is already satisfied, then the integration
-vector is not modified.) We fix $t_s$ to be the value of the sound
+vector is not modified.) We fix $\tau_s$ to be the value of the sound
 crossing time at the beginning of the burn (that is, we do not
 update it as the sound speed changes) and we fix the energy $e$
-that goes into the estimate for $t_e$ to be the value of the
+that goes into the estimate for $\tau_e$ to be the value of the
 internal energy of the zone at the beginning of the burn. If
 instead one allowed $c_s$ and $e$ to evolve with the burn, one
 would obtain a less conservative limiter in the case of explosive
@@ -495,7 +501,7 @@ burning, as $c_s$ and $e$ are both increasing in this case.
 As the point of the limiter is to ensure that the changes to the
 \textit{original} energy are small enough so that the following
 hydrodynamics update can advect away newly generated energy
-quickly enough to avoid a nuerically seeded detonation,
+quickly enough to avoid a numerically seeded detonation,
 we desire the most conservative version of the limiter. We discuss
 our results with the suppressed burning mode in \autoref{sec:parameters:burningmode}.
 Note that we have found that with this option enabled, it typically takes
@@ -503,12 +509,12 @@ many more timesteps to complete a burn than in self-heating mode.
 
 Regardless of whether the suppressed burning mode works for this
 particular problem, it is not physical, so we include for
-consideration a different approach. If we insist that we cannot
+consideration a different approach. If we insist that we
 cannot directly control the energy injection timescale, we 
 must find a way to alter the sound-crossing timescale. 
 We can achieve this by adding levels of refinement in 
 regions that do not satisfy \autoref{eq:burning_limiter_2},
-which effectively lowers the $\Delta x$ and thus the
+which effectively lowers $\Delta x$ and thus the
 sound-crossing time. We keep tagging zones for refinement
 based on this criterion until the criterion is satisfied
 on the finest level. Since the concern is regions that 
@@ -539,13 +545,14 @@ where a spurious detonation begins in a single timestep on the coarse
 grid, though it will kick in immediately after that timestep
 to resolve the regions where the detonation has occurred.
 A possible remedy to be explored in future work is to add
-refinement pre-emptively in regions where the ratio $t_s / t_e$
+refinement pre-emptively in regions where the ratio $\tau_s / \tau_e$
 approaches $f_{s}$ but does not yet exceed it. Another
 possibility for this case would be to track how many levels
 would have been needed to prevent the numerical detonation,
 based on the stability criterion, and reject the timestep and
 retry it from the starting state using that many levels of refinement.
-The ability to reject a timestep and retry it is functionality that
+As mentioned in \autoref{sec:burnerhydrocoupling}, the ability to reject
+a timestep and retry it is functionality that
 we have recently added to \castro, so we may try this in future work.
 
 
@@ -566,7 +573,7 @@ in the Helmholtz equation of state. However, the results do not really depend on
 exact initial distance as long as there is enough time for the WDs to distort in
 response to tidal forces as they approach. Their initial velocity is that of
 two point-masses in free-fall towards each other coming in from infinity, such that
-the contact point is at the origin, and they approach each other on the $x$-axis.
+the contact point is at the origin, and they approach each other along the $x$-axis.
 The composition of the WDs is as described in Paper I: low-mass WDs are helium-dominated,
 intermediate-mass WDs are carbon and oxygen dominated, and high-mass WDs contain
 oxygen, neon, and magnesium. By default the WDs approach each other head-on, with
@@ -901,7 +908,7 @@ of a white dwarf merger using the post-Newtonian framework of \citet{blanchet:19
 While a typical merger event has a characteristic profile including a chirp and ringdown,
 white dwarf collisions are noticeably distinct in their gravitational wave signatures, and
 hence may be interesting targets for observation for future low frequency gravitational
-wave detectors \citep{eLISA}. The strain increases monotonically for a collision until impact,
+wave detectors such as LISA \citep{eLISA}. The strain increases monotonically for a collision until impact,
 instead of oscillating back and forth at a characteristic frequency as for mergers.
 The main caveat for these events compared to events
 such as neutron star mergers is that due to the event being inherently less energetic,
@@ -973,6 +980,14 @@ through the Empire State Development grant NYS \#28451.
 This research has made use of NASA's Astrophysics Data System 
 Bibliographic Services. In addition, this research has made use
 of the AstroBetter blog and wiki.
+
+\software{BoxLib\footnote{\url{https://github.com/BoxLib-Codes/BoxLib}},
+          CASTRO \citep{castro} (https://github.com/BoxLib-Codes/Castro),
+          wdmerger \citep{wdmergerI} (\url{https://github.com/BoxLib-Codes/wdmerger}),
+          GCC (\url{https://gcc.gnu.org/}),
+          python (\url{https://www.python.org/}),
+          matplotlib \citep{matplotlib}, \url{http://matplotlib.org/}),
+          yt \citep{yt}, \url{http://yt-project.org/})}
 
 \clearpage
 
