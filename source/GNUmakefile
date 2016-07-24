@@ -34,7 +34,9 @@ USE_ROTATION ?= TRUE
 
 DIMENSION_AGNOSTIC ?= TRUE
 
-USE_HYBRID_MOMENTUM ?= TRUE
+ifeq ($(DIM), 3)
+  USE_HYBRID_MOMENTUM ?= TRUE
+endif
 
 # Set the default integrator for the burner.
 
