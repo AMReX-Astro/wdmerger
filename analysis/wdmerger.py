@@ -1460,13 +1460,10 @@ def vol_render_density(outfile, ds):
     matplotlib.use('agg')
     from yt.visualization.volume_rendering.api import \
         Scene, \
-        Camera, \
         VolumeSource
     import matplotlib.pyplot as plt
 
     ds.periodicity = (True, True, True)
-
-    cm = "coolwarm"
 
     field = ('boxlib', 'density')
     ds._get_field_info(field).take_log = True
@@ -1476,6 +1473,8 @@ def vol_render_density(outfile, ds):
 
     # add a volume: select a sphere
     vol = VolumeSource(ds, field=field)
+    vol.use_ghost_zones = True
+
     sc.add_source(vol)
 
 
@@ -1509,8 +1508,6 @@ def vol_render_density(outfile, ds):
     cam.switch_orientation(normal_vector=normal,
                            north_vector=[0., 0., 1.])
     cam.set_width(ds.domain_width)
-
-    sc.camera = cam
 
     sc.render()
     sc.save(outfile, sigma_clip=6.0)
