@@ -430,6 +430,8 @@ def get_last_checkpoint(directory):
 def get_column(col_name, diag_filename):
     """Get a column of data from a diagnostic file."""
 
+    import numpy as np
+
     # Open up the file for reading. Get the names of the columns, as well as a 2D list
     # with all the data.
 
