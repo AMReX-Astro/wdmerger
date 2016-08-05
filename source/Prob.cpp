@@ -387,7 +387,7 @@ Castro::problem_post_timestep()
 	}
 #endif
 
-	E_tot = rho_E - 0.5 * rho_phi;
+	E_tot = rho_E + 0.5 * rho_phi;
 
 	ParallelDescriptor::ReduceRealSum(E_tot);
 

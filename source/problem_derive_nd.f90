@@ -427,10 +427,7 @@ subroutine ca_derphieff(phi,phi_lo,phi_hi,ncomp_phi, &
      do j = lo(2), hi(2)
         do i = lo(1), hi(1)
 
-           ! Note that we need to account for the fact that phiGrav
-           ! is positive in Castro.
-
-           phi(i,j,k,1) = -u(i,j,k,1) + u(i,j,k,2)
+           phi(i,j,k,1) = u(i,j,k,1) + u(i,j,k,2)
 
         enddo
      enddo

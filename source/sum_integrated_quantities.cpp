@@ -276,7 +276,7 @@ Castro::sum_integrated_quantities ()
 
     // Complete calculations for energy and momenta
 
-    gravitational_energy = -rho_phi; // CASTRO uses positive phi
+    gravitational_energy = rho_phi;
     if (gravity->get_gravity_type() == "PoissonGrav")
       gravitational_energy *= 0.5; // avoids double counting
     internal_energy = rho_e;
