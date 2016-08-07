@@ -357,7 +357,7 @@ def get_last_checkpoint(directory):
 
     if (not os.path.isdir(directory)):
         print "Error: directory " + directory + " does not exist in get_last_checkpoint()."
-        raise
+        return
 
     # Doing a search this way will treat first any checkpoint files 
     # with seven digits, and then will fall back to ones with six and then five digits.
@@ -386,7 +386,7 @@ def get_last_checkpoint(directory):
 
     if not checkpointList or not checkpointNums:
         print "Error: no checkpoints found in directory " + directory
-        raise
+        return
 
     # Match up the last checkpoint number with the actual file path location. 
 
@@ -413,7 +413,7 @@ def get_last_checkpoint(directory):
 
     if not checkpoint:
         print "Error: no completed checkpoint found in directory " + directory
-        raise
+        return
 
     # Extract out the search directory from the result.
 
@@ -865,7 +865,7 @@ def is_dir_done(directory):
 
     if not os.path.isdir(directory):
         print "Error: directory " + directory + " does not exist in is_dir_done()."
-        raise
+        return
 
     # If the directory already exists, check to see if we've reached the desired stopping point.
     # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
@@ -1460,9 +1460,7 @@ def vol_render_density(outfile, ds):
     import yt
     import matplotlib
     matplotlib.use('agg')
-    from yt.visualization.volume_rendering.api import \
-        Scene, \
-        VolumeSource
+    from yt.visualization.volume_rendering.api import Scene, VolumeSource
     import matplotlib.pyplot as plt
 
     ds.periodicity = (True, True, True)
@@ -1472,23 +1470,24 @@ def vol_render_density(outfile, ds):
 
     sc = Scene()
 
+    # Add a volume: select a sphere
 
-    # add a volume: select a sphere
     vol = VolumeSource(ds, field=field)
     vol.use_ghost_zones = True
 
     sc.add_source(vol)
 
+    # Transfer function
 
-    # transfer function
     vals = [-1, 0, 1, 2, 3, 4, 5, 6, 7]
     sigma = 0.1
 
     tf =  yt.ColorTransferFunction((min(vals), max(vals)))
 
     tf.clear()
-    cm = "coolwarm"
+
     cm = "spectral"
+
     for v in vals:
         if v < 3:
             alpha = 0.1
@@ -1500,16 +1499,46 @@ def vol_render_density(outfile, ds):
 
     cam = sc.add_camera(ds, lens_type="perspective")
     cam.resolution = (1920, 1080)
-    cam.position = 1.5*ds.arr(np.array([0.0, 5.e9, 5.e9]), 'cm')
 
-    # look toward the center -- we are dealing with an octant
-    center = 0.5*(ds.domain_left_edge + ds.domain_right_edge)
+    center = 0.5 * (ds.domain_left_edge + ds.domain_right_edge)
+    width = ds.domain_width
+
+    # Set the camera so that we're looking down on the xy plane from a 45
+    # degree angle. We reverse the y-coordinate since yt seems to use the
+    # opposite orientation convention to us (where the primary should be
+    # on the left along the x-axis). We'll scale the camera position based
+    # on a zoom factor proportional to the width of the domain.
+
+    zoom_factor = 0.75
+
+    cam_position = np.array([center[0], center[1] - zoom_factor * width[1], center[2] + zoom_factor * width[2]])
+
+    cam.position = zoom_factor * ds.arr(cam_position, 'cm')
+
+    # Set the normal vector so that we look toward the center.
+
     normal = (center - cam.position)
     normal /= np.sqrt(normal.dot(normal))
 
-    cam.switch_orientation(normal_vector=normal,
-                           north_vector=[0., 0., 1.])
-    cam.set_width(ds.domain_width)
+    cam.switch_orientation(normal_vector = normal, north_vector = [0.0, 0.0, 1.0])
+    cam.set_width(width)
+
+    # Render the image.
 
     sc.render()
+
+    # Save the image without annotation.
+
     sc.save(outfile, sigma_clip=6.0)
+
+    # Save the image with a colorbar.
+
+    sc.save_annotated(outfile.replace(".png", "_colorbar.png"), sigma_clip=6.0)
+
+    # Save the image with a colorbar and the current time.
+
+    sc.save_annotated(outfile.replace(".png", "_colorbar_time.png"), sigma_clip=6.0,
+                      text_annotate=[[(0.05, 0.925),
+                                      "t = {:.2f} s".format(float(ds.current_time.d)),
+                                      dict(horizontalalignment="left",
+                                           fontsize="20")]])
