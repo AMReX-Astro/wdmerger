@@ -239,6 +239,9 @@ gravity.gravity_type = PoissonGrav
 # Multipole expansion includes terms up to r**(-max_multipole_order)
 gravity.max_multipole_order = 6
 
+# Maximum level data to use in calculating multiple BCs
+gravity.max_multipole_moment_level = 20
+
 # Exact calculation of gravity boundary conditions (for analysis purposes only)
 gravity.direct_sum_bcs = 0
 
