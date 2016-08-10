@@ -530,14 +530,14 @@ Castro::wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, 
 
       if (lev < parent->finestLevel())
       {
-          const MultiFab* mask = c_lev.getLevel(lev+1).build_fine_mask();
+          const MultiFab& mask = c_lev.getLevel(lev+1).build_fine_mask();
 
-	  MultiFab::Multiply(*mfrho,  *mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfxmom, *mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfymom, *mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfzmom, *mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfrho,  mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfxmom, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfymom, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfzmom, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphip, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphis, mask, 0, 0, 1, 0);
       }
 
 #ifdef _OPENMP
@@ -669,10 +669,10 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
 
       if (lev < parent->finestLevel())
       {
-	  const MultiFab* mask = c_lev.getLevel(lev+1).build_fine_mask();
-	  MultiFab::Multiply(*mf, *mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphip, *mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphis, *mask, 0, 0, 1, 0);
+	  const MultiFab& mask = c_lev.getLevel(lev+1).build_fine_mask();
+	  MultiFab::Multiply(*mf, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphip, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfphis, mask, 0, 0, 1, 0);
       }
 
       Real vp = 0.0;
@@ -765,15 +765,15 @@ Castro::gwstrain (Real time,
 
     if (level < parent->finestLevel())
     {
-	const MultiFab* mask = getLevel(level+1).build_fine_mask();
+	const MultiFab& mask = getLevel(level+1).build_fine_mask();
 
-	MultiFab::Multiply(*mfrho,   *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfxmom,  *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfymom,  *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfzmom,  *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfgravx, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfgravy, *mask, 0, 0, 1, 0);
-	MultiFab::Multiply(*mfgravz, *mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfrho,   mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfxmom,  mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfymom,  mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfzmom,  mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfgravx, mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfgravy, mask, 0, 0, 1, 0);
+	MultiFab::Multiply(*mfgravz, mask, 0, 0, 1, 0);
     }
 
     // Qtt stores the second time derivative of the quadrupole moment.
