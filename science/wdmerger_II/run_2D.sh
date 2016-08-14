@@ -62,7 +62,6 @@ function set_run_opts {
 
     max_stellar_tagging_level=$max_level
     max_temperature_tagging_level=$max_level
-    gravity_max_solve_level=$max_level
 
     # If we specify a refinement parameter,
     # we can use that to control amr_ref_ratio.
