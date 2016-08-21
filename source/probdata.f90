@@ -213,6 +213,7 @@ module probdata_module
   double precision, save :: relaxation_damping_timescale = -1.0d0
   double precision, save :: relaxation_density_cutoff = 1.0d3
   logical,          save :: relaxation_implicit = .false.
+  integer,          save :: relaxation_is_done = 0
 
   ! Radial damping parameters for problem 3
 

@@ -61,6 +61,7 @@ extern "C"
 			Real* h_plus_3, Real* h_cross_3,
 			Real* Qtt, const Real* time);
 
+  void get_period(Real* period);
   void set_period(const Real* period);
 
   void update_center(const Real* time);
@@ -86,9 +87,14 @@ extern "C"
 
   void turn_off_relaxation(const Real* time);
 
-  void set_stellar_acceleration(const Real* time, const Real* dt,
-				const Real* com_p, const Real* com_s,
-				const Real* vel_p, const Real* vel_s);
+  void sum_force_on_stars(const int* lo, const int* hi,
+                          BL_FORT_FAB_ARG_3D(force),
+                          BL_FORT_FAB_ARG_3D(state),
+                          BL_FORT_FAB_ARG_3D(phip),
+                          BL_FORT_FAB_ARG_3D(phis),
+                          BL_FORT_FAB_ARG_3D(vol),
+                          Real* fpx, Real* fpy, Real* fpz,
+                          Real* fsx, Real* fsy, Real* fsz);
 
   void get_axes(int& axis_1, int& axis_2, int& axis_3);
 
@@ -101,6 +107,10 @@ extern "C"
   void get_job_status(int* job_status);
 
   void set_job_status(int* job_status);
+
+  void get_relaxation_status(int* relaxation_status);
+
+  void set_relaxation_status(int* relaxation_status);
 
   void get_total_ener_array(const Real* ener_array);
 

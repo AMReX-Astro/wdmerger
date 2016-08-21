@@ -111,12 +111,6 @@ contains
        call bl_error("The free-fall problem does not make sense in a rotating reference frame.")
     endif
 
-    ! Disable the Coriolis term if we're doing a relaxation.
-
-    if (problem .eq. 3 .and. relaxation_damping_timescale > ZERO) then
-       rotation_include_coriolis = 0
-    endif
-
     ! Make sure we have a sensible eccentricity.
 
     if (orbital_eccentricity >= 1.0) then
@@ -130,6 +124,26 @@ contains
     endif
 
     orbital_angle = orbital_angle * M_PI / 180.0
+
+    ! If we're doing problem 3, which has an initial relaxation, ensure
+    ! that the damping timescale is positive. Be aware that this safety
+    ! check implies that relaxation_damping_timescale must be positive even
+    ! if we're restarting from a checkpoint that indicates that the relaxation
+    ! has already completed. There's no way for us to test that here because
+    ! the checkpoint is read after the namelist initialization step we are
+    ! currently in. If the checkpoint does indicate that, the relaxation
+    ! damping timescale will just be set negative, effectively disabling
+    ! relaxation, at the time the checkpoint is read.
+
+    if (problem .eq. 3 .and. relaxation_damping_timescale <= ZERO) then
+       call bl_error("The relaxation step requires a positive relaxation_damping_timescale.")
+    endif
+
+    ! Disable the Coriolis term if we're doing a relaxation.
+
+    if (problem .eq. 3) then
+       rotation_include_coriolis = 0
+    endif
 
   end subroutine read_namelist
 
@@ -1043,7 +1057,9 @@ contains
     sponge_timescale = -ONE
     rotation_include_coriolis = 1
 
-    if (ioproc) then
+    ! If we got a valid simulation time, print to the log when we stopped.
+
+    if (ioproc .and. time >= 0.0d0) then
        print *, ""
        print *, "Initial relaxation phase terminated at t = ", time
        print *, ""
@@ -1097,77 +1113,68 @@ contains
 
 
 
-  ! Computes the acceleration acting on the WDs in the inertial frame.
-  ! This relies on the velocities coming in being the 'old' velocities
-  ! from the last timestep. This should NOT be called inside an OpenMP
-  ! parallel region.
+  ! Computes the sum of the hydrodynamic and gravitational forces acting on the WDs.
 
-  subroutine set_stellar_acceleration(time, dt, com_p_in, com_s_in, vel_p_in, vel_s_in) bind(C,name='set_stellar_acceleration')
+  subroutine sum_force_on_stars(lo, hi, &
+                                force, f_lo, f_hi, &
+                                state, s_lo, s_hi, &
+                                vol, v_lo, v_hi, &
+                                phip, pp_lo, pp_hi, &
+                                phis, ps_lo, ps_hi, &
+                                fpx, fpy, fpz, fsx, fsy, fsz) &
+                                bind(C,name='sum_force_on_stars')
 
     use bl_constants_module, only: ZERO
     use prob_params_module, only: center
-    use meth_params_module, only: rot_period, do_rotation
-    use rotation_module, only: rotational_acceleration
-    use problem_io_module, only: ioproc
+    use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ
+    use castro_util_module, only: position
 
     implicit none
 
-    double precision :: time, dt, com_p_in(3), com_s_in(3), vel_p_in(3), vel_s_in(3)
+    integer :: lo(3), hi(3)
+    integer :: f_lo(3), f_hi(3)
+    integer :: s_lo(3), s_hi(3)
+    integer :: v_lo(3), v_hi(3)
+    integer :: pp_lo(3), pp_hi(3)
+    integer :: ps_lo(3), ps_hi(3)
 
-    double precision :: old_vel_p(3), old_vel_s(3), new_vel_p(3), new_vel_s(3)
-    double precision :: acc_p(3), acc_s(3), a_p, a_s, omega
+    double precision :: force(f_lo(1):f_hi(1),f_lo(2):f_hi(2),f_lo(3):f_hi(3), NVAR)
+    double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3), NVAR)
+    double precision :: vol(v_lo(1):v_hi(1),v_lo(2):v_hi(2),v_lo(3):v_hi(3))
+    double precision :: phip(pp_lo(1):pp_hi(1),pp_lo(2):pp_hi(2),pp_lo(3):pp_hi(3))
+    double precision :: phis(ps_lo(1):ps_hi(1),ps_lo(2):ps_hi(2),ps_lo(3):ps_hi(3))
 
-    if (dt > ZERO) then
+    double precision :: fpx, fpy, fpz, fsx, fsy, fsz
+    double precision :: dt
 
-       old_vel_p = inertial_velocity(com_p_in, vel_p_in, time - dt)
-       old_vel_s = inertial_velocity(com_s_in, vel_s_in, time - dt)
+    integer :: i, j, k
 
-       new_vel_p = inertial_velocity(com_p, vel_p, time)
-       new_vel_s = inertial_velocity(com_s, vel_s, time)
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
-       a_p = sqrt( sum( (com_p - center)**2 ) )
-       a_s = sqrt( sum( (com_s - center)**2 ) )
+             ! Don't sum up material that is below the density threshold.
 
-       acc_p = (new_vel_p - old_vel_p) / dt
-       acc_s = (new_vel_s - old_vel_s) / dt
+             if (state(i,j,k,URHO) < stellar_density_threshold) cycle
 
-       ! If we're in the rotating frame, then we need to subtract the present rotational
-       ! acceleration so that the remainder is all of the other forces on the stars.
-       
-       if (do_rotation .eq. 1) then
+             if (phip(i,j,k) < ZERO .and. phip(i,j,k) < phis(i,j,k)) then
 
-          acc_p = acc_p - rotational_acceleration(com_p, vel_p, time)
-          acc_s = acc_s - rotational_acceleration(com_s, vel_s, time)
+                fpx = fpx + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMX)
+                fpy = fpy + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMY)
+                fpz = fpz + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMZ)
 
-          ! We also need to take account of the damping force. Note that we
-          ! are using the *rotating frame* velocities for this correction.
+             else if (phis(i,j,k) < ZERO .and. phis(i,j,k) < phip(i,j,k)) then
 
-          if (problem == 3 .and. relaxation_damping_timescale > ZERO) then
-             if (relaxation_implicit) then
-                acc_p = acc_p + HALF * (vel_p + vel_p_in) * (ONE - ONE / (ONE + dt / relaxation_damping_timescale)) / dt
-                acc_s = acc_s + HALF * (vel_s + vel_s_in) * (ONE - ONE / (ONE + dt / relaxation_damping_timescale)) / dt
-             else
-                acc_p = acc_p + HALF * (vel_p + vel_p_in) / relaxation_damping_timescale
-                acc_s = acc_s + HALF * (vel_s + vel_s_in) / relaxation_damping_timescale
+                fsx = fsx + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMX)
+                fsy = fsy + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMY)
+                fsz = fsz + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMZ)
+
              endif
-          endif
 
-       endif
+          enddo
+       enddo
+    enddo
 
-       ! Now update the rotation frequency to match this acceleration.
-
-       omega = HALF * ( sqrt( sqrt( sum(acc_p**2) ) / a_p ) + sqrt( sqrt( sum(acc_s**2) ) / a_s ) )
-
-       rot_period = TWO * M_PI / omega
-
-       if (ioproc) then
-          print *, ""
-          print *, "  Updating the rotational period to ", rot_period
-          print *, ""
-       endif
-
-    endif
-
-  end subroutine set_stellar_acceleration
+  end subroutine sum_force_on_stars
 
 end module wdmerger_util_module

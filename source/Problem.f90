@@ -9,7 +9,8 @@ subroutine problem_checkpoint(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
-  use probdata_module, only: jobIsDone, signalJobIsNotDone, num_previous_ener_timesteps, total_ener_array
+  use probdata_module, only: jobIsDone, signalJobIsNotDone, num_previous_ener_timesteps, total_ener_array, &
+                             relaxation_is_done
 
   implicit none
 
@@ -63,13 +64,21 @@ subroutine problem_checkpoint(int_dir_name, len)
 
 
 
-  open(unit=un, file=trim(dir)//"/Energy", status="unknown")
+  open (unit=un, file=trim(dir)//"/Energy", status="unknown")
 
   do i = 1, num_previous_ener_timesteps
 
      write (un,100) total_ener_array(i)
 
   enddo
+
+  close (un)
+
+
+
+  open (unit=un, file=trim(dir)//"/Relaxation", status="unknown")
+
+  write (un,100) relaxation_is_done
 
   close (un)
 
@@ -106,7 +115,9 @@ subroutine problem_restart(int_dir_name, len)
                              T_global_max, rho_global_max, ts_te_global_max
   use prob_params_module, only: center
   use meth_params_module, only: rot_period
-  use probdata_module, only: jobIsDone, num_previous_ener_timesteps, total_ener_array
+  use probdata_module, only: jobIsDone, num_previous_ener_timesteps, total_ener_array, &
+                             problem, relaxation_is_done
+  use wdmerger_Util_module, only: turn_off_relaxation
 
   implicit none
 
@@ -198,6 +209,30 @@ subroutine problem_restart(int_dir_name, len)
   else
 
      total_ener_array(:) = -1.d200
+
+  endif
+
+
+
+  open (unit=un, file=trim(dir)//"/Relaxation", status="old", IOSTAT = stat)
+
+  if (stat .eq. 0) then
+
+     read (un,100) relaxation_is_done
+
+     close (un)
+
+  else
+
+     if (problem == 3) then
+        call bl_error("Error: no Relaxation file found in the checkpoint.")
+     endif
+
+  endif
+
+  if (relaxation_is_done == 1) then
+
+     call turn_off_relaxation(-1.0d0)
 
   endif
 
@@ -831,6 +866,22 @@ end subroutine set_period
 
 
 
+! Returns the CASTRO rotational period.
+
+subroutine get_period(period) bind(C,name='get_period')
+
+  use meth_params_module, only: rot_period
+
+  implicit none
+
+  double precision :: period
+
+  period = rot_period
+
+end subroutine get_period
+
+
+
 ! Returns the CASTRO rotation frequency vector.
 
 subroutine get_omega_vec(omega_in, time) bind(C,name='get_omega_vec')
@@ -901,6 +952,38 @@ subroutine set_job_status(jobDoneStatus) bind(C,name='set_job_status')
   endif
 
 end subroutine set_job_status
+
+
+
+! Gets whether the relaxation is done.
+
+subroutine get_relaxation_status(relaxation_status) bind(C,name='get_relaxation_status')
+
+  use probdata_module, only: relaxation_is_done
+
+  implicit none
+
+  integer, intent(inout) :: relaxation_status
+
+  relaxation_status = relaxation_is_done
+
+end subroutine get_relaxation_status
+
+
+
+! Sets whether the relaxation is done.
+
+subroutine set_relaxation_status(relaxation_status) bind(C,name='set_relaxation_status')
+
+  use probdata_module, only: relaxation_is_done
+
+  implicit none
+
+  integer, intent(in) :: relaxation_status
+
+  relaxation_is_done = relaxation_status
+
+end subroutine set_relaxation_status
 
 
 

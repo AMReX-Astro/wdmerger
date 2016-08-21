@@ -1,24 +1,24 @@
 // Preprocessor directive for allowing us to do a post-initialization update.
 
-#ifndef do_problem_post_init
-#define do_problem_post_init
+#ifndef DO_PROBLEM_POST_INIT
+#define DO_PROBLEM_POST_INIT
 #endif
 
 // Same for post-restart.
 
-#ifndef do_problem_post_restart
-#define do_problem_post_restart
+#ifndef DO_PROBLEM_POST_RESTART
+#define DO_PROBLEM_POST_RESTART
 #endif
 
 // Preprocessor directive for allowing us to do a post-timestep update.
 
-#ifndef do_problem_post_timestep
-#define do_problem_post_timestep
+#ifndef DO_PROBLEM_POST_TIMESTEP
+#define DO_PROBLEM_POST_TIMESTEP
 #endif
 
 // Routine for determining white dwarf masses, centers of mass and velocities.
 
-void wdCOM (Real time, Real& mass_p, Real& mass_s, Real* com_p, Real* com_s, Real* vel_p, Real* vel_s, bool local = false);
+void wd_update(Real time, Real dt);
 
 // Volume within white dwarfs at a given density cutoff.
 
@@ -60,38 +60,78 @@ void problem_post_timestep();
 
 void writeGitHashes(std::ostream& log);
 
+// Check whether we should stop the run.
+
+void check_to_stop(Real time);
+
+// Calculate extrema on grid.
+
+void update_extrema(Real time);
+
+// Update relaxation process.
+
+void update_relaxation(Real time, Real dt);
+
 // Input parameters
 
 static int use_stopping_criterion;
 
 // Data we want to store, for interfacing with the Fortran
 
-static bool relaxation_is_done;
+static int relaxation_is_done;
 static int problem;
 
-// Radii of the WDs at various density thresholds.
+// Stellar masses
 
-Real rad_p[7];
-Real rad_s[7];
+static Real mass_p;
+static Real mass_s;
 
 // Rate of change of stellar masses
 
-Real mdot_p;
-Real mdot_s;
+static Real mdot_p;
+static Real mdot_s;
+
+// Stellar centers of mass and velocities
+
+static Real com_p[3];
+static Real com_s[3];
+
+static Real vel_p[3];
+static Real vel_s[3];
+
+// Radii of the WDs at various density thresholds.
+
+static Real rad_p[7];
+static Real rad_s[7];
+
+// Effective volume of the stars at various density cutoffs.
+
+static Real vol_p[7];
+static Real vol_s[7];
+
+// Average density of the stars.
+
+static Real rho_avg_p;
+static Real rho_avg_s;
+
+// Gravitational free-fall timescale of the stars.
+
+static Real t_ff_p;
+static Real t_ff_s;
 
 // Global extrema of various quantities over the whole simulation
 
-Real T_global_max;
-Real rho_global_max;
-Real ts_te_global_max;
+static Real T_global_max;
+static Real rho_global_max;
+static Real ts_te_global_max;
 
 // Current values of the above extrema
 
-Real T_curr_max;
-Real rho_curr_max;
-Real ts_te_curr_max;
+static Real T_curr_max;
+static Real rho_curr_max;
+static Real ts_te_curr_max;
 
 // Value of the total energy on the domain over the last several timesteps
 
 static const int num_previous_ener_timesteps = 5;
-Real total_ener_array[num_previous_ener_timesteps];
+static Real total_ener_array[num_previous_ener_timesteps];
