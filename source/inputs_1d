@@ -139,9 +139,6 @@ castro.ppm_type = 1
 # Whether to evaluate eigenvectors using the reference state
 castro.ppm_reference_eigenvectors = 1
 
-# Whether to do PPM tracing for the source terms
-castro.ppm_trace_sources = 1
-
 # Use the EOS in calculation of the edge states going into the Riemann solver
 castro.ppm_temp_fix = 0
 
@@ -157,9 +154,6 @@ castro.cg_blend = 2
 
 # Use a lagged predictor estimate of the source terms in the hydro
 castro.source_term_predictor = 1
-
-# How to include the gravity source term in the hydro equations
-castro.grav_source_type = 2
 
 # Reset (rho*e) if it goes negative in the transverse terms
 castro.transverse_reset_rhoe = 1
@@ -239,9 +233,6 @@ castro.rotational_period = 100.0
 
 # Time rate of change of the rotational period
 castro.rotational_dPdt = -0.0
-
-# Enable the implicit rotation update
-castro.implicit_rotation_update = 1
 
 ############################################################################################
 # Load balancing

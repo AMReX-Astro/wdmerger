@@ -142,9 +142,6 @@ castro.ppm_type = 1
 # Whether to evaluate eigenvectors using the reference state
 castro.ppm_reference_eigenvectors = 1
 
-# Whether to do PPM tracing for the source terms
-castro.ppm_trace_sources = 1
-
 # Use the EOS in calculation of the edge states going into the Riemann solver
 castro.ppm_temp_fix = 0
 
@@ -163,12 +160,6 @@ castro.source_term_predictor = 1
 
 # Whether to take other source terms into account for new-time sources
 castro.update_state_between_sources = 0
-
-# How to include the gravity source term in the hydro equations
-castro.grav_source_type = 4
-
-# How to include the rotation source term in the hydro equations
-castro.rot_source_type = 4
 
 # Whether to use the hybrid advection technique that conserves angular momentum
 castro.hybrid_hydro = 0
@@ -251,9 +242,6 @@ gravity.max_multipole_order = 6
 # Maximum level data to use in calculating multiple BCs
 gravity.max_multipole_moment_level = 20
 
-# Exact calculation of gravity boundary conditions (for analysis purposes only)
-gravity.direct_sum_bcs = 0
-
 # Relative tolerance for multigrid solver for phi solves
 gravity.ml_tol = 1.e-10 1.e-10 1.e-8 1.e-8 1.e-6 1.e-6 1.e-6 1.e-5 1.e-5 1.e-5
 
@@ -275,9 +263,6 @@ castro.rotational_period = 100.0
 
 # Time rate of change of the rotational period
 castro.rotational_dPdt = -0.0
-
-# Enable the implicit rotation update
-castro.implicit_rotation_update = 1
 
 # Whether to evolve state variables in the inertial or rotating frame
 castro.state_in_rotating_frame = 1
