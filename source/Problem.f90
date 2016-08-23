@@ -117,7 +117,7 @@ subroutine problem_restart(int_dir_name, len)
   use meth_params_module, only: rot_period
   use probdata_module, only: jobIsDone, num_previous_ener_timesteps, total_ener_array, &
                              problem, relaxation_is_done
-  use wdmerger_Util_module, only: turn_off_relaxation
+  use wdmerger_util_module, only: turn_off_relaxation
 
   implicit none
 
