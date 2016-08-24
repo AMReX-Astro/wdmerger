@@ -1119,8 +1119,8 @@ contains
                                 force, f_lo, f_hi, &
                                 state, s_lo, s_hi, &
                                 vol, v_lo, v_hi, &
-                                phip, pp_lo, pp_hi, &
-                                phis, ps_lo, ps_hi, &
+                                pmask, pm_lo, pm_hi, &
+                                smask, sm_lo, sm_hi, &
                                 fpx, fpy, fpz, fsx, fsy, fsz) &
                                 bind(C,name='sum_force_on_stars')
 
@@ -1135,14 +1135,14 @@ contains
     integer :: f_lo(3), f_hi(3)
     integer :: s_lo(3), s_hi(3)
     integer :: v_lo(3), v_hi(3)
-    integer :: pp_lo(3), pp_hi(3)
-    integer :: ps_lo(3), ps_hi(3)
+    integer :: pm_lo(3), pm_hi(3)
+    integer :: sm_lo(3), sm_hi(3)
 
     double precision :: force(f_lo(1):f_hi(1),f_lo(2):f_hi(2),f_lo(3):f_hi(3), NVAR)
     double precision :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3), NVAR)
     double precision :: vol(v_lo(1):v_hi(1),v_lo(2):v_hi(2),v_lo(3):v_hi(3))
-    double precision :: phip(pp_lo(1):pp_hi(1),pp_lo(2):pp_hi(2),pp_lo(3):pp_hi(3))
-    double precision :: phis(ps_lo(1):ps_hi(1),ps_lo(2):ps_hi(2),ps_lo(3):ps_hi(3))
+    double precision :: pmask(pm_lo(1):pm_hi(1),pm_lo(2):pm_hi(2),pm_lo(3):pm_hi(3))
+    double precision :: smask(sm_lo(1):sm_hi(1),sm_lo(2):sm_hi(2),sm_lo(3):sm_hi(3))
 
     double precision :: fpx, fpy, fpz, fsx, fsy, fsz
     double precision :: dt
@@ -1153,17 +1153,13 @@ contains
        do j = lo(2), hi(2)
           do i = lo(1), hi(1)
 
-             ! Don't sum up material that is below the density threshold.
-
-             if (state(i,j,k,URHO) < stellar_density_threshold) cycle
-
-             if (phip(i,j,k) < ZERO .and. phip(i,j,k) < phis(i,j,k)) then
+             if (pmask(i,j,k) > ZERO) then
 
                 fpx = fpx + vol(i,j,k) * force(i,j,k,UMX)
                 fpy = fpy + vol(i,j,k) * force(i,j,k,UMY)
                 fpz = fpz + vol(i,j,k) * force(i,j,k,UMZ)
 
-             else if (phis(i,j,k) < ZERO .and. phis(i,j,k) < phip(i,j,k)) then
+             else if (smask(i,j,k) > ZERO) then
 
                 fsx = fsx + vol(i,j,k) * force(i,j,k,UMX)
                 fsy = fsy + vol(i,j,k) * force(i,j,k,UMY)

@@ -151,28 +151,28 @@ Castro::wd_update (Real time, Real dt)
       MultiFab* mfymom = c_lev.derive("ymom",time,0);
       MultiFab* mfzmom = c_lev.derive("zmom",time,0);
 
-      // Effective potentials of the primary and secondary
+      // Masks for the primary and secondary
 
-      MultiFab* mfphip = c_lev.derive("phiEffPM_P", time, 0);
-      MultiFab* mfphis = c_lev.derive("phiEffPM_S", time, 0);
+      MultiFab* mfpmask = c_lev.derive("primarymask", time, 0);
+      MultiFab* mfsmask = c_lev.derive("secondarymask", time, 0);
 
       BL_ASSERT(mfrho  != 0);
       BL_ASSERT(mfxmom != 0);
       BL_ASSERT(mfymom != 0);
       BL_ASSERT(mfzmom != 0);
-      BL_ASSERT(mfphip != 0);
-      BL_ASSERT(mfphis != 0);
+      BL_ASSERT(mfpmask != 0);
+      BL_ASSERT(mfsmask != 0);
 
       if (lev < parent->finestLevel())
       {
           const MultiFab& mask = getLevel(lev+1).build_fine_mask();
 
-	  MultiFab::Multiply(*mfrho,  mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfxmom, mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfymom, mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfzmom, mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphip, mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphis, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfrho,   mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfxmom,  mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfymom,  mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfzmom,  mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfpmask, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfsmask, mask, 0, 0, 1, 0);
       }
 
 #ifdef _OPENMP
@@ -180,15 +180,14 @@ Castro::wd_update (Real time, Real dt)
                      reduction(+:vel_p_x,vel_p_y,vel_p_z,vel_s_x,vel_s_y,vel_s_z) \
                      reduction(+:mp, ms)
 #endif
-      for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi)
-	{
-	  FArrayBox& fabrho  = (*mfrho )[mfi];
-	  FArrayBox& fabxmom = (*mfxmom)[mfi];
-	  FArrayBox& fabymom = (*mfymom)[mfi];
-	  FArrayBox& fabzmom = (*mfzmom)[mfi];
-	  FArrayBox& fabphip = (*mfphip)[mfi];
-	  FArrayBox& fabphis = (*mfphis)[mfi];
-	  FArrayBox& vol     = c_lev.volume[mfi];
+      for (MFIter mfi(*mfrho,true); mfi.isValid(); ++mfi) {
+          FArrayBox& fabrho   = (*mfrho )[mfi];
+	  FArrayBox& fabxmom  = (*mfxmom)[mfi];
+	  FArrayBox& fabymom  = (*mfymom)[mfi];
+	  FArrayBox& fabzmom  = (*mfzmom)[mfi];
+	  FArrayBox& fabpmask = (*mfpmask)[mfi];
+	  FArrayBox& fabsmask = (*mfsmask)[mfi];
+	  FArrayBox& vol      = c_lev.volume[mfi];
 
 	  const Box& box  = mfi.tilebox();
 	  const int* lo   = box.loVect();
@@ -198,8 +197,8 @@ Castro::wd_update (Real time, Real dt)
 		BL_TO_FORTRAN_3D(fabxmom),
 		BL_TO_FORTRAN_3D(fabymom),
 		BL_TO_FORTRAN_3D(fabzmom),
-		BL_TO_FORTRAN_3D(fabphip),
-		BL_TO_FORTRAN_3D(fabphis),
+		BL_TO_FORTRAN_3D(fabpmask),
+		BL_TO_FORTRAN_3D(fabsmask),
 		BL_TO_FORTRAN_3D(vol),
 		ARLIM_3D(lo),ARLIM_3D(hi),
 		ZFILL(dx),&time,
@@ -214,8 +213,8 @@ Castro::wd_update (Real time, Real dt)
       delete mfxmom;
       delete mfymom;
       delete mfzmom;
-      delete mfphip;
-      delete mfphis;
+      delete mfpmask;
+      delete mfsmask;
 
     }
 
@@ -372,19 +371,19 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
 
       // Effective potentials of the primary and secondary
 
-      MultiFab* mfphip = c_lev.derive("phiEffPM_P", time, 0);
-      MultiFab* mfphis = c_lev.derive("phiEffPM_S", time, 0);
+      MultiFab* mfpmask = c_lev.derive("primarymask", time, 0);
+      MultiFab* mfsmask = c_lev.derive("secondarymask", time, 0);
 
-      BL_ASSERT(mf != 0);
-      BL_ASSERT(mfphip != 0);
-      BL_ASSERT(mfphis != 0);
+      BL_ASSERT(mf      != 0);
+      BL_ASSERT(mfpmask != 0);
+      BL_ASSERT(mfsmask != 0);
 
       if (lev < parent->finestLevel())
       {
 	  const MultiFab& mask = c_lev.getLevel(lev+1).build_fine_mask();
-	  MultiFab::Multiply(*mf, mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphip, mask, 0, 0, 1, 0);
-	  MultiFab::Multiply(*mfphis, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mf,      mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfpmask, mask, 0, 0, 1, 0);
+	  MultiFab::Multiply(*mfsmask, mask, 0, 0, 1, 0);
       }
 
       Real vp = 0.0;
@@ -393,12 +392,11 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:vp,vs)
 #endif
-      for (MFIter mfi(*mf,true); mfi.isValid(); ++mfi)
-      {
-          FArrayBox& fab     = (*mf)[mfi];
-	  FArrayBox& fabphip = (*mfphip)[mfi];
-	  FArrayBox& fabphis = (*mfphis)[mfi];
-	  FArrayBox& vol     = c_lev.volume[mfi];
+      for (MFIter mfi(*mf,true); mfi.isValid(); ++mfi) {
+          FArrayBox& fab      = (*mf)[mfi];
+          FArrayBox& fabpmask = (*mfpmask)[mfi];
+          FArrayBox& fabsmask = (*mfsmask)[mfi];
+          FArrayBox& vol      = c_lev.volume[mfi];
 
 	  Real sp = 0.0;
 	  Real ss = 0.0;
@@ -408,8 +406,8 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
 	  const int* hi   = box.hiVect();
 
 	  ca_volumeindensityboundary(BL_TO_FORTRAN_3D(fab),
-		                     BL_TO_FORTRAN_3D(fabphip),
-				     BL_TO_FORTRAN_3D(fabphis),
+		                     BL_TO_FORTRAN_3D(fabpmask),
+				     BL_TO_FORTRAN_3D(fabsmask),
 				     BL_TO_FORTRAN_3D(vol),
 				     ARLIM_3D(lo),ARLIM_3D(hi),
 				     ZFILL(dx),&sp,&ss,&rho_cutoff);
@@ -418,8 +416,8 @@ void Castro::volInBoundary (Real time, Real& vol_p, Real& vol_s, Real rho_cutoff
       }
 
       delete mf;
-      delete mfphis;
-      delete mfphip;
+      delete mfsmask;
+      delete mfpmask;
 
       vol_p += vp;
       vol_s += vs;
@@ -953,8 +951,8 @@ Castro::update_relaxation(Real time, Real dt) {
 
 	MultiFab& S_new = getLevel(lev).get_new_data(State_Type);
 
-	MultiFab* phip = getLevel(lev).derive("phiEffPM_P", time, 0);
-	MultiFab* phis = getLevel(lev).derive("phiEffPM_S", time, 0);
+	MultiFab* pmask = getLevel(lev).derive("primarymask", time, 0);
+	MultiFab* smask = getLevel(lev).derive("secondarymask", time, 0);
 
 	MultiFab& vol = getLevel(lev).Volume();
 
@@ -979,8 +977,8 @@ Castro::update_relaxation(Real time, Real dt) {
 			       BL_TO_FORTRAN_3D(rot_force[lev][mfi]),
 			       BL_TO_FORTRAN_3D(S_new[mfi]),
 			       BL_TO_FORTRAN_3D(vol[mfi]),
-			       BL_TO_FORTRAN_3D((*phip)[mfi]),
-			       BL_TO_FORTRAN_3D((*phis)[mfi]),
+			       BL_TO_FORTRAN_3D((*pmask)[mfi]),
+			       BL_TO_FORTRAN_3D((*smask)[mfi]),
 			       &fpx, &fpy, &fpz, &fsx, &fsy, &fsz);
 
 	}
@@ -993,8 +991,8 @@ Castro::update_relaxation(Real time, Real dt) {
 	force_s[1] += fsy;
 	force_s[2] += fsz;
 
-	delete phip;
-	delete phis;
+	delete pmask;
+	delete smask;
 
     }
 

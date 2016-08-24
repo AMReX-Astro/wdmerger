@@ -276,8 +276,8 @@ subroutine wdcom(rho,  r_lo, r_hi, &
                  xmom, px_lo, px_hi, &
                  ymom, py_lo, py_hi, &
                  zmom, pz_lo, pz_hi, &
-                 phip, pp_lo, pp_hi, &
-                 phis, ps_lo, ps_hi, &
+                 pmask, pm_lo, pm_hi, &
+                 smask, sm_lo, sm_hi, &
                  vol,  vo_lo, vo_hi, &
                  lo, hi, dx, time, &
                  com_p_x, com_p_y, com_p_z, &
@@ -289,7 +289,6 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   use bl_constants_module, only: HALF, ZERO, ONE
   use prob_params_module, only: problo, probhi, physbc_lo, physbc_hi, Symmetry
   use castro_util_module, only: position
-  use probdata_module, only: stellar_density_threshold
 
   implicit none
 
@@ -297,16 +296,16 @@ subroutine wdcom(rho,  r_lo, r_hi, &
   integer         , intent(in   ) :: px_lo(3), px_hi(3)
   integer         , intent(in   ) :: py_lo(3), py_hi(3)
   integer         , intent(in   ) :: pz_lo(3), pz_hi(3)
-  integer         , intent(in   ) :: pp_lo(3), pp_hi(3)
-  integer         , intent(in   ) :: ps_lo(3), ps_hi(3)
+  integer         , intent(in   ) :: pm_lo(3), pm_hi(3)
+  integer         , intent(in   ) :: sm_lo(3), sm_hi(3)
   integer         , intent(in   ) :: vo_lo(3), vo_hi(3)
 
   double precision, intent(in   ) :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
   double precision, intent(in   ) :: xmom(px_lo(1):px_hi(1),px_lo(2):px_hi(2),px_lo(3):px_hi(3))
   double precision, intent(in   ) :: ymom(py_lo(1):py_hi(1),py_lo(2):py_hi(2),py_lo(3):py_hi(3))
   double precision, intent(in   ) :: zmom(pz_lo(1):pz_hi(1),pz_lo(2):pz_hi(2),pz_lo(3):pz_hi(3))
-  double precision, intent(in   ) :: phip(pp_lo(1):pp_hi(1),pp_lo(2):pp_hi(2),pp_lo(3):pp_hi(3))
-  double precision, intent(in   ) :: phis(ps_lo(1):ps_hi(1),ps_lo(2):ps_hi(2),ps_lo(3):ps_hi(3))
+  double precision, intent(in   ) :: pmask(pm_lo(1):pm_hi(1),pm_lo(2):pm_hi(2),pm_lo(3):pm_hi(3))
+  double precision, intent(in   ) :: smask(sm_lo(1):sm_hi(1),sm_lo(2):sm_hi(2),sm_lo(3):sm_hi(3))
   double precision, intent(in   ) :: vol(vo_lo(1):vo_hi(1),vo_lo(2):vo_hi(2),vo_lo(3):vo_hi(3))
 
   integer         , intent(in   ) :: lo(3), hi(3)
@@ -331,10 +330,6 @@ subroutine wdcom(rho,  r_lo, r_hi, &
      do j = lo(2), hi(2)
         do i = lo(1), hi(1)
 
-           ! Don't sum up material that is below the density threshold.
-
-           if (rho(i,j,k) < stellar_density_threshold) cycle
-
            ! Our convention is that the COM locations for the WDs are 
            ! absolute positions on the grid, not relative to the center.
 
@@ -349,7 +344,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
 
            dm = rho(i,j,k) * vol(i,j,k)
 
-           if (phip(i,j,k) < ZERO .and. phip(i,j,k) < phis(i,j,k)) then
+           if (pmask(i,j,k) > ZERO) then
 
               m_p = m_p + dm
 
@@ -361,7 +356,7 @@ subroutine wdcom(rho,  r_lo, r_hi, &
               vel_p_y = vel_p_y + ymom(i,j,k) * vol(i,j,k)
               vel_p_z = vel_p_z + zmom(i,j,k) * vol(i,j,k)
 
-           else if (phis(i,j,k) < ZERO .and. phis(i,j,k) < phip(i,j,k)) then
+           else if (smask(i,j,k) > ZERO) then
 
               m_s = m_s + dm
 
@@ -390,8 +385,8 @@ end subroutine wdcom
 ! at zones within the Roche lobe of the white dwarf.
 
 subroutine ca_volumeindensityboundary(rho,r_lo,r_hi, &
-                                      phip,pp_lo,pp_hi, &
-                                      phis,ps_lo,ps_hi, &
+                                      pmask,pm_lo,pm_hi, &
+                                      smask,sm_lo,sm_hi, &
                                       vol,v_lo,v_hi, &
                                       lo,hi,dx, &
                                       volp,vols,rho_cutoff) &
@@ -402,14 +397,14 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi, &
   implicit none
 
   integer          :: r_lo(3), r_hi(3)
-  integer          :: pp_lo(3), pp_hi(3)
-  integer          :: ps_lo(3), ps_hi(3)
+  integer          :: pm_lo(3), pm_hi(3)
+  integer          :: sm_lo(3), sm_hi(3)
   integer          :: v_lo(3), v_hi(3)
   integer          :: lo(3), hi(3)
   double precision :: volp, vols, rho_cutoff, dx(3)
   double precision :: rho(r_lo(1):r_hi(1),r_lo(2):r_hi(2),r_lo(3):r_hi(3))
-  double precision :: phip(pp_lo(1):pp_hi(1),pp_lo(2):pp_hi(2),pp_lo(3):pp_hi(3))
-  double precision :: phis(ps_lo(1):ps_hi(1),ps_lo(2):ps_hi(2),ps_lo(3):ps_hi(3))
+  double precision :: pmask(pm_lo(1):pm_hi(1),pm_lo(2):pm_hi(2),pm_lo(3):pm_hi(3))
+  double precision :: smask(sm_lo(1):sm_hi(1),sm_lo(2):sm_hi(2),sm_lo(3):sm_hi(3))
   double precision :: vol(v_lo(1):v_hi(1),v_lo(2):v_hi(2),v_lo(3):v_hi(3))
 
   integer          :: i, j, k
@@ -423,11 +418,11 @@ subroutine ca_volumeindensityboundary(rho,r_lo,r_hi, &
 
            if (rho(i,j,k) > rho_cutoff) then
 
-              if (phip(i,j,k) < ZERO .and. phip(i,j,k) < phis(i,j,k)) then
+              if (pmask(i,j,k) > ZERO) then
 
                  volp = volp + vol(i,j,k)
 
-              else if (phis(i,j,k) < ZERO .and. phis(i,j,k) < phip(i,j,k)) then
+              else if (smask(i,j,k) > ZERO) then
 
                  vols = vols + vol(i,j,k)
 
