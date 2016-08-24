@@ -86,3 +86,22 @@
     derive_lst.addComponent("rho_phiRot",desc_lst,State_Type,Density,1);
     derive_lst.addComponent("rho_phiRot",desc_lst,Rotation_Type,0,1);
 #endif
+
+#ifdef GRAVITY
+#ifdef ROTATION
+    //
+    // Mask determining which zones are inside the primary
+    //
+    derive_lst.add("primarymask",IndexType::TheCellType(),1,ca_derprimarymask,the_same_box);
+    derive_lst.addComponent("primarymask",desc_lst,State_Type,Density,1);
+    derive_lst.addComponent("primarymask",desc_lst,PhiRot_Type,0,1);
+
+
+    //
+    // Mask determining which zones are inside the secondary
+    //
+    derive_lst.add("secondarymask",IndexType::TheCellType(),1,ca_dersecondarymask,the_same_box);
+    derive_lst.addComponent("secondarymask",desc_lst,State_Type,Density,1);
+    derive_lst.addComponent("secondarymask",desc_lst,PhiRot_Type,0,1);
+#endif
+#endif

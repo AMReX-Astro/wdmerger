@@ -464,9 +464,9 @@ subroutine ca_derphieffpm_p(phi,phi_lo,phi_hi,ncomp_phi, &
   integer          :: i, j, k
   double precision :: loc(3), r
 
-  ! Don't do anything here if the star no longer exists
-
   phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
+
+  ! Don't do anything here if the star no longer exists
 
   if (mass_P == ZERO) return
 
@@ -513,9 +513,9 @@ subroutine ca_derphieffpm_s(phi,phi_lo,phi_hi,ncomp_phi, &
   integer          :: i, j, k
   double precision :: loc(3), r
 
-  ! Don't do anything here if the star no longer exists
-
   phi(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = ZERO
+
+  ! Don't do anything here if the star no longer exists
 
   if (mass_S == ZERO) return
 
@@ -599,3 +599,130 @@ subroutine ca_derrhophiRot(rhophi,p_lo,p_hi,nk, &
   end do
 
 end subroutine ca_derrhophiRot
+
+
+
+! Create a mask for all zones considered to be within the primary star.
+! It uses the same prescription as above for the effective potential of the
+! star, and uses the stellar density threshold input parameter to determine
+! what parts of the domain should be considered stellar material.
+! The convention will be that the mask is positive (1) for zones inside the
+! star and negative (-1) for zones outside the star.
+
+subroutine ca_derprimarymask(mask,mask_lo,mask_hi,ncomp_mask, &
+                             u,u_lo,u_hi,ncomp_u, &
+                             lo,hi,domlo,domhi, &
+                             dx,xlo,time,dt,bc,level,grid_no) bind(C,name='ca_derprimarymask')
+
+  use bl_constants_module, only: ZERO, HALF, ONE
+  use probdata_module, only: mass_P, com_P, mass_S, com_S, stellar_density_threshold
+  use fundamental_constants_module, only: Gconst
+
+  implicit none
+
+  integer          :: mask_lo(3), mask_hi(3), ncomp_mask ! == 1
+  integer          :: u_lo(3), u_hi(3), ncomp_u ! == 2 (density, rotational potential)
+  integer          :: lo(3), hi(3), domlo(3), domhi(3)
+  double precision :: mask(mask_lo(1):mask_hi(1),mask_lo(2):mask_hi(2),mask_lo(3):mask_hi(3),ncomp_mask)
+  double precision :: u(u_lo(1):u_hi(1),u_lo(2):u_hi(2),u_lo(3):u_hi(3),ncomp_u)
+  double precision :: dx(3), xlo(3), time, dt
+  integer          :: bc(3,2,ncomp_u), level, grid_no
+
+  integer          :: i, j, k
+  double precision :: loc(3), r_P, r_S, phi_P, phi_S
+
+  ! By default, assume we're not inside the star.
+
+  mask(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = -ONE
+
+  ! Don't do anything here if the star no longer exists
+
+  if (mass_P == ZERO) return
+
+  do k = lo(3), hi(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     do j = lo(2), hi(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        do i = lo(1), hi(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+
+           ! Ignore zones whose density is too low.
+
+           if (u(i,j,k,1) < stellar_density_threshold) cycle
+
+           r_P = sqrt( sum( (loc - com_P)**2 ) )
+           r_S = sqrt( sum( (loc - com_S)**2 ) )
+
+           phi_p = -Gconst * mass_P / r_P + u(i,j,k,2)
+           phi_s = -Gconst * mass_P / r_P + u(i,j,k,2)
+
+           if (phi_p < ZERO .and. phi_p < phi_s) then
+              mask(i,j,k,1) = ONE
+           endif
+
+        enddo
+     enddo
+  enddo
+
+end subroutine ca_derprimarymask
+
+
+
+! Same as above, but for the secondary.
+
+subroutine ca_dersecondarymask(mask,mask_lo,mask_hi,ncomp_mask, &
+                               u,u_lo,u_hi,ncomp_u, &
+                               lo,hi,domlo,domhi, &
+                               dx,xlo,time,dt,bc,level,grid_no) bind(C,name='ca_dersecondarymask')
+
+  use bl_constants_module, only: ZERO, HALF, ONE
+  use probdata_module, only: mass_P, com_P, mass_S, com_S, stellar_density_threshold
+  use fundamental_constants_module, only: Gconst
+
+  implicit none
+
+  integer          :: mask_lo(3), mask_hi(3), ncomp_mask ! == 1
+  integer          :: u_lo(3), u_hi(3), ncomp_u ! == 2 (density, rotational potential)
+  integer          :: lo(3), hi(3), domlo(3), domhi(3)
+  double precision :: mask(mask_lo(1):mask_hi(1),mask_lo(2):mask_hi(2),mask_lo(3):mask_hi(3),ncomp_mask)
+  double precision :: u(u_lo(1):u_hi(1),u_lo(2):u_hi(2),u_lo(3):u_hi(3),ncomp_u)
+  double precision :: dx(3), xlo(3), time, dt
+  integer          :: bc(3,2,ncomp_u), level, grid_no
+
+  integer          :: i, j, k
+  double precision :: loc(3), r_P, r_S, phi_P, phi_S
+
+  ! By default, assume we're not inside the star.
+
+  mask(lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),:) = -ONE
+
+  ! Don't do anything here if the star no longer exists
+
+  if (mass_S == ZERO) return
+
+  do k = lo(3), hi(3)
+     loc(3) = xlo(3) + (dble(k - lo(3)) + HALF) * dx(3)
+     do j = lo(2), hi(2)
+        loc(2) = xlo(2) + (dble(j - lo(2)) + HALF) * dx(2)
+        do i = lo(1), hi(1)
+           loc(1) = xlo(1) + (dble(i - lo(1)) + HALF) * dx(1)
+
+           ! Ignore zones whose density is too low.
+
+           if (u(i,j,k,1) < stellar_density_threshold) cycle
+
+           r_P = sqrt( sum( (loc - com_P)**2 ) )
+           r_S = sqrt( sum( (loc - com_S)**2 ) )
+
+           phi_p = -Gconst * mass_P / r_P + u(i,j,k,2)
+           phi_s = -Gconst * mass_P / r_P + u(i,j,k,2)
+
+           if (phi_s < ZERO .and. phi_s < phi_p) then
+              mask(i,j,k,1) = ONE
+           endif
+
+        enddo
+     enddo
+  enddo
+
+end subroutine ca_dersecondarymask
