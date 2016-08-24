@@ -1159,15 +1159,15 @@ contains
 
              if (phip(i,j,k) < ZERO .and. phip(i,j,k) < phis(i,j,k)) then
 
-                fpx = fpx + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMX)
-                fpy = fpy + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMY)
-                fpz = fpz + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMZ)
+                fpx = fpx + vol(i,j,k) * force(i,j,k,UMX)
+                fpy = fpy + vol(i,j,k) * force(i,j,k,UMY)
+                fpz = fpz + vol(i,j,k) * force(i,j,k,UMZ)
 
              else if (phis(i,j,k) < ZERO .and. phis(i,j,k) < phip(i,j,k)) then
 
-                fsx = fsx + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMX)
-                fsy = fsy + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMY)
-                fsz = fsz + vol(i,j,k) * state(i,j,k,URHO) * force(i,j,k,UMZ)
+                fsx = fsx + vol(i,j,k) * force(i,j,k,UMX)
+                fsy = fsy + vol(i,j,k) * force(i,j,k,UMY)
+                fsz = fsz + vol(i,j,k) * force(i,j,k,UMZ)
 
              endif
 

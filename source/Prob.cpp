@@ -978,9 +978,9 @@ Castro::update_relaxation(Real time, Real dt) {
 	    sum_force_on_stars(lo, hi,
 			       BL_TO_FORTRAN_3D(rot_force[lev][mfi]),
 			       BL_TO_FORTRAN_3D(S_new[mfi]),
+			       BL_TO_FORTRAN_3D(vol[mfi]),
 			       BL_TO_FORTRAN_3D((*phip)[mfi]),
 			       BL_TO_FORTRAN_3D((*phis)[mfi]),
-			       BL_TO_FORTRAN_3D(vol[mfi]),
 			       &fpx, &fpy, &fpz, &fsx, &fsy, &fsz);
 
 	}
@@ -1013,15 +1013,15 @@ Castro::update_relaxation(Real time, Real dt) {
 
     ParallelDescriptor::ReduceRealSum(foo, 6);
 
-    force_p[0] = foo[0] / mass_p;
-    force_p[1] = foo[1] / mass_p;
-    force_p[2] = foo[2] / mass_p;
+    force_p[0] = foo[0];
+    force_p[1] = foo[1];
+    force_p[2] = foo[2];
 
-    force_s[0] = foo[3] / mass_s;
-    force_s[1] = foo[4] / mass_s;
-    force_s[2] = foo[5] / mass_s;
+    force_s[0] = foo[3];
+    force_s[1] = foo[4];
+    force_s[2] = foo[5];
 
-    // Divide by the mass of the stars and then get the new rotation frequency.
+    // Divide by the mass of the stars to obtain the acceleration, and then get the new rotation frequency.
 
     Real fp = std::sqrt(std::pow(force_p[0], 2) + std::pow(force_p[1], 2) + std::pow(force_p[2], 2));
     Real fs = std::sqrt(std::pow(force_s[0], 2) + std::pow(force_s[1], 2) + std::pow(force_s[2], 2));
@@ -1029,13 +1029,13 @@ Castro::update_relaxation(Real time, Real dt) {
     Real ap = std::sqrt(std::pow(com_p[0], 2) + std::pow(com_p[1], 2) + std::pow(com_p[2], 2));
     Real as = std::sqrt(std::pow(com_s[0], 2) + std::pow(com_s[1], 2) + std::pow(com_s[2], 2));
 
-    Real omega = 0.5 * ( std::sqrt(fp / ap) + std::sqrt(fs / as) );
+    Real omega = 0.5 * ( std::sqrt((fp / mass_p) / ap) + std::sqrt((fs / mass_s) / as) );
 
     Real period = 2.0 * M_PI / omega;
 
     if (ParallelDescriptor::IOProcessor()) {
           std::cout << "\n";
-          std::cout << "  Updating the rotational period from " << rotational_period << " s to " << period << " s.";
+          std::cout << "  Updating the rotational period from " << rotational_period << " s to " << period << " s." << "\n";
 	  std::cout << "\n";
     }
 

@@ -90,9 +90,9 @@ extern "C"
   void sum_force_on_stars(const int* lo, const int* hi,
                           BL_FORT_FAB_ARG_3D(force),
                           BL_FORT_FAB_ARG_3D(state),
+                          BL_FORT_FAB_ARG_3D(vol),
                           BL_FORT_FAB_ARG_3D(phip),
                           BL_FORT_FAB_ARG_3D(phis),
-                          BL_FORT_FAB_ARG_3D(vol),
                           Real* fpx, Real* fpy, Real* fpz,
                           Real* fsx, Real* fsy, Real* fsz);
 
