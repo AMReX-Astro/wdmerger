@@ -654,7 +654,7 @@ subroutine ca_derprimarymask(mask,mask_lo,mask_hi,ncomp_mask, &
            r_S = sqrt( sum( (loc - com_S)**2 ) )
 
            phi_p = -Gconst * mass_P / r_P + u(i,j,k,2)
-           phi_s = -Gconst * mass_P / r_P + u(i,j,k,2)
+           phi_s = -Gconst * mass_S / r_S + u(i,j,k,2)
 
            if (phi_p < ZERO .and. phi_p < phi_s) then
               mask(i,j,k,1) = ONE
@@ -715,7 +715,7 @@ subroutine ca_dersecondarymask(mask,mask_lo,mask_hi,ncomp_mask, &
            r_S = sqrt( sum( (loc - com_S)**2 ) )
 
            phi_p = -Gconst * mass_P / r_P + u(i,j,k,2)
-           phi_s = -Gconst * mass_P / r_P + u(i,j,k,2)
+           phi_s = -Gconst * mass_S / r_S + u(i,j,k,2)
 
            if (phi_s < ZERO .and. phi_s < phi_p) then
               mask(i,j,k,1) = ONE
