@@ -162,6 +162,12 @@ subroutine problem_restart(int_dir_name, len)
 
         read (un,100) rot_period
 
+        print *, ""
+        write(*,1001) rot_period
+        print *, ""
+
+1001    format ("  Based on the checkpoint, updating the rotational period to ", F7.3 " s.")
+
         close (un)
 
      else
