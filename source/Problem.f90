@@ -112,12 +112,13 @@ subroutine problem_restart(int_dir_name, len)
 
   use bl_IO_module
   use probdata_module, only: com_P, com_S, vel_P, vel_S, mass_P, mass_S, t_ff_P, t_ff_S, problem, &
-                             T_global_max, rho_global_max, ts_te_global_max
-  use prob_params_module, only: center
-  use meth_params_module, only: rot_period
-  use probdata_module, only: jobIsDone, num_previous_ener_timesteps, total_ener_array, &
+                             T_global_max, rho_global_max, ts_te_global_max, &
+                             jobIsDone, num_previous_ener_timesteps, total_ener_array, &
                              problem, relaxation_is_done
   use wdmerger_util_module, only: turn_off_relaxation
+  use problem_io_module, only: ioproc
+  use prob_params_module, only: center
+  use meth_params_module, only: rot_period
 
   implicit none
 
@@ -162,11 +163,13 @@ subroutine problem_restart(int_dir_name, len)
 
         read (un,100) rot_period
 
-        print *, ""
-        write(*,1001) rot_period
-        print *, ""
+        if (ioproc) then
+           print *, ""
+           write(*,1001) rot_period
+           print *, ""
 
-1001    format ("  Based on the checkpoint, updating the rotational period to ", F7.3 " s.")
+1001       format ("  Based on the checkpoint, updating the rotational period to ", F7.3 " s.")
+        endif
 
         close (un)
 
