@@ -190,7 +190,7 @@ castro.small_temp = 1.e5
 castro.small_dens = 1.e-5
 
 # Disable the possibility of having a negative energy
-castro.allow_negative_energy = 0
+castro.allow_small_energy = 0
 
 # Don't update the total energy using the internal energy
 castro.dual_energy_update_E_from_e = 0
