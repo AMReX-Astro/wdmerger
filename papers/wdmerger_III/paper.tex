@@ -181,7 +181,7 @@ To this end, what we have done is to add three new ``hybrid'' momentum state
 variables, corresponding to the radial momentum, angular momentum, and the linear
 momentum component that is perpendicular to both. Whenever we update the normal
 momentum state variables with hydrodynamics fluxes, we add the analogous fluxes
-to the hybrid momenta -- that is, using the edge state values determined by the
+to the hybrid momenta --- that is, using the edge state values determined by the
 final multi-dimensional Riemann solve, we construct the value of the hybrid
 momenta on that zone edge, and then allow it to be transported as usual by the
 advective velocity $\mathbf{u}$. When we update the normal momenta with an
@@ -213,11 +213,88 @@ momentum state variables for calculating source terms, so the hybrid scheme requ
 minimal changes to the code architecture. For example, when we compute
 the primitive variables from the conservative variables in preparation for an advective
 hydrodynamic update, we will still be getting them from the linear momenta,
-but these linaer momenta are consistent with the conserved angular momentum,
+but these linear momenta are consistent with the conserved angular momentum,
 so we get the same result as if we had modified the code to explicitly compute
 the primitive variables as a function of the hybrid momenta. Consequently the
 scheme presented here adds the ability to explicitly conserve angular momentum
 in a simulation without a significant footprint on the simulation software.
+
+
+
+\subsection{Rotation Revisited}\label{sec:rotation}
+
+Another significant change we have made in \castro\ since \citet{wdmergerI} deals
+with how rotation is applied as a source term. We noted in that paper that rotation
+can be used to reduce advection errors in a binary system due to the fact that
+material is moving less on the grid. However, we have also observed that rotation
+source terms introduce the opportunity for other numerical problems to arise. In
+particular, the most significant problem for us is that conservation of linear and
+angular momentum is harder to accomplish with the standard rotation source terms.
+Largely this is due to the fact that the rotation force is not expressed in a numerically
+conservative fashion; the forces are evaluated at cell centers and do not inherently
+have the telescoping property that allows for conservation of momentum in the case
+of hydrodynamic fluxes. While gravity has the property that in practice momentum
+conservation errors due to the gravitational force are typically quite small due to
+an underlying telescoping behavior in the gravitational force (see the discussion
+in Section 2.3.1 of \cite{wdmergerI}), this is harder to obtain for rotation (this is
+easy to see when considering the Coriolis force, as the standard Coriolis forcing
+involves cell-centered velocities that cannot trivially be evaluated in a way that
+leads to numerical cancellation --- though see \citet{audusse:2009} for a method that
+utilizes the edge-centered hydrodynamic fluxes to this end). A way around this issue
+is to evolve variables measured in the \textit{inertial} frame, even when the reference
+frame used for the advection is rotating. The benefits of this were observed by
+\citet{kley:1998} in the context of protostellar accretion disk simulations (and the
+method has since been used in a number of codes in that community, e.g. \citet{NIRVANA}
+and \citet{FARGO3D}), and also by \citet{call:2010}, whose method was adopted by
+\citet{byerly:2014} in the context of binary star simulations. The benefit of using
+inertial frame variables in this context is that the rotational terms vanish as an explicit
+source term to the angular momentum. \citet{kley:1998} points out that the rotational update
+to the $z$-component of the angular momentum measured in the rotating frame (which we
+temporarily call $\ell^\prime$) is:
+\begin{equation}
+  \left.\frac{\partial \ell}{\partial t}\right|^{\text{rotation}} = -2\rho\, v_r\, \omega\, R.\label{eq:rotating-angular-momentum}
+\end{equation}
+(Note that in \castro\ we construct all source terms, including rotation, for the linear
+momenta and then apply the source term to the hybrid momenta using \autoref{eq:force-radial} and
+\autoref{eq:force-angular}; \autoref{eq:rotating-angular-momentum} is automatically obtained this way.)
+The term on the right-hand-side vanishes if instead we evolve the inertial frame $\ell$, and there
+is no source term for the radial momentum either. If one is evolving the linear momenta measured
+in the inertial frame, \cite{byerly:2014} give the form of the update:
+\begin{equation}
+  \left.\frac{\partial (\rho \mathbf{u})}{\partial t}\right|^{\text{rotation}} = -{\bm{\omega}} \times (\rho \mathbf{u})
+\end{equation}
+This is equal to one-half of the Coriolis force (with the centrifugal force not used; see
+\cite{call:2010} for a further discussion of the meaning of this expression),
+and is needed because the linear momentum components change when advected over a
+rotating cylindrical grid. (Since the form of the update is similar to the Coriolis force,
+we can still use the implicit update technique from Section 2.4 of \cite{wdmergerI} when
+evaluating the new-time source term at time-level $n+1$.)
+
+The ability to evolve state variables measured in the inertial frame when doing a
+rotating frame simulation has been added as a runtime parameter in \castro. Note that
+other than evolving inertial frame variables, other aspects of the rotating frame are
+preserved --- for example, binary stars in a stable circular orbit will remain in the same
+location on the grid as where they started, just as in a standard rotating frame simulation,
+and the difference is mainly that the simulation velocity associated with those stationary
+stars will read as the equivalent velocity of the star in the inertial frame. The only
+meaningful wrinkle this introduces is that the hydrodynamic update needs to use the
+rotating frame velocities, not the inertial frame velocities. So in the conversion from
+conserved variables $\mathbf{U}$ to primitive variables $\mathbf{q}$, the latter being
+the ones used by the hydrodynamics module to construct an advective update, we subtract
+the rotating frame velocity from the conserved variables when constructing $\mathbf{q}$.
+Then the rest of the hydrodynamics update proceeds as normal with rotating frame velocities.
+As observed by \citet{byerly:2014}, this is acceptable because the divergence of the
+rotational velocity field is zero, so it can legitimately be analytically subtracted
+from the inertial velocity field. The payoff to the scheme is that we get the better
+numerical behavior associated with the rotating frame velocities, as they are smaller
+in magnitude with respect to the grid.
+
+
+
+\subsection{Miscellaneous Other Changes}
+\label{sec:hydro-other-changes}
+
+- Density flux limiter
 
 
 
