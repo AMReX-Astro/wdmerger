@@ -72,64 +72,69 @@ mesh refinement in the algorithm. Then we consider mergers of these binary stars
 % Numerical Methods
 %==========================================================================
 \section{Numerical Methods}
+\label{sec:methodology}
+
+The numerical methodology for our problem was established in \cite{wdmergerI}.
+In this section we report only on the differences between our current methodology
+and the methodology in that work.
 
 \subsection{Hybrid Advection Scheme}
+\label{sec:hybrid}
 
 It is well known that there is a trade-off between conservation of linear
 momentum and conservation of angular momentum in grid-based, Eulerian codes
-such as \castro. Although both are true statements analytically, we cannot
+such as \castro. Although both quantities should be conserved analytically, we cannot
 numerically guarantee that both hold. Consequently the choice of which
 physical quantity to conserve must be motivated by analysis of the particular
-problem to be done. Ideally a simulation code will be capable of evolving the
+problem to be done. In \cite{wdmergerI}, we demonstrated that numerical conservation
+of linear momentum leads to white dwarf mergers that are spuriously caused by violation
+of numerical conservation of angular momentum. Ideally our simulation code should be capable of evolving the
 equations for both the linear momentum and the angular momentum, and be
 able to switch between them as appropriate. Prior to this work, \castro\
 already had the standard method implemented for evolving the linear momentum.
-To solve the need for an angular momentum evolution, we adopt the ``hybrid''
+To solve the need for an angular momentum evolution, which could end up being more
+appropriate for binary star systems than linear momentum evolution (a proposition we
+will test in \autoref{sec:results}), we adopt the ``hybrid''
 advection scheme presented by \cite{byerly:2014} (see also \cite{motl:2002} for
 a similar equation set). Their approach is appropriate for physical situations
 where there is a dominant angular momentum axis and it is desirable to conserve
 that component as accurately as possible. This is certainly applicable for
 studies of the stability of binary stellar systems. This section contains a
-discussion of our implementation of that scheme in \castro. For the sake
-of simplicity, let us assume that the rotation axis of the binary system is the $z$
+discussion of our implementation of that scheme in \castro.
+
+For the sake of simplicity, let us assume that the rotation axis of the binary system is the $z$
 axis and so the WDs orbit in the $xy$-plane. The core of the method is that instead
 of solving the Euler equations for the linear momenta $(\rho u)$ and $(\rho v)$,
 we instead solve the corresponding equations for the radial momentum
 $s_R \equiv \rho v_R$ (where $v_R$ is the radial velocity with respect to the
 rotation axis) and the angular momentum with respect to the $z$-axis,
-$\ell_z \equiv R\rho v_\phi$ (where $v_\phi$ is the azimuthal velocity).
+$\ell_z \equiv R\rho v_\phi$ (where $v_\phi$ is the azimuthal velocity
+and $R$ is the distance to the rotation axis).
 The equation for the linear $z$-momentum is unchanged. We want to be able
 to solve these equations while still operating in our preferred Cartesian
-coordinate system. \cite{byerly:2014} present these equations as the following;
-for the moment we neglect inclusion of external source terms such as gravity and rotation:
+coordinate system. \cite{byerly:2014} present these equations as the following
+(for the moment we neglect inclusion of external source terms such as gravity and rotation,
+and we note that we have reorganized terms slightly relative to their presentation):
 \begin{align}
-  \frac{\partial(s_R)}{\partial t} + \nabla \cdot (s_R \mathbf{u}) &=
-    - \frac{1}{R}\left(x \frac{\partial}{\partial x} + y \frac{\partial}{\partial y}\right) p
+  \frac{\partial(s_R)}{\partial t} &= -\nabla \cdot (s_R \mathbf{u})
+    - \frac{1}{R}\left(x \frac{\partial p}{\partial x} + y \frac{\partial p}{\partial y}\right)
     + \frac{\ell_z^2}{\rho R^3} \label{eq:radial-momentum}\\
-    \frac{\partial(\ell_z)}{\partial t} + \nabla \cdot (\ell_z \mathbf{u}) &=
-  \left(y\frac{\partial}{\partial x} - x \frac{\partial}{\partial y}\right) p \label{eq:angular-momentum}
-\end{align}  
+    \frac{\partial(\ell_z)}{\partial t} &= -\nabla \cdot (\ell_z \mathbf{u}) - \left(\frac{\partial (-py)}{\partial x} + \frac{\partial(px)}{\partial y}\right).\label{eq:angular-momentum}
+\end{align}
 Here $\mathbf{u}$ is the ordinary linear momentum used to advect any fluid quantity
 on the grid, and $R = \sqrt{x^2 + y^2}$, where the coordinates $x$ and $y$ are defined
 relative to the axis of rotation, and the origin is located on a zone corner
 so that singularities are avoided. Note that $v_R = (1 / R)(x u + y v)$, and
 $v_\phi = (1/R)(x v - y u)$. These equations can be straightforwardly derived from
 the Euler equations for linear momentum by appropriate multiplication of $x$, $y$,
-$x / R$, and $y/R$, and subsequent algebraic manipulation. We now rewrite this in the
-way that illustrates how the update is done in the code:
-\begin{align}
-  \frac{\partial(s_R)}{\partial t} &= -\nabla \cdot (s_R \mathbf{u})
-    - \frac{1}{R}\left(x \frac{\partial p}{\partial x} + y \frac{\partial p}{\partial y}\right)
-    + \frac{\ell_z^2}{\rho R^3} \label{eq:radial-momentum-rearranged}\\
-    \frac{\partial(\ell_z)}{\partial t} &= -\nabla \cdot (\ell_z \mathbf{u}) - \left(\frac{\partial (-py)}{\partial x} + \frac{\partial(px)}{\partial y}\right).\label{eq:angular-momentum-rearranged}
-\end{align}
-The first term is the standard advective flux term for any variable that advects with
+$x / R$, and $y/R$, and subsequent algebraic manipulation. The first term on the
+right-hand-side is the standard advective flux term for any variable that advects with
 the flow, and the state quantity inside this advective term can be derived on cell edges
-using the primitive hydrodynamic variables after a Riemann solver has been performed.
-The second term on the right-hand-side of \autoref{eq:angular-momentum-rearranged} can be swept up
+using the primitive hydrodynamic variables after a Riemann solve has been performed.
+The second term on the right-hand-side of \autoref{eq:angular-momentum} can be swept up
 into the flux terms in the same way that the pressure term for the linear momenta
 is often added to the fluxes, to make the conservation form explicit. The remainder
-are the last two terms on the right-hand-side of \autoref{eq:radial-momentum-rearranged}.
+are the last two terms on the right-hand-side of \autoref{eq:radial-momentum}.
 While maintaining second-order accuracy in time, the last term can be treated as a
 cell-centered source term that we deal with using a predictor-corrector
 method (similar to how we implement external forcing like gravity and rotation; see
@@ -145,15 +150,19 @@ equation of state call that entails.
 It is important to observe that in this formulation the radial momentum equation
 is \textit{not} a conserved quantity: it should and will in general change with
 time over the course of the simulation if the system is not in perfect rotational
-equilibrium. The above form, absent of source terms, makes this clear. The angular momentum term in
-\autoref{eq:radial-momentum} can be thought of physically as expressing the fact
-that a particle with some initial angular momentum will have its radial momentum
-increase with time as it moves away from the origin, and can be thought of geometrically
-as expressing the curved nature of the underlying coordinates for the radial momentum
-\citep{motl:2002}. It is only the presence of a source term like gravity that can keep
-such a particle on an orbit at its original radius, and for such a case it may be helpful
-to think of the angular momentum source term as an outward centrifugal force that
-balances against the inward centripetal force provided by gravity.
+equilibrium. The above form, absent of source terms, makes this clear. The angular
+momentum term in \autoref{eq:radial-momentum} is effectively an outward centrifugal
+force that tends to increase the radial momentum with time. This is a reflection of
+the fact that mass on the domain with non-zero momentum tends to increase its radial
+momentum with time. For example, consider a star initially on the $x$ axis moving
+in the positive $y$ direction at constant speed: initially its radial momentum is
+zero, but as its $y$ coordinate increases, more of its velocity becomes radial rather
+than angular).  This term can thus also be thought of geometrically as expressing the
+curved nature of the underlying coordinates for the radial momentum
+\citep{motl:2002}. In the presence of a source term like gravity that can keep
+such a star on an orbit at its original radius, the gravitational force acts as a
+centripetal force that balances the centrifugal force, allowing the radial momentum
+to remain constant with time, as it should when the orbital radius is constant.
 
 In the absence of source terms, the angular momentum \textit{is} conserved
 to machine precision (ignoring the effects of physical domain boundaries). In the
@@ -176,46 +185,59 @@ to the hybrid momenta -- that is, using the edge state values determined by the
 final multi-dimensional Riemann solve, we construct the value of the hybrid
 momenta on that zone edge, and then allow it to be transported as usual by the
 advective velocity $\mathbf{u}$. When we update the normal momenta with an
-external forcing $\mathbf{F}$ such as gravity or rotation, with $x$ and $y$
+external forcing $\mathbf{F}$ such as gravity, with $x$ and $y$
 components $F_x$ and $F_y$, we apply the update to the hybrid momenta as well:
 \begin{align}
   \left.\frac{\partial(s_R)}{\partial t}\right|_{F} &= -F_x \frac{x}{R} - F_y\frac{y}{R} \label{eq:force-radial}\\
   \left.\frac{\partial(\ell_z)}{\partial t}\right|_{F} &= F_x\, y - F_y\, x.\label{eq:force-angular}
   \end{align}
-Then, when we are in a phase of the evolution when we want to conserve angular
-momentum, we make one additional change: at the end of a (single-level) advance,
-we recompute the normal momenta so that they are fully consistent with the hybrid
-momenta. This is all that is necessary to have a calculation that conserves angular
-momentum over the course of the simulation, without changing any of the
-core infrastructure for the hydrodynamics update. For example, when we compute
-the primitive variables from the conservative variables, we will still be
-getting them from the normal momenta, but these normal momenta are always consistent
-with the conserved angular momentum, so we get the same result as if we had done
-a much more involved update where we explicitly computed the primitive variables
-using the hybrid momenta. There is of course no unique choice for how to do this.
-For example, we could take the approach of explicitly re-calculating the normal
-momenta after any change has been made to the state. This would add significant code
-complexity without a clear benefit. The most significant difference would be
-that when evaluating the new-time value of source terms like rotation, the velocity
-field used is slightly different than it would otherwise be; but this is a high-order
-effect that does not change the core angular momentum conservation property. An
-analysis of the different mechanisms for implementing this update may be an interesting
-avenue for future research --- including various aspects like how to implement the
-source terms in the radial momentum equation. Of course, the answer will likely
-be problem-dependent. Indeed, we already face this situation in general with the
-gravitational and rotational source terms, even independent of the hybrid momentum
-discussion --- the velocity field seen by the new-time rotation source terms depends
-on whether we apply the gravitational force before or after the rotation force.
+
+If in addition to evolving these variables we want to use them in place of the
+standard linear momenta for determining the hydrodynamic flow, only one change
+is needed for the standard timestep advance scheme: after source terms are
+applied to the state, we recompute the normal momenta so that they are fully
+consistent with the hybrid momenta. In practice for a \castro\ advance this
+synchronization of the linear and hybrid momenta occurs twice: once after the
+old-time source terms and the hydrodynamic update has been applied (these all
+use time-level $n$ data to construct the update, which is expected to already have
+synchronized linear and hybrid momenta), and once after new-time source
+terms have been applied. The use of adaptive mesh refinement implies sychronization
+in two other places: after a reflux that syncs up the fluxes between coarse and
+fine grids; and, after interpolation has been performed to obtain fine grid data
+from a coarser grid (since the spatially interpolated data may not respect the
+consistency relationship between the two momenta). In this way, the linear momenta
+are essentially placeholder variables that always reflect what the current radial
+and angular momenta are, but it is quite useful to express the scheme in this way
+because most of the \castro\ infrastructure is already set up to use the linear
+momentum state variables for calculating source terms, so the hybrid scheme requires
+minimal changes to the code architecture. For example, when we compute
+the primitive variables from the conservative variables in preparation for an advective
+hydrodynamic update, we will still be getting them from the linear momenta,
+but these linaer momenta are consistent with the conserved angular momentum,
+so we get the same result as if we had modified the code to explicitly compute
+the primitive variables as a function of the hybrid momenta. Consequently the
+scheme presented here adds the ability to explicitly conserve angular momentum
+in a simulation without a significant footprint on the simulation software.
+
+
+
+%==========================================================================
+% Results
+%==========================================================================
+\section{Simulation Results}\label{sec:results}
 
 
 
 %==========================================================================
 % Conclusions
 %==========================================================================
-\section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
+\section{Conclusions and Discussion}\label{sec:Conclusions and Discussion}
 
 
 \acknowledgments
+
+The authors thank Dominic Marcello and Zachary Byerly for helpful comments
+regarding the hybrid advection scheme.
 
 This research was supported by NSF award AST-1211563.  This research
 used resources of the National Energy Research Scientific Computing
