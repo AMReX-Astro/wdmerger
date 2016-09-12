@@ -90,7 +90,11 @@ if __name__ == "__main__":
     plotfile = ""
 
 
-    try: plotfile = sys.argv[1]
-    except: sys.exit("ERROR: no plotfile specified")
+    try:
+        plotfile = sys.argv[1]
+    except: 
+        sys.exit("ERROR: no plotfile specified")
 
-    doit(plotfile)
+    for plt in sys.argv[1:]:
+        plotfile = plt
+        doit(plotfile)
