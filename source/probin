@@ -131,4 +131,10 @@
 
   ode_max_steps = 1000000
 
+  ! Note that use_tables is a network
+  ! specific parameter that will not apply
+  ! to every network.
+
+  use_tables = T
+
 /
