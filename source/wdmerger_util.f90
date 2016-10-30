@@ -107,7 +107,7 @@ contains
        call bl_error("The collision problem does not make sense in a rotating reference frame.")
     endif
 
-    if (problem .eq. 1 .and. do_rotation .eq. 1) then
+    if (problem .eq. 4 .and. do_rotation .eq. 1) then
        call bl_error("The free-fall problem does not make sense in a rotating reference frame.")
     endif
 
