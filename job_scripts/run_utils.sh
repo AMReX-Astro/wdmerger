@@ -150,6 +150,15 @@ function get_last_checkpoint {
       dir=$1
   fi
 
+  # Optionally pass in a second argument corresponding to how far back we want to go.
+  # By default we return the very latest one.
+
+  if [ ! -z $2 ]; then
+      num=$2
+  else
+      num=1
+  fi
+
   # Doing a search this way will treat first any checkpoint files 
   # with seven digits, and then will fall back to ones with six and then five digits.
   # We want to be smart about this and list the ones in the current directory first,
@@ -162,31 +171,38 @@ function get_last_checkpoint {
   checkpointNums=""
 
   checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk???????" | sort -r)"
-  checkpointList+=" $(find $dir ! -path $dir -type d -name "*chk???????" | sort -r)"
+  checkpointList+=" $(find $dir -mindepth 2 -type d -name "*chk???????" | sort -r)"
   checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
-  checkpointNums+=" $(find $dir ! -path $dir -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find $dir -mindepth 2 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
 
   checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk??????" | sort -r)"
-  checkpointList+=" $(find $dir ! -path $dir -type d -name "*chk??????" | sort -r)"
+  checkpointList+=" $(find $dir -mindepth 2 -type d -name "*chk??????" | sort -r)"
   checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
-  checkpointNums+=" $(find $dir ! -path $dir -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find $dir -mindepth 2 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
 
   checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk?????" | sort -r)"
-  checkpointList+=" $(find $dir ! -path $dir -type d -name "*chk?????" | sort -r)"
+  checkpointList+=" $(find $dir -mindepth 2 -type d -name "*chk?????" | sort -r)"
   checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
-  checkpointNums+=" $(find $dir ! -path $dir -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find $dir -mindepth 2 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
 
   if [ -z "$checkpointList" ]; then
 
       echo ""
       return
-      
+
   fi
 
-  # Match up the last checkpoint number with the actual file path location. 
+  # Match up the last checkpoint number with the actual file path location.
+
+  numSkipped=1
 
   for chkNum in $checkpointNums
   do
+
+      if [ $numSkipped -lt $num ]; then
+	  numSkipped=$((numSkipped + 1))
+	  continue
+      fi
 
       for chkFile in $checkpointList
       do
@@ -965,6 +981,82 @@ function check_to_stop {
       if [ $curr_wall_time -gt $nextCheckpointTime ]; then
 	  touch "dump_and_continue"
 	  nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
+      fi
+
+      # Delete checkpoints as we go so that we don't fill up the disk with temporaries.
+      # We will only delete the second-to-last, not the last, for safety.
+      # Only do this if the checkpoint is one of our temporary checkpoints to
+      # guard against a crash, not if it's a regularly spaced checkpoint printed
+      # at the request of BoxLib. We can test this by checking if the timestep
+      # number or simulation time is a multiple of amr.check_int or amr.check_per.
+
+      checkpoint=$(get_last_checkpoint . 2)
+
+      if [ ! -z $checkpoint ] && [ -d $checkpoint ]; then
+
+	  # Extract the checkpoint time. It is stored in row 3 of the Header file.
+
+	  chk_time=$(awk 'NR==3' $checkpoint/Header)
+
+	  # Convert to floating point, since it might be in exponential format.
+
+	  chk_time=$(printf "%f" $chk_time)
+
+	  # Extract the current timestep. We can get it from the
+	  # name of the checkpoint file. cut will do the trick;
+	  # just capture everything after the 'k' of 'chk'.
+
+	  chk_step=$(echo $checkpoint | cut -d"k" -f2)
+
+	  # Now get the I/O parameters from the inputs file.
+
+	  chk_int=$(get_inputs_var "amr_check_int" .)
+	  chk_per=$(get_inputs_var "amr_check_per" .)
+
+	  if [ $chk_int -le 0 ] && [ $(echo "$chk_per <= 0" | bc -l) -eq 1 ]; then
+
+	      rm -rf $checkpoint
+
+	  elif [ $chk_int -gt 0 ]; then
+
+	      if [ $(( $chk_step % $chk_int )) -eq 0 ]; then
+
+		  rm -rf $checkpoint
+
+	      fi
+
+	  else # chk_per > 0
+
+	      if [ $(echo "$chk_per <= 0" | bc -l) -eq 1 ]; then
+
+		  rm -rf $checkpoint
+
+	      else
+
+		  # Get the coarse timestep; it's the first value in the 10th row.
+
+		  coarseDt=$(awk 'FNR==10 {print $1}' $checkpoint/Header)
+
+		  # Convert to floating point, since it might be in exponential format.
+
+		  coarseDt=$(printf "%f" $coarseDt)
+
+		  # Use the same logic as in the Amr class for determining
+		  # if we just wrote a checkpoint using amr.check_per.
+
+		  num_per_old=$(printf "%.0f" $(echo "($chk_time - $coarseDt) / $chk_per" | bc -l))
+		  num_per_new=$(printf "%.0f" $(echo "($chk_time            ) / $chk_per" | bc -l))
+
+		  if [ "$num_per_old" == "$num_per_new" ]; then
+
+		      rm -rf $checkpoint
+
+		  fi
+
+	      fi
+
+	  fi
+
       fi
 
   done
