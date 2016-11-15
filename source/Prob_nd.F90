@@ -201,6 +201,19 @@
 
               endif
 
+              ! Zero out any velocities that have been generated in ambient density material.
+              ! At large enough distances our rigid body rotation formula above gives meaningless
+              ! results, and this is enough to be an issue for the problem sizes of interest.
+              ! So in the inertial frame the stars will be plowing through the ambient material
+              ! whereas in the rotating frame they will be at rest with respect to the ambient fluid.
+              ! The ambient density should be low enough that this is not an important effect.
+
+              if (state(i,j,k,URHO) < 1.1d0 * ambient_state % rho) then
+
+                 state(i,j,k,UMX:UMZ) = ZERO
+
+              endif
+
            enddo
         enddo
      enddo
