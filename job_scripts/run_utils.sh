@@ -1033,9 +1033,23 @@ function check_to_stop {
 
 	      else
 
-		  # Get the coarse timestep; it's the first value in the 10th row.
+		  # Get the coarse timestep. There's a row in the Header that lists
+		  # the timestep on each level but to make things tricky, the row is
+		  # dependent on the number of levels. The bottom line is that there
+		  # are five fixed lines of output, and then nlevs+1 lines after that
+		  # describing the domain geometry (where nlevs == amr.max_level + 1),
+		  # and then one more line with the refinement ratios, and then finally
+		  # the line with the timesteps (where the level 0 timestep is first).
+		  # See Amr::checkPoint if you don't believe me and/or this changes
+		  # in the future. So the only variable we need to determine where to
+		  # look for dt is the maximum number of levels, which conveniently
+		  # is one of those fixed lines (the fourth, in particular).
 
-		  coarseDt=$(awk 'FNR==10 {print $1}' $checkpoint/Header)
+		  nlevs=$((1 + $(awk 'NR==4' $checkpoint/Header)))
+
+		  line=$((5 + $nlevs + 1 + 2))
+
+		  coarseDt=$(awk -v line=$line 'FNR==line {print $1}' $checkpoint/Header)
 
 		  # Convert to floating point, since it might be in exponential format.
 
