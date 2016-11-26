@@ -46,17 +46,13 @@ INTEGRATOR_DIR ?= BS
 ifeq ($(findstring titan, $(UNAMEN)), titan)
 	# OLCF Titan
 	COMP ?= Cray
-	FCOMP ?= Cray
 else ifeq ($(findstring h2o, $(UNAMEN)), h2o)
 	# NCSA Blue Waters
 	COMP ?= Cray
-	FCOMP ?= Cray
 else ifeq ($(findstring mira, $(UNAMEN)), mira)
 	COMP ?= IBM
-	FCOMP ?= IBM
 else
 	COMP ?= g++
-	FCOMP ?= gfortran
 endif
 
 # This sets the EOS directory in $(MICROPHYSICS_HOME)/eos
