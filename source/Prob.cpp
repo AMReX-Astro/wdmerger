@@ -8,6 +8,8 @@
 
 #include "buildInfo.H"
 
+#include <fstream>
+
 int Castro::relaxation_is_done = 0;
 int Castro::problem = -1;
 int Castro::use_stopping_criterion = 1;
@@ -837,8 +839,22 @@ void Castro::check_to_stop(Real time) {
 
     get_job_status(&jobDoneStatus);
 
-    if (jobDoneStatus == 1)
+    if (jobDoneStatus == 1) {
+
+      // Write out a checkpoint. Note that this will
+      // only happen if you have amr.message_int = 1.
+
+      if (ParallelDescriptor::IOProcessor()) {
+	std::ofstream dump_file;
+	dump_file.open("dump_and_continue", std::ofstream::out);
+	dump_file.close();
+	dump_file.open("plot_and_continue", std::ofstream::out);
+	dump_file.close();
+      }
+
       stopJob();
+
+    }
 
 }
 
