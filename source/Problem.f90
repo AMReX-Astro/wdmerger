@@ -1,6 +1,6 @@
 ! Problem-specific Fortran routines that are designed to interact with C++
 
-subroutine problem_checkpoint(int_dir_name, len)
+subroutine problem_checkpoint(int_dir_name, len) bind(C, name="problem_checkpoint")
 
   ! called by the IO processor during checkpoint
 
@@ -106,7 +106,7 @@ end subroutine problem_checkpoint
 
 
 
-subroutine problem_restart(int_dir_name, len)
+subroutine problem_restart(int_dir_name, len) bind(C, name="problem_restart")
 
   ! called by ALL processors during restart 
 
