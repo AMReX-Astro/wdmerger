@@ -71,7 +71,7 @@ castro.hard_cfl_limit = 0
 amr.compute_new_dt_on_regrid = 1
 
 # Use a retry if an advance violated our stability criteria
-castro.use_retry = 0
+castro.use_retry = 1
 
 # Disable retries based on negative density resets
 castro.retry_neg_dens_factor = -1.0
@@ -174,7 +174,7 @@ castro.transverse_reset_density = 1
 castro.density_reset_method = 2
 
 # Explicitly limit fluxes to avoid hitting a negative density
-castro.limit_fluxes_on_small_dens = 0
+castro.limit_fluxes_on_small_dens = 1
 
 # Time center the sponge source
 castro.time_center_sponge = 1
@@ -222,6 +222,12 @@ castro.react_T_min = 1.0e8
 
 # Maximum temperature for allowing nuclear burning
 castro.react_T_max = 1.0e12
+
+# Minimum density for allowing nuclear burning
+castro.react_rho_min = 1.0e6
+
+# Maximum density for allowing nuclear burning
+castro.react_rho_max = 1.0e12
 
 ############################################################################################
 # Gravity
