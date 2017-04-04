@@ -841,16 +841,11 @@ void Castro::check_to_stop(Real time) {
 
     if (jobDoneStatus == 1) {
 
-      // Write out a checkpoint. Note that this will
-      // only happen if you have amr.message_int = 1.
+      // Signal that we want to write out a checkpoint and plotfile,
+      // if we weren't already going to do this upon completion.
 
-      if (ParallelDescriptor::IOProcessor()) {
-	std::ofstream dump_file;
-	dump_file.open("dump_and_continue", std::ofstream::out);
-	dump_file.close();
-	dump_file.open("plot_and_continue", std::ofstream::out);
-	dump_file.close();
-      }
+      if (!output_at_completion)
+	  output_at_completion = 1;
 
       stopJob();
 
