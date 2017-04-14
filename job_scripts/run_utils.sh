@@ -1198,12 +1198,12 @@ function copy_files {
       new_inputs="T"
 
       if [ -e "$compile_dir/$inputs" ]; then
-          cp $compile_dir/inputs $dir/$inputs
+          cp $compile_dir/$inputs $dir/$inputs
       else
 	  if [ ! -z $problem_dir ]; then
 	      cp $problem_dir/$inputs $dir/$inputs
 	  else
-              cp $WDMERGER_HOME/source/inputs $dir/$inputs
+              cp $WDMERGER_HOME/source/$inputs $dir/$inputs
 	  fi
       fi
   fi
@@ -1235,10 +1235,6 @@ function copy_files {
 
   if [ -z "$inputs_only" ]; then
       touch "$dir/jobs_submitted.txt"
-  fi
-
-  if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
-      convert_to_2D
   fi
 
   # Now determine all the variables that have been added
@@ -1389,68 +1385,6 @@ function get_last_submitted_job {
   fi
 
   echo $job_number
-
-}
-
-
-
-# Convert some inputs variables from 3D into their 2D equivalents.
-
-function convert_to_2D {
-
-    # Cylindrical (R-Z) coordinate system.
-
-    geometry_coord_sys=1
-
-    if [ -z "$geometry_is_periodic" ]; then
-	geometry_is_periodic=$(get_inputs_var "geometry_is_periodic" $dir)
-    fi
-
-    geometry_is_periodic=$(echo $geometry_is_periodic | awk '{print $1, $2}')
-
-    # Set the radial coordinate to have lower boundary value = 0.
-
-    if [ -z "$geometry_prob_lo" ]; then
-	geometry_prob_lo=$(get_inputs_var "geometry_prob_lo" $dir)
-    fi
-
-    if [ -z "$geometry_prob_hi" ]; then
-	geometry_prob_hi=$(get_inputs_var "geometry_prob_hi" $dir)
-    fi
-
-    if [ -z "$castro_center" ]; then
-	castro_center=$(get_inputs_var "castro_center" $dir)
-    fi
-
-    geometry_prob_lo=$(echo $geometry_prob_lo | awk '{print "0.0e0", $2}')
-    geometry_prob_hi=$(echo $geometry_prob_hi | awk '{print      $1, $2}')
-    castro_center=$(echo $castro_center | awk '{print $1, $2}')
-
-    # Use half as many radial points to keep dr = dz.
-
-    if [ -z "$amr_n_cell" ]; then
-	amr_n_cell=$(get_inputs_var "amr_n_cell" $dir)
-    fi
-
-    nr=$(echo $amr_n_cell | awk '{print $1}')
-    nz=$(echo $amr_n_cell | awk '{print $2}')
-
-    nr=$(echo "$nz / 2" | bc)	
-
-    amr_n_cell="$nr $nz"
-
-    # Use a symmetric lower boundary condition for radial coordinate.
-
-    if [ -z "$castro_lo_bc" ]; then
-	castro_lo_bc=$(get_inputs_var "castro_lo_bc" $dir)
-    fi
-
-    if [ -z "$castro_hi_bc" ]; then
-	castro_hi_bc=$(get_inputs_var "castro_hi_bc" $dir)
-    fi
-
-    castro_lo_bc=$(echo $castro_lo_bc | awk '{print  3, $2}')
-    castro_hi_bc=$(echo $castro_hi_bc | awk '{print $1, $2}')
 
 }
 
@@ -1985,6 +1919,10 @@ function run {
 
   if [ -z $DIM ]; then
       DIM="3"
+  fi
+
+  if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
+      inputs=inputs_2d
   fi
 
   set_up_problem_dir
