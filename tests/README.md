@@ -1,1 +1,0 @@
-This directory contains problems designed to be included in a test suite that is regularly run to check for code errors.
