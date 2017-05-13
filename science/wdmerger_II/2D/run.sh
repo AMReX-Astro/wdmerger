@@ -68,57 +68,57 @@ function set_run_opts {
 
 	    if [ $refinement -eq 1 ]; then
 		amr_max_level=0
-		amr_blocking_factor="32"
+		amr_blocking_factor="8"
 		amr_max_grid_size="32"
 	    elif [ $refinement -eq 2 ]; then
 		amr_max_level=1
 		amr_ref_ratio="2"
-		amr_blocking_factor="32 8"
+		amr_blocking_factor="8 8"
 		amr_max_grid_size="32 32"
 	    elif [ $refinement -eq 4 ]; then
 		amr_max_level=1
 		amr_ref_ratio="4"
-		amr_blocking_factor="32 8"
+		amr_blocking_factor="8 8"
 		amr_max_grid_size="32 32"
 	    elif [ $refinement -eq 8 ]; then
 		amr_max_level=2
 		amr_ref_ratio="4 2"
-		amr_blocking_factor="32 8 8"
+		amr_blocking_factor="8 8 8"
 		amr_max_grid_size="32 32 48"
 	    elif [ $refinement -eq 16 ]; then
 		amr_max_level=2
 		amr_ref_ratio="4 4"
-		amr_blocking_factor="32 8 8"
+		amr_blocking_factor="8 8 8"
 		amr_max_grid_size="32 32 48"
 	    elif [ $refinement -eq 32 ]; then
 		amr_max_level=3
 		amr_ref_ratio="4 4 2"
-		amr_blocking_factor="32 8 8 16"
+		amr_blocking_factor="8 8 8 8"
 		amr_max_grid_size="32 32 48 64"
 	    elif [ $refinement -eq 64 ]; then
 		amr_max_level=3
 		amr_ref_ratio="4 4 4"
-		amr_blocking_factor="32 8 8 16"
+		amr_blocking_factor="8 8 8 8"
 		amr_max_grid_size="32 32 48 64"
 	    elif [ $refinement -eq 128 ]; then
 		amr_max_level=4
 		amr_ref_ratio="4 4 4 2"
-		amr_blocking_factor="32 8 8 16 32"
+		amr_blocking_factor="8 8 8 8 8"
 		amr_max_grid_size="32 32 48 64 64"
 	    elif [ $refinement -eq 256 ]; then
 		amr_max_level=4
 		amr_ref_ratio="4 4 4 4"
-		amr_blocking_factor="32 8 8 16 32"
+		amr_blocking_factor="8 8 8 8 8"
 		amr_max_grid_size="32 32 48 64 64"
 	    elif [ $refinement -eq 512 ]; then
 		amr_max_level=5
 		amr_ref_ratio="4 4 4 4 2"
-		amr_blocking_factor="32 8 8 16 32 32"
+		amr_blocking_factor="8 8 8 8 8 8"
 		amr_max_grid_size="32 32 48 64 64 128"
 	    elif [ $refinement -eq 1024 ]; then
 		amr_max_level=5
 		amr_ref_ratio="4 4 4 4 2"
-		amr_blocking_factor="32 8 8 16 32 32"
+		amr_blocking_factor="8 8 8 8 8 8"
 		amr_max_grid_size="32 32 48 64 64 128"
 	    fi
 
@@ -127,37 +127,37 @@ function set_run_opts {
 	    if [ $refinement -eq 1 ]; then
 		amr_max_level=1
 		amr_ref_ratio="4"
-		amr_blocking_factor="32 8"
+		amr_blocking_factor="8 8"
 		amr_max_grid_size="32 32"
 	    elif [ $refinement -eq 2 ]; then
 		amr_max_level=2
 		amr_ref_ratio="4 2"
-		amr_blocking_factor="32 8 8"
+		amr_blocking_factor="8 8 8"
 		amr_max_grid_size="32 32 48"
 	    elif [ $refinement -eq 4 ]; then
 		amr_max_level=2
 		amr_ref_ratio="4 4"
-		amr_blocking_factor="32 8 8"
+		amr_blocking_factor="8 8 8"
 		amr_max_grid_size="32 32 48"
 	    elif [ $refinement -eq 8 ]; then
 		amr_max_level=3
 		amr_ref_ratio="4 4 2"
-		amr_blocking_factor="32 8 8 16"
+		amr_blocking_factor="8 8 8 8"
 		amr_max_grid_size="32 32 48 64"
 	    elif [ $refinement -eq 16 ]; then
 		amr_max_level=3
 		amr_ref_ratio="4 4 4"
-		amr_blocking_factor="32 8 8 16"
+		amr_blocking_factor="8 8 8 8"
 		amr_max_grid_size="32 32 48 64"
 	    elif [ $refinement -eq 32 ]; then
 		amr_max_level=4
 		amr_ref_ratio="4 4 4 2"
-		amr_blocking_factor="32 8 8 16 32"
+		amr_blocking_factor="8 8 8 8 8"
 		amr_max_grid_size="32 32 48 64 128"
 	    elif [ $refinement -eq 64 ]; then
 		amr_max_level=4
 		amr_ref_ratio="4 4 4 4"
-		amr_blocking_factor="32 8 8 16 32"
+		amr_blocking_factor="8 8 8 8 8"
 		amr_max_grid_size="32 32 48 64 128"
 	    fi
 
