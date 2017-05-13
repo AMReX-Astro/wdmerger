@@ -120,6 +120,11 @@ function set_run_opts {
 
 DIM=3
 
+# Grab the right inputs and probin files.
+
+inputs=inputs_3d
+probin=probin
+
 # Variables we need to set up the collision.
 
 problem=0

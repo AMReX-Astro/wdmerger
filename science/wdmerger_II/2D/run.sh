@@ -220,6 +220,11 @@ function set_run_opts {
 
 DIM=2
 
+# Get the right inputs and probin files.
+
+inputs=inputs_2d
+probin=probin
+
 # Variables we need to set up the collision.
 
 problem=0

@@ -12,6 +12,12 @@ else
   script_dir="$WDMERGER_HOME/job_scripts"
 fi
 
+# By default, we want to use the wdmerger source directory for building.
+
+if [ -z $problem_dir ]; then
+  problem_dir=$CASTRO_HOME/Exec/science/wdmerger
+fi
+
 # Functions for working with inputs and probin files.
 source $script_dir/inputs.sh
 source $script_dir/probin.sh
@@ -1200,11 +1206,7 @@ function copy_files {
       if [ -e "$compile_dir/$inputs" ]; then
           cp $compile_dir/$inputs $dir/$inputs
       else
-	  if [ ! -z $problem_dir ]; then
-	      cp $problem_dir/$inputs $dir/$inputs
-	  else
-              cp $WDMERGER_HOME/source/$inputs $dir/$inputs
-	  fi
+	  cp $problem_dir/$inputs $dir/$inputs
       fi
   fi
 
@@ -1215,13 +1217,9 @@ function copy_files {
       new_probin="T"
 
       if [ -e "$compile_dir/$probin" ]; then
-	  cp $compile_dir/probin $dir/$probin
+	  cp $compile_dir/$probin $dir/$probin
       else
-	  if [ ! -z $problem_dir ]; then
-	      cp $problem_dir/$probin $dir/$probin
-	  else
-	      cp $WDMERGER_HOME/source/probin $dir/$probin
-	  fi
+	  cp $problem_dir/$probin $dir/$probin
       fi
   fi
 
@@ -1921,10 +1919,6 @@ function run {
       DIM="3"
   fi
 
-  if [ $DIM -eq "2" ] && [ -z $problem_dir ]; then
-      inputs=inputs_2d
-  fi
-
   set_up_problem_dir
 
   if [ -z $nprocs ]; then
@@ -2101,7 +2095,7 @@ function compile_in_job_directory {
   fi
 
   if [ ! -e $1/$compile_dir/GNUmakefile ]; then
-      cp $WDMERGER_HOME/source/GNUmakefile $1/$compile_dir
+      cp $problem_dir/GNUmakefile $1/$compile_dir
   fi
 
   if [ ! -e $1/$compile_dir/$CASTRO ]; then
