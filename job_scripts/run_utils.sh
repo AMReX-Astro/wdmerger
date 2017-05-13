@@ -12,12 +12,6 @@ else
   script_dir="$WDMERGER_HOME/job_scripts"
 fi
 
-# By default, we want to use the wdmerger source directory for building.
-
-if [ -z $problem_dir ]; then
-  problem_dir=$CASTRO_HOME/Exec/science/wdmerger
-fi
-
 # Functions for working with inputs and probin files.
 source $script_dir/inputs.sh
 source $script_dir/probin.sh
@@ -1909,6 +1903,13 @@ function resume {
 # If walltime isn't defined, we run for one hour.
 
 function run {
+
+  # Require the user to tell us where the source files and inputs are coming from.
+
+  if [ -z $problem_dir ]; then
+      echo "No problem directory specified; exiting."
+      return
+  fi
 
   if [ -z $dir ]; then
       echo "No directory given to run; exiting."

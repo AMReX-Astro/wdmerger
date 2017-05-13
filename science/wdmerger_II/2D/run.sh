@@ -216,6 +216,10 @@ function set_run_opts {
 
 }
 
+# Specify the problem directory.
+
+problem_dir=$CASTRO_HOME/Exec/science/wdmerger
+
 # Needed for the makefile: we want to compile in 2D.
 
 DIM=2
