@@ -7,11 +7,7 @@ function set_run_opts {
 	exit
     fi
 
-    if [ $ncell -ge 256 ]; then
-	amr_n_cell="256 256"
-    else
-	amr_n_cell="$ncell $ncell"
-    fi
+    amr_n_cell="$(echo "$ncell / 2" | bc) $ncell"
 
     # Define a maximum level for refinement of the 
     # stars and the high-temperature regions.
@@ -114,6 +110,16 @@ function set_run_opts {
 		amr_ref_ratio="4 4 4 4"
 		amr_blocking_factor="32 8 8 16 32"
 		amr_max_grid_size="32 32 48 64 64"
+	    elif [ $refinement -eq 512 ]; then
+		amr_max_level=5
+		amr_ref_ratio="4 4 4 4 2"
+		amr_blocking_factor="32 8 8 16 32 32"
+		amr_max_grid_size="32 32 48 64 64 128"
+	    elif [ $refinement -eq 1024 ]; then
+		amr_max_level=5
+		amr_ref_ratio="4 4 4 4 2"
+		amr_blocking_factor="32 8 8 16 32 32"
+		amr_max_grid_size="32 32 48 64 64 128"
 	    fi
 
 	elif [ $ncell -eq 1024 ]; then
@@ -177,8 +183,8 @@ function set_run_opts {
 		    nprocs="24"
 		    walltime="12:00:00"
 		else
-		    queue="extended"
-		    nprocs="24"
+		    queue="medium"
+		    nprocs="144"
 		    walltime="12:00:00"
 		fi
 	    else
@@ -237,7 +243,7 @@ amr_derive_plot_vars="pressure x_velocity y_velocity z_velocity soundspeed"
 
 # Initial timestep shortening factor.
 
-castro_init_shrink=1.0
+castro_init_shrink=0.01
 
 # Set the interval for doing diagnostic global sums.
 
@@ -245,7 +251,7 @@ castro_sum_interval=1
 
 # This problem self-terminates, so just pick a reasonably safe number here.
 
-stop_time=100.0
+stop_time=20.0
 
 # Enable reactions, but for efficiency disable all burning
 # for T < 10^8 K and rho < 10^6 g/cc.
@@ -571,7 +577,7 @@ castro_small_temp=$small_temp_default
 
 # Test the dependence on the dual energy criteria.
 
-eta2_list="0.00 0.01 0.05 0.10"
+eta2_list="0.00 0.0001 0.001 0.01 0.05 0.10"
 
 for castro_dual_energy_eta2 in $eta2_list
 do
@@ -585,7 +591,7 @@ done
 
 unset castro_dual_energy_eta2
 
-eta3_list="0.00 0.01 0.05 0.10"
+eta3_list="0.00 0.0001 0.001 0.01 0.05 0.10"
 
 for castro_dual_energy_eta3 in $eta3_list
 do
@@ -622,9 +628,10 @@ unset local_compile
 
 
 
-# Do a run without any burning.
+# Do a run without any burning. Let this one run for a while
+# so that we know what happens to the collision on longer timescales.
 
-stop_time=10.0
+castro_use_stopping_criterion=0
 
 for castro_do_react in 0 1
 do
@@ -636,5 +643,5 @@ do
 
 done
 
+unset castro_use_stopping_criterion
 castro_do_react=1
-stop_time=100.0
