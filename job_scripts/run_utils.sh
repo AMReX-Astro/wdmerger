@@ -1489,9 +1489,9 @@ function create_job_script {
   touch $dir/$job_script
   chmod u+x $dir/$job_script
 
-  if [ $batch_system == "PBS" ]; then
+  echo "#!/bin/bash" > $dir/$job_script
 
-      echo "#!/bin/bash" > $dir/$job_script
+  if [ $batch_system == "PBS" ]; then
 
       # Select the project allocation we're charging this job to
       if [ ! -z $allocation ]; then
@@ -1523,6 +1523,11 @@ function create_job_script {
 	  echo "#PBS -q $queue" >> $dir/$job_script
       fi
 
+      echo "" >> $dir/$job_script
+
+      # Insert machine-specific preload statements.
+
+      echo "$job_prepend" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Set name of problem directory, if applicable.
@@ -1685,8 +1690,11 @@ function create_job_script {
 
   elif [ $batch_system == "COBALT" ]; then
 
-      echo "#!/bin/bash" > $dir/$job_script
+      echo "" >> $dir/$job_script
 
+      # Insert machine-specific preload statements.
+
+      echo "$job_prepend" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       # Set name of problem directory, if applicable.

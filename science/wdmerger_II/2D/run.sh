@@ -358,7 +358,7 @@ do
     dir=$results_dir/2D/dxnuc/r$refinement
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -377,7 +377,7 @@ do
     dir=$results_dir/2D/center_tagging/r$refinement
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -400,7 +400,7 @@ do
   dir=$results_dir/2D/stellar_tagging/n$ncell
 
   set_run_opts
-  run
+  #run
 
 done
 
@@ -434,7 +434,7 @@ do
     dir=$results_dir/2D/burning_limiter_mode/mode$castro_dtnuc_mode
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -447,7 +447,7 @@ castro_dtnuc_mode=$limiter_mode_default
 
 castro_dtnuc_X="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 4.0 3.0 2.0 1.0 0.75 0.5 0.4 0.3 0.25 0.2 0.15 0.1 0.05 0.025 0.01 0.005 0.0025 0.001"
+dtnuc_list="10000.0" # 1000.0 100.0 10.0 5.0 4.0 3.0 2.0 1.0" #0.75 0.5 0.4 0.3 0.25 0.2 0.15 0.1 0.05 0.025 0.01 0.005 0.0025 0.001"
 
 for dtnuc in $dtnuc_list
 do
@@ -478,7 +478,7 @@ do
     dir=$results_dir/2D/burning_limiter_X/dt$castro$dtnuc
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -497,7 +497,7 @@ do
     dir=$results_dir/2D/burning_mode/$burning_mode
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -521,7 +521,7 @@ do
     dir=$results_dir/2D/co/c"$co_wd_c_frac"o"$co_wd_o_frac"
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -540,7 +540,7 @@ do
     dir=$results_dir/2D/T_min/T$castro_react_T_min
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -558,7 +558,7 @@ do
     dir=$results_dir/2D/rho_min/rho$castro_react_rho_min
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -576,7 +576,7 @@ do
     dir=$results_dir/2D/small_temp/T$castro_small_temp
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -594,7 +594,7 @@ do
     dir=$results_dir/2D/eta2/eta$castro_dual_energy_eta2
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -608,7 +608,7 @@ do
     dir=$results_dir/2D/eta3/eta$castro_dual_energy_eta3
 
     set_run_opts
-    run
+    #run
 
 done
 
@@ -627,7 +627,7 @@ do
     dir=$results_dir/2D/networks/$Network_dir
 
     set_run_opts
-#    run
+    #run
 
 done
 
@@ -648,7 +648,7 @@ do
     dir=$results_dir/2D/reactions/react$castro_do_react
 
     set_run_opts
-    run
+    #run
 
 done
 

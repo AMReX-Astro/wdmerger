@@ -121,6 +121,7 @@ function set_machine_params {
 	launcher="mpirun"
 	queue="medium"
 	run_ext=".OU"
+	job_prepend="module load shared; module load torque; module load maui; module load mvapich2; module load gcc"
 
     # Mira at ALCF
 
