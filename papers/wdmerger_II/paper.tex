@@ -540,22 +540,30 @@ Even if one cannot afford the full resolution required by this
 AMR criterion, and chooses to limit the number of levels to some
 predetermined maximum based on a constraint of computing time,
 the added resolution will still go to the most-needed places.
-However, a significant drawback to this approach is that it
-does not turn on until after an unstable burning region has
-been generated, so this AMR criterion cannot help in the case
-where a spurious detonation begins in a single timestep on the coarse
-grid, though it will kick in immediately after that timestep
-to resolve the regions where the detonation has occurred.
-A possible remedy to be explored in future work is to add
-refinement pre-emptively in regions where the ratio $\tau_s / \tau_e$
-approaches $f_{s}$ but does not yet exceed it. Another
-possibility for this case would be to track how many levels
-would have been needed to prevent the numerical detonation,
-based on the stability criterion, and reject the timestep and
-retry it from the starting state using that many levels of refinement.
-As mentioned in \autoref{sec:hydrocoupling}, the ability to reject
-a timestep and retry it is functionality that
-we have recently added to \castro, so we may try this in future work.
+
+A potential limitation of this approach is that it does not turn on
+until \textit{after} an unstable burning region has been generated,
+because we generally only perform a regridding and level generation
+step at times when AMR levels are synchronized, such as at the beginning
+of the timestep on the coarsest level. So this AMR criterion cannot
+help in the case where a spurious detonation begins in a single timestep
+on the coarse grid, though it will kick in immediately after that
+timestep to resolve the regions where the detonation has occurred.
+This situation is common in our white dwarf collision simulations.
+We have developed a remedy to this issue. At the \textit{end} of every step
+on every level, we check whether the stability criterion has been violated.
+If so, we recognize that it is not too late to solve the problem -- we can
+still add levels of refinement in those places. We then perform the new level
+generation to cover specifically those places that violated the stability criterion.
+To ensure consistency with our algorithm, we use the \textit{old}-time values
+of the coarse fluid state to interpolate into the new fine level, even
+though it is the \textit{new}-time values that were used to guide the level
+generation. Then our algorithm evolves the timestep on the new level as normal.
+Because our algorithm is recursive, this can continue to generate
+as many new levels as are needed to satisfy the stability criterion.
+The upshot is that as long as the simulation can afford enough levels to
+satisfy the stability criterion, there never needs to be even a single timestep
+that violates the criterion.
 
 
 
