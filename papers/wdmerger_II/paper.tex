@@ -31,6 +31,7 @@
 \newcommand{\msolar}{\mathrm{M}_\odot}
 
 % Software names
+\newcommand{\amrex}{\texttt{AMReX}}
 \newcommand{\boxlib}{\texttt{BoxLib}}
 \newcommand{\castro}{\texttt{CASTRO}}
 \newcommand{\microphysics}{\texttt{Microphysics}}
@@ -152,7 +153,7 @@ would appear observationally and whether it bears any resemblance to a SN Ia.
 See Table 4 of \cite{garcia-senz:2013} for a summary of the outcome of many of these studies.
 
 In this paper we seek to add another view to the problem using the reactive hydrodynamics
-code \castro\ \citep{castro} and its underlying adaptive mesh refinement library \boxlib.
+code \castro\ \citep{castro} and its underlying adaptive mesh refinement library \amrex\footnote{\amrex is the successor to \boxlib.}.
 This paper is a follow-up to \citet{wdmergerI} (hereafter, Paper I), which established
 the hydrodynamic methdology we are using to simulate mergers of white dwarfs.
 Paper I left out a discussion of the methodology we are using for nuclear reactions,
@@ -218,8 +219,8 @@ the latter two networks is that they allow us to track changes away from
 $Y_e = 0.5$.
 
 All four of these networks have been ported into a form that is consistent
-with the \boxlib\ codes, in the freely available \microphysics\ code
-repository\footnote{\microphysics\ can be obtained at \url{https://github.com/BoxLib-Codes/Microphysics}.},
+with the \amrex\ codes, in the freely available \microphysics\ code
+repository\footnote{\microphysics\ can be obtained at \url{https://github.com/starkiller-astro/Microphysics}.},
 a collection of microphysical routines that are designed to be used in our
 hydrodynamics codes. These can be easily swapped at compile time by using the 
 appropriate makefile variable.
@@ -280,7 +281,7 @@ In our \microphysics\ repository we provide several software options for
 solving a set of coupled stiff ODEs. For this work we use an implementation of
 the well known variable-order Richardson extrapolation method presented by \citet{stoer:1980},
 that is similar to the integrator which ships with
-the original versions of the networks mentioned above. Previous work using the \boxlib\
+the original versions of the networks mentioned above. Previous work using the \amrex\
 codes typically used the classic \vode\ integrator \citep{vode}. We do maintain a version
 of the software that is compatible with our software interfaces in the \microphysics\
 repository, but we have largely shifted to integrators which are written in modern
@@ -551,7 +552,7 @@ possibility for this case would be to track how many levels
 would have been needed to prevent the numerical detonation,
 based on the stability criterion, and reject the timestep and
 retry it from the starting state using that many levels of refinement.
-As mentioned in \autoref{sec:burnerhydrocoupling}, the ability to reject
+As mentioned in \autoref{sec:hydrocoupling}, the ability to reject
 a timestep and retry it is functionality that
 we have recently added to \castro, so we may try this in future work.
 
@@ -981,13 +982,13 @@ This research has made use of NASA's Astrophysics Data System
 Bibliographic Services. In addition, this research has made use
 of the AstroBetter blog and wiki.
 
-\software{BoxLib\footnote{\url{https://github.com/BoxLib-Codes/BoxLib}},
-          CASTRO \citep{castro} (https://github.com/BoxLib-Codes/Castro),
-          wdmerger \citep{wdmergerI} (\url{https://github.com/BoxLib-Codes/wdmerger}),
+\software{\amrex\ (\url{https://github.com/AMReX-Codes/Amrex}),
+          \castro\ \citep{castro} (\url{https://github.com/AMReX-Astro/Castro}),
+          \wdmerger\ \citep{wdmergerI} (\url{https://github.com/AMReX-Astro/wdmerger}),
           GCC (\url{https://gcc.gnu.org/}),
           python (\url{https://www.python.org/}),
-          matplotlib \citep{matplotlib}, \url{http://matplotlib.org/}),
-          yt \citep{yt}, \url{http://yt-project.org/})}
+          matplotlib \citep{matplotlib} (\url{http://matplotlib.org/}),
+          yt \citep{yt} (\url{http://yt-project.org/})}
 
 \clearpage
 
