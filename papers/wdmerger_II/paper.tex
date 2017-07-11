@@ -825,7 +825,17 @@ detonations occur slightly outside the initial contact point, near the edges of 
 establish as the main source of error in simulations that produce too little nickel. However, we find
 that the resulting detonations are not strong enough to convert a significant amount of material to NSE
 conditions; instead, only QSE conditions are reached near the center of the collision, leaving a significant
-amount of silicon and sulfur on the domain that is not further processed.
+amount of silicon and sulfur on the domain that is not further processed. In order to ensure that the
+very different results we obtained were not a result of the specific choice we made for how to suppress
+the burn, we tried varying the approach discussed in \autoref{sec:burner}. First, we limited based on
+the current value of the internal energy and sound speed rather than the fixed, initial value during a burn
+(this should be a less severe limiter). This did not yield a significant difference in the outcome. Second,
+we also tried applying the limiting after the burn had completed, using the differences between the input
+and output states of the integration, rather than directly limiting the RHS in the ODE. The behavior of the
+burn was qualitatively different, in that nickel production began much earlier in the collision when the limiting
+was applied this way. Nevertheless, the qualitative final outcome of the collision -- only trace amounts
+of nickel produced in total -- was still unchanged. With this variant too, it did not matter whether the limiting
+factor was determined based on the initial value of the state or the final value of the state.
 
 
 
