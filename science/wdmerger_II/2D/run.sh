@@ -322,6 +322,9 @@ co_wd_o_frac_default="0.5"
 T_min_default="1.0e8"
 rho_min_default="1.0e6"
 small_temp_default="1.0e7"
+spec_tol_default="1.0e-8"
+temp_tol_default="1.0e-6"
+enuc_tol_default="1.0e-6"
 
 ncell=$ncell_default
 mass_P=$mass_P_default
@@ -634,6 +637,58 @@ done
 Network_dir=$network_default
 
 unset local_compile
+
+
+
+# Test the effect of ODE solver tolerance.
+
+for enuc_tol in 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4 1.d-3
+do
+
+    atol_enuc=$enuc_tol
+    rtol_enuc=$enuc_tol
+
+    dir=$results_dir/2D/enuc_tol/tol$enuc_tol
+
+    set_run_opts
+    run
+
+done
+
+atol_enuc=$enuc_tol_default
+rtol_enuc=$enuc_tol_default
+
+for temp_tol in 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4 1.d-3
+do
+
+    atol_temp=$temp_tol
+    rtol_temp=$temp_tol
+
+    dir=$results_dir/2D/temp_tol/tol$temp_tol
+
+    set_run_opts
+    run
+
+done
+
+atol_temp=$temp_tol_default
+rtol_temp=$temp_tol_default
+
+for spec_tol in 1.d-12 1.d-11 1.d-10 1.d-9 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4
+do
+
+    atol_spec=$spec_tol
+    rtol_spec=$spec_tol
+
+    dir=$results_dir/2D/spec_tol/tol$spec_tol
+
+    set_run_opts
+    run
+
+done
+
+atol_spec=$spec_tol_default
+rtol_spec=$spec_tol_default
 
 
 
