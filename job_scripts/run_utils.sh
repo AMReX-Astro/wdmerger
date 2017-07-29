@@ -1241,6 +1241,9 @@ function copy_files {
   if [ ! -e "$dir/job_scripts/run_utils.sh" ] && [ -z "$inputs_only" ]; then
       mkdir -p "$dir/job_scripts"
       cp -r $WDMERGER_HOME/job_scripts/*.sh $dir/job_scripts/
+
+      # Cache the name of the machine we're working on in the run directory.
+      echo "$MACHINE" > $dir/job_scripts/machine
   fi
 
   if [ -z "$inputs_only" ]; then
@@ -1521,6 +1524,15 @@ function create_job_script {
 
   num_mpi_tasks=$(echo "$nprocs / $OMP_NUM_THREADS" | bc)
   tasks_per_node=$(echo "$ppn / $OMP_NUM_THREADS" | bc)
+
+  # Some systems like Cori count logical cores on a node (for example, with hyperthreading)
+  # in the job scheduler. Create a variable that accounts for this.
+
+  if [ ! -z $logical_ppn ]; then
+      logical_cores_per_task=$(echo "$logical_ppn / $tasks_per_node" | bc)
+  else
+      logical_cores_per_task=$(echo "$ppn / $tasks_per_node" | bc)
+  fi
 
   # Create the job script and make it executable.
 
@@ -1824,7 +1836,7 @@ function create_job_script {
       # Set the aprun options.
 
       if [ $launcher == "srun" ]; then
-	  launcher_opts="-n $num_mpi_tasks -N $nodes -c $OMP_NUM_THREADS"
+	  launcher_opts="-n $num_mpi_tasks -N $nodes -c $logical_cores_per_task"
 	  redirect="> $job_name.OU"
       fi
 

@@ -2,41 +2,45 @@
 
 function get_machine {
 
-  # Get the name of the machine by using uname;
-  # then store it in a file in the wdmerger root.
-  # This storage helps when we're on the compute nodes,
-  # which often don't have the same system name as the login nodes.
+  # The generic default.
 
-  MACHINE=''
+  MACHINE=GENERICLINUX
 
-  UNAMEN=$(uname -n)
+  # Check to see if the machine name has been cached
+  # in a local job_scripts run directory; if so, grab
+  # it from there (this is useful on compute nodes at
+  # various HPC sites that don't name the nodes with
+  # a useful identifier).
 
-  if   [[ $UNAMEN == *"h2o"*    ]]; then
-      MACHINE=BLUE_WATERS
-  elif [[ $UNAMEN == *"titan"*  ]]; then
-      MACHINE=TITAN
-  elif [[ $UNAMEN == *"hopper"* ]]; then
-      MACHINE=HOPPER
-  elif [[ $UNAMEN == *"edison"* ]]; then
-      MACHINE=EDISON
-  elif [[ $UNAMEN == *"cori"* ]]; then
-      MACHINE=CORI
-  elif [[ $UNAMEN == *"lired"*  ]]; then
-      MACHINE=LIRED
-  elif [[ $UNAMEN == *"mira"*   ]]; then
-      MACHINE=MIRA
-  fi
+  # Otherwise, assume we are on a login node and so
+  # we can identify the machine based on the uname.
 
-  # Store the name, or retrieve it as needed.
+  if [ -d "job_scripts" ]; then
 
-  if [ ! -z $MACHINE ]; then
-      echo "$MACHINE" > $WDMERGER_HOME/job_scripts/machine
-  else
-      if [ -e $WDMERGER_HOME/job_scripts/machine ]; then
-          MACHINE=$(cat $WDMERGER_HOME/job_scripts/machine)
-      else
-          MACHINE=GENERICLINUX
+      if [ -e "job_scripts/machine" ]; then
+          MACHINE=$(cat "job_scripts/machine")
       fi
+
+  else
+
+      UNAMEN=$(uname -n)
+
+      if   [[ $UNAMEN == *"h2o"*    ]]; then
+          MACHINE=BLUE_WATERS
+      elif [[ $UNAMEN == *"titan"*  ]]; then
+          MACHINE=TITAN
+      elif [[ $UNAMEN == *"hopper"* ]]; then
+          MACHINE=HOPPER
+      elif [[ $UNAMEN == *"edison"* ]]; then
+          MACHINE=EDISON
+      elif [[ $UNAMEN == *"cori"* ]]; then
+          MACHINE=CORI
+      elif [[ $UNAMEN == *"lired"*  ]]; then
+          MACHINE=LIRED
+      elif [[ $UNAMEN == *"mira"*   ]]; then
+          MACHINE=MIRA
+      fi
+
   fi
 
   echo $MACHINE
@@ -133,6 +137,7 @@ function set_machine_params {
 	exec="sbatch"
 	cancel_job="scancel"
 	ppn="32"
+        logical_ppn="64"
 	run_ext=".OU"
 	batch_system="SLURM"
 	launcher="srun"
