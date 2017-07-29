@@ -140,6 +140,8 @@ function set_machine_params {
         constraint="haswell"
         resource="SCRATCH"
 
+        job_prepend="export OMP_PROC_BIND=spread; export OMP_PLACES=threads"
+
     # LIRED at Stony Brook University
 
     elif [ $MACHINE == "LIRED" ]; then
