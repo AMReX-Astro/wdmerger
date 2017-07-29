@@ -81,6 +81,10 @@ function get_submitted_jobs {
 
       showq -u $USER | grep $USER | awk '{ print $1 }' > $job_file
 
+  elif [ $batch_system == "SLURM" ]; then
+
+      squeue -u $USER | grep $USER | awk '{ print $1 }' > $job_file
+
   elif [ $batch_system == "COBALT" ]; then
 
       qstat -u $USER | grep $USER | awk '{ print $1 }' > $job_file
@@ -395,6 +399,20 @@ function get_remaining_walltime {
 
       if [ ! -z $total_time ]; then
 	  total_time=$(hours_to_seconds $total_time)
+      fi
+
+  elif [ $batch_system == "SLURM" ]; then
+
+      # For SLURM we need to subtract the run time from the total alloted time.
+
+      total_time=$(squeue -l -u $USER | grep $job_number | awk '{ print $7 }')
+      total_time=$(hours_to_seconds $total_time)
+
+      time_used=$(squeue -l -u $USER | grep $job_number | awk '{ print $6 }')
+      time_used=$(hours_to_seconds $time_used)
+
+      if [ ! -z $total_time ] && [ ! -z $time_used ]; then
+          total_time=$(echo "$total_time - $time_used" | bc - l)
       fi
 
   elif [ $batch_system == "COBALT" ]; then
@@ -1343,6 +1361,8 @@ function submit_job {
 
   if [ $batch_system == "PBS" ]; then
       submitted_job_number=`$exec $job_script`
+  elif [ $batch_system == "SLURM" ]; then
+      submitted_job_number=`$exec $job_script`
   elif [ $batch_system == "COBALT" ]; then
       submitted_job_number=`$exec -A $allocation -t $walltime_in_minutes -n $nodes --mode script run_script`
   fi
@@ -1351,6 +1371,12 @@ function submit_job {
   # at the end of the number, so remove any appended text.
 
   submitted_job_number=${submitted_job_number%%.*}
+
+  # The sbatch output is "Submitted job number XXX"
+
+  if [ $batch_system == "SLURM" ]; then
+      submitted_job_number=$(echo $submitted_job_number | awk '{ print $NF }')
+  fi
 
   if [ ! -z "$submitted_job_number" ]; then
       echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
@@ -1458,6 +1484,18 @@ function create_job_script {
 	  elif [ $max_level_grid_size -lt "128" ]; then
 	      OMP_NUM_THREADS=4
 	  fi
+      elif [ $MACHINE == "EDISON" ]; then
+          if [ $max_level_grid_size -lt "64" ]; then
+              OMP_NUM_THREADS=2
+          elif [ $max_level_grid_size -lt "128" ]; then
+              OMP_NUM_THREADS=4
+          fi
+      elif [ $MACHINE == "CORI" ]; then
+          if [ $max_level_grid_size -lt "64" ]; then
+              OMP_NUM_THREADS=2
+          elif [ $max_level_grid_size -lt "128" ]; then
+              OMP_NUM_THREADS=4
+          fi
       fi
 
       # Also, we want to make sure that OMP_NUM_THREADS is equal to one
@@ -1687,6 +1725,137 @@ function create_job_script {
 	  echo "" >> $dir/output/$archive_script
 
       fi
+
+  elif [ $batch_system == "SLURM" ]; then
+
+      # Select the project allocation we're charging this job to
+      if [ ! -z $allocation ]; then
+	  echo "#SBATCH -A $allocation" >> $dir/$job_script
+      fi
+
+      # Set the name of the job
+      echo "#SBATCH -J $job_name" >> $dir/$job_script
+
+      # Combine standard error into the standard out file
+      echo "#SBATCH -o $job_name.OU" >> $dir/$job_script
+
+      # Amount of wall time for the simulation
+      echo "#SBATCH -t $walltime" >> $dir/$job_script
+
+      # Number of nodes, the number of MPI tasks per node, and the node type to use
+      echo "#SBATCH -N $nodes" >> $dir/$job_script
+
+      # Queue to submit to. This is required for some systems.
+      if [ ! -z $queue ]; then
+	  echo "#SBATCH -p $queue" >> $dir/$job_script
+      fi
+
+      # Job constraint to apply.
+      if [ ! -z $constraint ]; then
+          echo "#SBATCH -C $constraint" >> $dir/$job_script
+      fi
+
+      # Resources to use.
+      if [ ! -z $resource ]; then
+          echo "#SBATCH -L $resource" >> $dir/$job_script
+      fi
+
+      echo "" >> $dir/$job_script
+
+      # Insert machine-specific preload statements.
+
+      echo "$job_prepend" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Set name of problem directory, if applicable.
+
+      if [ ! -z $problem_dir ]; then
+	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Set the name of the inputs and probin files, in case they are 
+      # unique for this problem.
+
+      if [ $inputs != "inputs" ]; then
+	  echo "inputs=$inputs" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      if [ $probin != "probin" ]; then
+	  echo "probin=$probin" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to continue the run.
+
+      if [ ! -z $no_continue ]; then
+	  echo "no_continue=$no_continue" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to archive the data.
+
+      if [ ! -z $do_storage ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Store the job number.
+
+      echo "job_number=\$SLURM_JOB_ID" >> $dir/$job_script
+      echo "job_number=\${job_number%%.*}" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Load up our helper functions.
+
+      echo "source job_scripts/run_utils.sh" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Number of OpenMP threads
+
+      echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
+
+      # Amount of memory allocated to each OpenMP thread.
+
+      echo "export OMP_STACKSIZE=64M" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Set the aprun options.
+
+      if [ $launcher == "srun" ]; then
+	  launcher_opts="-n $num_mpi_tasks -N $nodes -c $OMP_NUM_THREADS"
+	  redirect="> $job_name.OU"
+      fi
+
+      # Main job execution.
+
+      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "pid=\$!" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
+
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "wait" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # With srun we redirect the output to a file; let's move that to a file 
+      # named by the job number so that we retain it later.
+
+      if [ $launcher == "srun" ]; then
+
+	echo "mv $job_name.OU \$job_number.out" >> $dir/$job_script
+	echo "" >> $dir/$job_script
+
+      fi
+
+
 
   elif [ $batch_system == "COBALT" ]; then
 
