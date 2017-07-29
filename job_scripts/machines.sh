@@ -7,32 +7,36 @@ function get_machine {
   # This storage helps when we're on the compute nodes,
   # which often don't have the same system name as the login nodes.
 
-  if [ ! -e $WDMERGER_HOME/job_scripts/machine ]; then
+  MACHINE=''
 
-      UNAMEN=$(uname -n)
+  UNAMEN=$(uname -n)
 
-      if   [[ $UNAMEN == *"h2o"*    ]]; then
-	MACHINE=BLUE_WATERS
-      elif [[ $UNAMEN == *"titan"*  ]]; then
-	MACHINE=TITAN
-      elif [[ $UNAMEN == *"hopper"* ]]; then
-	MACHINE=HOPPER
-      elif [[ $UNAMEN == *"lired"*  ]]; then
-	MACHINE=LIRED
-      elif [[ $UNAMEN == *"mira"*   ]]; then
-	MACHINE=MIRA
-      else
-	MACHINE=GENERICLINUX
-      fi
+  if   [[ $UNAMEN == *"h2o"*    ]]; then
+      MACHINE=BLUE_WATERS
+  elif [[ $UNAMEN == *"titan"*  ]]; then
+      MACHINE=TITAN
+  elif [[ $UNAMEN == *"hopper"* ]]; then
+      MACHINE=HOPPER
+  elif [[ $UNAMEN == *"edison"* ]]; then
+      MACHINE=EDISON
+  elif [[ $UNAMEN == *"cori"* ]]; then
+      MACHINE=CORI
+  elif [[ $UNAMEN == *"lired"*  ]]; then
+      MACHINE=LIRED
+  elif [[ $UNAMEN == *"mira"*   ]]; then
+      MACHINE=MIRA
+  fi
 
-      # Store the name 
+  # Store the name, or retrieve it as needed.
 
+  if [ ! -z $MACHINE ]; then
       echo "$MACHINE" > $WDMERGER_HOME/job_scripts/machine
-
   else
-
-      MACHINE=$(cat $WDMERGER_HOME/job_scripts/machine)
-
+      if [ -e $WDMERGER_HOME/job_scripts/machine ]; then
+          MACHINE=$(cat $WDMERGER_HOME/job_scripts/machine)
+      else
+          MACHINE=GENERICLINUX
+      fi
   fi
 
   echo $MACHINE
@@ -106,6 +110,35 @@ function set_machine_params {
 	batch_system="PBS"
 	launcher="aprun"
 	queue="regular"
+
+    # Edison at NERSC
+
+    elif [ $MACHINE == "EDISON" ]; then
+
+	allocation="m1938"
+	exec="sbatch"
+	cancel_job="scancel"
+	ppn="24"
+	run_ext=".OU"
+	batch_system="SLURM"
+	launcher="srun"
+	queue="regular"
+        resource="SCRATCH"
+
+    # Cori at NERSC (phase I)
+
+    elif [ $MACHINE == "CORI" ]; then
+
+	allocation="m1938"
+	exec="sbatch"
+	cancel_job="scancel"
+	ppn="32"
+	run_ext=".OU"
+	batch_system="SLURM"
+	launcher="srun"
+	queue="regular"
+        constraint="haswell"
+        resource="SCRATCH"
 
     # LIRED at Stony Brook University
 
