@@ -69,7 +69,7 @@ function get_make_var {
 
 function get_submitted_jobs {
 
-  job_file=$WDMERGER_HOME/job_scripts/jobs.txt
+  job_file=jobs.txt
 
   # Store the result of the queue information command, 
   # but only keep the lines that store jobs with our 
@@ -104,6 +104,8 @@ function get_submitted_jobs {
       done
 
   fi
+
+  rm $job_file
 
 }
 
