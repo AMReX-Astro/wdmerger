@@ -7,7 +7,11 @@ function set_run_opts {
 	exit
     fi
 
-    amr_n_cell="$(echo "$ncell / 2" | bc) $ncell"
+    if [ $DIM -eq 2 ]; then
+        amr_n_cell="$(echo "$ncell / 2" | bc) $ncell"
+    else
+        amr_n_cell="$ncell $ncell $ncell"
+    fi
 
     # Define a maximum level for refinement of the 
     # stars and the high-temperature regions.
@@ -189,7 +193,7 @@ function set_run_opts {
 
 problem_dir=$CASTRO_HOME/Exec/science/wdmerger
 
-# Needed for the makefile: we want to compile in 2D.
+# Needed for the makefile: we want to compile in 2D for most of the tests.
 
 DIM=2
 
@@ -415,7 +419,7 @@ castro_dtnuc_mode=$limiter_mode_default
 
 castro_dtnuc_X="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.1 0.01 0.001"
+dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001"
 
 for dtnuc in $dtnuc_list
 do
@@ -436,7 +440,7 @@ castro_dtnuc_X=$dtnuc_X_default
 
 castro_dtnuc_e="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.1 0.01 0.001"
+dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001"
 
 for dtnuc in $dtnuc_list
 do
@@ -670,6 +674,28 @@ for castro_do_react in 0 1
 do
 
     dir=$results_dir/2D/reactions/react$castro_do_react
+
+    set_run_opts
+    run
+
+done
+
+unset castro_use_stopping_criterion
+castro_do_react=1
+
+
+
+# Switch to a 3D test.
+
+DIM=3
+inputs=inputs_3d
+
+castro_use_stopping_criterion=0
+
+for castro_do_react in 0 1
+do
+
+    dir=$results_dir/3D/reactions/react$castro_do_react
 
     set_run_opts
     run
