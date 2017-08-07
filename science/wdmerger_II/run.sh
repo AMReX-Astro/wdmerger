@@ -9,8 +9,12 @@ function set_run_opts {
 
     if [ $DIM -eq 2 ]; then
         amr_n_cell="$(echo "$ncell / 2" | bc) $ncell"
+        geometry_prob_lo="0.0 $prob_lo"
+        geometry_prob_hi="$prob_hi $prob_hi"
     else
         amr_n_cell="$ncell $ncell $ncell"
+        geometry_prob_lo="$prob_lo $prob_lo $prob_lo"
+        geometry_prob_hi="$prob_hi $prob_hi $prob_hi"
     fi
 
     # Define a maximum level for refinement of the 
@@ -185,6 +189,13 @@ function set_run_opts {
             fi
         fi
 
+        if [ $ncell -gt 1024 ]; then
+            queue="medium"
+            nprocs="192"
+            walltime="12:00:00"
+            OMP_NUM_THREADS=8
+        fi
+
     fi
 
 }
@@ -201,6 +212,12 @@ DIM=2
 
 inputs=inputs_2d
 probin=probin
+
+# Use a narrower domain than the usual default.
+# This problem is insensitive to accuracy in the boundary conditions.
+
+prob_lo=-2.56e9
+prob_hi=2.56e9
 
 # Variables we need to set up the collision.
 
