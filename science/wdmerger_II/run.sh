@@ -216,8 +216,8 @@ probin=probin
 # Use a narrower domain than the usual default.
 # This problem is insensitive to accuracy in the boundary conditions.
 
-prob_lo=-2.56e9
-prob_hi=2.56e9
+prob_lo=-4e9
+prob_hi=4e9
 
 # Variables we need to set up the collision.
 
