@@ -167,50 +167,19 @@ function set_run_opts {
 
     if [ $MACHINE == "LIRED" ]; then
 
-	# This is our default queue, which is appropriate
-	# for most of the larger runs.
+	queue="extended"
+        nprocs="24"
+        walltime="24:00:00"
+        OMP_NUM_THREADS=1
 
-	queue="medium"
-
-	if [ $ncell -eq 256 ]; then
-	    if [ ! -z $refinement ]; then
-		if [ $refinement -le 64 ]; then
-		    queue="extended"
-		    nprocs="24"
-		    walltime="12:00:00"
-		elif [ $refinement -le 256 ]; then
-		    queue="extended"
-		    nprocs="24"
-		    walltime="12:00:00"
-		else
-		    queue="medium"
-		    nprocs="144"
-		    walltime="12:00:00"
-		fi
-	    else
-		queue="extended"
-		nprocs="24"
-		walltime="24:00:00"
-	    fi
-	elif [ $ncell -eq 512 ]; then
-	    nprocs="144"
-	    walltime="12:00:00"
-	elif [ $ncell -eq 1024 ]; then
-	    nprocs="144"
-	    walltime="12:00:00"
-	elif [ $ncell -eq 2048 ]; then
-	    nprocs="144"
-	    walltime="12:00:00"
-	elif [ $ncell -eq 4096 ]; then
-	    nprocs="144"
-	    walltime="12:00:00"
-	elif [ $ncell -eq 8192 ]; then
-	    nprocs="144"
-	    walltime="12:00:00"
-	elif [ $ncell -eq 16384 ]; then
-	    nprocs="144"
-	    walltime="12:00:00"
-	fi
+        if [ ! -z $refinement ]; then
+            if [ $refinement -gt 256 ]; then
+                queue="medium"
+                nprocs="192"
+                walltime="12:00:00"
+                OMP_NUM_THREADS=8
+            fi
+        fi
 
     fi
 
@@ -284,10 +253,6 @@ co_wd_o_frac=0.5d0
 
 castro_do_sponge=0
 
-# Set the BS integrator scaling method.
-
-scaling_method=2
-
 # The timesteps can get quite small if you're fully 
 # resolving the burning, so allow for this.
 
@@ -304,7 +269,7 @@ castro_change_max=1.05
 ncell_default="256"
 
 # Empirically we have found that the answer is qualitatively
-# converged for dtnuc < 100. So let's set it here to get 
+# converged for dtnuc_e < 100. So let's set it here to get 
 # enough timestep control to get a reasonable answer, but not
 # so low that it takes forever for the runs with multiple levels
 # of refinement to finish.
@@ -323,8 +288,8 @@ T_min_default="1.0e8"
 rho_min_default="1.0e6"
 small_temp_default="1.0e7"
 spec_tol_default="1.0e-8"
-temp_tol_default="1.0e-6"
 enuc_tol_default="1.0e-6"
+temp_tol_default="1.0e-6"
 
 ncell=$ncell_default
 mass_P=$mass_P_default
@@ -355,7 +320,7 @@ castro_dxnuc="1.0e-1"
 castro_dtnuc_e="1.e200"
 castro_dtnuc_X="1.e200"
 
-for refinement in 1 2 4 8 16 32 64 128 256
+for refinement in 1 2 4 8 16 32 64 128 256 512 1024
 do
 
     dir=$results_dir/2D/dxnuc/r$refinement
@@ -450,7 +415,7 @@ castro_dtnuc_mode=$limiter_mode_default
 
 castro_dtnuc_X="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 4.0 3.0 2.0 1.0 0.75 0.5 0.4 0.3 0.25 0.2 0.15 0.1 0.05 0.025 0.01 0.005 0.0025 0.001"
+dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.1 0.01 0.001"
 
 for dtnuc in $dtnuc_list
 do
@@ -471,7 +436,7 @@ castro_dtnuc_X=$dtnuc_X_default
 
 castro_dtnuc_e="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 4.0 3.0 2.0 1.0 0.75 0.5 0.4 0.3 0.25 0.2 0.15 0.1 0.05 0.025 0.01 0.005 0.0025 0.001"
+dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.1 0.01 0.001"
 
 for dtnuc in $dtnuc_list
 do
@@ -630,7 +595,7 @@ do
     dir=$results_dir/2D/networks/$Network_dir
 
     set_run_opts
-#    run
+    run
 
 done
 
@@ -658,6 +623,8 @@ done
 atol_enuc=$enuc_tol_default
 rtol_enuc=$enuc_tol_default
 
+
+
 for temp_tol in 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4 1.d-3
 do
 
@@ -673,6 +640,8 @@ done
 
 atol_temp=$temp_tol_default
 rtol_temp=$temp_tol_default
+
+
 
 for spec_tol in 1.d-12 1.d-11 1.d-10 1.d-9 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4
 do
