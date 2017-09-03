@@ -37,6 +37,8 @@ function get_machine {
           MACHINE=CORI
       elif [[ $UNAMEN == *"lired"*  ]]; then
           MACHINE=LIRED
+      elif [[ $UNAMEN == "login"  ]]; then
+          MACHINE=SEAWULF
       elif [[ $UNAMEN == *"mira"*   ]]; then
           MACHINE=MIRA
       fi
@@ -156,6 +158,22 @@ function set_machine_params {
 	pause_job="qhold"
 	resume_job="qrls"
 	ppn="24"
+	threads_per_task="1"
+	batch_system="PBS"
+	launcher="mpirun"
+	queue="medium"
+	run_ext=".OU"
+	job_prepend="module load shared; module load torque; module load maui; module load mvapich2; module load gcc"
+
+    # SeaWulf at Stony Brook University
+
+    elif [ $MACHINE == "SEAWULF" ]; then
+
+	exec="qsub"
+	cancel_job="qdel"
+	pause_job="qhold"
+	resume_job="qrls"
+	ppn="28"
 	threads_per_task="1"
 	batch_system="PBS"
 	launcher="mpirun"

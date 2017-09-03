@@ -1566,6 +1566,8 @@ function create_job_script {
 	  echo "#PBS -l mppwidth=$nprocs" >> $dir/$job_script
       elif [ $MACHINE == "LIRED" ]; then
 	  echo "#PBS -l nodes=$nodes:ppn=$ppn" >> $dir/$job_script
+      elif [ $MACHINE == "SEAWULF" ]; then
+	  echo "#PBS -l nodes=$nodes:ppn=$ppn" >> $dir/$job_script
       else
 	  echo "#PBS -l nodes=$nodes" >> $dir/$job_script
       fi
