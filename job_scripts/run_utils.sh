@@ -414,7 +414,7 @@ function get_remaining_walltime {
       time_used=$(hours_to_seconds $time_used)
 
       if [ ! -z $total_time ] && [ ! -z $time_used ]; then
-          total_time=$(echo "$total_time - $time_used" | bc - l)
+          total_time=$(echo "$total_time - $time_used" | bc -l)
       fi
 
   elif [ $batch_system == "COBALT" ]; then
