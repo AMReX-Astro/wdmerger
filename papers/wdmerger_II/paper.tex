@@ -321,7 +321,10 @@ Given an estimate for $\dot{e}$, the factor $f_{e}$ determines by what
 fraction we would like to allow the internal energy to change
 in the current timestep, under the assumption that $\dot{e}$ does not change from
 timestep to timestep. Similarly, given an estimate for $\dot{X_k}$, the factor $f_{X}$ 
-determines the maximum change in the mass fraction of any species. By making 
+determines the maximum change in the mass fraction of any species. To prevent species
+whose abundances are small in absolute terms from controlling the timestep, we apply
+the limiter based on $f_{X}$ only to species with abundances in a given zone greater
+than $10^{-3}$ (this abundance threshold can be changed by the user of the code). By making 
 $f_{e}$ and $f_{X}$ smaller, we can control the magnitude of the decoupling 
 between the reactions and the hydro. A typical choice for $f_e$ parameter in the
 literature is in the range of 0.2 or 0.3, while to our knowledge a limiter based on
