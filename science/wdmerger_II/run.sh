@@ -1,3 +1,5 @@
+#!/bin/bash
+
 source $WDMERGER_HOME/job_scripts/run_utils.sh
 
 function set_run_opts {
@@ -21,47 +23,64 @@ function set_run_opts {
     # stars and the high-temperature regions.
 
     max_level="0"
+    amr_max_level="0"
 
-    if [ $ncell -eq 256 ]; then
-	if [ -z $refinement ]; then
-	    amr_max_level="0"
-	fi
-    elif [ $ncell -eq 512 ]; then
-	if [ -z $refinement ]; then
-	    amr_max_level="1"
-	fi
-	max_level="1"
-	amr_ref_ratio="2 4 4 4 4 4 4 4 4"
-    elif [ $ncell -eq 1024 ]; then
-	if [ -z $refinement ]; then
-	    amr_max_level="1"
-	fi
-	max_level="1"
-	amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-    elif [ $ncell -eq 2048 ]; then
-	if [ -z $refinement ]; then
-	    amr_max_level="2"
-	fi
-	max_level="2"
-	amr_ref_ratio="4 2 4 4 4 4 4 4 4"
-    elif [ $ncell -eq 4096 ]; then
-	if [ -z $refinement ]; then
-	    amr_max_level="2"
-	fi
-	max_level="2"
-	amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-    elif [ $ncell -eq 8192 ]; then
-	if [ -z $refinement ]; then
-	    amr_max_level="3"
-	fi
-	max_level="3"
-	amr_ref_ratio="4 4 2 4 4 4 4 4 4"
-    elif [ $ncell -eq 16384 ]; then
-	if [ -z $refinement ]; then
-	    amr_max_level="3"
-	fi
-	max_level="3"
-	amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+    if [ ! -z $refine_stars_only ]; then
+
+        if [ $ncell -eq 256 ]; then
+	    if [ -z $refinement ]; then
+	        amr_max_level="0"
+	    fi
+        else
+
+            base_ncell=256
+
+            if [ $DIM -eq 2 ]; then
+                amr_n_cell="$(echo "$base_ncell / 2" | bc) $base_ncell"
+            else
+                amr_n_cell="$base_ncell $base_ncell $base_ncell"
+            fi
+
+            if [ $ncell -eq 512 ]; then
+	        if [ -z $refinement ]; then
+	            amr_max_level="1"
+	        fi
+	        max_level="1"
+	        amr_ref_ratio="2 4 4 4 4 4 4 4 4"
+            elif [ $ncell -eq 1024 ]; then
+	        if [ -z $refinement ]; then
+	            amr_max_level="1"
+	        fi
+	        max_level="1"
+	        amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $ncell -eq 2048 ]; then
+	        if [ -z $refinement ]; then
+	            amr_max_level="2"
+	        fi
+	        max_level="2"
+	        amr_ref_ratio="4 2 4 4 4 4 4 4 4"
+            elif [ $ncell -eq 4096 ]; then
+	        if [ -z $refinement ]; then
+	            amr_max_level="2"
+	        fi
+	        max_level="2"
+	        amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $ncell -eq 8192 ]; then
+	        if [ -z $refinement ]; then
+	            amr_max_level="3"
+	        fi
+	        max_level="3"
+	        amr_ref_ratio="4 4 2 4 4 4 4 4 4"
+            elif [ $ncell -eq 16384 ]; then
+	        if [ -z $refinement ]; then
+	            amr_max_level="3"
+	        fi
+	        max_level="3"
+	        amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+            fi
+
+        fi
+
     fi
 
     max_stellar_tagging_level=$max_level
@@ -180,21 +199,12 @@ function set_run_opts {
         walltime="24:00:00"
         OMP_NUM_THREADS=1
 
-        if [ ! -z $refinement ]; then
-            if [ $refinement -gt 256 ]; then
-                queue="medium"
-                nprocs="192"
-                walltime="12:00:00"
-                OMP_NUM_THREADS=8
-            fi
-        fi
+    elif [ $MACHINE == "SEAWULF" ]; then
 
-        if [ $ncell -gt 1024 ]; then
-            queue="medium"
-            nprocs="192"
-            walltime="12:00:00"
-            OMP_NUM_THREADS=8
-        fi
+        queue="long"
+        nprocs="28"
+        walltime="24:00:00"
+        OMP_NUM_THREADS=1
 
     fi
 
@@ -311,6 +321,7 @@ small_temp_default="1.0e7"
 spec_tol_default="1.0e-8"
 enuc_tol_default="1.0e-6"
 temp_tol_default="1.0e-6"
+gravity_abs_tol_default="1.0e-10"
 
 ncell=$ncell_default
 mass_P=$mass_P_default
@@ -341,7 +352,7 @@ castro_dxnuc="1.0e-1"
 castro_dtnuc_e="1.e200"
 castro_dtnuc_X="1.e200"
 
-for refinement in 1 2 4 8 16 32 64 128 256 512 1024
+for refinement in 1 2 4 8 16 32 64 128 256
 do
 
     dir=$results_dir/2D/dxnuc/r$refinement
@@ -360,7 +371,7 @@ castro_dxnuc=$dxnuc_default
 
 center_tagging_radius=2.0d8
 
-for refinement in 1 2 4 8 16 32 64 128 256
+for refinement in 1 2 4 8 16 32 64
 do
 
     dir=$results_dir/2D/center_tagging/r$refinement
@@ -383,7 +394,9 @@ unset amr_max_level
 
 # Do full refinement on the stars.
 
-for ncell in 256 512 1024 2048 4096
+refine_stars_only=1
+
+for ncell in 256 512 1024 2048 4096 8192
 do
 
   dir=$results_dir/2D/stellar_tagging/n$ncell
@@ -393,6 +406,32 @@ do
 
 done
 
+ncell=$ncell_default
+unset refine_stars_only
+
+
+
+
+# Do full refinement on the entire domain.
+
+for ncell in 256 512 1024 2048 4096
+do
+
+  dir=$results_dir/2D/uniform_grid/n$ncell
+
+  # For the higher resolution runs, the tolerance
+  # on the gravity solve needs to be loosened a little.
+
+  if [ $ncell -gt 2048 ]; then
+      gravity_abs_tol="1.0e-9"
+  fi
+
+  set_run_opts
+  run
+
+done
+
+gravity_abs_tol=$gravity_abs_tol_default
 ncell=$ncell_default
 
 
@@ -436,7 +475,7 @@ castro_dtnuc_mode=$limiter_mode_default
 
 castro_dtnuc_X="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001"
+dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001 0.0001"
 
 for dtnuc in $dtnuc_list
 do
@@ -457,7 +496,7 @@ castro_dtnuc_X=$dtnuc_X_default
 
 castro_dtnuc_e="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001"
+dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0"
 
 for dtnuc in $dtnuc_list
 do
