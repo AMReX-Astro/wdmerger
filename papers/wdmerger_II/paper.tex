@@ -578,47 +578,23 @@ in the Helmholtz equation of state. However, the results do not really depend on
 exact initial distance as long as there is enough time for the WDs to distort in
 response to tidal forces as they approach. Their initial velocity is that of
 two point-masses in free-fall towards each other coming in from infinity, such that
-the contact point is at the origin, and they approach each other along the $x$-axis.
-The composition of the WDs is as described in Paper I: low-mass WDs are helium-dominated,
-intermediate-mass WDs are carbon and oxygen dominated, and high-mass WDs contain
-oxygen, neon, and magnesium. By default the WDs approach each other head-on, with
-their respective centers lying on the $x$-axis, but we have also added an option
-to have the WDs approach each other at a non-zero impact parameter $b$, where the
-offset is perpendicular to the $x$-axis in the $y$ direction. We measure
-$b$ in units of the secondary WD's radius, so that the default head-on case
-corresponds to $b = 0$ and the case where the two WDs just graze past each other
-corresponds to $b = 1$ (in practice it happens slightly differently because
-of the WDs responding to each other's gravitational fields).
+the contact point is at the origin, and they approach each other along a coordinate axis.
+In this paper we focus only on head-on collisions of two 0.64 $\msolar$ white dwarfs
+composed of equal parts carbon and oxygen by mass, for comparison to earlier studies;
+however, the code does have the ability to vary the impact parameter of the collision
+and the composition of the WDs.
 
-For all the 3D simulations to follow, we use the same coarse grid as in Paper I:
-there are 256 zones per dimension, and the width of each axis is $1.024 \times 10^{10}$
-cm, yielding a base resolution of 400 km. When we use adaptive-mesh refinement, we will
-use the refinement scheme described in \autoref{sec:unstable_burning}. This is
-acceptable because the outcome of the collision problem is chiefly a function
-of the propagation of burning front through the WDs, so for this problem one
-can take some liberties in other parts of the algorithm for the purpose of
-computational efficiency, which can always be turned back on later if a more
-accurate answer is desired. So, for example, we do not need to add refinement
-everywhere in the WDs in the interest of getting the collision dynamics to be
-slightly more accurate. Additionally, we choose to solve the Poisson equation
-for the self-gravity of the system only on the coarse grid. The gravitational
-potential and acceleration on the finer levels are interpolated from the coarse
-grid. This grants enhanced computational speed without a serious effect on the
-accuracy of the simulation (for the case where the fine grids cover the stars,
-we have checked that the more accurate gravitational forcing would only modify
-slightly the time to impact and the subsequent detonation process).
-
-We have also added to \wdmerger\ the ability to use the 2D cylindrical ($R-z$)
-coordinate system evolution in \castro. In this coordinate system, we align
-the WDs along the $z$-axis (which is analogous to our $x$-axis in the Cartesian
-evolution) at the usual distance, with the center of the WDs at $R = 0$. The
-un-simulated $\phi$ dimension then would extend the WDs through a $2\pi$ revolution.
-The nature of the axisymmetry inherent to the cylindrical coordinate system
-means that we can only run head-on collisions with $b = 0$. The coarse grid
-is the same resolution as the 3D case: the width of the $z$ axis is $1.024 \times 10^{10}$
-cm and the width of the $R$ axis is $5.012 \times 10^{9}$ cm, with twice as
-many zones along the $z$ axis as the $R$ axis so that the equal 400 km
-resolution is maintained.
+We have added to the \wdmerger\ problem setup the ability to take advantage of 
+the 2D cylindrical ($R-z$) coordinate system evolution in \castro, and we use it
+in this study, because the axisymmetry inherent to the cylindrical coordinate system
+lends itself well to the head-on collision problem. In this coordinate system, we
+align the WDs along the $z$-axis (which is analogous to the $x$-axis in Cartesian
+evolution), with the center of the WDs at $R = 0$. The un-simulated $\phi$ dimension
+then would extend the WDs through a $2\pi$ revolution. The domain has width $4 \times 10^{9}$
+cm along the $z$ axis, and is half as wide along the $R$ axis. The resolution is equal
+in both dimensions, so that there are twice as many zones in the $z$ dimension in
+a uniform grid. The default grid has 256 zones along the $z$ axis, yielding a resolution
+of 156.25 km.
 
 The simulation is terminated when the total energy is positive, indicating that
 the system has become unbound due to nuclear energy release, and has been
@@ -630,8 +606,7 @@ criterion is applied throughout all simulations shown here.
 
 As in Paper I, the region outside the WDs is filled with a low-density ambient
 material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition is the
-same as that of the WDs (which is equal carbon and oxygen by mass, unless
-stated otherwise). Reactions in this region are unimportant, so for
+same as that of the WDs. Reactions in this region are unimportant, so for
 computational efficiency, we disable all nuclear burning for zones that have
 $\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. The initial ambient
 temperature is $10^7\ \text{K}$, which is the same as the initial temperature
@@ -812,44 +787,13 @@ burn was qualitatively different, in that nickel production began much earlier i
 was applied this way. Nevertheless, the qualitative final outcome of the collision -- only trace amounts
 of nickel produced in total -- was still unchanged. With this variant too, it did not matter whether the limiting
 factor was determined based on the initial value of the state or the final value of the state.
-Our default 400 km resolution is significantly lower than that of \citeauthor{kushnir:2013} (the text
-says they used resolutions up to a few km) but we have tried runs at 100 km and 50 km resolution and
+Our default resolution is significantly lower than that of \citeauthor{kushnir:2013} (the text
+says they used resolutions up to a few km) but we have tried runs at higher resolution and
 the results are qualitatively similar. We did not directly compare the results of the method at
 the same resolution as theirs, but our results suggest at least that this limiter significantly
 modifies the evolution for modest resolution simulations and may be inappropriate as a method for enabling
 simulations at those resolutions to obtain accurate results.
 
-
-
-\subsection{Impact Parameter}
-\label{sec:parameters:impactparameter}
-
-As the impact parameter varies for a head-on collision, the cross-section of the contact
-zone between the two stars varies in size and geometry. In \autoref{fig:impact_parameter}, we
-see the dependence of the nickel production on the impact parameter $b$, measured in units
-of the WD radius. This test was performed using the 3D setup at our usual base resolution of
-400 km. For computational efficiency, timestep limiting based on burning was disabled.
-We sampled at $b = 0.0$, $0.01$, $0.02$, $0.03$, $0.04$, $0.05$, and then increasing
-in increments of $0.05$. Relative to $b = 0$, there is a slight increase in nickel production for small
-but non-zero $b$, which then declines with increasing $b$ except for a bump at $b = 0.5$.
-For $b \ge 0.7$, no detonation forms at all, and the merged object remains a stable C/O WD
-with $M = 1.2\ \msolar$ at least until $t = 100$.
-
-It is worth nothing that for $b = 0.0$ the nickel production is a bit smaller for the 3D simulation
-than its equivalent 2D simulation, the default case described above. There are differences both in
-the size of the timestep (which as we saw in \autoref{sec:parameters:timestepping} plays a role in
-the total nickel production) and in the discretized nature of the stars; the assumption of perfect
-azimuthal symmetry inherent to the 2D simulation breaks down for the 3D simulation, especially at
-low resolution, since the zones are rectangular.
-
-\begin{figure}
-  \centering
-  \includegraphics[scale=0.425]{plots/impact_parameter}
-  \caption[Nickel production dependence on the impact parameter]
-          {$^{56}$Ni generation as a function of the initial WD impact parameter for
-           a $0.64\ \msolar$ + $0.64\ \msolar$ WD collision.
-           \label{fig:impact_parameter}}
-\end{figure}
 
 
 \subsection{Other Parameters}
@@ -873,21 +817,10 @@ WDs were. We also checked whether there was any consequence of our choice to dis
 burning for small enough $\rho$ and $T$. Lowering the minimum $\rho$ for reactions to
 $10^0\ \text{g cm}^{-3}$ from $10^6\ \text{g cm}^{-3}$ had a negligible effect,
 and varying the minimum $T$ for reactions from $2 \times 10^{7}\ \text{K}$ to
-$4 \times 10^{8}\ \text{K}$ also had no meaningful effect.
+$4 \times 10^{8}\ \text{K}$ also had no meaningful effect. Finally, we also checked
+that the 2D axisymmetric simulation matched the results of an equivalent 3D Cartesian simulation.
 
 %TODO: maybe show an image of the temperature field in the WDs before colliding to demonstrate the point about numerical error?
-
-The choice of the WD composition to be equal carbon and oxygen by mass is a common
-choice in the literature and is broadly comparable to what stellar evolution codes
-yield for WDs of this mass. Still, it is an arbitrary approximation, especially the
-insistence that the composition is uniform throughout the WD. In \autoref{table:co}
-we list the nickel production as a function of the initial carbon mass fraction.
-This can have a few percent impact on the outcome for the plausible values we tested.
-In future work we may look at the effect of a more realistic progenitor structure,
-including the effects of a helium shell on the surface of the WDs \citep{holcomb:2015}
-and a non-uniform interior structure.
-
-\input{plots/co_frac_m_P_0.64_m_S_0.64.tbl}
 
 
 
