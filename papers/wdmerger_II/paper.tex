@@ -900,60 +900,6 @@ and a non-uniform interior structure.
 
 
 %==========================================================================
-% Gravitational Wave Signature
-%==========================================================================
-\section{Gravitational Wave Signature}
-\label{sec:gwsignature}
-
-Paper I established our methodology for calculating the gravitational wave signature
-of a white dwarf merger using the post-Newtonian framework of \citet{blanchet:1990}.
-While a typical merger event has a characteristic profile including a chirp and ringdown,
-white dwarf collisions are noticeably distinct in their gravitational wave signatures, and
-hence may be interesting targets for observation for future low frequency gravitational
-wave detectors such as LISA \citep{eLISA}. The strain increases monotonically for a collision until impact,
-instead of oscillating back and forth at a characteristic frequency as for mergers.
-The main caveat for these events compared to events
-such as neutron star mergers is that due to the event being inherently less energetic,
-the typical distance scale on which we could observe a white dwarf merger or collision
-is the size of our own galaxy, with extragalactic events being unlikely to be
-detected, at least with the first generation of space-based gravitational wave
-detectors.
-
-\begin{figure}
-  \centering
-  \includegraphics[scale=0.425]{plots/gw_signal_2D}
-  \caption{Gravitational wave strains for the head-on collision of two $0.64\ \msolar$
-           white dwarfs. The strain is normalized to a source distance of 10 kpc.
-           \label{fig:gw_signal_2D}}
-\end{figure}
-
-\autoref{fig:gw_signal_2D} is a plot of the gravitational wave strain for
-the representative case of \autoref{sec:parameters} ($M_P = 0.64\ \msolar$, $M_S = 0.64\ \msolar$, $b = 0$),
-where we disabled the normal stopping criterion and let the simulation run until $t = 20$.
-We use the convention that the absolute scale of the strain is normalized to a distance
-of 10 kpc (the strain scales inversely with the source distance). We show the $+$ and $\times$
-polarizations for observers situated along the $x$, $y$, and $z$ axes (for the 2D case,
-this corresponds to the $z$, $R$, and $\phi$ axes, respectively, in the simulation).
-The shape of the profile agrees qualitatively with the gravitational wave signatures
-predicted by \cite{loren-aguilar:2009:collisions} and \cite{garcia-senz:2013}.
-\autoref{fig:gw_signal_3D} shows the strain prediction for a 3D collision event
-with $M_P = 0.8\ \msolar$, $M_S = 0.6\ \msolar$, and $b = 0.8$. This mass combination
-was chosen because \cite{loren-aguilar:2009:collisions} used the same combination for
-gravitational wave signal prediction, but we cannot replicate the large impact parameter
-they used on our simulation grid, so the detonation looks quite different than in their case.
-
-\begin{figure}
-  \centering
-  \includegraphics[scale=0.425]{plots/gw_signal_3D}
-  \caption{Gravitational wave strains for the off-center collision ($b = 0.8$) of
-           $0.8\ \msolar$ and $0.6\ \msolar$ WDs. The strain is normalized to a
-           source distance of 10 kpc.
-           \label{fig:gw_signal_3D}}
-\end{figure}
-
-
-
-%==========================================================================
 % Conclusions
 %==========================================================================
 \section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
