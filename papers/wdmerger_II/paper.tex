@@ -908,12 +908,13 @@ because all of the reacting regions have a low enough kinetic energy relative to
 total energy such that the internal energy variable is always kept in sync with $(E - K)$.
 (We did not look at $\eta_1$ because that has a direct effect only on the hydrodynamics,
 not the reactions.) We also tested whether our choice for the temperature floor mattered
-by lowering it to $10^6\ \text{K}$ and $10^5\ \text{K}$, and this had no effect on nickel
-production. It does allow parts of the WDs to become colder as they move, due to numerical
-errors in the advecting flow (the Helmholtz equation of state is very insensitive to
-temperature, so even small changes in the internal energy can create very large changes
-in the implied temperature), but the amount of energy injected by the collision is so
-large that the final result is insensitive to whatever the initial temperature of the
+by lowering it to $10^6\ \text{K}$ and $10^5\ \text{K}$; this had a minor effect on nickel
+production, again on the order of a few percent. It does allow parts of the WDs to
+become colder as they move, due to numerical errors in the advecting flow (the Helmholtz
+equation of state is very insensitive to temperature, so even small changes in the internal
+energy can create very large changes in the implied temperature), but the amount of energy
+injected by the collision is so large that the final result is largely insensitive to whatever
+the initial temperature of the
 WDs were. We also checked whether there was any consequence of our choice to disable the
 burning for small enough $\rho$ and $T$. Lowering the minimum $\rho$ for reactions to
 $10^0\ \text{g cm}^{-3}$ from $10^6\ \text{g cm}^{-3}$ had a negligible effect,
