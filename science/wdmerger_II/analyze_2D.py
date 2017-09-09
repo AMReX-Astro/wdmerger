@@ -1,6 +1,8 @@
 import numpy as np
-from matplotlib import pyplot as plt
 import wdmerger
+import matplotlib
+matplotlib.use('agg')
+from matplotlib import pyplot as plt
 import os
 
 linestyles = ['-', '--', '-.', ':']
@@ -86,11 +88,16 @@ def burning_limiter_e(eps_filename, results_base):
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
 
-    ni56_arr = get_ni56(results_dir)
+    ni56_arr = np.array(get_ni56(results_dir))
 
-    dtnuc_list = [dtnuc[len('dt'):] for dtnuc in dtnuc_list]
+    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
-    plt.plot(np.array(dtnuc_list), np.array(ni56_arr), linestyle=linestyles[0], lw = 4.0)
+    # Sort the lists
+
+    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
+    dtnuc_list = sorted(dtnuc_list)
+
+    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0)
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{be}$", fontsize=20)
@@ -116,11 +123,16 @@ def burning_limiter_X(eps_filename, results_base):
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
 
-    ni56_arr = get_ni56(results_dir)
+    ni56_arr = np.array(get_ni56(results_dir))
 
-    dtnuc_list = [dtnuc[len('dt'):] for dtnuc in dtnuc_list]
+    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
-    plt.plot(np.array(dtnuc_list), np.array(ni56_arr), linestyle=linestyles[0], lw = 4.0)
+    # Sort the lists
+
+    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
+    dtnuc_list = sorted(dtnuc_list)
+
+    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0)
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{bX}$", fontsize=20)
@@ -148,11 +160,16 @@ def burning_limiter(eps_filename, results_base):
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
 
-    ni56_arr = get_ni56(results_dir)
+    ni56_arr = np.array(get_ni56(results_dir))
 
-    dtnuc_list = [dtnuc[len('dt'):] for dtnuc in dtnuc_list]
+    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
-    plt.plot(np.array(dtnuc_list), np.array(ni56_arr), linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$')
+    # Sort the lists
+
+    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
+    dtnuc_list = sorted(dtnuc_list)
+
+    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$')
 
 
 
@@ -162,11 +179,22 @@ def burning_limiter(eps_filename, results_base):
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
 
-    ni56_arr = get_ni56(results_dir)
+    ni56_arr = np.array(get_ni56(results_dir))
 
-    dtnuc_list = [dtnuc[len('dt'):] for dtnuc in dtnuc_list]
+    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
-    plt.plot(np.array(dtnuc_list), np.array(ni56_arr), linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$')
+    print ni56_arr
+    print dtnuc_list
+
+    # Sort the lists
+
+    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
+    dtnuc_list = sorted(dtnuc_list)
+
+    print ni56_arr
+    print dtnuc_list
+
+    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$')
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
@@ -195,9 +223,14 @@ def c_fraction(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
-    c_list = [param.split('c')[1].split('o')[0] for param in param_list]
+    c_list = np.array([float(param.split('c')[1].split('o')[0]) for param in param_list])
 
-    ni56_list = get_ni56(results_dir)
+    ni56_list = np.array(get_ni56(results_dir))
+
+    # Sort the lists
+
+    ni56_list = np.array([x for _,x in sorted(zip(c_list,ni56_list))])
+    c_list = sorted(c_list)
 
     comment = '%\n' + \
               '% Summary of the effect of C/O mass fraction \n' + \
@@ -234,9 +267,14 @@ def eta2(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
-    eta_list = [param[3:] for param in param_list]
+    eta_list = [float(param[3:]) for param in param_list]
 
     ni56_list = get_ni56(results_dir)
+
+    # Sort the lists
+
+    ni56_list = np.array([x for _,x in sorted(zip(eta_list,ni56_list))])
+    eta_list = sorted(eta_list)
 
     comment = '%\n' + \
               '% Summary of the effect of the dual energy parameter \n' + \
@@ -271,9 +309,14 @@ def eta3(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
-    eta_list = [param[3:] for param in param_list]
+    eta_list = [float(param[3:]) for param in param_list]
 
     ni56_list = get_ni56(results_dir)
+
+    # Sort the lists
+
+    ni56_list = np.array([x for _,x in sorted(zip(eta_list,ni56_list))])
+    eta_list = sorted(eta_list)
 
     comment = '%\n' + \
               '% Summary of the effect of the dual energy parameter \n' + \
@@ -308,9 +351,18 @@ def small_temp(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
-    temp_list = [param[1:] for param in param_list]
+    temp_list = [float(param[1:]) for param in param_list]
 
     ni56_list = get_ni56(results_dir)
+
+    # Sort the lists
+
+    ni56_list = np.array([x for _,x in sorted(zip(temp_list,ni56_list))])
+    temp_list = sorted(temp_list)
+
+    # Return temp_list to scientific notation
+
+    temp_list = np.array(["{:.1e}".format(t) for t in temp_list])
 
     comment = '%\n' + \
               '% Summary of the effect of the temperature floor \n' + \
@@ -345,9 +397,18 @@ def t_min(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
-    temp_list = [param[1:] for param in param_list]
+    temp_list = [float(param[1:]) for param in param_list]
 
     ni56_list = get_ni56(results_dir)
+
+    # Sort the lists
+
+    ni56_list = np.array([x for _,x in sorted(zip(temp_list,ni56_list))])
+    temp_list = sorted(temp_list)
+
+    # Return temp_list to scientific notation
+
+    temp_list = np.array(["{:.1e}".format(t) for t in temp_list])
 
     comment = '%\n' + \
               '% Summary of the effect of the minimum temperature\n' + \
@@ -382,9 +443,19 @@ def rho_min(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
-    temp_list = [param[3:] for param in param_list]
+    temp_list = [float(param[3:]) for param in param_list]
 
     ni56_list = get_ni56(results_dir)
+
+    # Sort the lists
+
+    ni56_list = np.array([x for _,x in sorted(zip(temp_list,ni56_list))])
+    temp_list = sorted(temp_list)
+
+    # Return temp_list to scientific notation
+
+    temp_list = np.array(["{:.1e}".format(t) for t in temp_list])
+
 
     comment = '%\n' + \
               '% Summary of the effect of the minimum density\n' + \
