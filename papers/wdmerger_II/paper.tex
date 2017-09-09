@@ -50,9 +50,9 @@
 %==========================================================================
 % Title
 %==========================================================================
-\title{White Dwarf Mergers on Adaptive Meshes\\ II. Collisions}
+\title{White Dwarf Mergers on Adaptive Meshes\\ II. Nuclear Reactions}
 
-\shorttitle{WD Mergers. II. Collisions}
+\shorttitle{WD Mergers. II. Nuclear Reactions}
 \shortauthors{Katz et al. (2017)}
 
 \author{Max P. Katz\altaffilmark{1}}
@@ -97,20 +97,26 @@
 % Abstract
 %==========================================================================
 \begin{abstract}
-Collisions of white dwarfs are a subset of white dwarf mergers that occur
-when the stars approach each other nearly head-on. These have the potential
-for explosive nucleosynthesis, leading to a thermonuclear detonation that
-disrupts both stars, possibly causing a Type Ia supernova. Simulation of
-these events is challenging due to the rapid evolution of the nuclear burning,
-posing numerical challenges related to both spatial and temporal resolution.
-In this study we explore a number of the algorithms that affect the outcome
-of reacting hydrodynamics simulations that lead to explosive burning and
-address the question of what needs to be done to ensure that these simulations
-are properly converged. We find that achieving a converged simulation in the
-code \castro\ is non-trivial and requires demanding computational resources.
-We also discuss the quantities obtained from our simulations that bear relevance
-to observations of these events, particularly production of nickel-group
-elements and gravitational wave emission during the collision.
+Simulations of white dwarf mergers and collisions that attempt to answer the
+question of whether these events are progenitors of Type Ia supernovae must
+confront the question of how nuclear detonations form and whether observed
+detonations in a numerical simulation are realistic. We address this question
+by performing simulations of collisions of white dwarfs, a subset of white
+dwarf mergers that occur when the stars approach each other nearly head-on.
+These have the potential for explosive nucleosynthesis, leading to a thermonuclear
+detonation that disrupts both stars, possibly causing a Type Ia supernova.
+While this story is intuitively plausible, demonstrating this in a reacting
+hydrodynamics simulation is challenging due to the rapid evolution of the
+nuclear burning, posing numerical challenges related to both spatial and
+temporal resolution. In this study we explore a number of the algorithms
+that affect the outcome of reacting hydrodynamics simulations that lead
+to explosive burning and address the question of what can be done to ensure
+that these simulations are properly converged. We find that achieving a
+converged simulation in the code \castro\ is non-trivial, and it is not
+clear that we can correctly simulate a white dwarf collision and obtain
+an adequate estimate of the nucleosynthetic yield. This result calls into
+question whether it is possible to self-consistently simulate a white dwarf
+merger leading to a thermonuclear detonation.
 \end{abstract}
 \keywords{supernovae: general - white dwarfs}
 
