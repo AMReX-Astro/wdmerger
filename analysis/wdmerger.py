@@ -48,6 +48,14 @@ def get_inputs_filename(directory):
 
         return 'inputs'
 
+    elif os.path.isfile(directory + '/inputs_2d'):
+
+        return 'inputs_2d'
+
+    elif os.path.isfile(directory + '/inputs_3d'):
+
+        return 'inputs_3d'
+
     else:
 
         print "Error: no inputs file found in " + directory + "."
@@ -334,7 +342,7 @@ def get_last_output(directory):
     # Open up the standard output for analysis. It will be the numerically last file
     # starting with the designated output string.
 
-    files = os.listdir(directory)
+    files = os.listdir(directory + '/output')
 
     files = sorted(filter(lambda s: s[0:9] == "wdmerger.",files))
 
