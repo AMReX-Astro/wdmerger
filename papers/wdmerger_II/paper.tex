@@ -219,7 +219,7 @@ and ${}^{52}$Fe). This network was used by \citet{hawley:2012} and \citet{raskin
 that included additionally ${}^{60}$Zn. The \aproxnineteen\ network \citep{timmes:1999}
 builds on \aproxthirteen\ by including isotopes for hydrogen burning and explicit
 tracking of photodisintegration into ${}^{54}$Fe. This network was used by
-\citet{kushnir:2013}, \citet{kushnir:2014}, \citet{rosswog:2009} for their
+\citet{kushnir:2013}, \citet{kushnir:2014}, and \citet{rosswog:2009} for their
 calculations with FLASH, and \citet{papish:2015}. Finally we will also
 consider \aproxtwentyone, which includes all of the above plus ${}^{56}$Cr
 and ${}^{56}$Fe and related reaction links. The primary virtue of using
@@ -450,31 +450,6 @@ stability criteria as judged from the end of the timestep.
 However we have found that the benefits for this problem are
 small.
 
-One other point worth noting for the coupling of the reactions
-and the hydrodynamics relates to the dual-energy formalism used
-by \castro\ and many other hydrodynamics codes \cite{bryan:1995}.
-\castro\ evolves separately equations for the total energy $(\rho E)$ and
-for the internal energy $(\rho e)$. The former is conservative while the latter
-is not, so for accurate hydrodynamics we prefer to use the total
-energy when possible and to use the evolved internal energy variable
-only in situations where the kinetic energy dominates the contribution
-to the total energy. Indeed, for the cosmological purpose for which
-this was originally developed, \cite{ENZO} choose a value $\eta_2 = 0.1$
-so that $e$ is only updated to be equal to $E - \mathbf{v}^2/2$ if
-$e > \eta_2\, E$. In other cases the evolved value of the internal
-energy variable is preserved. However, this choice is somewhat unsafe
-for our application, because the ultimate cause of the nuclear
-burning in a white dwarf collision is the rapid conversion of
-kinetic energy from the white dwarf bulk motion to thermal energy
-as the white dwarfs slam into each other. Keeping $\eta_2$ large
-prevents this from happening, and consequently the temperature
-will never reach values high enough to generate significant
-amounts of nickel. For this paper we choose $\eta_2 = 10^{-4}$,
-which is low enough for the correct conversion of kinetic energy
-but not so low that we need to be concerned about roundoff issues
-caused by subtracting kinetic from total energy. This is also
-the value that was used by \cite{hawley:2012}.
-
 \subsection{Numerically Unstable Burning}
 \label{sec:unstable_burning}
 
@@ -662,31 +637,6 @@ $\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. The initial ambient
 temperature is $10^7\ \text{K}$, which is the same as the initial temperature
 everywhere throughout the WDs, and we set the temperature floor to the same
 value (any zone that reaches below this temperature will be reset).
-
-\castro\ uses the dual energy formalism of \cite{bryan:1995,ENZO}, where we evolve equations
-for both the total energy $E$ and the internal energy $e$, using one or the other to
-determine the pressure in the hydrodynamics step (if we are using the total energy, we
-compute the corresponding internal energy by subtracting the kinetic energy $K$). The switching
-parameter is $\eta_1 = 10^{-3}$, and if $(E - K) / E < \eta_1$, we use the internal energy variable $e$
-in the equation of state call that obtains the pressure. Otherwise we use $(E - K)$. The
-idea behind this is that in high Mach number flows where the kinetic energy dominates the
-total energy, we do not want to risk generating a negative estimate of the internal energy
-due to roundoff error. Similarly, at regular intervals when we enforce consistency of the
-internal energy variable (which occurs a few times per timestep), we sync the internal energy
-variable so that it is equal to $E - K$, skipping this step only if $(E - K) / E < \eta_2$.
-We adopt by default $\eta_2 = 10^{-4}$. This choice can matter much more for reacting
-hydrodynamics than non-reacting hydrodynamics. For example, a collision can only lead to a
-detonation if there is sufficient conversion of kinetic to thermal energy. Obviously
-this happens physically, but if the parameter $\eta_2$ is set high enough then it could
-in principle interfere by not allowing the simulation to efficiently convert kinetic energy
-to thermal energy. (This does not end up mattering much for our simulations because the
-kinetic energy does not strongly dominate the internal energy for colliding WDs.) And on
-a similar note, when using this formalism it is ambiguous which variable to use ($(E - K)$
-or $e$) when calculating the initial temperature that goes into the reaction step. We
-have introduced a new parameter $\eta_3$ that uses the same logic as the first two: if
-$(E - K) / E < \eta_3$, we use $(E - K)$ in the equation of state call that obtains the
-temperature; otherwise, we use $e$. However, unlike the other two, the \castro\ default
-is $\eta_3 = 1.0$, meaning that we normally use the internal energy variable.
 
 
 
@@ -905,14 +855,13 @@ low resolution, since the zones are rectangular.
 \subsection{Other Parameters}
 
 We tested a few other parameters that ended up having no serious effect on the outcome.
-The dual energy parameter $\eta_2$ described in \autoref{sec:problemsetup} can have a
-minor effect on the nickel production, yielding variations on the order of a few percent,
-but there is no clear pattern. The dual energy parameter $\eta_3$ has no effect on the
-outcome: the answer is the same for $\eta_3 = 0$ and $\eta_3 = 1$, which makes sense
-because all of the reacting regions have a low enough kinetic energy relative to their
-total energy such that the internal energy variable is always kept in sync with $(E - K)$.
-(We did not look at $\eta_1$ because that has a direct effect only on the hydrodynamics,
-not the reactions.) We also tested whether our choice for the temperature floor mattered
+The dual energy hydrodynamic formalism (discussed in Paper I) has parameters that determine
+whether we obtain the internal energy from the total energy or from a separately advected
+internal energy variable. This is usually employed when calculating the pressure during
+a hydrodynamics update, and we have also added to \castro\ a similar switch when calculating
+the initial temperature for a burn. We find that the value of the dual energy parameter has
+only a minor effect on the nickel production, yielding variations on the order of a few percent
+with no systematic trend. We also tested whether our choice for the temperature floor mattered
 by lowering it to $10^6\ \text{K}$ and $10^5\ \text{K}$; this had a minor effect on nickel
 production, again on the order of a few percent. It does allow parts of the WDs to
 become colder as they move, due to numerical errors in the advecting flow (the Helmholtz
