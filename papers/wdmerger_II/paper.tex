@@ -126,57 +126,55 @@ merger leading to a thermonuclear detonation.
 \section{Introduction}
 \label{sec:introduction}
 
-Binary white dwarf (WD) systems have long been thought to be potential progenitors
-of Type Ia supernovae (SNe Ia) \citep{ibentutukov:1984,webbink:1984}. Recently there
-has been a growing amount of observational evidence that double WD systems play
-an important role in explaining at least some SNe Ia \citep{maoz:2014}. These systems
-may be isolated or they may be in hierarchical triple systems, where a WD binary
-system in a tight inner orbit is gravitationally coupled to a third, outer star.
-In either case the binary WD pair can merge due to the emissions of gravitational waves,
-but in the hierarchical triple case, dynamical interactions between the WD binary and
-the outer star can prompt mergers as well \citep{thompson:2011,hamers:2013}. The mergers
-occur due to perturbations in the eccentricity of the binary orbit caused by the outer
-star, which significantly increase the gravitational wave emission of the system. In a
-subset of these mergers the eccentricity may be driven to such a high value that the
-merger resembles a head-on collision of the binary WDs. Whether the rate of these collisions
-may be high enough to significantly contribute to the observed SN Ia rate is debated:
-\cite{katzdong:2012} suggest that this is plausible, but \cite{hamers:2013} and
-\cite{papish:2015} suggest that the rate is relatively low. Even if the rate is low,
-if at least some SNe Ia are caused by WD collisions then they are worth understanding.
+Binary white dwarf (WD) systems are a promising progenitor candidate for Type
+Ia supernovae (SNe Ia) for observational reasons, but from the simulation
+perspective there is still significant uncertainty regarding how nuclear
+detonations form in an exploding white dwarf. There is uncertainty in the
+model, regarding whether detonations form on the surface of a star as
+accreting material heats up when it strikes the surface, or at or near the
+center of the star as the accreted material compresses the WD. There is also
+uncertainty in the numerics: given one of these models, can we self-consistently
+demonstrate that a detonation occurs? This question has haunted both single
+WD and double WD progenitor models, because the length and time scale at which
+a detonation forms is orders of magnitude smaller than the resolution that
+typical hydrodynamic simulations can achieve. Furthemore, the approximate equations
+we use at the resolution that we can achieve are still notoriously
+difficult to solve accurately. The mere presence of a detonation
+(or lack thereof) in a simulation is therefore only weak evidence regarding
+whether a detonation would truly occur.
 
-Over the past few years a number of groups have performed simulations of WD collisions
-to understand whether they may yield astrophysical transients that look like SNe Ia
-\citep{rosswog:2009,raskin:2010,loren-aguilar:2010,hawley:2012,garcia-senz:2013,
-kushnir:2013,papish:2015,holcomb:2015}. Head-on collisions rapidly convert a significant
-amount of kinetic energy into thermal energy in a small region and thus set up the
-conditions for a thermonuclear detonation, and these previous simulations have indeed
+In this study we examine the challenges associated with simulating nuclear detonations.
+This paper follows from our first WD merger methodology paper, \citet{wdmergerI}
+(hereafter, Paper I), where we deferred discussion of our nuclear reaction methodology.
+After presenting the burning methodology, we apply it to the problem of collisions of white dwarfs.
+WD collisions can occur in isolated binaries or in hierarchical triple systems, where the WD binary
+system in a tight inner orbit is gravitationally coupled to a third, outer star \citep{thompson:2011,hamers:2013}.
+Whether the rate of these collisions may be high enough to significantly contribute to
+the observed SN Ia rate is debated: \cite{katzdong:2012} suggest that this is plausible,
+but \cite{hamers:2013} and \cite{papish:2015} suggest that the rate is relatively low.
+Regardless, they are a useful vehicle for understanding the problem of nuclear burning.
+Head-on WD collisions rapidly convert a significant amount of kinetic energy into thermal
+energy in a small region and thus set up conditions ripe for a thermonuclear detonation;
+being able to correctly simulate these is in some sense a prerequisite to correct simulation
+of the more complicated general case of white dwarf mergers, where we do not initially know
+under what conditions the seed of a thermonuclear detonation is born.
+
+There have been a number of previous studies which provide useful insight into setting up
+the problem and the burning methodology \citep{rosswog:2009,raskin:2010,loren-aguilar:2010,
+hawley:2012,garcia-senz:2013,kushnir:2013,papish:2015,holcomb:2015}. These studies
 found that detonations occur and convert a large amount of carbon/oxygen material into
 iron-group elements. These papers varied significantly in the hydrodynamic methods used
 (Lagrangian versus Eulerian methods), the methodology used for coupling nuclear
 reactions to the hydrodynamics (including variation in the number of isotopes in
 the nuclear network and in the evolution of the temperature), and the temporal and
-spatial resolution. Consequently they yielded estimates of production of nickel-group
-elements that varied significantly, leaving much uncertainty about how such an event
-would appear observationally and whether it bears any resemblance to a SN Ia.
-See Table 4 of \cite{garcia-senz:2013} for a summary of the outcome of many of these studies.
-
-In this paper we seek to add another view to the problem using the reactive hydrodynamics
-code \castro\ \citep{castro} and its underlying adaptive mesh refinement library \amrex\footnote{\amrex is the successor to \boxlib.}.
-This paper is a follow-up to \citet{wdmergerI} (hereafter, Paper I), which established
-the hydrodynamic methdology we are using to simulate mergers of white dwarfs.
-Paper I left out a discussion of the methodology we are using for nuclear reactions,
-and we fill out this information below in \autoref{sec:numericalmethods}. While it is
-our aim is to add information to the discussion about collisions of white dwarfs,
-we also view this work as a methodology study that asks to what extent we
-can trust the reliability of explosive thermonuclear reactions in Eulerian
-hydrodynamics simulations. As a corollary, to what extent does static and/or
-adaptive mesh refinement resolve the types of problems that occur in low resolution
-simulations? We discuss this in Section \autoref{sec:resolution}, though first
-we examine the response of the code to a number of user-specified parameters in
-\autoref{sec:parameters}. We then close with our thoughts on what our work implies
-for the broader astrophysical reacting hydrodynamics literature in \autoref{sec:conclusion}.
-
-
+spatial resolution. Consequently the detonations they formed varied in location and nature,
+and the resultant estimates of production of nickel-group elements varied significantly,
+leaving much uncertainty about how such an event would appear observationally and whether
+it bears any resemblance to a SN Ia. See Table 4 of \cite{garcia-senz:2013} for a summary
+of the outcome of many of these studies. In this paper we make the case that
+while we can identify the main problems prevent accurate simulation of the collision
+event, there is no clear path to overcoming them using the computational resources
+typically available for contemporary hydrodynamics simulations.
 
 %==========================================================================
 % Numerical Implementation
@@ -184,7 +182,8 @@ for the broader astrophysical reacting hydrodynamics literature in \autoref{sec:
 \section{Numerical Methods}
 \label{sec:numericalmethods}
 
-The hydrodynamical equations solved in this paper were presented in \citet{wdmergerI} (hereafter, Paper I).
+The hydrodynamical equations solved in this paper were presented in \citet{wdmergerI}
+(hereafter, Paper I) for the reacting hydrodynamics code \castro\ \citep{castro}.
 Revisions to the core algorithm since then are presented in \autoref{app:hydro}.
 In this paper we focus our discussion on our implementation of the nuclear
 reaction network and integrator. There are three main areas of concern: first,
@@ -594,8 +593,8 @@ that violates the criterion.
 \section{Problem Setup}
 \label{sec:problemsetup}
 
-We implement the white dwarf collision problem in \castro\ using our \wdmerger\
-package. We load the grid in the way most previous papers have done so:
+We implement the white dwarf collision problem in \castro\ in the \wdmerger\ problem
+directory. We prepare the domain in the way most previous papers have done so:
 the white dwarf centers of mass are initially separated by a distance of four times
 the (secondary) white dwarf radius. Note that the radius of the white dwarf, and
 consequently the initial distance, depends on the equation of state used, and this
