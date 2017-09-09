@@ -516,10 +516,103 @@ def burning_mode(out_filename, results_base):
 
 
 
+# Effect of the imapct parameter
+
+def impact_parameter(eps_filename, results_dir):
+    """Plot the effect of the impact parameter."""
+
+    import os
+
+    if os.path.isfile(eps_filename):
+        return
+
+    import numpy as np
+    from matplotlib import pyplot as plt
+
+    # Get the list of parameter values we have tried
+
+    dtnuc_list = wdmerger.get_parameter_list(results_dir)
+
+    ni56_arr = get_ni56(results_dir)
+
+    b_list = [dtnuc[len('b'):] for dtnuc in dtnuc_list]
+
+    b_list = sorted(b_list)
+
+    plt.plot(np.array(b_list), np.array(ni56_arr), markers[0], markersize = 12.0)
+
+    xaxis_buffer = 0.025
+
+    plt.xlim([float(b_list[0]) - xaxis_buffer, float(b_list[-1]) + xaxis_buffer])
+    plt.xlabel(r"Impact parameter $b$", fontsize=24)
+    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=24)
+    plt.tick_params(labelsize=20)
+    plt.tight_layout()
+    plt.savefig(eps_filename)
+    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+
+    plt.close()
+
+
+
+# Gravitational wave signal
+
+def gravitational_wave_signal(eps_filename, results_dir):
+    """Plot the gravitational radiation waveform."""
+
+    import os
+
+    if os.path.isfile(eps_filename):
+        return
+
+    if not os.path.exists(results_dir):
+        return
+
+    from matplotlib import pyplot as plt
+
+    print "Generating plot with filename " + eps_filename
+
+    diag_file = results_dir + '/output/grid_diag.out'
+
+    time     = wdmerger.get_column('TIME', diag_file)
+
+    strain_p_1 = wdmerger.get_column('h_+ (axis 1)', diag_file)
+    strain_x_1 = wdmerger.get_column('h_x (axis 1)', diag_file)
+
+    strain_p_2 = wdmerger.get_column('h_+ (axis 2)', diag_file)
+    strain_x_2 = wdmerger.get_column('h_x (axis 2)', diag_file)
+
+    strain_p_3 = wdmerger.get_column('h_+ (axis 3)', diag_file)
+    strain_x_3 = wdmerger.get_column('h_x (axis 3)', diag_file)
+
+    plt.plot(time, strain_p_1 / 1.e-22, lw = 4.0, color = colors[0], linestyle = linestyles[0], marker = markers[0], markersize = 12, markevery = 250, label = r'$h^x_+$')
+    plt.plot(time, strain_x_1 / 1.e-22, lw = 4.0, color = colors[1], linestyle = linestyles[1], marker = markers[1], markersize = 12, markevery = 250, label = r'$h^x_\times$')
+
+    plt.plot(time, strain_p_2 / 1.e-22, lw = 4.0, color = colors[2], linestyle = linestyles[2], marker = markers[2], markersize = 12, markevery = 250, label = r'$h^y_+$')
+    plt.plot(time, strain_x_2 / 1.e-22, lw = 4.0, color = colors[3], linestyle = linestyles[3], marker = markers[3], markersize = 12, markevery = 250, label = r'$h^y_\times$')
+
+    plt.plot(time, strain_p_3 / 1.e-22, lw = 4.0, color = colors[4], linestyle = linestyles[4], marker = markers[4], markersize = 12, markevery = 250, label = r'$h^z_+$')
+    plt.plot(time, strain_x_3 / 1.e-22, lw = 4.0, color = colors[5], linestyle = linestyles[5], marker = markers[5], markersize = 12, markevery = 250, label = r'$h^z_\times$')
+
+    plt.tick_params(labelsize=20)
+
+    plt.xlabel(r'$t\ \mathrm{(s)}$', fontsize=24)
+    plt.ylabel(r'$h\, /\, 10^{-22}$', fontsize=24)
+    plt.legend(loc = 'best', prop = {'size':20})
+    plt.tight_layout()
+
+    plt.savefig(eps_filename)
+
+    wdmerger.insert_commits_into_eps(eps_filename, diag_file, 'diag')
+
+    plt.close()
+
+
+
 # Main execution: do all of the analysis routines.
 
 if __name__ == "__main__":
-    """Generate the plots and tables for the 2D collision tests."""
+    """Generate the plots and tables for the 2D and 3D collision tests."""
 
     mass_P = '0.64'
     mass_S = '0.64'
