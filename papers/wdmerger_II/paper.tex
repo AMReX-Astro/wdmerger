@@ -793,12 +793,12 @@ yields in production science runs, it may still be fair for use in proof-of-conc
 
 \input{plots/networks_m_P_0.64_m_S_0.64.tbl}
 
-\isoseven\ also has the peculiar property that after the detonation had passed through the WDs,
-the region at the central contact point did not fully stop burning, yielding a quasistatic energy
-release that added a couple of million extra timesteps to the simulation (in addition to the few
-hundred it normally takes) before we manually terminated the run. The full effect of these additional
-timesteps only amounted to a $10^{-4}$ relative change in the nickel production. By examining the behavior
-of zones near the collision point, we discovered the reason for this. The zones in question have a composition that
+\isoseven\ also has the peculiar property that after the detonation has passed through the WDs,
+the region at the central contact point does not fully stop burning, yielding a quasistatic energy
+release that can add thousands to millions of extra timesteps to the simulation (in addition to the few
+hundred it normally takes). The full effect of these additional timesteps only amounts to a trace change
+in the nickel production. By examining the behavior of zones near the collision point, we discovered the
+reason for this. The zones in question have a composition that
 is approximately $98\%$ Ni and $2\%$ He by mass. For this combination, a direct evaluation of the RHS in
 comparison to, say, \aproxthirteen, reveals that $dX/dt$ for these isotopes is off by many orders of magnitude.
 This is a consequence of the choice inherent to the network to assume that the isotopes in between $^{28}$Si
