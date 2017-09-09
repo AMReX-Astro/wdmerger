@@ -281,18 +281,28 @@ are implemented in our burner software. The simulations shown in this work all
 use the self-heating mode unless otherwise specified.
 
 In our \microphysics\ repository we provide several software options for
-solving a set of coupled stiff ODEs. For this work we use an implementation of
-the well known variable-order Richardson extrapolation method presented by \citet{stoer:1980},
-that is similar to the integrator which ships with
-the original versions of the networks mentioned above. Previous work using the \amrex\
-codes typically used the classic \vode\ integrator \citep{vode}. We do maintain a version
-of the software that is compatible with our software interfaces in the \microphysics\
-repository, but we have largely shifted to integrators which are written in modern
-Fortran as a consequence of our efforts to run our codes on GPUs. The Stoer and Bulirsch
-integrator we provide satisfies this criterion; we also provide a rewrite of the VODE
-BDF algorithm that uses modern Fortran features. The Stoer and Bulirsch algorithm
-relies on a uniform relative error tolerance for all of the ODEs in the system, which
-we set at $10^{-6}$ for all simulations described here.
+solving a set of coupled stiff ODEs. For this work our primary integrator
+is the classic \vode\ integrator \citep{vode}, of which we have a version
+compatible with our software interfaces in the \microphysics\ repository.
+We also employ an implementation of the well known variable-order Richardson
+extrapolation method presented by \citet{stoer:1980}, that is similar to the
+integrator which ships with the original versions of the networks mentioned
+above. Our experience shows that relying on a single ODE integrator for the
+variety of stiff ODEs that are present in a collision is insufficient, as we
+sometimes run into integration failures. A combination of the two integrators
+is usually sufficient, however: we first try \vode, and if that fails, we then
+try the Stoer and Bulirsch method. Since it is possible for neither method to
+succeed, we have one more backup scheme. Our specified error tolerances are
+$10^{-6}$ for the energy and temperature ODEs, and $10^{-8}$ for the
+nuclear abundance ODEs (we discuss the sensitivity to this choice in
+\autoref{sec:parameters:tolerance}). We can loosen these tolerances in an
+attempt to give the integrator an easier time. If both \vode\ and the Stoer
+and Bulirsch algorithm fail, then we loosen the tolerances by a multiplicative
+factor of 25\%, and then repeat the attempts with \vode\ and Stoer and Bulirsch.
+We keep doing this until either we have loosened the tolerances enough for one
+of the two methods to succeed, or until we have loosened the tolerances by two
+orders of magnitude, at which point we finally give up. We have found that this
+scheme is resilient enough to handle all of the simulations shown below.
 
 \subsection{Coupling to the Hydrodynamics}
 \label{sec:hydrocoupling}
@@ -754,6 +764,12 @@ and disable limiting with $f_{bX}$ by setting it to a large number. This choice 
 between accuracy and efficiency: we avoid the obviously wrong answers that occur for $f_{be} > 10^3$
 while ensuring that the timesteps are long enough that the following tests are computationally
 inexpensive.
+
+
+\subsection{Integration Error Tolerance}
+\label{sec:parameters:tolerance}
+
+%TODO: add discussion of how ODE tolerances affect the answer
 
 
 
