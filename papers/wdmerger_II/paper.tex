@@ -738,6 +738,11 @@ step following the advective update. This then causes the burning timestep limit
 timestep very small so that the advective changes do not cause such strong effects on the burning equilibrium.
 This effect is an argument against the use of \isoseven\ for explosive, non-hydrostatic burning problems.
 
+\aproxnineteen\ and \aproxtwentyone\ both take significantly longer to evaluate at our default
+ODE tolerances than \aproxthirteen\ does, even after accounting for the increased number of species.
+This is due to a significant number of integration failures and subsequent retries (see the discussion
+in \autoref{sec:burner}). The species tolerance of $10^{-8}$ is challenging for these networks.
+
 
 
 \subsection{Burning Mode}
