@@ -655,7 +655,7 @@ examined come from the timestep limiting scheme described in \autoref{sec:hydroc
 The parameters $f_{be}$ (from \autoref{eq:timestep_e}) and $f_{bX}$ (from
 \autoref{eq:timestep_X}) control the size of the timestep as a function of the
 burning rate. As the timestep gets smaller, the error due to the Strang splitting
-scheme coupling the reactions and the burning also gets smaller, and we expect
+scheme coupling the reactions and the hydro also gets smaller, and we expect
 that the results become more accurate.
 \begin{figure}[ht]
   \centering
@@ -668,32 +668,30 @@ that the results become more accurate.
            \label{fig:timestep_factor}}
 \end{figure}
 \autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
-production. As either $f$ becomes small, the restriction on the timestep becomes quite
-severe: for $f_{bX} = 0.01$, the minimum timestep in the simulation is smaller than
-$2 \times 10^{-9}\ \text{s}$ and the full simulation requires over 750,000 timesteps.
+production (these limiters are somewhat redundant in the sense that a given $f_{bX}$
+roughly corresponds to another (higher) $f_{be}$, as is evident by the fact that on
+the graph the curves look qualitatively similar in shape but with a horizontal offset.
+As either $f$ becomes small, the restriction on the timestep becomes quite severe:
+for $f_{be} = 0.001$, the minimum timestep in the simulation is smaller than
+$5 \times 10^{-9}\ \text{s}$ and the full simulation requires over 100,000 timesteps.
+Such a simulation would be prohibitively expensive for a high resolution 3D calculation.
 Yet it is clear that even for this steep value of the limiter, which is much stricter
 than the limiter used in, e.g., \cite{hawley:2012} and \cite{raskin:2010}, the
-simulation has not fully converged in nickel production. These limiters are somewhat
-redundant in the sense that a given $f_{bX}$ corresponds to another (higher) $f_{be}$,
-as is evident by the fact that on the graph the curves look similar in shape but with
-a horizontal offset.
+simulation has not fully converged in nickel production.
 
 We also examined the effect of the method used to enforce the limiting, using the
-four limiting modes discussed in \autoref{sec:hydrocoupling}. The results are shown
-in \autoref{table:burninglimitermode} for the case $f_{be} = 0.3$ (we did not use
-limiting with $f_{bX}$ for this test). The two modes that use the full last timestep's
-worth of information to estimate $\dot{e}$ yield a slightly larger nickel mass than the
-two modes that only use more recent information, but the difference is negligible.
-
-\input{plots/burning_limiter_mode_m_P_0.64_m_S_0.64.tbl}
+four limiting modes discussed in \autoref{sec:hydrocoupling}. The two modes that
+use the full last timestep's worth of information to estimate $\dot{e}$ (Mode 3 and Mode 4)
+yield a slightly larger nickel mass than the two modes that only use more recent information,
+but the difference is less than 10\%, and it is not clear which is preferable since
+for the value of the timestep limiter we used to compare these modes ($f_{be} = 0.3$),
+the simulation is not converged anyway.
 
 %TODO: add a ``Nonaka plot''
 
 For all remaining tests in this section, unless otherwise stated, we take $f_{be} = 10^2$
-and disable limiting with $f_{bX}$ by setting it to a large number. This choice is a balance
-between accuracy and efficiency: we avoid the obviously wrong answers that occur for $f_{be} > 10^3$
-while ensuring that the timesteps are long enough that the following tests are computationally
-inexpensive.
+and disable limiting with $f_{bX}$ by setting it to a large number. This choice was made
+somewhat arbitrarily for computational efficiency.
 
 
 \subsection{Integration Error Tolerance}
