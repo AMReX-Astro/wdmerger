@@ -5,23 +5,45 @@ matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import os
 
-linestyles = ['-', '--', '-.', ':']
-markers = ['o', 's', 'D', '^']
-
-
+linestyles = ['-', '--', ':', '-', '--', ':']
+markers = ['', '', '', 'o', 's', 'D']
+colors = ['b', 'g', 'r', 'c', 'm', 'k']
 
 def get_ni56(results_dir):
     """Return a list of maximum 56Ni production from all completed sub-directories in results_dir."""
 
     import wdmerger_spec_diag_analysis as spec_diag
+    import numpy as np
 
     dir_list = wdmerger.get_parameter_list(results_dir)
 
     diag_filename_list = [results_dir + '/' + directory + '/output/species_diag.out' for directory in dir_list]
 
-    ni56_arr = [np.amax(spec_diag.get_column('Mass ni56', diag_filename)) for diag_filename in diag_filename_list]
+    ni56_arr = [np.amax(spec_diag.get_column('Mass ni56', diag_filename)) - np.amin(spec_diag.get_column('Mass ni56', diag_filename))
+                for diag_filename in diag_filename_list]
 
     return ni56_arr
+
+
+
+def get_e_release(results_dir):
+    """Return a list of energy generation from all completed sub-directories in results_dir."""
+
+    import wdmerger_grid_diag_analysis as grid_diag
+    import numpy as np
+
+    dir_list = wdmerger.get_parameter_list(results_dir)
+
+    diag_filename_list = [results_dir + '/' + directory + '/output/grid_diag.out' for directory in dir_list]
+
+    e_arr = [np.amax(grid_diag.get_column('TOTAL ENERGY', diag_filename)) - np.amin(grid_diag.get_column('TOTAL ENERGY', diag_filename))
+             for diag_filename in diag_filename_list]
+
+    # Divide by 10**51
+
+    e_arr = [e / 1.0e51 for e in e_arr]
+
+    return e_arr
 
 
 
@@ -42,8 +64,16 @@ def get_diagfile(results_dir):
 
 
 
-def write_ni56_table(results_dir, out_filename, v_list, n_list, comment, caption, col1title, label):
-    """Write out a LaTeX table of 56Ni mass as a function of a given variable."""
+def write_ni56_table(results_dir, out_filename, v_list, n_list, comment, col1title, label, e_list = [], precision = 3, title = '', caption = ''):
+    """Write out a LaTeX table of 56Ni mass as a function of a given variable.
+
+    Optionally we can also include the energy release from the explosion.
+    """
+
+    if e_list:
+        have_energy = True
+    else:
+        have_energy = False
 
     wdmerger.insert_commits_into_txt(out_filename, get_diagfile(results_dir), 'diag')
 
@@ -51,27 +81,104 @@ def write_ni56_table(results_dir, out_filename, v_list, n_list, comment, caption
 
     out_file.write(comment)
 
-    out_file.write('\\begin{deluxetable*}{ll}' + '\n')
-    out_file.write('  \\tablecaption{ ' + caption + ' }' + '\n')
+    if have_energy:
+        col_just = 'ccc'
+    else:
+        col_just = 'cc'
 
-    out_file.write('  \\tablehead{ \\colhead{ ' + col1title + ' } & \\colhead{ Max. $^{56}$Ni }' + '\n')
+    out_file.write('\\begin{deluxetable}{' + col_just + '}' + '\n')
+
+    out_file.write('  \\tablecaption{ ' + title + ' \label{table:' + label + '} }' + '\n')
+
+    # Pad the table columns so that they fix the text column. This is an experimentally derived solution.
+
+    padlabel = '\\tbl' + label + 'pad'
+    if have_energy:
+        padwidth = '0.03in'
+    else:
+        padwidth = '0.325in'
+
+    out_file.write('  \\newlength{' + padlabel + '}' + '\n')
+    out_file.write('  \\setlength{' + padlabel + '}{' + padwidth + '}' + '\n')
+
+    padstr = '\\hspace{\\tbl' + label + 'pad}'
+
+    out_file.write('  \\tablehead{ \\colhead{ ' + padstr + col1title + padstr + ' } & \\colhead{ ' + padstr + 'Max. $^{56}$Ni (${M_{\odot}}$)' + padstr + ' } ')
+
+    if have_energy:
+        out_file.write('& \\colhead{ ' + padstr + 'Energy Release (' + '$10^{51}$' + ' erg)' + padstr + ' } ')
+
+    out_file.write('}' + '\n')
 
     out_file.write('  \\startdata' + '\n')
 
-    for v, n in zip(v_list, n_list):
+    for i, v in enumerate(v_list):
 
-        line_str = '  ' + str(v) + ' & ' + "%.3f" % float(n)
+        n = n_list[i]
+
+        line_str = '  ' + padstr + str(v) + padstr + ' & ' + padstr + "%.*f" % (precision, float(n)) + padstr
+
+        if have_energy:
+            e = e_list[i]
+            line_str += ' & ' + padstr + "%.3f" % float(e) + padstr
 
         if (v != v_list[-1]):
-            line_str += " \\\\"  + "\n" 
+            line_str += " \\\\"  + "\n"
         else:
             line_str += "\n"
 
         out_file.write(line_str)
 
     out_file.write('  \\enddata' + '\n')
-    out_file.write('  \\label{table:' + label + '}' + '\n')
-    out_file.write('\end{deluxetable*}' + '\n')
+    out_file.write('  \\tablecomments{ ' + caption + ' }' + '\n')
+    out_file.write('\end{deluxetable}' + '\n')
+    out_file.close()
+
+    # Write a version of the table using the standard LaTeX tabular environment.
+
+    out_filename += ".nodeluxe"
+
+    wdmerger.insert_commits_into_txt(out_filename, get_diagfile(results_dir), 'diag')
+
+    out_file = open(out_filename, 'a')
+
+    out_file.write(comment)
+
+    if have_energy:
+        col_just = '|c|c|c|'
+    else:
+        col_just = '|c|c|'
+
+    out_file.write('\\begin{table}[h]' + '\n')
+    out_file.write('  \\centering' + '\n')
+    out_file.write('  \\begin{tabular}{' + col_just + '}' + '\n')
+    out_file.write('    \\hline' + '\n')
+    out_file.write('    ' + col1title + ' & ' + 'Max. $^{56}$Ni (${M_{\odot}}$)')
+
+    if have_energy:
+        out_file.write(' & ' + 'Energy Release ($10^{51}$ erg)')
+
+    out_file.write(' \\\\' + '\n')
+    out_file.write('    \\hline' + '\n')
+
+    for i, v in enumerate(v_list):
+
+        n = n_list[i]
+
+        line_str = '    ' + str(v) + ' & ' + "%.3f" % float(n)
+
+        if have_energy:
+            e = e_list[i]
+            line_str += ' & ' + "%.3f" % float(e)
+
+        line_str += " \\\\"  + "\n"
+
+        out_file.write(line_str)
+        out_file.write('    \\hline' + '\n')
+
+    out_file.write('  \\end{tabular}' + '\n')
+    out_file.write('  \\caption[' + title + ']{' + caption + ' \label{table:' + label + '}}' + '\n')
+    out_file.write('\end{table}' + '\n')
     out_file.close()
 
 
@@ -102,7 +209,7 @@ def burning_limiter_e(eps_filename, results_base):
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{be}$", fontsize=20)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    plt.tick_params(labelsize=16)
+    plt.tick_params(labelsize=20)
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
@@ -137,7 +244,7 @@ def burning_limiter_X(eps_filename, results_base):
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{bX}$", fontsize=20)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    plt.tick_params(labelsize=16)
+    plt.tick_params(labelsize=20)
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
@@ -183,24 +290,18 @@ def burning_limiter(eps_filename, results_base):
 
     dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
-    print ni56_arr
-    print dtnuc_list
-
     # Sort the lists
 
     ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
     dtnuc_list = sorted(dtnuc_list)
-
-    print ni56_arr
-    print dtnuc_list
 
     plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$')
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    plt.tick_params(labelsize=16)
-    plt.legend(loc='best')
+    plt.tick_params(labelsize=20)
+    plt.legend(loc='best', prop={'size':20})
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
@@ -209,47 +310,124 @@ def burning_limiter(eps_filename, results_base):
 
 
 
-# Effect of the C/O mass fraction
+# Effect of burning timestep limiter mode
 
-def c_fraction(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the C/O fraction."""
+def burning_limiter_mode(out_filename, results_base):
+    """Create a table with the nickel generation as a function of the mode used for timestep limiting."""
 
-    if (os.path.isfile(out_filename)):
+    import os
+
+    if os.path.isfile(out_filename):
         return
 
     # Get the list of parameter values we have tried
 
-    results_dir = results_base + '/co'
+    results_dir = results_base + '/burning_limiter_mode'
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
-    c_list = np.array([float(param.split('c')[1].split('o')[0]) for param in param_list])
+    mode_list = [param[4:] for param in param_list]
 
-    ni56_list = np.array(get_ni56(results_dir))
-
-    # Sort the lists
-
-    ni56_list = np.array([x for _,x in sorted(zip(c_list,ni56_list))])
-    c_list = sorted(c_list)
+    ni56_list = get_ni56(results_dir)
 
     comment = '%\n' + \
-              '% Summary of the effect of C/O mass fraction \n' + \
+              '% Summary of the effect of the timestep limiting mode \n' + \
               '% on 56Ni yield in a 2D white dwarf collision.\n' + \
-              '% The first column is the initial carbon mass \n' + \
-              '% fraction and the second is the final nickel \n' + \
+              '% The first column is the limiter mode \n' + \
+              '% and the second is the final nickel \n' + \
               '% mass produced, in solar masses.\n' + \
               '%\n'
 
-    caption = ' Maximum $^{56}Ni$ mass ($M_{\odot}) produced as a function of the ' + \
-              'initial mass fraction $C$. Since the white dwarfs are purely ' + \
-              'carbon/oxygen the initial oxygen fraction is $1 - C$.'
+    caption = 'The burning limiter modes are explained in \\autoref{sec:hydrocoupling}.'
 
-    col1title = '$C$'
+    col1title = 'Mode'
 
-    label = 'co'
+    title = 'Burning Limiter Mode'
 
-    write_ni56_table(results_dir, out_filename, c_list, ni56_list, comment, caption, col1title, label)
+    label = 'burninglimitermode'
 
+    write_ni56_table(results_dir, out_filename, mode_list, ni56_list, comment, col1title, label, title = title, caption = caption)
+
+
+
+# Combined plot of effect of ODE tolerances
+
+def ode_tolerances(eps_filename, results_base):
+    """Plot the effects of all ODE tolerance options."""
+
+    if (os.path.isfile(eps_filename)):
+        return
+
+    results_dir = results_base + 'spec_tol/'
+
+    # Get the list of parameter values we have tried
+
+    tol_list = wdmerger.get_parameter_list(results_dir)
+
+    ni56_arr = np.array(get_ni56(results_dir))
+
+    tol_list = [tol[len('tol'):] for tol in tol_list]
+    tol_list = np.array([float(tol.replace('d','e')) for tol in tol_list])
+
+    # Sort the lists
+
+    ni56_arr = np.array([x for _,x in sorted(zip(tol_list,ni56_arr))])
+    tol_list = sorted(tol_list)
+
+    plt.plot(tol_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, label=r'Species Tolerance')
+
+
+
+    results_dir = results_base + 'temp_tol/'
+
+    # Get the list of parameter values we have tried
+
+    tol_list = wdmerger.get_parameter_list(results_dir)
+
+    ni56_arr = np.array(get_ni56(results_dir))
+
+    tol_list = [tol[len('tol'):] for tol in tol_list]
+    tol_list = np.array([float(tol.replace('d','e')) for tol in tol_list])
+
+    # Sort the lists
+
+    ni56_arr = np.array([x for _,x in sorted(zip(tol_list,ni56_arr))])
+    tol_list = sorted(tol_list)
+
+    plt.plot(tol_list, ni56_arr, linestyle=linestyles[1], lw = 4.0, label=r'Temperature Tolerance')
+
+
+
+    results_dir = results_base + 'enuc_tol/'
+
+    # Get the list of parameter values we have tried
+
+    tol_list = wdmerger.get_parameter_list(results_dir)
+
+    ni56_arr = np.array(get_ni56(results_dir))
+
+    tol_list = [tol[len('tol'):] for tol in tol_list]
+    tol_list = np.array([float(tol.replace('d','e')) for tol in tol_list])
+
+    # Sort the lists
+
+    ni56_arr = np.array([x for _,x in sorted(zip(tol_list,ni56_arr))])
+    tol_list = sorted(tol_list)
+
+    plt.plot(tol_list, ni56_arr, linestyle=linestyles[2], lw = 4.0, label=r'Energy Tolerance')
+
+
+
+    plt.xscale('log')
+    plt.xlabel(r"ODE Error Tolerance", fontsize=20)
+    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
+    plt.tick_params(labelsize=16)
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(eps_filename)
+    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+
+    plt.close()
 
 
 
@@ -284,14 +462,13 @@ def eta2(out_filename, results_base):
               '%is the final nickel mass produced, in solar masses.\n' + \
               '%\n'
 
-    caption = 'Maximum $^{56}Ni$ mass ($M_{\odot}) produced as a function of the ' + \
-              'dual energy formalism parameter $\\eta_2$.'
-
     col1title = '$\\eta_2$'
+
+    title = 'Effect of dual-energy parameter $\\eta_2$'
 
     label = 'eta2'
 
-    write_ni56_table(results_dir, out_filename, eta_list, ni56_list, comment, caption, col1title, label)
+    write_ni56_table(results_dir, out_filename, eta_list, ni56_list, comment, col1title, label, title = title)
 
 
 
@@ -326,14 +503,13 @@ def eta3(out_filename, results_base):
               '% is the final nickel mass produced, in solar masses.\n' + \
               '%\n'
 
-    caption = 'Maximum $^{56}Ni$ mass ($M_{\odot}) produced as a function of the ' + \
-              'dual energy formalism parameter $\\eta_3$.'
+    title = 'Effect of dual-energy parameter $\\eta_3'
 
     col1title = '$\\eta_3$'
 
     label = 'eta3'
 
-    write_ni56_table(results_dir, out_filename, eta_list, ni56_list, comment, caption, col1title, label)
+    write_ni56_table(results_dir, out_filename, eta_list, ni56_list, comment, col1title, label, title = title)
 
 
 
@@ -372,14 +548,13 @@ def small_temp(out_filename, results_base):
               '% second is the final nickel mass produced, in solar masses.\n' + \
               '%\n'
 
-    caption = 'Maximum $^{56}Ni$ mass ($M_{\odot}) produced as a function of the ' + \
-              'temperature floor.'
+    title = 'Effect of the temperature floor'
 
     col1title = '$T_{\\text{floor}}$'
 
     label = 'smalltemp'
 
-    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, caption, col1title, label)
+    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, col1title, label, title = title)
 
 
 
@@ -418,14 +593,13 @@ def t_min(out_filename, results_base):
               '% second is the final nickel mass produced, in solar masses.\n' + \
               '%\n'
 
-    caption = 'Maximum $^{56}Ni$ mass ($M_{\odot}) produced as a function of the ' + \
-              'minimum temperature for allowing nuclear reactions.'
+    title = 'Effect of the temperature floor for reactions'
 
     col1title = '$T_{\\text{min}}$'
 
     label = 'tmin'
 
-    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, caption, col1title, label)
+    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, col1title, label, title = title)
 
 
 
@@ -465,14 +639,13 @@ def rho_min(out_filename, results_base):
               '% second is the final nickel mass produced, in solar masses.\n' + \
               '%\n'
 
-    caption = 'Maximum $^{56}Ni$ mass ($M_{\odot}) produced as a function of the ' + \
-              'minimum density for allowing nuclear reactions.'
+    title = 'Effect of the density floor for reactions'
 
     col1title = '$\\rho_{\\text{min}}$'
 
     label = 'tmin'
 
-    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, caption, col1title, label)
+    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, col1title, label, title = title)
 
 
 
@@ -494,6 +667,11 @@ def burning_mode(out_filename, results_base):
 
     ni56_list = get_ni56(results_dir)
 
+    # Sort the lists
+
+    ni56_list = np.array([x for _,x in sorted(zip(mode_list,ni56_list))])
+    mode_list = sorted(mode_list)
+
     comment = '%\n' + \
               '% Summary of the effect of the burning mode \n' + \
               '% for reactions on 56Ni yield in a 2D white \n' + \
@@ -502,110 +680,17 @@ def burning_mode(out_filename, results_base):
               '% second is the final nickel mass produced, in solar masses.\n' + \
               '%\n'
 
-    caption = 'Maximum $^{56}Ni$ mass ($M_{\odot}) produced as a function of the ' + \
-              'burning mode for allowing nuclear reactions. Burning mode 0 is a ' + \
-              'hydrostatic burn, mode 1 is a self-heating burn, mode 2 is a hybrid ' + \
-              'burn, and mode 3 is a suppressed burn. The meaning of these burning ' + \
-              'modes is explained in the text.'
+    caption = 'The burning modes are explained in \\autoref{sec:burner}.'
 
     col1title = 'Burning Mode'
 
+    title = 'Burning Mode'
+
     label = 'burningmode'
 
-    write_ni56_table(results_dir, out_filename, mode_list, ni56_list, comment, caption, col1title, label)
+    precision = 4 # Because burning mode 3 creates so little nickel
 
-
-
-# Effect of the imapct parameter
-
-def impact_parameter(eps_filename, results_dir):
-    """Plot the effect of the impact parameter."""
-
-    import os
-
-    if os.path.isfile(eps_filename):
-        return
-
-    import numpy as np
-    from matplotlib import pyplot as plt
-
-    # Get the list of parameter values we have tried
-
-    dtnuc_list = wdmerger.get_parameter_list(results_dir)
-
-    ni56_arr = get_ni56(results_dir)
-
-    b_list = [dtnuc[len('b'):] for dtnuc in dtnuc_list]
-
-    b_list = sorted(b_list)
-
-    plt.plot(np.array(b_list), np.array(ni56_arr), markers[0], markersize = 12.0)
-
-    xaxis_buffer = 0.025
-
-    plt.xlim([float(b_list[0]) - xaxis_buffer, float(b_list[-1]) + xaxis_buffer])
-    plt.xlabel(r"Impact parameter $b$", fontsize=24)
-    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=24)
-    plt.tick_params(labelsize=20)
-    plt.tight_layout()
-    plt.savefig(eps_filename)
-    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
-
-    plt.close()
-
-
-
-# Gravitational wave signal
-
-def gravitational_wave_signal(eps_filename, results_dir):
-    """Plot the gravitational radiation waveform."""
-
-    import os
-
-    if os.path.isfile(eps_filename):
-        return
-
-    if not os.path.exists(results_dir):
-        return
-
-    from matplotlib import pyplot as plt
-
-    print "Generating plot with filename " + eps_filename
-
-    diag_file = results_dir + '/output/grid_diag.out'
-
-    time     = wdmerger.get_column('TIME', diag_file)
-
-    strain_p_1 = wdmerger.get_column('h_+ (axis 1)', diag_file)
-    strain_x_1 = wdmerger.get_column('h_x (axis 1)', diag_file)
-
-    strain_p_2 = wdmerger.get_column('h_+ (axis 2)', diag_file)
-    strain_x_2 = wdmerger.get_column('h_x (axis 2)', diag_file)
-
-    strain_p_3 = wdmerger.get_column('h_+ (axis 3)', diag_file)
-    strain_x_3 = wdmerger.get_column('h_x (axis 3)', diag_file)
-
-    plt.plot(time, strain_p_1 / 1.e-22, lw = 4.0, color = colors[0], linestyle = linestyles[0], marker = markers[0], markersize = 12, markevery = 250, label = r'$h^x_+$')
-    plt.plot(time, strain_x_1 / 1.e-22, lw = 4.0, color = colors[1], linestyle = linestyles[1], marker = markers[1], markersize = 12, markevery = 250, label = r'$h^x_\times$')
-
-    plt.plot(time, strain_p_2 / 1.e-22, lw = 4.0, color = colors[2], linestyle = linestyles[2], marker = markers[2], markersize = 12, markevery = 250, label = r'$h^y_+$')
-    plt.plot(time, strain_x_2 / 1.e-22, lw = 4.0, color = colors[3], linestyle = linestyles[3], marker = markers[3], markersize = 12, markevery = 250, label = r'$h^y_\times$')
-
-    plt.plot(time, strain_p_3 / 1.e-22, lw = 4.0, color = colors[4], linestyle = linestyles[4], marker = markers[4], markersize = 12, markevery = 250, label = r'$h^z_+$')
-    plt.plot(time, strain_x_3 / 1.e-22, lw = 4.0, color = colors[5], linestyle = linestyles[5], marker = markers[5], markersize = 12, markevery = 250, label = r'$h^z_\times$')
-
-    plt.tick_params(labelsize=20)
-
-    plt.xlabel(r'$t\ \mathrm{(s)}$', fontsize=24)
-    plt.ylabel(r'$h\, /\, 10^{-22}$', fontsize=24)
-    plt.legend(loc = 'best', prop = {'size':20})
-    plt.tight_layout()
-
-    plt.savefig(eps_filename)
-
-    wdmerger.insert_commits_into_eps(eps_filename, diag_file, 'diag')
-
-    plt.close()
+    write_ni56_table(results_dir, out_filename, mode_list, ni56_list, comment, col1title, label, precision = precision, title = title, caption = caption)
 
 
 
@@ -625,10 +710,10 @@ if __name__ == "__main__":
     burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56" + mass_string + ".eps", results_base)
     burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56" + mass_string + ".eps", results_base)
     burning_limiter(plots_dir + "dtnuc_max_Ni56" + mass_string + ".eps", results_base)
-    c_fraction(plots_dir + "co_frac" + mass_string + ".tbl", results_base)
     eta2(plots_dir + "eta2" + mass_string + ".tbl", results_base)
     eta3(plots_dir + "eta3" + mass_string + ".tbl", results_base)
     small_temp(plots_dir + "small_temp" + mass_string + ".tbl", results_base)
     burning_mode(plots_dir + "burning_mode" + mass_string + ".tbl", results_base)
     t_min(plots_dir + "t_min" + mass_string + ".tbl", results_base)
     rho_min(plots_dir + "rho_min" + mass_string + ".tbl", results_base)
+    ode_tolerances(plots_dir + "ode_tolerance.eps", results_base)
