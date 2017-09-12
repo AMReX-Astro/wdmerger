@@ -1,24 +1,3 @@
-#
-# Returns the current git hash of the wdmerger repo.
-# Credit: http://stackoverflow.com/questions/14989858/get-the-current-git-hash-in-a-python-script
-#
-
-def get_wdmerger_git_commit_hash():
-    """Return current git commit hash of wdmerger."""
-
-    import os
-    import subprocess
-
-    WDMERGER_HOME = os.getenv('WDMERGER_HOME')
-
-    cwd = os.getcwd()
-    os.chdir(WDMERGER_HOME)
-    hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
-    os.chdir(cwd)
-
-    return hash
-
-
 
 #
 # Return the CASTRO directory on the current machine, based on your environment variables.
@@ -167,24 +146,21 @@ def get_git_commits_from_plotfile(plotfile):
     lines = [line.split() for line in lines]
 
     castro_hash   = ""
-    boxlib_hash   = ""
-    wdmerger_hash = ""
+    amrex_hash   = ""
     microphysics_hash = ""
 
     for line in lines:
         if (len(line) == 4):
             if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
                 castro_hash = line[3]
-            elif (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
-                boxlib_hash = line[3]
-            elif (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
-                wdmerger_hash = line[3]
+            elif (line[0] == "AMReX" and line[1] == "git" and line[2] == "hash:"):
+                amrex_hash = line[3]
             elif (line[0] == "Microphysics" and line[1] == "git" and line[2] == "hash:"):
                 microphysics_hash = line[3]
 
     job_info.close()
 
-    return [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash]
+    return [castro_hash, amrex_hash, microphysics_hash]
 
 
 
@@ -198,8 +174,7 @@ def get_git_commits_from_diagfile(diagfile):
     diagfile = open(diagfile, 'r')
 
     castro_hash   = ""
-    boxlib_hash   = ""
-    wdmerger_hash = ""
+    amrex_hash   = ""
     microphysics_hash = ""
 
     line = diagfile.readline().split()
@@ -209,22 +184,17 @@ def get_git_commits_from_diagfile(diagfile):
 
     line = diagfile.readline().split()
 
-    if (line[1] == "BoxLib" and line[2] == "git" and line[3] == "hash:"):
-        boxlib_hash = line[4]
+    if (line[1] == "AMReX" and line[2] == "git" and line[3] == "hash:"):
+        amrex_hash = line[4]
 
     line = diagfile.readline().split()
 
     if (line[1] == "Microphysics" and line[2] == "git" and line[3] == "hash:"):
         microphysics_hash = line[4]
 
-    line = diagfile.readline().split()
-
-    if (line[1] == "wdmerger" and line[2] == "git" and line[3] == "hash:"):
-        wdmerger_hash = line[4]
-
     diagfile.close()
 
-    return [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash]
+    return [castro_hash, amrex_hash, microphysics_hash]
 
 
 
@@ -240,29 +210,26 @@ def get_git_commits_from_infofile(infofile):
     lines = [line.split() for line in lines]
 
     castro_hash   = ""
-    boxlib_hash   = ""
-    wdmerger_hash = ""
+    amrex_hash   = ""
     microphysics_hash = ""
 
     for line in lines:
         if (len(line) == 4):
             if (line[0] == "Castro" and line[1] == "git" and line[2] == "hash:"):
                 castro_hash = line[3]
-            elif (line[0] == "BoxLib" and line[1] == "git" and line[2] == "hash:"):
-                boxlib_hash = line[3]
-            elif (line[0] == "wdmerger" and line[1] == "git" and line[2] == "hash:"):
-                wdmerger_hash = line[3]
+            elif (line[0] == "AMReX" and line[1] == "git" and line[2] == "hash:"):
+                amrex_hash = line[3]
             elif (line[0] == "Microphysics" and line[1] == "git" and line[2] == "hash:"):
                 microphysics_hash = line[4]
 
     infofile.close()
 
-    return [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash]
+    return [castro_hash, amrex_hash, microphysics_hash]
 
 
 
 #
-# Given CASTRO and BoxLib hashes that were used to create the plot for a given plotfile,
+# Given CASTRO and AMReX hashes that were used to create the plot for a given plotfile,
 # insert these and the current Microphysics and wdmerger hashes into an EPS file.
 # Credit: http://stackoverflow.com/questions/1325905/inserting-line-at-specified-position-of-a-text-file-in-python
 # A comma in a print statement effectively prevents a newline from being appended to the print. This is valid in Python 2.x,
@@ -276,11 +243,11 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
     import fileinput
 
     if (data_file_type == 'plot'):
-        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_plotfile(data_file)
+        [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_plotfile(data_file)
     elif (data_file_type == 'diag'):
-        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_diagfile(data_file)
+        [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_diagfile(data_file)
     elif (data_file_type == 'info'):
-        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
+        [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
     else:
         print "Error: Data file type not recognized."
 
@@ -290,14 +257,13 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
         print line,
         if line.startswith('%%CreationDate:'):
             print "%%CASTRO git hash: " + castro_hash + "\n" + \
-                  "%%BoxLib git hash: " + boxlib_hash + "\n" + \
-                  "%%Microphysics git hash: " + microphysics_hash + "\n" + \
-                  "%%wdmerger git hash: " + wdmerger_hash
+                  "%%AMReX git hash: " + amrex_hash + "\n" + \
+                  "%%Microphysics git hash: " + microphysics_hash + "\n"
 
 
 
 #
-# Given CASTRO and BoxLib hashes that were used to create the plot for a given plotfile,
+# Given CASTRO and AMReX hashes that were used to create the plot for a given plotfile,
 # insert these and the current Microphysics and wdmerger hashes into a text file.
 # We will append these to the end of the file, so that the code calling this should wait
 # until just before it wants the commit hashes to appear to call it, and should probably
@@ -311,18 +277,17 @@ def insert_commits_into_txt(txt_file, data_file, data_file_type, comment_char='%
     """Insert git commit hashes into a text file."""
 
     if (data_file_type == 'plot'):
-        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_plotfile(data_file)
+        [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_plotfile(data_file)
     elif (data_file_type == 'diag'):
-        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_diagfile(data_file)
+        [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_diagfile(data_file)
     elif (data_file_type == 'info'):
-        [castro_hash, boxlib_hash, wdmerger_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
+        [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
     else:
         print "Error: Data file type not recognized."
 
     string = comment_char + " CASTRO git hash: " + castro_hash + "\n" + \
-             comment_char + " BoxLib git hash: " + boxlib_hash + "\n" + \
-             comment_char + " Microphysics git hash: " + microphysics_hash + "\n" + \
-             comment_char + " wdmerger git hash: " + wdmerger_hash + "\n"
+             comment_char + " AMReX git hash: " + amrex_hash + "\n" + \
+             comment_char + " Microphysics git hash: " + microphysics_hash + "\n"
 
     in_file = open(txt_file, 'a')
     in_file.write(string)
@@ -513,10 +478,10 @@ def timing(output_filename):
 
 
 # Extract timing data from a series of output files 
-# and save it in a file using the BoxLib convention.
+# and save it in a file using the AMReX convention.
 # See, e.g., MAESTRO/Docs/managing_jobs/scaling.
 
-def boxlib_timing(output_filenames, data_filename):
+def amrex_timing(output_filenames, data_filename):
     """Extract timing data and save it to an output file."""
 
     import numpy as np
