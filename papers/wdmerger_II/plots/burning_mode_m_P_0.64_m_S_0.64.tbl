@@ -1,7 +1,6 @@
-% CASTRO git hash: b8779559733d18a20d5a0a81c28f16d499d81a6e
-% BoxLib git hash: ca7a8a354b0f3a9a5cd953678c487460ecd3807b
-% Microphysics git hash: 1b4c695d803b838cb7cda40a51eec2d9a5a3519b
-% wdmerger git hash: fdbeb300504cfd861caf9d72c5e04a035ea0945a
+% CASTRO git hash: 17.09-6-g5d0010cb
+% AMReX git hash: 17.09-19-g908e3c1a3
+% Microphysics git hash: 17.09-2-g502a051
 %
 % Summary of the effect of the burning mode 
 % for reactions on 56Ni yield in a 2D white 
@@ -15,10 +14,10 @@
   \setlength{\tblburningmodepad}{0.325in}
   \tablehead{ \colhead{ \hspace{\tblburningmodepad}Burning Mode\hspace{\tblburningmodepad} } & \colhead{ \hspace{\tblburningmodepad}Max. $^{56}$Ni (${M_{\odot}}$)\hspace{\tblburningmodepad} } }
   \startdata
-  \hspace{\tblburningmodepad}0\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.204\hspace{\tblburningmodepad} \\
-  \hspace{\tblburningmodepad}1\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.193\hspace{\tblburningmodepad} \\
-  \hspace{\tblburningmodepad}2\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.204\hspace{\tblburningmodepad} \\
-  \hspace{\tblburningmodepad}3\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.001\hspace{\tblburningmodepad}
+  \hspace{\tblburningmodepad}0\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.2025\hspace{\tblburningmodepad} \\
+  \hspace{\tblburningmodepad}1\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.1906\hspace{\tblburningmodepad} \\
+  \hspace{\tblburningmodepad}2\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.2025\hspace{\tblburningmodepad} \\
+  \hspace{\tblburningmodepad}3\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.0002\hspace{\tblburningmodepad}
   \enddata
-  \tablecomments{ Maximum $^{56}$Ni mass produced as a function of the burning mode for allowing nuclear reactions. Burning mode 0 is a hydrostatic burn, mode 1 is a self-heating burn, mode 2 is a hybrid burn, and mode 3 is a suppressed burn. The meaning of these burning modes is explained in the text. }
+  \tablecomments{ The burning modes are explained in \autoref{sec:burner}. }
 \end{deluxetable}

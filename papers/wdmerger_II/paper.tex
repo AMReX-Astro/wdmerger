@@ -769,7 +769,7 @@ occurs only after we have burned to NSE.
 \input{plots/burning_mode_m_P_0.64_m_S_0.64.tbl}
 
 In contrast, the suppressed burning mode (modeled after \citet{kushnir:2013}) produces only about
-$5 \times 10^{-4}\ \msolar$ of $^{56}$Ni. In a suppressed burn, we ensure that at every evaluation
+$2 \times 10^{-4}\ \msolar$ of $^{56}$Ni. In a suppressed burn, we ensure that at every evaluation
 of the right-hand-side vector for the nuclear network integration, all quantities are scaled by the
 same factor, with this factor ensuring that the energy release is not large enough to permit a
 spurious detonation. This seems to be equivalent to the method used in \citet{kushnir:2013}. We
@@ -793,9 +793,12 @@ factor was determined based on the initial value of the state or the final value
 Our default resolution is significantly lower than that of \citeauthor{kushnir:2013} (the text
 says they used resolutions up to a few km) but we have tried runs at higher resolution and
 the results are qualitatively similar. We did not directly compare the results of the method at
-the same resolution as theirs, but our results suggest at least that this limiter significantly
-modifies the evolution for modest resolution simulations and may be inappropriate as a method for enabling
-simulations at those resolutions to obtain accurate results.
+the same resolution as theirs, but our results indicate at least that this limiter significantly
+modifies the evolution for modest resolution simulations. The low amount of nickel generated is,
+interestingly, similar to the results at higher resolution from \autoref{sec:resolution}. However,
+this may be a coincidence rather than, as claimed by \citeauthor{kushnir:2013}, a shortcut to obtaining
+a resolved simulation. In any case, the suppressed burn limiting used here is ultimately unphysical
+and we choose not to use it in any other simulation.
 
 
 
