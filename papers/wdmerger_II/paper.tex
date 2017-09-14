@@ -302,9 +302,9 @@ variety of stiff ODEs that are present in a collision is insufficient, as we
 sometimes run into integration failures. A combination of the two integrators
 is usually sufficient, however: we first try \vode, and if that fails, we then
 try the Stoer and Bulirsch method. Since it is possible for neither method to
-succeed, we have one more backup scheme. Our specified error tolerances are
-$10^{-6}$ for the energy and temperature ODEs, and $10^{-8}$ for the
-nuclear abundance ODEs (we discuss the sensitivity to this choice in
+succeed, we have one more backup scheme. Our specified (relative and absolute)
+error tolerances are uniformly $10^{-6}$ for the energy, temperature, and nuclear
+abundance ODEs (we discuss the sensitivity to this choice in
 \autoref{sec:parameters:tolerance}). We can loosen these tolerances in an
 attempt to give the integrator an easier time. If both \vode\ and the Stoer
 and Bulirsch algorithm fail, then we loosen the tolerances by a multiplicative
