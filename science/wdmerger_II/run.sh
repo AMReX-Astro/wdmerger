@@ -149,43 +149,118 @@ function set_run_opts {
 		amr_max_grid_size="32 32 48 64 64 128"
 	    fi
 
-	elif [ $ncell -eq 1024 ]; then
+        elif [ $ncell -eq 512 ]; then
 
 	    if [ $refinement -eq 1 ]; then
+		amr_max_level=0
+		amr_blocking_factor="8"
+		amr_max_grid_size="32"
+	    elif [ $refinement -eq 2 ]; then
+		amr_max_level=1
+		amr_ref_ratio="2"
+		amr_blocking_factor="8 8"
+		amr_max_grid_size="32 32"
+	    elif [ $refinement -eq 4 ]; then
 		amr_max_level=1
 		amr_ref_ratio="4"
 		amr_blocking_factor="8 8"
 		amr_max_grid_size="32 32"
-	    elif [ $refinement -eq 2 ]; then
+	    elif [ $refinement -eq 8 ]; then
 		amr_max_level=2
 		amr_ref_ratio="4 2"
 		amr_blocking_factor="8 8 8"
-		amr_max_grid_size="32 32 48"
-	    elif [ $refinement -eq 4 ]; then
+		amr_max_grid_size="32 32 64"
+	    elif [ $refinement -eq 16 ]; then
 		amr_max_level=2
 		amr_ref_ratio="4 4"
 		amr_blocking_factor="8 8 8"
-		amr_max_grid_size="32 32 48"
-	    elif [ $refinement -eq 8 ]; then
+		amr_max_grid_size="32 32 64"
+	    elif [ $refinement -eq 32 ]; then
 		amr_max_level=3
 		amr_ref_ratio="4 4 2"
 		amr_blocking_factor="8 8 8 8"
-		amr_max_grid_size="32 32 48 64"
-	    elif [ $refinement -eq 16 ]; then
+		amr_max_grid_size="32 32 64 64"
+	    elif [ $refinement -eq 64 ]; then
 		amr_max_level=3
 		amr_ref_ratio="4 4 4"
 		amr_blocking_factor="8 8 8 8"
-		amr_max_grid_size="32 32 48 64"
+		amr_max_grid_size="32 32 64 64"
+	    fi
+
+	elif [ $ncell -eq 1024 ]; then
+
+	    if [ $refinement -eq 1 ]; then
+		amr_max_level=0
+		amr_blocking_factor="8"
+		amr_max_grid_size="32"
+	    elif [ $refinement -eq 2 ]; then
+		amr_max_level=1
+		amr_ref_ratio="2"
+		amr_blocking_factor="8 8"
+		amr_max_grid_size="32 32"
+	    elif [ $refinement -eq 4 ]; then
+		amr_max_level=1
+		amr_ref_ratio="4"
+		amr_blocking_factor="8 8"
+		amr_max_grid_size="32 32"
+	    elif [ $refinement -eq 8 ]; then
+		amr_max_level=2
+		amr_ref_ratio="4 2"
+		amr_blocking_factor="8 8 8"
+		amr_max_grid_size="32 32 64"
+	    elif [ $refinement -eq 16 ]; then
+		amr_max_level=2
+		amr_ref_ratio="4 4"
+		amr_blocking_factor="8 8 8"
+		amr_max_grid_size="32 32 64"
 	    elif [ $refinement -eq 32 ]; then
-		amr_max_level=4
-		amr_ref_ratio="4 4 4 2"
-		amr_blocking_factor="8 8 8 8 8"
-		amr_max_grid_size="32 32 48 64 128"
+		amr_max_level=3
+		amr_ref_ratio="4 4 2"
+		amr_blocking_factor="8 8 8 8"
+		amr_max_grid_size="32 32 64 64"
 	    elif [ $refinement -eq 64 ]; then
-		amr_max_level=4
-		amr_ref_ratio="4 4 4 4"
-		amr_blocking_factor="8 8 8 8 8"
-		amr_max_grid_size="32 32 48 64 128"
+		amr_max_level=3
+		amr_ref_ratio="4 4 4"
+		amr_blocking_factor="8 8 8 8"
+		amr_max_grid_size="32 32 64 64"
+	    fi
+
+        elif [ $ncell -eq 2048 ]; then
+
+	    if [ $refinement -eq 1 ]; then
+		amr_max_level=0
+		amr_blocking_factor="8"
+		amr_max_grid_size="32"
+	    elif [ $refinement -eq 2 ]; then
+		amr_max_level=1
+		amr_ref_ratio="2"
+		amr_blocking_factor="8 8"
+		amr_max_grid_size="32 32"
+	    elif [ $refinement -eq 4 ]; then
+		amr_max_level=1
+		amr_ref_ratio="4"
+		amr_blocking_factor="8 8"
+		amr_max_grid_size="32 32"
+	    elif [ $refinement -eq 8 ]; then
+		amr_max_level=2
+		amr_ref_ratio="4 2"
+		amr_blocking_factor="8 8 8"
+		amr_max_grid_size="32 32 64"
+	    elif [ $refinement -eq 16 ]; then
+		amr_max_level=2
+		amr_ref_ratio="4 4"
+		amr_blocking_factor="8 8 8"
+		amr_max_grid_size="32 32 64"
+	    elif [ $refinement -eq 32 ]; then
+		amr_max_level=3
+		amr_ref_ratio="4 4 2"
+		amr_blocking_factor="8 8 8 8"
+		amr_max_grid_size="32 32 64 64"
+	    elif [ $refinement -eq 64 ]; then
+		amr_max_level=3
+		amr_ref_ratio="4 4 4"
+		amr_blocking_factor="8 8 8 8"
+		amr_max_grid_size="32 32 64 64"
 	    fi
 
 	fi
@@ -346,22 +421,63 @@ castro_max_dt="0.05"
 # at least within reason. For amr.max_level = 4,
 # the maximum resolution will be about 1.5 km.
 
+# Start with base resolution of 128 x 256
+
 amr_max_level=9
 
 castro_dxnuc="1.0e-1"
 castro_dtnuc_e="1.e200"
 castro_dtnuc_X="1.e200"
 
-for refinement in 1 2 4 8 16 32 64 128 256
+for refinement in 1 2 4 8 16 32 64 128
 do
 
-    dir=$results_dir/2D/dxnuc/r$refinement
+    dir=$results_dir/2D/dxnuc/n$ncell/r$refinement
 
     set_run_opts
     run
 
 done
 
+# Increase by a factor of 2
+
+ncell=512
+
+for refinement in 1 2 4 8 16 32 64
+do
+
+    dir=$results_dir/2D/dxnuc/n$ncell/r$refinement
+
+    set_run_opts
+    run
+
+done
+
+ncell=1024
+
+for refinement in 1 2 4 8 16 32
+do
+
+    dir=$results_dir/2D/dxnuc/n$ncell/r$refinement
+
+    set_run_opts
+    run
+
+done
+
+ncell=2048
+
+for refinement in 1 2 4 8 16
+do
+
+    dir=$results_dir/2D/dxnuc/n$ncell/r$refinement
+
+    set_run_opts
+    run
+
+done
+
+ncell=$ncell_default
 castro_dxnuc=$dxnuc_default
 
 
@@ -475,7 +591,7 @@ castro_dtnuc_mode=$limiter_mode_default
 
 castro_dtnuc_X="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001 0.0001"
+dtnuc_list="10000.0 5000.0 2000.0 1000.0 500.0 200.0 100.0 50.0 20.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.05 0.02 0.01 0.005 0.002 0.001 0.0005 0.0002 0.0001"
 
 for dtnuc in $dtnuc_list
 do
@@ -496,7 +612,7 @@ castro_dtnuc_X=$dtnuc_X_default
 
 castro_dtnuc_e="1.e200"
 
-dtnuc_list="10000.0 1000.0 100.0 10.0 5.0 2.0 1.0"
+dtnuc_list="10000.0 5000.0 2000.0 1000.0 500.0 200.0 100.0 50.0 20.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.05 0.02"
 
 for dtnuc in $dtnuc_list
 do
@@ -530,31 +646,6 @@ do
 done
 
 burning_mode=$burning_mode_default
-
-
-
-# Test the dependence on the C/O mass fraction.
-
-c_frac_list=(0.30 0.40 0.50 0.60 0.70)
-o_frac_list=(0.70 0.60 0.50 0.40 0.30)
-
-list_length=${#c_frac_list[@]}
-
-for index in $(seq 0 $(($list_length-1)))
-do
-
-    co_wd_c_frac=${c_frac_list[$index]}
-    co_wd_o_frac=${o_frac_list[$index]}
-
-    dir=$results_dir/2D/co/c"$co_wd_c_frac"o"$co_wd_o_frac"
-
-    set_run_opts
-    run
-
-done
-
-co_wd_c_frac=$co_wd_c_frac_default
-co_wd_o_frac=$co_wd_o_frac_default
 
 
 
@@ -730,28 +821,6 @@ for castro_do_react in 0 1
 do
 
     dir=$results_dir/2D/reactions/react$castro_do_react
-
-    set_run_opts
-    run
-
-done
-
-unset castro_use_stopping_criterion
-castro_do_react=1
-
-
-
-# Switch to a 3D test.
-
-DIM=3
-inputs=inputs_3d
-
-castro_use_stopping_criterion=0
-
-for castro_do_react in 0 1
-do
-
-    dir=$results_dir/3D/reactions/react$castro_do_react
 
     set_run_opts
     run
