@@ -672,6 +672,13 @@ def burning_mode(out_filename, results_base):
     ni56_list = np.array([x for _,x in sorted(zip(mode_list,ni56_list))])
     mode_list = sorted(mode_list)
 
+    # Replace the burning mode numbers with names for output purposes
+
+    mode_list[mode_list.index('0')] = 'Hydrostatic'
+    mode_list[mode_list.index('1')] = 'Self-heating'
+    mode_list[mode_list.index('2')] = 'Hybrid'
+    mode_list[mode_list.index('3')] = 'Suppressed'
+
     comment = '%\n' + \
               '% Summary of the effect of the burning mode \n' + \
               '% for reactions on 56Ni yield in a 2D white \n' + \
