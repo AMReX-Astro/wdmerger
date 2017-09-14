@@ -14,10 +14,10 @@
   \setlength{\tblburningmodepad}{0.325in}
   \tablehead{ \colhead{ \hspace{\tblburningmodepad}Burning Mode\hspace{\tblburningmodepad} } & \colhead{ \hspace{\tblburningmodepad}Max. $^{56}$Ni (${M_{\odot}}$)\hspace{\tblburningmodepad} } }
   \startdata
-  \hspace{\tblburningmodepad}0\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.2025\hspace{\tblburningmodepad} \\
-  \hspace{\tblburningmodepad}1\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.1906\hspace{\tblburningmodepad} \\
-  \hspace{\tblburningmodepad}2\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.2025\hspace{\tblburningmodepad} \\
-  \hspace{\tblburningmodepad}3\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.0002\hspace{\tblburningmodepad}
+  \hspace{\tblburningmodepad}Hydrostatic\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.2025\hspace{\tblburningmodepad} \\
+  \hspace{\tblburningmodepad}Self-heating\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.1906\hspace{\tblburningmodepad} \\
+  \hspace{\tblburningmodepad}Hybrid\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.2025\hspace{\tblburningmodepad} \\
+  \hspace{\tblburningmodepad}Suppressed\hspace{\tblburningmodepad} & \hspace{\tblburningmodepad}0.0002\hspace{\tblburningmodepad}
   \enddata
   \tablecomments{ The burning modes are explained in \autoref{sec:burner}. }
 \end{deluxetable}
