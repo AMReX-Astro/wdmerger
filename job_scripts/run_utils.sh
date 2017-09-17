@@ -39,8 +39,8 @@ function compile_options {
       compile_opts=$compile_opts' DIM='$DIM
   fi
 
-  if [ ! -z $Network_dir ]; then
-      compile_opts=$compile_opts' Network_dir='$Network_dir
+  if [ ! -z $NETWORK_DIR ]; then
+      compile_opts=$compile_opts' NETWORK_DIR='$NETWORK_DIR
   fi
 
   echo $compile_opts
@@ -1306,7 +1306,8 @@ function submit_job {
   # Let's protect against this by putting in a safeguard.
   # If the job stops within the first 25% of its requested runtime,
   # it is a safe bet that we are crashing and we don't want to
-  # submit a new job.
+  # submit a new job. You can set the flag force_submit if you
+  # know it's safe to submit the job.
 
   old_date=$(tail -1 jobs_submitted.txt | awk '{print $2}')
   old_walltime=$(tail -1 jobs_submitted.txt | awk '{print $3}')
@@ -1318,6 +1319,12 @@ function submit_job {
 
       safety_factor=$(get_safety_factor $old_walltime)
       submit_flag=$(echo "$date_diff > 0.25 * $old_walltime" | bc -l)
+
+      if [ $submit_flag -eq 0 ] && [ ! -z $force_submit ]; then
+          if [ $force_submit -eq 1 ]; then
+              submit_flag=1
+          fi
+      fi
 
       if [ $submit_flag -eq 0 ]; then
 	  echo "Refusing to submit job because the last job ended too soon."
