@@ -685,10 +685,6 @@ It is clear, though, that the timestep effect has converged when $f_{be} \sim 0.
 agree that the use of values in this range by \cite{raskin:2010}, \cite{hawley:2012},
 and \cite{kushnir:2013} is appropriate.
 
-%TODO: update the above with more recent data.
-
-
-
 
 
 %==========================================================================
@@ -696,6 +692,19 @@ and \cite{kushnir:2013} is appropriate.
 %==========================================================================
 \section{Spatial Resolution}
 \label{sec:spatialresolution}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.425]{{{plots/amr}}}
+  \caption{Nickel production as a function of the simulation resolution. The solid
+           black curve connects the points at uniform resolution. For each uniform
+           resolution simulation, we include additional simulations using the adaptive
+           mesh refinement criterion described in \autoref{sec:unstable_burning}.
+           The horizontal axis is the effective number of zones per dimension on the
+           finest level, which is the number of zones per dimension that would exist
+           if the finest resolution was uniformly applied on the grid.
+           \label{fig:amr}}
+\end{figure}
 
 
 
