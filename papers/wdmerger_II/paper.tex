@@ -685,8 +685,8 @@ used here is ultimately unphysical, we choose not to use it in any other simulat
 \section{Temporal Resolution}
 \label{sec:temporalresolution}
 
-For the standard self-heating burns that we use, the most important parameters we
-examined come from the timestep limiting scheme described in \autoref{sec:hydrocoupling}.
+For the standard self-heating burns that we use, the timestep limiting scheme
+described in \autoref{sec:hydrocoupling} has a significant effect on the evolution.
 The parameters $f_{be}$ (from \autoref{eq:timestep_e}) and $f_{bX}$ (from
 \autoref{eq:timestep_X}) control the size of the timestep as a function of the
 burning rate. As the timestep gets smaller, the error due to the Strang splitting
@@ -710,9 +710,9 @@ As either $f$ becomes small, the restriction on the timestep becomes quite sever
 for $f_{be} = 0.001$, the minimum timestep in the simulation is smaller than
 $5 \times 10^{-9}\ \text{s}$ and the full simulation requires over 100,000 timesteps.
 Such a simulation would be prohibitively expensive for a high resolution 3D calculation.
-Yet it is clear that even for this steep value of the limiter, which is much stricter
-than the limiter used in, e.g., \cite{hawley:2012} and \cite{raskin:2010}, the
-simulation has not fully converged in nickel production.
+It is clear, though, that the timestep effect has converged when $f_{be} \sim 0.1$. We
+agree that the use of values in this range by \cite{raskin:2010}, \cite{hawley:2012},
+and \cite{kushnir:2013} is appropriate.
 
 %TODO: update the above with more recent data.
 
