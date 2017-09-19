@@ -292,15 +292,15 @@ is usually sufficient, however: we first try \vode, and if that fails, we then
 try the Stoer and Bulirsch method. Since it is possible for neither method to
 succeed, we have one more backup scheme. Our specified (relative and absolute)
 error tolerances are uniformly $10^{-6}$ for the energy, temperature, and nuclear
-abundance ODEs (we discuss the sensitivity to this choice in
-\autoref{sec:parameters:tolerance}). We can loosen these tolerances in an
-attempt to give the integrator an easier time. If both \vode\ and the Stoer
-and Bulirsch algorithm fail, then we loosen the tolerances by a multiplicative
-factor of 25\%, and then repeat the attempts with \vode\ and Stoer and Bulirsch.
-We keep doing this until either we have loosened the tolerances enough for one
-of the two methods to succeed, or until we have loosened the tolerances by two
-orders of magnitude, at which point we finally give up. We have found that this
-scheme is resilient enough to handle all of the simulations shown below.
+abundance ODEs. We can loosen these tolerances in an attempt to give the integrator
+an easier time. If both \vode\ and the Stoer and Bulirsch algorithm fail, then we
+loosen the tolerances by a multiplicative factor of 25\%, and then repeat the attempts
+with \vode\ and Stoer and Bulirsch. We keep doing this until either we have loosened
+the tolerances enough for one of the two methods to succeed, or until we have loosened
+the tolerances by two orders of magnitude, at which point we finally give up. We have
+found that this scheme is resilient enough to handle all of the simulations shown below.
+We have also verified that our results do not depend much on the tolerances when they
+are tighter than $10^{-4}$.
 
 \subsection{Coupling to the Hydrodynamics}
 \label{sec:hydrocoupling}
@@ -366,6 +366,8 @@ the current default in \castro, we evaluate the right-hand-side of the
 burning network given the current state to explicitly obtain the 
 instantaneous value of $\dot{e}$ and $\dot{X_k}$. 
 
+%TODO: add a ``Nonaka plot''
+
 To understand the consequences of this choice, and more broadly to 
 understand the limitations of Strang splitting, we consider the 
 basic outline of a single-level advance in an advection-reaction system:
@@ -401,11 +403,10 @@ to this staggered burning phenomenon; silicon-group material can
 build up without changing the internal energy by a  large fraction,
 so the timestep limiter is never triggered, and then in a single step
 a substantial amount of iron-group elements can be be generated,
-perhaps forming a detonation. This can have non-trivial effects
-on the total amount of iron-group elements generated over the course of
-the simulation. We have found that the addition of the 
-limiter based on changes in species functionally precludes this, and
-so the two methods can complement each other.
+perhaps forming a detonation. In practice, however, we find that
+this effect is not large enough to have a meaningful outcome, and
+the results are largely insensitive to which method of limiting
+is used.
 
 With the timestep limited the way we advocate in this paper, 
 the timesteps are generally short enough so that the errors 
@@ -440,8 +441,7 @@ evolution and perhaps substantially change the final results.
 To this end, we have implemented a timestep retry option in
 \castro, which re-computes an advance if it violated the
 stability criteria as judged from the end of the timestep.
-However we have found that the benefits for this problem are
-small.
+We have found that the benefits for this problem are, however, small.
 
 \subsection{Numerically Unstable Burning}
 \label{sec:unstable_burning}
@@ -493,7 +493,7 @@ As the point of the limiter is to ensure that the changes to the
 hydrodynamics update can advect away newly generated energy
 quickly enough to avoid a numerically seeded detonation,
 we desire the most conservative version of the limiter. We discuss
-our results with the suppressed burning mode in \autoref{sec:parameters:burningmode}.
+our results with the suppressed burning mode in \autoref{sec:collisionburning}.
 Note that we have found that with this option enabled, it typically takes
 many more timesteps to complete a burn than in self-heating mode.
 
@@ -586,8 +586,7 @@ evolution), with the center of the WDs at $R = 0$. The un-simulated $\phi$ dimen
 then would extend the WDs through a $2\pi$ revolution. The domain has width $4 \times 10^{9}$
 cm along the $z$ axis, and is half as wide along the $R$ axis. The resolution is equal
 in both dimensions, so that there are twice as many zones in the $z$ dimension in
-a uniform grid. The default grid has 256 zones along the $z$ axis, yielding a
-spatial resolution of 312.5 km.
+a uniform grid.
 
 We terminate the simulation at $t = 10$ seconds, as we have found that for this
 particular setup, all of the significant burning has completed by this time. At
@@ -607,96 +606,23 @@ everywhere throughout the WDs, and we set the temperature floor to the same
 value (any zone that reaches below this temperature will be reset). Setting the
 temperature floor to a lower value has only minor effects on the simulation outcome.
 
+Our primary metric for this test is the amount of $^{56}$Ni generated in the collision,
+as this is the parameter most directly related to the observable quantities of interest
+for Type Ia supernovae. We collect information at the end of every timestep about the
+total amount of nickel on the grid (in solar masses), and we use the maximum value of
+this nickel mass.
+
 
 
 %==========================================================================
-% Parameter Study
+% Standard Results
 %==========================================================================
-\section{Parameter Study}
-\label{sec:parameters}
+\section{Collision Burning}
+\label{sec:collisionburning}
 
-Before turning to the effect that adaptive mesh refinement has on WD collisions,
-we will first examine the effect of a number of other code parameters. For most
-of the following we will use two-dimensional axisymmetric simulations which have
-impact parameter $b = 0$, unless otherwise specified, and we will stick to a
-moderate resolution (we use only the coarse grid described in \autoref{sec:problemsetup}).
-For all simulations in this section, we use a pair of $0.64\ \msolar$ WDs, a binary
-system that has been studied in most of the collision papers to date. This allows
-us to cheaply test how the collision responds to many effects. One limitation of
-this is that we will not find out exactly how a simulation differs in the case of a
-high-resolution 3D run when these parameters changed. Another is that we will not
-perform a full parameter study where we consider the full non-linear dependence of
-all parameters on all other parameters; here we are merely interested in qualitative
-trends that will help to understand the limitations of WD collision simulations.
-
-With those caveats in mind, let us consider the tests and the results we obtained.
-Our primary metric for the following tests will be the amount of $^{56}$Ni generated
-in the collision, as this is the parameter most directly related to the observable
-quantities of interest for Type Ia supernovae. Specifically, we collect information
-at the end of every timestep about the total amount of nickel on the grid (in solar
-masses), and we will use the maximum value of this nickel mass. When the stopping
-criterion described in \autoref{sec:problemsetup} is used, this nickel mass is generally
-constant or decreasing by the end of the run. The typical amount of nickel mass generated
-for our runs at low resolution is $0.2\ \msolar$, which is significantly lower than
-that obtained by \cite{raskin:2010} and \cite{kushnir:2013} for the same problem.
-We will discuss this in \autoref{sec:resolution}.
-
-\subsection{Timestepping}
-\label{sec:parameters:timestepping}
-
-For the standard self-heating burns that we use, the most important parameters we
-examined come from the timestep limiting scheme described in \autoref{sec:hydrocoupling}.
-The parameters $f_{be}$ (from \autoref{eq:timestep_e}) and $f_{bX}$ (from
-\autoref{eq:timestep_X}) control the size of the timestep as a function of the
-burning rate. As the timestep gets smaller, the error due to the Strang splitting
-scheme coupling the reactions and the hydro also gets smaller, and we expect
-that the results become more accurate.
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.425]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
-  \caption{Nickel production as a function of the timestep factors $f_{be}$
-           (solid blue, limiting the timestep on changes in internal energy) and
-           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
-           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
-           the timestep by at least an order of magnitude more.
-           \label{fig:timestep_factor}}
-\end{figure}
-\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
-production (these limiters are somewhat redundant in the sense that a given $f_{bX}$
-roughly corresponds to another (higher) $f_{be}$, as is evident by the fact that on
-the graph the curves look qualitatively similar in shape but with a horizontal offset.
-As either $f$ becomes small, the restriction on the timestep becomes quite severe:
-for $f_{be} = 0.001$, the minimum timestep in the simulation is smaller than
-$5 \times 10^{-9}\ \text{s}$ and the full simulation requires over 100,000 timesteps.
-Such a simulation would be prohibitively expensive for a high resolution 3D calculation.
-Yet it is clear that even for this steep value of the limiter, which is much stricter
-than the limiter used in, e.g., \cite{hawley:2012} and \cite{raskin:2010}, the
-simulation has not fully converged in nickel production.
-
-We also examined the effect of the method used to enforce the limiting, using the
-four limiting modes discussed in \autoref{sec:hydrocoupling}. The two modes that
-use the full last timestep's worth of information to estimate $\dot{e}$ (Mode 3 and Mode 4)
-yield a slightly larger nickel mass than the two modes that only use more recent information,
-but the difference is less than 10\%, and it is not clear which is preferable since
-for the value of the timestep limiter we used to compare these modes ($f_{be} = 0.3$),
-the simulation is not converged anyway.
-
-%TODO: add a ``Nonaka plot''
-
-For all remaining tests in this section, unless otherwise stated, we take $f_{be} = 10^2$
-and disable limiting with $f_{bX}$ by setting it to a large number. This choice was made
-somewhat arbitrarily for computational efficiency.
-
-
-\subsection{Integration Error Tolerance}
-\label{sec:parameters:tolerance}
-
-%TODO: add discussion of how ODE tolerances affect the answer
-
-
-
-\subsection{Burning Mode}
-\label{sec:parameters:burningmode}
+% Discuss the results for the case of the uniform grid with 256 zones along
+% the $z$ axis, yielding a spatial resolution of 312.5 km, with no timestep limiting.
+% Discuss the effect of the burning mode here.
 
 In \autoref{sec:burner} we observed that there are several alternatives to the traditional
 self-heating approach in a burn. These alternatives are relevant to a collision problem because,
@@ -753,12 +679,52 @@ is between our simulation and that of \citeauthor{kushnir:2013}, but as the supp
 used here is ultimately unphysical, we choose not to use it in any other simulation.
 
 
+%==========================================================================
+% Temporal Resolution
+%==========================================================================
+\section{Temporal Resolution}
+\label{sec:temporalresolution}
+
+For the standard self-heating burns that we use, the most important parameters we
+examined come from the timestep limiting scheme described in \autoref{sec:hydrocoupling}.
+The parameters $f_{be}$ (from \autoref{eq:timestep_e}) and $f_{bX}$ (from
+\autoref{eq:timestep_X}) control the size of the timestep as a function of the
+burning rate. As the timestep gets smaller, the error due to the Strang splitting
+scheme coupling the reactions and the hydro also gets smaller, and we expect
+that the results become more accurate.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.425]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
+  \caption{Nickel production as a function of the timestep factors $f_{be}$
+           (solid blue, limiting the timestep on changes in internal energy) and
+           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
+           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
+           the timestep by at least an order of magnitude more.
+           \label{fig:timestep_factor}}
+\end{figure}
+\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
+production (these limiters are somewhat redundant in the sense that a given $f_{bX}$
+roughly corresponds to another (higher) $f_{be}$, as is evident by the fact that on
+the graph the curves look qualitatively similar in shape but with a horizontal offset.
+As either $f$ becomes small, the restriction on the timestep becomes quite severe:
+for $f_{be} = 0.001$, the minimum timestep in the simulation is smaller than
+$5 \times 10^{-9}\ \text{s}$ and the full simulation requires over 100,000 timesteps.
+Such a simulation would be prohibitively expensive for a high resolution 3D calculation.
+Yet it is clear that even for this steep value of the limiter, which is much stricter
+than the limiter used in, e.g., \cite{hawley:2012} and \cite{raskin:2010}, the
+simulation has not fully converged in nickel production.
+
+%TODO: update the above with more recent data.
+
+
+
+
 
 %==========================================================================
 % Resolution Dependence
 %==========================================================================
-\section{Resolution Dependence}
-\label{sec:resolution}
+\section{Spatial Resolution}
+\label{sec:spatialresolution}
 
 
 
