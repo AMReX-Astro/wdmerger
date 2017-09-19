@@ -332,7 +332,7 @@ def burning_limiter_mode(out_filename, results_base):
 
     comment = '%\n' + \
               '% Summary of the effect of the timestep limiting mode \n' + \
-              '% on 56Ni yield in a 2D white dwarf collision.\n' + \
+              '% on 56Ni yield in a white dwarf collision.\n' + \
               '% The first column is the limiter mode \n' + \
               '% and the second is the final nickel \n' + \
               '% mass produced, in solar masses.\n' + \
@@ -431,88 +431,6 @@ def ode_tolerances(eps_filename, results_base):
 
 
 
-# Effect of the dual energy parameter eta2
-
-def eta2(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the dual energy eta2 parameter."""
-
-    if (os.path.isfile(out_filename)):
-        return
-
-    # Get the list of parameter values we have tried
-
-    results_dir = results_base + '/eta2'
-
-    param_list = wdmerger.get_parameter_list(results_dir)
-
-    eta_list = [float(param[3:]) for param in param_list]
-
-    ni56_list = get_ni56(results_dir)
-
-    # Sort the lists
-
-    ni56_list = np.array([x for _,x in sorted(zip(eta_list,ni56_list))])
-    eta_list = sorted(eta_list)
-
-    comment = '%\n' + \
-              '% Summary of the effect of the dual energy parameter \n' + \
-              '% castro.dual_energy_eta2 on 56Ni yield in a 2D white \n' + \
-              '% dwarf collision.\n' + \
-              '% The first column is the value of eta2 and the second \n' + \
-              '%is the final nickel mass produced, in solar masses.\n' + \
-              '%\n'
-
-    col1title = '$\\eta_2$'
-
-    title = 'Effect of dual-energy parameter $\\eta_2$'
-
-    label = 'eta2'
-
-    write_ni56_table(results_dir, out_filename, eta_list, ni56_list, comment, col1title, label, title = title)
-
-
-
-# Effect of the dual energy parameter eta3
-
-def eta3(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the dual energy eta3 parameter."""
-
-    if (os.path.isfile(out_filename)):
-        return
-
-    # Get the list of parameter values we have tried
-
-    results_dir = results_base + '/eta3'
-
-    param_list = wdmerger.get_parameter_list(results_dir)
-
-    eta_list = [float(param[3:]) for param in param_list]
-
-    ni56_list = get_ni56(results_dir)
-
-    # Sort the lists
-
-    ni56_list = np.array([x for _,x in sorted(zip(eta_list,ni56_list))])
-    eta_list = sorted(eta_list)
-
-    comment = '%\n' + \
-              '% Summary of the effect of the dual energy parameter \n' + \
-              '% castro.dual_energy_eta3 on 56Ni yield in a 2D white \n' + \
-              '% dwarf collision.\n' + \
-              '% The first column is the value of eta3 and the second \n' + \
-              '% is the final nickel mass produced, in solar masses.\n' + \
-              '%\n'
-
-    title = 'Effect of dual-energy parameter $\\eta_3'
-
-    col1title = '$\\eta_3$'
-
-    label = 'eta3'
-
-    write_ni56_table(results_dir, out_filename, eta_list, ni56_list, comment, col1title, label, title = title)
-
-
-
 # Effect of the temperature floor
 
 def small_temp(out_filename, results_base):
@@ -542,7 +460,7 @@ def small_temp(out_filename, results_base):
 
     comment = '%\n' + \
               '% Summary of the effect of the temperature floor \n' + \
-              '% castro.small_temp on 56Ni yield in a 2D white \n' + \
+              '% castro.small_temp on 56Ni yield in a white \n' + \
               '% dwarf collision.\n' + \
               '% The first column is the temperature floor and the \n' + \
               '% second is the final nickel mass produced, in solar masses.\n' + \
@@ -587,7 +505,7 @@ def t_min(out_filename, results_base):
 
     comment = '%\n' + \
               '% Summary of the effect of the minimum temperature\n' + \
-              '% for reactions on 56Ni yield in a 2D white \n' + \
+              '% for reactions on 56Ni yield in a white \n' + \
               '% dwarf collision.\n' + \
               '% The first column is the temperature minimum and the \n' + \
               '% second is the final nickel mass produced, in solar masses.\n' + \
@@ -633,7 +551,7 @@ def rho_min(out_filename, results_base):
 
     comment = '%\n' + \
               '% Summary of the effect of the minimum density\n' + \
-              '% for reactions on 56Ni yield in a 2D white \n' + \
+              '% for reactions on 56Ni yield in a white \n' + \
               '% dwarf collision.\n' + \
               '% The first column is the density minimum and the \n' + \
               '% second is the final nickel mass produced, in solar masses.\n' + \
@@ -681,7 +599,7 @@ def burning_mode(out_filename, results_base):
 
     comment = '%\n' + \
               '% Summary of the effect of the burning mode \n' + \
-              '% for reactions on 56Ni yield in a 2D white \n' + \
+              '% for reactions on 56Ni yield in a white \n' + \
               '% dwarf collision.\n' + \
               '% The first column is the density minimum and the \n' + \
               '% second is the final nickel mass produced, in solar masses.\n' + \
@@ -701,26 +619,91 @@ def burning_mode(out_filename, results_base):
 
 
 
+def amr(eps_filename, results_base):
+    """Plot the effect of the refinement based on the nuclear burning rate."""
+
+    import os
+
+    if os.path.isfile(eps_filename):
+        return
+
+    import math
+    import numpy as np
+    from matplotlib import pyplot as plt
+
+    results_dir = results_base + 'amr'
+
+    # Loop over base number of zones per dimension.
+
+    ncell_list = sorted([int(n[1:]) for n in os.listdir(results_dir)])
+
+    coarse_list = []
+
+    print ncell_list
+
+    i = 0
+
+    for ncell in ncell_list:
+
+        results_dir = results_base + 'dxnuc/n' + str(ncell)
+
+        # Get the list of parameter values we have tried
+
+        r_list = [float(r[1:]) for r in wdmerger.get_parameter_list(results_dir)]
+
+        ni56_arr = get_ni56(results_dir)
+
+        # Sort the lists
+
+        ni56_arr = np.array([x for _,x in sorted(zip(r_list,ni56_arr))])
+        r_list = np.array(sorted(r_list))
+
+        print r_list
+        print ni56_arr
+
+        zonesPerDim = [ncell * int(r) for r in r_list]
+
+        print zonesPerDim
+
+        plt.plot(zonesPerDim, ni56_arr, markers[i], markersize=12, linestyle=linestyles[i], lw = 4.0, label = 'n = ' + str(ncell))
+
+        i += 1
+
+        coarse_list.append(ni56_arr[0])
+
+    # Add a plot connecting the uniform grid cases
+
+    plt.plot(ncell_list, coarse_list, lw = 4.0, color = 'black', marker = 'o', markersize = 12, label = 'Uniform grid')
+
+    plt.tick_params(axis='both', which='major', pad=10)
+    plt.xscale('log', basex=2)
+    plt.ylim([0.0, 0.6])
+    plt.xlabel(r"Effective zones/dimension on finest level", fontsize=24)
+    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=24)
+    plt.tick_params(labelsize=20)
+    plt.tight_layout()
+    plt.legend(loc='best', prop={'size':20})
+    plt.savefig(eps_filename)
+    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+
+    plt.close()
+
+
+
 # Main execution: do all of the analysis routines.
 
 if __name__ == "__main__":
-    """Generate the plots and tables for the 2D and 3D collision tests."""
+    """Generate the plots and tables for the collision tests."""
 
-    mass_P = '0.64'
-    mass_S = '0.64'
-
-    mass_string = "_m_P_" + mass_P + "_m_S_" + mass_S
-
-    results_base = 'results/2D/'
+    results_base = 'results/'
     plots_dir = 'plots/'
 
-    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56" + mass_string + ".eps", results_base)
-    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56" + mass_string + ".eps", results_base)
-    burning_limiter(plots_dir + "dtnuc_max_Ni56" + mass_string + ".eps", results_base)
-    eta2(plots_dir + "eta2" + mass_string + ".tbl", results_base)
-    eta3(plots_dir + "eta3" + mass_string + ".tbl", results_base)
-    small_temp(plots_dir + "small_temp" + mass_string + ".tbl", results_base)
-    burning_mode(plots_dir + "burning_mode" + mass_string + ".tbl", results_base)
-    t_min(plots_dir + "t_min" + mass_string + ".tbl", results_base)
-    rho_min(plots_dir + "rho_min" + mass_string + ".tbl", results_base)
+    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56.eps", results_base)
+    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56.eps", results_base)
+    burning_limiter(plots_dir + "dtnuc_max_Ni56.eps", results_base)
+    small_temp(plots_dir + "small_temp.tbl", results_base)
+    burning_mode(plots_dir + "burning_mode.tbl", results_base)
+    t_min(plots_dir + "t_min.tbl", results_base)
+    rho_min(plots_dir + "rho_min.tbl", results_base)
     ode_tolerances(plots_dir + "ode_tolerance.eps", results_base)
+    amr(plots_dir + "amr.eps", results_base)
