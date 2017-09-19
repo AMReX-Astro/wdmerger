@@ -207,36 +207,24 @@ ${}^{12}$C, ${}^{16}$O, ${}^{20}$Ne, and ${}^{24}$ Mg. Therefore the core of
 any network appropriate for modeling nuclear burning in white dwarfs will be
 these alpha chain nuclides, with the idea being that links up the $\alpha$-chain
 will eventually get us to ${}^{56}$Ni, the nuclide responsible for the
-energy output of Type Ia supernovae. In this paper we consider four networks
-to do this, presented in order of increasing complexity. The most simple is
-\isoseven\ \citep{timmes:2000}, which includes all of the aforementioned isotopes and
-${}^{28}$Si (see also \citet{hix:1998}). ${}^{28}$Si effectively measures the
-equilibrium state of silicon-group elements, and ${}^{56}$Ni effectively measures
-the equilibrium state of iron-group elements, with the link between them governed
-by the effective loss or gain of seven $\alpha$-particles. This type of network
-was used by \citet{rosswog:2009} for their collision calculations in SPH.
-
-Next is \aproxthirteen\ \citep{timmes:1999,timmes:2000}. This includes
-all of the isotopes of \isoseven, and all of the $\alpha$-chain particles between
-silicon and nickel (${}^{32}$S, ${}^{36}$Ar, ${}^{40}$Ca, ${}^{44}$Ti, ${}^{48}$Cr,
-and ${}^{52}$Fe). This network was used by \citet{hawley:2012} and \citet{raskin:2010}.
-\citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a very similar network
-that included additionally ${}^{60}$Zn. The \aproxnineteen\ network \citep{timmes:1999}
-builds on \aproxthirteen\ by including isotopes for hydrogen burning and explicit
-tracking of photodisintegration into ${}^{54}$Fe. This network was used by
-\citet{kushnir:2013}, \citet{kushnir:2014}, and \citet{rosswog:2009} for their
-calculations with FLASH, and \citet{papish:2015}. Finally we will also
-consider \aproxtwentyone, which includes all of the above plus ${}^{56}$Cr
-and ${}^{56}$Fe and related reaction links. The primary virtue of using
-the latter two networks is that they allow us to track changes away from
-$Y_e = 0.5$.
-
-All four of these networks have been ported into a form that is consistent
-with the \amrex\ codes, in the freely available \microphysics\ code
-repository\footnote{\microphysics\ can be obtained at \url{https://github.com/starkiller-astro/Microphysics}.},
+energy output of Type Ia supernovae. In this paper we use the \aproxthirteen\
+network\ \citep{timmes:1999,timmes:2000}. This includes all thirteen $\alpha$-chain
+particles between ${}^4$He and ${}^{56}$Ni. This network was used by \citet{hawley:2012}
+and \citet{raskin:2010}. \citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a
+very similar network that additionally included ${}^{60}$Zn. This network has been
+ported into a form that is consistent with the \amrex\ codes, in the freely available
+\microphysics\ code repository
+\footnote{\microphysics\ can be obtained at \url{https://github.com/starkiller-astro/Microphysics}.},
 a collection of microphysical routines that are designed to be used in our
-hydrodynamics codes. These can be easily swapped at compile time by using the 
-appropriate makefile variable.
+hydrodynamics codes. In our \microphysics\ repository we have also ported \aproxnineteen\
+\citep{timmes:1999}, which was used in a few previous collision papers, and \aproxtwentyone.
+The isotopes added by these networks relative to \aproxthirteen\ are not particularly relevant
+to the problem of head-on white dwarf collisions, so we do not discuss results with these networks
+here (though we have verified for this problem that these larger networks do not significantly change
+the answer). We also make available \isoseven\ \citep{timmes:2000}, which skips the nuclides between
+silicon and nickel, and was used by \citet{rosswog:2009}. \isoseven\ gives significantly different
+quantitative results than \aproxthirteen\ for this problem, due to the inapplicable assumption of
+an equilibrium abundance of the unused isotopes, but the results are still qualitatively similar.
 
 \subsection{Nuclear Burning}
 \label{sec:burner}
@@ -704,48 +692,6 @@ somewhat arbitrarily for computational efficiency.
 \label{sec:parameters:tolerance}
 
 %TODO: add discussion of how ODE tolerances affect the answer
-
-
-
-\subsection{Nuclear Network}
-\label{sec:parameters:network}
-
-Now we move to a discussion of the effect of including various isotopes
-in the nuclear reaction network. In particular we compare the \isoseven, \aproxthirteen,
-\aproxnineteen, and \aproxtwentyone\ reaction networks. In all cases we run
-the same problem setup, and the unused isotopes (everything but carbon and oxygen)
-have their mass fractions in every zone set to a negligibly small number at initialization.
-\autoref{table:networks} lists the $^{56}$Ni generation and total energy generation (determined
-by subtracting the initial energy from the final energy). The energy generated in the latter
-three cases agrees remarkably well, with a less than $0.5\%$ difference. \aproxthirteen\
-over-generates nickel at the $2\%$ level compared to the networks with more isotopes, a reasonably
-small difference. On the other hand, agreement with \isoseven\ is not very strong, as \isoseven\
-generates far too much nickel and far too little energy. Nevertheless while the quantitative
-agreement is not there, the collision looks qualitatively similar compared to the evolution with
-more complicated networks, so while \isoseven\ should not be used for predicting nucleosynthetic
-yields in production science runs, it may still be fair for use in proof-of-concept studies.
-
-\input{plots/networks_m_P_0.64_m_S_0.64.tbl}
-
-\isoseven\ also has the peculiar property that after the detonation has passed through the WDs,
-the region at the central contact point does not fully stop burning, yielding a quasistatic energy
-release that can add thousands to millions of extra timesteps to the simulation (in addition to the few
-hundred it normally takes, using our designated stopping criterion). The full effect of these additional
-timesteps only amounts to a trace change in the nickel production. By examining the behavior of zones
-near the collision point, we discovered the reason for this. The zones in question have a composition that
-is approximately $98\%$ Ni and $2\%$ He by mass. For this combination, a direct evaluation of the RHS in
-comparison to, say, \aproxthirteen, reveals that $dX/dt$ for these isotopes is off by many orders of magnitude.
-This is a consequence of the choice inherent to the network to assume that the isotopes in between $^{28}$Si
-and $^{56}$Ni are in an effective equilibrium state. So an advective update that yields even a small change
-to the abundances in the zone will very strongly knock the zone out of equilibrium with respect to the burn
-step following the advective update. This then causes the burning timestep limiter to kick in and make the
-timestep very small so that the advective changes do not cause such strong effects on the burning equilibrium.
-This effect is an argument against the use of \isoseven\ for explosive, non-hydrostatic burning problems.
-
-\aproxnineteen\ and \aproxtwentyone\ both take significantly longer to evaluate at our default
-ODE tolerances than \aproxthirteen\ does, even after accounting for the increased number of species.
-This is due to a significant number of integration failures and subsequent retries (see the discussion
-in \autoref{sec:burner}). The species tolerance of $10^{-8}$ is challenging for these networks.
 
 
 

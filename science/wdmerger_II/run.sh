@@ -296,6 +296,10 @@ problem_dir=$CASTRO_HOME/Exec/science/wdmerger
 
 DIM="2"
 
+# Use the aprox13 network for all following tests.
+
+NETWORK_DIR="aprox13"
+
 # Get the right inputs and probin files.
 
 inputs="inputs_2d"
@@ -379,7 +383,6 @@ dtnuc_X_default="1.e200"
 dxnuc_default="1.0e200"
 mass_P_default="0.64"
 mass_S_default="0.64"
-network_default="aprox13"
 limiter_mode_default="1"
 burning_mode_default="1"
 T_min_default="1.0e8"
@@ -604,27 +607,6 @@ do
 done
 
 castro_small_temp=$small_temp_default
-
-
-
-# Test the effect of the various networks.
-
-network_list="iso7 aprox13 aprox19 aprox21"
-local_compile=1
-
-for NETWORK_DIR in $network_list
-do
-
-    dir=$results_dir/networks/$NETWORK_DIR
-
-    set_run_opts
-    run
-
-done
-
-NETWORK_DIR=$network_default
-
-unset local_compile
 
 
 
