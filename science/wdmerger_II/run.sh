@@ -320,12 +320,14 @@ collision_impact_parameter="0.0"
 # Make a full plotfile every second.
 
 amr_plot_per="1.0"
-amr_derive_plot_vars="pressure x_velocity y_velocity z_velocity soundspeed"
+amr_plot_vars="ALL"
+amr_derive_plot_vars="ALL"
 
-# Take small plotfiles rapidly.
+# Make small plotfiles rapidly.
 
 amr_small_plot_per="0.05"
 amr_small_plot_vars="density Temp"
+amr_derive_small_plot_vars="pressure x_velocity y_velocity soundspeed"
 
 # Save checkpoints every second.
 
