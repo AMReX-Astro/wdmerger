@@ -587,7 +587,7 @@ the contact point is at the origin, and they approach each other along a coordin
 In this paper we focus only on head-on collisions of two 0.64 $\msolar$ white dwarfs
 composed of equal parts carbon and oxygen by mass, for comparison to earlier studies;
 however, the code does have the ability to vary the impact parameter of the collision
-and the composition of the WDs.
+and the mass and composition of the WDs.
 
 We have added to the \wdmerger\ problem setup the ability to take advantage of 
 the 2D cylindrical ($R-z$) coordinate system evolution in \castro, and we use it
@@ -601,22 +601,23 @@ in both dimensions, so that there are twice as many zones in the $z$ dimension i
 a uniform grid. The default grid has 256 zones along the $z$ axis, yielding a
 spatial resolution of 312.5 km.
 
-The simulation is terminated when the total energy is positive, indicating that
-the system has become unbound due to nuclear energy release, and has been
-constant or decreasing for the last five timesteps, indicating that no further
-meaningful nuclear energy generation is occurring and material is now beginning
-to stream off the simulation domain. As all simulations in this paper are of
-WD collisions that generate enough energy to unbind the system, this stopping
-criterion is applied throughout all simulations shown here.
+We terminate the simulation at $t = 10$ seconds, as we have found that for this
+particular setup, all of the significant burning has completed by this time. At
+this point, the total energy on the domain has become positive, typically about
+$10^{51}$ ergs, and has stopped increasing. This means that the system has become
+unbound due to nuclear energy release, and that no further meaningful nuclear energy
+generation is occurring.
 
 As in Paper I, the region outside the WDs is filled with a low-density ambient
 material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition is the
 same as that of the WDs. Reactions in this region are unimportant, so for
 computational efficiency, we disable all nuclear burning for zones that have
-$\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. The initial ambient
+$\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. We have confirmed that
+the results do not depend on this choice. The initial ambient
 temperature is $10^7\ \text{K}$, which is the same as the initial temperature
 everywhere throughout the WDs, and we set the temperature floor to the same
-value (any zone that reaches below this temperature will be reset).
+value (any zone that reaches below this temperature will be reset). Setting the
+temperature floor to a lower value has only minor effects on the simulation outcome.
 
 
 
@@ -804,34 +805,6 @@ the detonation occurs, as expected by \citeauthor{kushnir:2013}, but the conditi
 significant amounts of iron-group elements do not develop. It is not clear what the relevant difference
 is between our simulation and that of \citeauthor{kushnir:2013}, but as the suppressed burn limiting
 used here is ultimately unphysical, we choose not to use it in any other simulation.
-
-
-
-\subsection{Other Parameters}
-
-We tested a few other parameters that ended up having no serious effect on the outcome.
-The dual energy hydrodynamic formalism (discussed in Paper I) has parameters that determine
-whether we obtain the internal energy from the total energy or from a separately advected
-internal energy variable. This is usually employed when calculating the pressure during
-a hydrodynamics update, and we have also added to \castro\ a similar switch when calculating
-the initial temperature for a burn. We find that the value of the dual energy parameter has
-only a minor effect on the nickel production, yielding variations on the order of a few percent
-with no systematic trend. We also tested whether our choice for the temperature floor mattered
-by lowering it to $10^6\ \text{K}$ and $10^5\ \text{K}$; this had a minor effect on nickel
-production, again on the order of a few percent. It does allow parts of the WDs to
-become colder as they move, due to numerical errors in the advecting flow (the Helmholtz
-equation of state is very insensitive to temperature, so even small changes in the internal
-energy can create very large changes in the implied temperature), but the amount of energy
-injected by the collision is so large that the final result is largely insensitive to whatever
-the initial temperature of the
-WDs were. We also checked whether there was any consequence of our choice to disable the
-burning for small enough $\rho$ and $T$. Lowering the minimum $\rho$ for reactions to
-$10^0\ \text{g cm}^{-3}$ from $10^6\ \text{g cm}^{-3}$ had a negligible effect,
-and varying the minimum $T$ for reactions from $2 \times 10^{7}\ \text{K}$ to
-$4 \times 10^{8}\ \text{K}$ also had no meaningful effect. Finally, we also checked
-that the 2D axisymmetric simulation matched the results of an equivalent 3D Cartesian simulation.
-
-%TODO: maybe show an image of the temperature field in the WDs before colliding to demonstrate the point about numerical error?
 
 
 
