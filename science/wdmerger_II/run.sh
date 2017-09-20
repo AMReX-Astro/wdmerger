@@ -15,10 +15,12 @@ function set_run_opts {
     geometry_prob_lo="0.0 $prob_lo"
     geometry_prob_hi="$prob_hi $prob_hi"
 
-    # Define a maximum level for refinement of the 
-    # stars and the high-temperature regions.
+    # Defaults for the coarse uniform grid.
 
     amr_max_level="0"
+    amr_ref_ratio="2"
+    amr_blocking_factor="8"
+    amr_max_grid_size="32"
 
     # If we specify a refinement parameter,
     # we can use that to control amr_ref_ratio.
