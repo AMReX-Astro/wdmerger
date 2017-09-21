@@ -27,6 +27,12 @@ function set_run_opts {
 
     if [ ! -z $refinement ]; then
 
+        # Disable refinement based on non-burning criteria.
+
+        max_stellar_tagging_level="0"
+        max_temperature_tagging_level="0"
+        max_center_tagging_level="0"
+
 	if [ $ncell -eq 256 ]; then
 
             amr_blocking_factor="8"
