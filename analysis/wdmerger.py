@@ -37,7 +37,7 @@ def get_inputs_filename(directory):
 
     else:
 
-        print "Error: no inputs file found in " + directory + "."
+        print("Error: no inputs file found in " + directory + ".")
         exit
 
 
@@ -55,8 +55,8 @@ def get_inputs_var(inputs, var):
     inputs_file = open(inputs, 'r')
     lines = inputs_file.readlines()
 
-    lines = filter(lambda s: s.split() != [], lines)
-    line = filter(lambda s: s.split()[0] == var, lines)
+    lines = list(filter(lambda s: s.split() != [], lines))
+    line = list(filter(lambda s: s.split()[0] == var, lines))
 
     # The variable is the last item in a line before the comment.
     # This should work correctly even if there is no comment.
@@ -232,9 +232,6 @@ def get_git_commits_from_infofile(infofile):
 # Given CASTRO and AMReX hashes that were used to create the plot for a given plotfile,
 # insert these and the current Microphysics and wdmerger hashes into an EPS file.
 # Credit: http://stackoverflow.com/questions/1325905/inserting-line-at-specified-position-of-a-text-file-in-python
-# A comma in a print statement effectively prevents a newline from being appended to the print. This is valid in Python 2.x,
-# but is not valid in Python 3.x. Instead, one should use the print() function in that case.
-# Source: http://stackoverflow.com/questions/11266068/python-avoid-new-line-with-print-command
 #
 
 def insert_commits_into_eps(eps_file, data_file, data_file_type):
@@ -249,16 +246,16 @@ def insert_commits_into_eps(eps_file, data_file, data_file_type):
     elif (data_file_type == 'info'):
         [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
     else:
-        print "Error: Data file type not recognized."
+        print("Error: Data file type not recognized.")
 
     input = fileinput.input(eps_file, inplace=True)
 
     for line in input:
-        print line,
+        print(line, end="") # No additional newline
         if line.startswith('%%CreationDate:'):
-            print "%%CASTRO git hash: " + castro_hash + "\n" + \
+            print("%%CASTRO git hash: " + castro_hash + "\n" + \
                   "%%AMReX git hash: " + amrex_hash + "\n" + \
-                  "%%Microphysics git hash: " + microphysics_hash + "\n"
+                  "%%Microphysics git hash: " + microphysics_hash)
 
 
 
@@ -283,7 +280,7 @@ def insert_commits_into_txt(txt_file, data_file, data_file_type, comment_char='%
     elif (data_file_type == 'info'):
         [castro_hash, amrex_hash, microphysics_hash] = get_git_commits_from_infofile(data_file)
     else:
-        print "Error: Data file type not recognized."
+        print("Error: Data file type not recognized.")
 
     string = comment_char + " CASTRO git hash: " + castro_hash + "\n" + \
              comment_char + " AMReX git hash: " + amrex_hash + "\n" + \
@@ -312,7 +309,7 @@ def get_last_output(directory):
     files = sorted(filter(lambda s: s[0:9] == "wdmerger.",files))
 
     if (len(files) == 0):
-        print "Error: No wdmerger output files in directory " + directory
+        print("Error: No wdmerger output files in directory " + directory)
         exit()
 
     return directory + "/" + files[len(files)-1]
@@ -329,7 +326,7 @@ def get_last_checkpoint(directory):
     import os
 
     if (not os.path.isdir(directory)):
-        print "Error: directory " + directory + " does not exist in get_last_checkpoint()."
+        print("Error: directory " + directory + " does not exist in get_last_checkpoint().")
         return
 
     # Doing a search this way will treat first any checkpoint files 
@@ -358,7 +355,7 @@ def get_last_checkpoint(directory):
     add_to_list(checkpointList, checkpointNums, directory + '/*/*chk?????')
 
     if not checkpointList or not checkpointNums:
-        print "Error: no checkpoints found in directory " + directory
+        print("Error: no checkpoints found in directory " + directory)
         return
 
     # Match up the last checkpoint number with the actual file path location. 
@@ -385,7 +382,7 @@ def get_last_checkpoint(directory):
             break
 
     if not checkpoint:
-        print "Error: no completed checkpoint found in directory " + directory
+        print("Error: no completed checkpoint found in directory " + directory)
         return
 
     # Extract out the search directory from the result.
@@ -428,7 +425,7 @@ def get_column(col_name, diag_filename):
     diag_list = diag_file.readlines()
     data = []
     for line in diag_list:
-        data.append( map(float, line[0:-1].split()) )
+        data.append( list(map(float, line[0:-1].split())) )
 
     diag_file.close()
 
@@ -440,7 +437,7 @@ def get_column(col_name, diag_filename):
 
     col_names.pop(0)                                        # Get rid of the # at the beginning
     col_names = [string.strip() for string in col_names]    # Remove any leading or trailing whitespace
-    col_names = filter(None, col_names)                     # Remove any remaining blank entries
+    col_names = list(filter(None, col_names))               # Remove any remaining blank entries
 
     # Obtain the column index and then return the column with that index.
 
@@ -580,37 +577,37 @@ def energy_momentum_diagnostics(output_filename):
 
     E_added_reset   = sum([float(s.split()[7]) for s in reset_E_lines])
 
-    print ""
-    print "Analysis of output file " + output_filename
-    print ""
+    print("")
+    print("Analysis of output file " + output_filename)
+    print("")
 
-    print "Mass added from negative density resets = " + str(mass_added_neg_reset)
-    print "Energy added from negative density resets = " + str(E_added_neg_reset)
-    print "Energy added from gravitational sources = " + str(E_added_grav)
-    print "Energy added from rotation sources = " + str(E_added_rot)
-    print "Energy added from hydro fluxes = " + str(E_added_flux)
-    print "Energy added from resets = " + str(E_added_reset)
-    print "xmom added from hydro fluxes = " + str(xmom_added_flux)
-    print "ymom added from hydro fluxes = " + str(ymom_added_flux)
-    print "zmom added from hydro fluxes = " + str(zmom_added_flux)
-    print "xmom added from gravitational sources = " + str(xmom_added_grav)
-    print "ymom added from gravitational sources = " + str(ymom_added_grav)
-    print "zmom added from gravitational sources = " + str(zmom_added_grav)
-    print "xmom added from rotation sources = " + str(xmom_added_rot)
-    print "ymom added from rotation sources = " + str(ymom_added_rot)
-    print "zmom added from rotation sources = " + str(zmom_added_rot)
+    print("Mass added from negative density resets = " + str(mass_added_neg_reset))
+    print("Energy added from negative density resets = " + str(E_added_neg_reset))
+    print("Energy added from gravitational sources = " + str(E_added_grav))
+    print("Energy added from rotation sources = " + str(E_added_rot))
+    print("Energy added from hydro fluxes = " + str(E_added_flux))
+    print("Energy added from resets = " + str(E_added_reset))
+    print("xmom added from hydro fluxes = " + str(xmom_added_flux))
+    print("ymom added from hydro fluxes = " + str(ymom_added_flux))
+    print("zmom added from hydro fluxes = " + str(zmom_added_flux))
+    print("xmom added from gravitational sources = " + str(xmom_added_grav))
+    print("ymom added from gravitational sources = " + str(ymom_added_grav))
+    print("zmom added from gravitational sources = " + str(zmom_added_grav))
+    print("xmom added from rotation sources = " + str(xmom_added_rot))
+    print("ymom added from rotation sources = " + str(ymom_added_rot))
+    print("zmom added from rotation sources = " + str(zmom_added_rot))
 
-    print ""
-    print "Final diagnostics:"
-    print ""
+    print("")
+    print("Final diagnostics:")
+    print("")
 
-    print "Mass added = " + str(mass_added_neg_reset)
-    print "Energy added = " + str(E_added_grav + E_added_flux + E_added_rot + E_added_reset + E_added_neg_reset)
-    print "xmom added = " + str(xmom_added_flux + xmom_added_grav + xmom_added_rot)
-    print "ymom added = " + str(ymom_added_flux + ymom_added_grav + ymom_added_rot)
-    print "zmom added = " + str(zmom_added_flux + zmom_added_grav + zmom_added_rot)
+    print("Mass added = " + str(mass_added_neg_reset))
+    print("Energy added = " + str(E_added_grav + E_added_flux + E_added_rot + E_added_reset + E_added_neg_reset))
+    print("xmom added = " + str(xmom_added_flux + xmom_added_grav + xmom_added_rot))
+    print("ymom added = " + str(ymom_added_flux + ymom_added_grav + ymom_added_rot))
+    print("zmom added = " + str(zmom_added_flux + zmom_added_grav + zmom_added_rot))
 
-    print ""
+    print("")
 
     output.close()
 
@@ -630,7 +627,7 @@ def get_plotfiles(directory, prefix = 'plt'):
     # Check to make sure the directory exists.
 
     if not os.path.isdir(directory):
-        print "Error: Directory " + directory + " does not exist, exiting."
+        print("Error: Directory " + directory + " does not exist, exiting.")
         exit()
 
     # List all of the files in the directory.
@@ -780,7 +777,7 @@ def get_castro_const(var_name):
                 const = float(const.replace("d","e"))
 
     if (const == None):
-        print "Constant " + var_name + " not found in CGS constants file; exiting."
+        print("Constant " + var_name + " not found in CGS constants file; exiting.")
         exit()
 
     file.close()
@@ -837,7 +834,7 @@ def is_dir_done(directory):
     import os
 
     if not os.path.isdir(directory):
-        print "Error: directory " + directory + " does not exist in is_dir_done()."
+        print("Error: directory " + directory + " does not exist in is_dir_done().")
         return
 
     # If the directory already exists, check to see if we've reached the desired stopping point.
@@ -856,7 +853,7 @@ def is_dir_done(directory):
         pass
 
     if not checkpoint and not last_output:
-        print "Error: no checkpoint or stdout in directory " + directory
+        print("Error: no checkpoint or stdout in directory " + directory)
         done_status = 0
         return done_status
 
@@ -869,8 +866,8 @@ def is_dir_done(directory):
     max_step = -1
 
     if os.path.isfile(inputs_filename):
-        stop_time = get_inputs_var(inputs_filename, "stop_time")
-        max_step = get_inputs_var(inputs_filename, "max_step")
+        stop_time = get_inputs_var(inputs_filename, "stop_time")[0]
+        max_step = get_inputs_var(inputs_filename, "max_step")[0]
 
     # Assume we're not done, by default.
 
@@ -915,10 +912,10 @@ def is_dir_done(directory):
         chk_step = checkpoint.split('chk')[-1]
 
         if stop_time >= 0.0:
-            time_flag = chk_time >= stop_time
+            time_flag = float(chk_time) >= float(stop_time)
 
         if max_step >= 0:
-            step_flag = chk_step >= max_step
+            step_flag = int(chk_step) >= int(max_step)
 
         chk_file.close()
 
@@ -937,7 +934,7 @@ def is_dir_done(directory):
 
 
 
-    if time_flag and step_flag:
+    if time_flag or step_flag:
 
         done_status = 1
 
@@ -1109,7 +1106,7 @@ def rho_T_sliceplot(output_filename, pltfile,
               domain_frac * ds.domain_left_edge[1], domain_frac * ds.domain_right_edge[1]]
 
     if dim == 1:
-        print "This slice plot routine is not implemented in one dimension."
+        print("This slice plot routine is not implemented in one dimension.")
         exit
     elif dim == 2:
         slc = ds.slice(2, 0.0)
@@ -1219,7 +1216,7 @@ def slice_plot(field, output_filename, pltfile, idir = 3):
 
     if dim == 1:
 
-        print "This slice plot routine is not implemented in one dimension."
+        print("This slice plot routine is not implemented in one dimension.")
         exit
 
     elif dim == 2:
@@ -1231,7 +1228,7 @@ def slice_plot(field, output_filename, pltfile, idir = 3):
         elif idir == 3:
             axis = 'theta'
         else:
-            print "Unknown direction for slicing in slice_plot."
+            print("Unknown direction for slicing in slice_plot.")
             exit
 
 
@@ -1244,7 +1241,7 @@ def slice_plot(field, output_filename, pltfile, idir = 3):
         elif idir == 3:
             axis = 'z'
         else:
-            print "Unknown direction for slicing in slice_plot."
+            print("Unknown direction for slicing in slice_plot.")
 
 
     sp = yt.SlicePlot(ds, axis, fields=fields)
@@ -1287,7 +1284,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
     # Sanity check: are there enough plots to fill the axes grid?
 
     if nrows * ncols != len(pltfiles):
-        print "Error: not enough plots for the multipanel slice plot."
+        print("Error: not enough plots for the multipanel slice plot.")
         exit
 
     fig = plt.figure()
@@ -1315,7 +1312,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
 
         if dim == 1:
 
-            print "This slice plot routine is not implemented in one dimension."
+            print("This slice plot routine is not implemented in one dimension.")
             exit
 
         elif dim == 2:
@@ -1327,7 +1324,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
             elif idir == 3:
                 axis = 'theta'
             else:
-                print "Unknown direction for slicing in multipanel_slice_plot."
+                print("Unknown direction for slicing in multipanel_slice_plot.")
                 exit
 
         elif dim == 3:
@@ -1339,12 +1336,12 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
             elif idir == 3:
                 axis = 'z'
             else:
-                print "Unknown direction for slicing in multipanel_slice_plot."
+                print("Unknown direction for slicing in multipanel_slice_plot.")
                 exit
 
         else:
 
-            print "Error: Invalid dataset dimensionality."
+            print("Error: Invalid dataset dimensionality.")
             exit
 
         # Set up the SlicePlot
@@ -1412,13 +1409,13 @@ def make_movie(output_dir, img_list, mpg_filename):
         try:
             shutil.copyfile(img_old, img_new)
         except:
-            print "Error: source file " + img_old + " does not exist."
+            print("Error: source file " + img_old + " does not exist.")
             pass
 
     try:
         os.system('ffmpeg -i ' + output_dir + '/temp_\%05d' + file_format + ' -b:v 20M ' + mpg_filename)
     except:
-        print "Error: could not successfully make a movie with ffmpeg."
+        print("Error: could not successfully make a movie with ffmpeg.")
         pass
 
     for img in in_list:

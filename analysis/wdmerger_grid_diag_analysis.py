@@ -34,7 +34,7 @@ def get_column(col_name, diag_filename):
     diag_list = diag_file.readlines()
     data = []
     for line in diag_list:
-        data.append( map(float, line[0:-1].split()) )
+        data.append( list(map(float, line[0:-1].split())) )
 
     diag_file.close()
 
@@ -46,7 +46,7 @@ def get_column(col_name, diag_filename):
 
     col_names.pop(0)                                        # Get rid of the # at the beginning
     col_names = [string.strip() for string in col_names]    # Remove any leading or trailing whitespace
-    col_names = filter(None, col_names)                     # Remove any remaining blank entries
+    col_names = list(filter(None, col_names))               # Remove any remaining blank entries
 
     # Obtain the column index and then return the column with that index.
 

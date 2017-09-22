@@ -17,9 +17,12 @@ def get_ni56(results_dir):
 
     dir_list = wdmerger.get_parameter_list(results_dir)
 
+    if (dir_list == []):
+        return
+
     diag_filename_list = [results_dir + '/' + directory + '/output/species_diag.out' for directory in dir_list]
 
-    ni56_arr = [np.amax(spec_diag.get_column('Mass ni56', diag_filename)) - np.amin(spec_diag.get_column('Mass ni56', diag_filename))
+    ni56_arr = [np.amax(wdmerger.get_column('Mass ni56', diag_filename)) - np.amin(wdmerger.get_column('Mass ni56', diag_filename))
                 for diag_filename in diag_filename_list]
 
     return ni56_arr
@@ -34,9 +37,12 @@ def get_e_release(results_dir):
 
     dir_list = wdmerger.get_parameter_list(results_dir)
 
+    if (dir_list == []):
+        return
+
     diag_filename_list = [results_dir + '/' + directory + '/output/grid_diag.out' for directory in dir_list]
 
-    e_arr = [np.amax(grid_diag.get_column('TOTAL ENERGY', diag_filename)) - np.amin(grid_diag.get_column('TOTAL ENERGY', diag_filename))
+    e_arr = [np.amax(wdmerger.get_column('TOTAL ENERGY', diag_filename)) - np.amin(wdmerger.get_column('TOTAL ENERGY', diag_filename))
              for diag_filename in diag_filename_list]
 
     # Divide by 10**51
@@ -52,15 +58,18 @@ def get_diagfile(results_dir):
 
        Useful for the functions that insert git commits into files and need a 
        representative diagnostic file to get the git commits from. We arbitrarily
-       pick the last directory."""
+       pick the last complete directory."""
 
     dir_list = wdmerger.get_parameter_list(results_dir)
 
-    diag_filename_list = [results_dir + '/' + directory + '/output/species_diag.out' for directory in dir_list]
+    if (dir_list == []):
+        return
 
-    diag_filename = diag_filename_list[-1]
+    dir_list = [results_dir + '/' + directory for directory in dir_list]
 
-    return diag_filename
+    for dir in dir_list:
+        if (wdmerger.is_dir_done(dir)):
+            return dir + '/output/species_diag.out'
 
 
 
@@ -195,6 +204,9 @@ def burning_limiter_e(eps_filename, results_base):
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
 
+    if (dtnuc_list == []):
+        return
+
     ni56_arr = np.array(get_ni56(results_dir))
 
     dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
@@ -229,6 +241,9 @@ def burning_limiter_X(eps_filename, results_base):
     # Get the list of parameter values we have tried
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
+
+    if (dtnuc_list == []):
+        return
 
     ni56_arr = np.array(get_ni56(results_dir))
 
@@ -267,6 +282,9 @@ def burning_limiter(eps_filename, results_base):
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
 
+    if (dtnuc_list == []):
+        return
+
     ni56_arr = np.array(get_ni56(results_dir))
 
     dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
@@ -285,6 +303,9 @@ def burning_limiter(eps_filename, results_base):
     # Get the list of parameter values we have tried
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
+
+    if (dtnuc_list == []):
+        return
 
     ni56_arr = np.array(get_ni56(results_dir))
 
@@ -326,6 +347,9 @@ def burning_limiter_mode(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
+    if (param_list == []):
+        return
+
     mode_list = [param[4:] for param in param_list]
 
     ni56_list = get_ni56(results_dir)
@@ -364,6 +388,9 @@ def ode_tolerances(eps_filename, results_base):
 
     tol_list = wdmerger.get_parameter_list(results_dir)
 
+    if (tol_list == []):
+        return
+
     ni56_arr = np.array(get_ni56(results_dir))
 
     tol_list = [tol[len('tol'):] for tol in tol_list]
@@ -384,6 +411,9 @@ def ode_tolerances(eps_filename, results_base):
 
     tol_list = wdmerger.get_parameter_list(results_dir)
 
+    if (tol_list == []):
+        return
+
     ni56_arr = np.array(get_ni56(results_dir))
 
     tol_list = [tol[len('tol'):] for tol in tol_list]
@@ -403,6 +433,9 @@ def ode_tolerances(eps_filename, results_base):
     # Get the list of parameter values we have tried
 
     tol_list = wdmerger.get_parameter_list(results_dir)
+
+    if (tol_list == []):
+        return
 
     ni56_arr = np.array(get_ni56(results_dir))
 
@@ -444,6 +477,9 @@ def small_temp(out_filename, results_base):
     results_dir = results_base + '/small_temp'
 
     param_list = wdmerger.get_parameter_list(results_dir)
+
+    if (param_list == []):
+        return
 
     temp_list = [float(param[1:]) for param in param_list]
 
@@ -490,6 +526,9 @@ def t_min(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
+    if (param_list == []):
+        return
+
     temp_list = [float(param[1:]) for param in param_list]
 
     ni56_list = get_ni56(results_dir)
@@ -534,6 +573,9 @@ def rho_min(out_filename, results_base):
     results_dir = results_base + '/rho_min'
 
     param_list = wdmerger.get_parameter_list(results_dir)
+
+    if (param_list == []):
+        return
 
     temp_list = [float(param[3:]) for param in param_list]
 
@@ -581,6 +623,9 @@ def burning_mode(out_filename, results_base):
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
+    if (param_list == []):
+        return
+
     mode_list = [param for param in param_list]
 
     ni56_list = get_ni56(results_dir)
@@ -592,10 +637,25 @@ def burning_mode(out_filename, results_base):
 
     # Replace the burning mode numbers with names for output purposes
 
-    mode_list[mode_list.index('0')] = 'Hydrostatic'
-    mode_list[mode_list.index('1')] = 'Self-heating'
-    mode_list[mode_list.index('2')] = 'Hybrid'
-    mode_list[mode_list.index('3')] = 'Suppressed'
+    try:
+        mode_list[mode_list.index('0')] = 'Hydrostatic'
+    except:
+        pass
+
+    try:
+        mode_list[mode_list.index('1')] = 'Self-heating'
+    except:
+        pass
+
+    try:
+        mode_list[mode_list.index('2')] = 'Hybrid'
+    except:
+        pass
+
+    try:
+        mode_list[mode_list.index('3')] = 'Suppressed'
+    except:
+        pass
 
     comment = '%\n' + \
               '% Summary of the effect of the burning mode \n' + \
@@ -639,17 +699,20 @@ def amr(eps_filename, results_base):
 
     coarse_list = []
 
-    print ncell_list
-
     i = 0
 
     for ncell in ncell_list:
 
-        results_dir = results_base + 'dxnuc/n' + str(ncell)
+        results_dir = results_base + 'amr/n' + str(ncell)
 
         # Get the list of parameter values we have tried
 
-        r_list = [float(r[1:]) for r in wdmerger.get_parameter_list(results_dir)]
+        r_list = wdmerger.get_parameter_list(results_dir)
+
+        if (r_list == []):
+            return
+
+        r_list = [float(r[1:]) for r in r_list]
 
         ni56_arr = get_ni56(results_dir)
 
@@ -658,12 +721,7 @@ def amr(eps_filename, results_base):
         ni56_arr = np.array([x for _,x in sorted(zip(r_list,ni56_arr))])
         r_list = np.array(sorted(r_list))
 
-        print r_list
-        print ni56_arr
-
         zonesPerDim = [ncell * int(r) for r in r_list]
-
-        print zonesPerDim
 
         plt.plot(zonesPerDim, ni56_arr, markers[i], markersize=12, linestyle=linestyles[i], lw = 4.0, label = 'n = ' + str(ncell))
 
@@ -687,6 +745,61 @@ def amr(eps_filename, results_base):
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
 
     plt.close()
+
+
+
+def rho_T_sliceplots(output_base, results_base, smallplt = True, prefix = "",
+                     domain_frac = 1.0, x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9], scale_exp = 9):
+    """Create a rho/T sliceplot for every plotfile in a given directory."""
+
+    import os
+
+    if not os.path.isdir(output_base):
+        os.makedirs(output_base)
+
+    from PIL import Image
+
+    if (smallplt):
+        plt_prefix = 'smallplt'
+
+    param_list = wdmerger.get_parameter_list(results_base)
+
+    if (param_list == []):
+        return
+
+    dir_list = [results_base + param + '/output/' for param in param_list]
+
+    for param, directory in zip(param_list, dir_list):
+
+        output_dir = output_base + param
+
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+
+        plt_list = wdmerger.get_plotfiles(directory, plt_prefix)
+        eps_list = [output_dir + "/rho_T_slice" + prefix + "_" + param + "_t_" + str("%.2f" % wdmerger.get_time_from_plotfile(directory + pltfile)) + '.eps' for pltfile in plt_list]
+
+        # Generate the plot
+
+        for eps_file, pltfile in zip(eps_list, plt_list):
+
+            if os.path.isfile(eps_file):
+                continue
+
+            print("Generating plot with filename " + eps_file)
+
+            wdmerger.rho_T_sliceplot(eps_file, directory + pltfile,
+                                     domain_frac = domain_frac,
+                                     x_ticks = x_ticks,
+                                     y_ticks = y_ticks,
+                                     scale_exp = scale_exp)
+
+        jpg_list = [eps.replace('eps', 'jpg') for eps in eps_list]
+
+        mpg_filename = output_dir + "/rho_T_slice" + prefix + "_" + param + ".mpg"
+
+        if not os.path.isfile(mpg_filename):
+            wdmerger.make_movie(output_dir, jpg_list, mpg_filename)
 
 
 
