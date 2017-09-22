@@ -544,9 +544,10 @@ response to tidal forces as they approach. Their initial velocity is that of
 two point-masses in free-fall towards each other coming in from infinity, such that
 the contact point is at the origin, and they approach each other along a coordinate axis.
 In this paper we focus only on head-on collisions of two 0.64 $\msolar$ white dwarfs
-composed of equal parts carbon and oxygen by mass, for comparison to earlier studies;
-however, the code does have the ability to vary the impact parameter of the collision
-and the mass and composition of the WDs.
+composed of equal parts carbon and oxygen by mass, at an initially uniform temperature
+of $T = 10^7$ K. This choice is for comparison to earlier studies; the code does have
+the ability to vary the impact parameter of the collision and the mass and composition
+of the WDs.
 
 We have added to the \wdmerger\ problem setup the ability to take advantage of 
 the 2D cylindrical ($R-z$) coordinate system evolution in \castro, and we use it
@@ -567,21 +568,21 @@ unbound due to nuclear energy release, and that no further meaningful nuclear en
 generation is occurring.
 
 As in Paper I, the region outside the WDs is filled with a low-density ambient
-material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition is the
+material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition and temperature is the
 same as that of the WDs. Reactions in this region are unimportant, so for
 computational efficiency, we disable all nuclear burning for zones that have
 $\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. We have confirmed that
-the results do not depend on this choice. The initial ambient
-temperature is $10^7\ \text{K}$, which is the same as the initial temperature
-everywhere throughout the WDs, and we set the temperature floor to the same
-value (any zone that reaches below this temperature will be reset). Setting the
-temperature floor to a lower value has only minor effects on the simulation outcome.
+the results do not depend on this choice. The density floor for the simulation is set
+at $10^{-5}\ \text{g / cm}^{-3}$ and the temperature floor is $10^7$ K.
 
 Our primary metric for this test is the amount of $^{56}$Ni generated in the collision,
 as this is the parameter most directly related to the observable quantities of interest
 for Type Ia supernovae. We collect information at the end of every timestep about the
 total amount of nickel on the grid (in solar masses), and we use the maximum value of
-this nickel mass.
+this nickel mass. Plotfiles of a few relevant quantities (density, temperature, velocity,
+pressure, sound speed, and the ratio $\tau_s / \tau_e$) are created every 0.01 seconds.
+The timesteps are limited to ensure that every multiple of this plotfile interval is
+reached exactly, which implies an effective maximum timestep of 0.01 seconds.
 
 
 
