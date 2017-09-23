@@ -280,21 +280,19 @@ def burning_limiter(eps_filename, results_base):
 
     # Get the list of parameter values we have tried
 
-    dtnuc_list = wdmerger.get_parameter_list(results_dir)
+    dtnuc_e_list = wdmerger.get_parameter_list(results_dir)
 
-    if (dtnuc_list == []):
+    if (dtnuc_e_list == []):
         return
 
-    ni56_arr = np.array(get_ni56(results_dir))
+    ni56_e_arr = np.array(get_ni56(results_dir))
 
-    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
+    dtnuc_e_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_e_list])
 
     # Sort the lists
 
-    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
-    dtnuc_list = sorted(dtnuc_list)
-
-    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$')
+    ni56_e_arr = np.array([x for _,x in sorted(zip(dtnuc_e_list,ni56_e_arr))])
+    dtnuc_e_list = sorted(dtnuc_e_list)
 
 
 
@@ -302,21 +300,22 @@ def burning_limiter(eps_filename, results_base):
 
     # Get the list of parameter values we have tried
 
-    dtnuc_list = wdmerger.get_parameter_list(results_dir)
+    dtnuc_X_list = wdmerger.get_parameter_list(results_dir)
 
-    if (dtnuc_list == []):
+    if (dtnuc_X_list == []):
         return
 
-    ni56_arr = np.array(get_ni56(results_dir))
+    ni56_X_arr = np.array(get_ni56(results_dir))
 
-    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
+    dtnuc_X_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_X_list])
 
     # Sort the lists
 
-    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
-    dtnuc_list = sorted(dtnuc_list)
+    ni56_X_arr = np.array([x for _,x in sorted(zip(dtnuc_X_list,ni56_X_arr))])
+    dtnuc_X_list = sorted(dtnuc_X_list)
 
-    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$')
+    plt.plot(dtnuc_e_list, ni56_e_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$')
+    plt.plot(dtnuc_X_list, ni56_X_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$')
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
@@ -461,54 +460,6 @@ def ode_tolerances(eps_filename, results_base):
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
 
     plt.close()
-
-
-
-# Effect of the temperature floor
-
-def small_temp(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the temperature floor."""
-
-    if (os.path.isfile(out_filename)):
-        return
-
-    # Get the list of parameter values we have tried
-
-    results_dir = results_base + '/small_temp'
-
-    param_list = wdmerger.get_parameter_list(results_dir)
-
-    if (param_list == []):
-        return
-
-    temp_list = [float(param[1:]) for param in param_list]
-
-    ni56_list = get_ni56(results_dir)
-
-    # Sort the lists
-
-    ni56_list = np.array([x for _,x in sorted(zip(temp_list,ni56_list))])
-    temp_list = sorted(temp_list)
-
-    # Return temp_list to scientific notation
-
-    temp_list = np.array(["{:.1e}".format(t) for t in temp_list])
-
-    comment = '%\n' + \
-              '% Summary of the effect of the temperature floor \n' + \
-              '% castro.small_temp on 56Ni yield in a white \n' + \
-              '% dwarf collision.\n' + \
-              '% The first column is the temperature floor and the \n' + \
-              '% second is the final nickel mass produced, in solar masses.\n' + \
-              '%\n'
-
-    title = 'Effect of the temperature floor'
-
-    col1title = '$T_{\\text{floor}}$'
-
-    label = 'smalltemp'
-
-    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, col1title, label, title = title)
 
 
 
@@ -736,11 +687,11 @@ def amr(eps_filename, results_base):
     plt.tick_params(axis='both', which='major', pad=10)
     plt.xscale('log', basex=2)
     plt.ylim([0.0, 0.6])
-    plt.xlabel(r"Effective zones/dimension on finest level", fontsize=24)
+    plt.xlabel(r"Effective zones/dimension", fontsize=24)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=24)
     plt.tick_params(labelsize=20)
-    plt.tight_layout()
     plt.legend(loc='best', prop={'size':20})
+    plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
 
@@ -814,9 +765,9 @@ if __name__ == "__main__":
     burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56.eps", results_base)
     burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56.eps", results_base)
     burning_limiter(plots_dir + "dtnuc_max_Ni56.eps", results_base)
-    small_temp(plots_dir + "small_temp.tbl", results_base)
     burning_mode(plots_dir + "burning_mode.tbl", results_base)
     t_min(plots_dir + "t_min.tbl", results_base)
     rho_min(plots_dir + "rho_min.tbl", results_base)
     ode_tolerances(plots_dir + "ode_tolerance.eps", results_base)
     amr(plots_dir + "amr.eps", results_base)
+    rho_T_sliceplots(plots_dir + "amr/", results_base + "amr/n256/")

@@ -117,6 +117,10 @@ function set_run_opts {
                 amr_max_level=4
                 amr_ref_ratio="4 4 4 2"
                 amr_max_grid_size="64 64 128 128 256"
+            elif [ $refinement -eq 256 ]; then
+                amr_max_level=4
+                amr_ref_ratio="4 4 4 4"
+                amr_max_grid_size="64 64 128 128 256"
 	    fi
 
 	elif [ $ncell -eq 1024 ]; then
@@ -150,6 +154,10 @@ function set_run_opts {
 		amr_max_level=3
 		amr_ref_ratio="4 4 4"
 		amr_max_grid_size="128 128 256 256"
+            elif [ $refinement -eq 128 ]; then
+                amr_max_level=4
+                amr_ref_ratio="4 4 4 2"
+                amr_max_grid_size="128 128 256 256 512"
 	    fi
 
         elif [ $ncell -eq 2048 ]; then
@@ -281,15 +289,19 @@ function set_run_opts {
 
     elif [ $MACHINE == "SEAWULF" ]; then
 
-        queue="long"
-        nprocs="28"
-        walltime="24:00:00"
-        OMP_NUM_THREADS=1
-
-        if [ $ncell -gt 4096 ]; then
+        if [ $ncell -gt 512 ]; then
             queue="short"
-            nprocs="224"
+            nprocs="112"
             walltime="4:00:00"
+        elif [ $ncell -gt 256 ]; then
+            queue="short"
+            nprocs="56"
+            walltime="4:00:00"
+        else
+            queue="long"
+            nprocs="28"
+            walltime="24:00:00"
+            OMP_NUM_THREADS=1
         fi
 
     fi
@@ -333,9 +345,15 @@ amr_derive_plot_vars="ALL"
 
 # Make small plotfiles rapidly.
 
-amr_small_plot_per="0.05"
+amr_small_plot_per="0.01"
 amr_small_plot_vars="density Temp"
-amr_derive_small_plot_vars="pressure x_velocity y_velocity soundspeed"
+amr_derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
+
+# Ensure that plotting intervals are hit exactly.
+# This helps in resolving the detonation point.
+
+castro_plot_per_is_exact="1"
+castro_small_plot_per_is_exact="1"
 
 # Save checkpoints every second.
 
@@ -418,11 +436,6 @@ castro_small_temp=$small_temp_default
 
 
 # Test the effect of the burning resolution limiter.
-# For this test, set the maximum timestep and small_plot_per
-# to be somewhat small so that we can make nice movies 
-# of temperature and density.
-
-castro_max_dt="0.05"
 
 amr_max_level=9
 
@@ -445,11 +458,11 @@ do
     fi
 
     if   [ $ncell -eq 256 ]; then
-        refinement_list="1 2 4 8 16 32 64 128 256"
+        refinement_list="1 2 4 8 16 32 64 128 256 512"
     elif [ $ncell -eq 512 ]; then
-        refinement_list="1 2 4 8 16 32 64 128"
+        refinement_list="1 2 4 8 16 32 64 128 256"
     elif [ $ncell -eq 1024 ]; then
-        refinement_list="1 2 4 8 16 32 64"
+        refinement_list="1 2 4 8 16 32 64 128"
     elif [ $ncell -eq 2048 ]; then
         refinement_list="1 2 4 8 16 32"
     elif [ $ncell -eq 4096 ]; then
@@ -462,6 +475,15 @@ do
 
     for refinement in $refinement_list
     do
+
+        # Don't run the large jobs on SeaWulf,
+        # and don't run the small jobs on Titan.
+
+        if [ $ncell -gt 1024 ] && [ $MACHINE == "SEAWULF" ]; then
+            continue
+        elif [ $ncell -lt 2048 ] && [ $MACHINE == "TITAN" ]; then
+            continue
+        fi
 
         dir=$results_dir/amr/n$ncell/r$refinement
 
@@ -599,24 +621,6 @@ do
 done
 
 castro_react_rho_min=$rho_min_default
-
-
-
-# Test the dependence on the temperature floor.
-
-small_temp_list="1.0e5 1.0e6 1.0e7"
-
-for castro_small_temp in $small_temp_list
-do
-
-    dir=$results_dir/small_temp/T$castro_small_temp
-
-    set_run_opts
-    run
-
-done
-
-castro_small_temp=$small_temp_default
 
 
 
