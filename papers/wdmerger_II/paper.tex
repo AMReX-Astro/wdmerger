@@ -560,7 +560,7 @@ cm along the $z$ axis, and is half as wide along the $R$ axis. The resolution is
 in both dimensions, so that there are twice as many zones in the $z$ dimension in
 a uniform grid.
 
-We terminate the simulation at $t = 10$ seconds, as we have found that for this
+We terminate the simulation at $t = 9$ seconds, as we have found that for this
 particular setup, all of the significant burning has completed by this time. At
 this point, the total energy on the domain has become positive, typically about
 $10^{51}$ ergs, and has stopped increasing. This means that the system has become
@@ -572,7 +572,11 @@ material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition and tempera
 same as that of the WDs. Reactions in this region are unimportant, so for
 computational efficiency, we disable all nuclear burning for zones that have
 $\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. We have confirmed that
-the results do not depend on this choice. The density floor for the simulation is set
+the results do not depend on this choice. A sponge is applied to all gas at a distance
+greater than $2.5 \times 10^9$ cm from the origin, which is just larger than the
+initial location of the outer edges of the white dwarfs. The sponge damps out the
+velocity in this region (see Paper I) to prevent spurious numerical error from dragging
+down the global timestep. The density floor for the simulation is set
 at $10^{-5}\ \text{g / cm}^{-3}$ and the temperature floor is $10^7$ K.
 
 Our primary metric for this test is the amount of $^{56}$Ni generated in the collision,
