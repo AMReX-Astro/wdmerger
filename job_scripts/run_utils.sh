@@ -2201,7 +2201,7 @@ function run {
 
       done_flag=$(is_dir_done)
 
-      if [ $done_flag -eq 0 ]; then
+      if [ $done_flag -eq 0 ] || [ "$submit_even_if_done" == "1" ]; then
 
   	  echo "Continuing job in directory $dir."
 
