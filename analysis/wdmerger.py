@@ -837,106 +837,109 @@ def is_dir_done(directory):
         print("Error: directory " + directory + " does not exist in is_dir_done().")
         return
 
-    # If the directory already exists, check to see if we've reached the desired stopping point.
-    # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
-
-    checkpoint = ""
-    try:
-        checkpoint = get_last_checkpoint(directory)
-    except:
-        pass
-
-    last_output = ""
-    try:
-        last_output = get_last_output(directory)
-    except:
-        pass
-
-    if not checkpoint and not last_output:
-        print("Error: no checkpoint or stdout in directory " + directory)
-        done_status = 0
-        return done_status
-
-    # Get the desired stopping time and max step from the inputs file in the directory.
-    # Alternatively, we may have set this from the calling script, so prefer that.
-
-    inputs_filename = directory + '/' + get_inputs_filename(directory)
-
-    stop_time = -1.0
-    max_step = -1
-
-    if os.path.isfile(inputs_filename):
-        stop_time = get_inputs_var(inputs_filename, "stop_time")[0]
-        max_step = get_inputs_var(inputs_filename, "max_step")[0]
-
-    # Assume we're not done, by default.
-
-    time_flag = 0
-    step_flag = 0
-
-    done_status = 0
-
     if os.path.isfile(directory + '/jobIsDone'):
 
         # The user has explicitly signalled that the simulation is complete; we can stop here.
 
         done_status = 1
 
-    elif os.path.isfile(directory + '/' + checkpoint + '/jobIsDone'):
+    else:
 
-        # The problem has explicitly signalled that the simulation is complete; we can stop here.
+        # If the directory already exists, check to see if we've reached the desired stopping point.
+        # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
 
-        done_status = 1
+        checkpoint = ""
+        try:
+            checkpoint = get_last_checkpoint(directory)
+        except:
+            pass
 
-    elif os.path.isfile(directory + '/' + checkpoint + '/jobIsNotDone'):
+        last_output = ""
+        try:
+            last_output = get_last_output(directory)
+        except:
+            pass
 
-        # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
+        if not checkpoint and not last_output:
+            print("Error: no checkpoint or stdout in directory " + directory)
+            done_status = 0
+            return done_status
+
+        # Get the desired stopping time and max step from the inputs file in the directory.
+        # Alternatively, we may have set this from the calling script, so prefer that.
+
+        inputs_filename = directory + '/' + get_inputs_filename(directory)
+
+        stop_time = -1.0
+        max_step = -1
+
+        if os.path.isfile(inputs_filename):
+            stop_time = get_inputs_var(inputs_filename, "stop_time")[0]
+            max_step = get_inputs_var(inputs_filename, "max_step")[0]
+
+        # Assume we're not done, by default.
+
+        time_flag = 0
+        step_flag = 0
 
         done_status = 0
 
-    elif os.path.isfile(directory + '/' + checkpoint + '/Header'):
+        if os.path.isfile(directory + '/' + checkpoint + '/jobIsDone'):
 
-        # Extract the checkpoint time. It is stored in row 3 of the Header file.
+            # The problem has explicitly signalled that the simulation is complete; we can stop here.
 
-        chk_file = open(directory + '/' + checkpoint + '/Header')
+            done_status = 1
 
-        for i in range(3):
-            line = chk_file.readline()
+        elif os.path.isfile(directory + '/' + checkpoint + '/jobIsNotDone'):
 
-        # Convert to floating point, since it might be in exponential format.
+            # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
 
-        chk_time = float(line)
+            done_status = 0
 
-        # Extract the current timestep number.
+        elif os.path.isfile(directory + '/' + checkpoint + '/Header'):
 
-        chk_step = checkpoint.split('chk')[-1]
+            # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
-        if stop_time >= 0.0:
-            time_flag = float(chk_time) >= float(stop_time)
+            chk_file = open(directory + '/' + checkpoint + '/Header')
 
-        if max_step >= 0:
-            step_flag = int(chk_step) >= int(max_step)
+            for i in range(3):
+                line = chk_file.readline()
 
-        chk_file.close()
+            # Convert to floating point, since it might be in exponential format.
 
-    elif last_output and os.path.isfile(directory + '/' + last_output):
+            chk_time = float(line)
 
-        # Get the details of the last finished timestep.
+            # Extract the current timestep number.
 
-        for line in reversed(open(directory + '/' + last_output)):
-            if "STEP =" in line:
-                output_time = float(line.split(' ')[5])
-                output_step = int(line.split(' ')[2])
-                break
+            chk_step = checkpoint.split('chk')[-1]
 
-        time_flag = output_time >= stop_time
-        step_flag = output_step >= max_step
+            if stop_time >= 0.0:
+                time_flag = float(chk_time) >= float(stop_time)
 
+            if max_step >= 0:
+                step_flag = int(chk_step) >= int(max_step)
 
+            chk_file.close()
 
-    if time_flag or step_flag:
+        elif last_output and os.path.isfile(directory + '/' + last_output):
 
-        done_status = 1
+            # Get the details of the last finished timestep.
+
+            for line in reversed(open(directory + '/' + last_output)):
+                if "STEP =" in line:
+                    output_time = float(line.split(' ')[5])
+                    output_step = int(line.split(' ')[2])
+                    break
+
+            time_flag = output_time >= stop_time
+            step_flag = output_step >= max_step
+
+        if time_flag or step_flag:
+
+            done_status = 1
+
+    if done_status == 1 and not os.path.isfile(directory + '/jobIsDone'):
+        os.system('touch %s' % directory + '/jobIsDone')
 
     return done_status
 

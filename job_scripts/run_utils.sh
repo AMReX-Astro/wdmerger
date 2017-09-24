@@ -526,97 +526,110 @@ function is_dir_done {
       directory=$dir
   fi
 
-  # If the directory already exists, check to see if we've reached the desired stopping point.
-  # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
-
-  checkpoint=$(get_last_checkpoint $directory)
-  last_output=$(get_last_output $directory)
-
-  # Get the desired stopping time and max step from the inputs file in the directory.
-  # Alternatively, we may have set this from the calling script, so prefer that.
-
-  if [ -z $stop_time ] && [ -e $directory/$inputs ]; then
-      stop_time=$(get_inputs_var "stop_time" $directory)
-  fi
-
-  if [ -z $max_step ] && [ -e $directory/$inputs ]; then
-      max_step=$(get_inputs_var "max_step" $directory)
-  fi
-
-  # Assume we're not done, by default.
-
-  time_flag=""
-  step_flag=""
-
-  done_status=0
-
   if [ -e "$directory/jobIsDone" ]; then
 
       # The user has explicitly signalled that the simulation is complete; we can stop here.
 
       done_status=1
 
-  elif [ -e "$directory/$checkpoint/jobIsDone" ]; then
+  else
 
-      # The problem has explicitly signalled that the simulation is complete; we can stop here.
+      # If the directory already exists, check to see if we've reached the desired stopping point.
+      # There are two places we can look: in the last checkpoint file, or in the last stdout file. 
 
-      done_status=1
+      checkpoint=$(get_last_checkpoint $directory)
+      last_output=$(get_last_output $directory)
 
-  elif [ -e "$directory/$checkpoint/jobIsNotDone" ]; then
+      # Get the desired stopping time and max step from the inputs file in the directory.
+      # Alternatively, we may have set this from the calling script, so prefer that.
 
-      # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
+      if [ -z $stop_time ] && [ -e $directory/$inputs ]; then
+          stop_time=$(get_inputs_var "stop_time" $directory)
+      fi
+
+      if [ -z $max_step ] && [ -e $directory/$inputs ]; then
+          max_step=$(get_inputs_var "max_step" $directory)
+      fi
+
+      # Assume we're not done, by default.
+
+      time_flag=""
+      step_flag=""
 
       done_status=0
 
-  elif [ -e "$directory/$checkpoint/Header" ]; then
+      if [ -e "$directory/$checkpoint/jobIsDone" ]; then
 
-      # Extract the checkpoint time. It is stored in row 3 of the Header file.
+          # The problem has explicitly signalled that the simulation is complete; we can stop here.
 
-      chk_time=$(awk 'NR==3' $directory/$checkpoint/Header)
+          done_status=1
 
-      # Convert to floating point, since it might be in exponential format.
+      elif [ -e "$directory/$checkpoint/jobIsNotDone" ]; then
 
-      chk_time=$(printf "%f" $chk_time)
+          # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
 
-      # Extract the current timestep. We can get it from the 
-      # name of the checkpoint file. cut will do the trick;
-      # just capture everything after the 'k' of 'chk'.
+          done_status=0
 
-      chk_step=$(echo $checkpoint | cut -d"k" -f2)
+      elif [ -e "$directory/$checkpoint/Header" ]; then
 
-      if [ ! -z $stop_time ]; then
-	  time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
+          # Extract the checkpoint time. It is stored in row 3 of the Header file.
+
+          chk_time=$(awk 'NR==3' $directory/$checkpoint/Header)
+
+          # Convert to floating point, since it might be in exponential format.
+
+          chk_time=$(printf "%f" $chk_time)
+
+          # Extract the current timestep. We can get it from the 
+          # name of the checkpoint file. cut will do the trick;
+          # just capture everything after the 'k' of 'chk'.
+
+          chk_step=$(echo $checkpoint | cut -d"k" -f2)
+
+          if [ ! -z $stop_time ]; then
+	      time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
+          fi
+
+          if [ ! -z $max_step ]; then
+	      step_flag=$(echo "$chk_step >= $max_step" | bc)
+          fi
+
+      elif [ ! -z "$last_output" ] && [ -e "$directory/$last_output" ]; then
+
+          output_time=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $6}')
+          output_step=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $3}')
+
+          # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
+
+          output_time=$(printf "%f" $output_time)
+
+          time_flag=$(echo "$output_time >= $stop_time" | bc -l)
+          step_flag=$(echo "$output_step >= $max_step" | bc)
+
       fi
 
-      if [ ! -z $max_step ]; then
-	  step_flag=$(echo "$chk_step >= $max_step" | bc)
+      # If we don't have valid variables for checking against the timestep and max_time
+      # criteria, we assume that we're not done because we just haven't run the job yet.
+
+      if [ ! -z $time_flag ] && [ ! -z $step_flag ]; then
+
+          # If the variables are valid, check if either one indicates that we are done.
+
+          if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
+              done_status=1
+          fi
+
       fi
-
-  elif [ ! -z "$last_output" ] && [ -e "$directory/$last_output" ]; then
-
-      output_time=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $6}')
-      output_step=$(grep "STEP =" $directory/$last_output | tail -1 | awk '{print $3}')
-
-      # bc can't handle numbers in scientific notation, so use printf to convert it to floating point.
-
-      output_time=$(printf "%f" $output_time)
-
-      time_flag=$(echo "$output_time >= $stop_time" | bc -l)
-      step_flag=$(echo "$output_step >= $max_step" | bc)
 
   fi
 
-  # If we don't have valid variables for checking against the timestep and max_time
-  # criteria, we assume that we're not done because we just haven't run the job yet.
+  # If we found out that the job is done, but there is no jobIsDone
+  # file in the directory yet, create one now. That way, if we run
+  # this check in the future on the same directory, it will be faster
+  # because we do not have to search through the plotfiles again.
 
-  if [ ! -z $time_flag ] && [ ! -z $step_flag ]; then
-
-    # If the variables are valid, check if either one indicates that we are done.
-
-    if [ $time_flag -eq 1 ] || [ $step_flag -eq 1 ]; then
-      done_status=1
-    fi
-
+  if [ $done_status -eq 1 ] && [ ! -e "$directory/jobIsDone" ]; then
+      touch "$directory/jobIsDone"
   fi
 
   echo $done_status
