@@ -96,7 +96,7 @@ function get_submitted_jobs {
   if [ -e $job_file ]; then
 
       num_jobs=$(cat $job_file | wc -l)
-      
+
       for i in $(seq 0 $(($num_jobs-1)))
       do
 	  line=$(awk "NR == $i+1" $job_file)
@@ -124,6 +124,11 @@ function get_last_output {
       dir=$1
   fi
 
+  if [ ! -d $dir ]; then
+      echo ""
+      return
+  fi
+
   # First try looking for jobs that are currently running.
 
   output=$(find $dir -name "*$run_ext" | sort | tail -1)
@@ -136,8 +141,10 @@ function get_last_output {
 
   # Extract out the search directory from the result.
 
-  output=$(echo ${output#$dir/})
-  output=$(echo ${output#$dir})
+  if [ -z $output ]; then
+      output=$(echo ${output#$dir/})
+      output=$(echo ${output#$dir})
+  fi
 
   echo $output
 
@@ -150,10 +157,16 @@ function get_last_output {
 function get_last_checkpoint {
 
   if [ -z $1 ]; then
-      echo "No directory passed to get_last_checkpoint; exiting."
+      echo "No directory passed to get_last_checkpoint; exiting." >&2
+      echo ""
       return
   else
       dir=$1
+  fi
+
+  if [ ! -d $dir ]; then
+      echo ""
+      return
   fi
 
   # Optionally pass in a second argument corresponding to how far back we want to go.
@@ -176,20 +189,32 @@ function get_last_checkpoint {
   checkpointList=""
   checkpointNums=""
 
-  checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk???????" | sort -r)"
-  checkpointList+=" $(find $dir -mindepth 2 -type d -name "*chk???????" | sort -r)"
-  checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
-  checkpointNums+=" $(find $dir -mindepth 2 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointList+=" $(find "$dir" -maxdepth 1 -type d -name "*chk???????" | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointList+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk???????" | sort -r)"
+  fi
+  checkpointNums+=" $(find "$dir" -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointNums+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
+  fi
 
-  checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk??????" | sort -r)"
-  checkpointList+=" $(find $dir -mindepth 2 -type d -name "*chk??????" | sort -r)"
-  checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
-  checkpointNums+=" $(find $dir -mindepth 2 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointList+=" $(find "$dir" -maxdepth 1 -type d -name "*chk??????" | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointList+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk??????" | sort -r)"
+  fi
+  checkpointNums+=" $(find "$dir" -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointNums+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+  fi
 
-  checkpointList+=" $(find $dir -maxdepth 1 -type d -name "*chk?????" | sort -r)"
-  checkpointList+=" $(find $dir -mindepth 2 -type d -name "*chk?????" | sort -r)"
-  checkpointNums+=" $(find $dir -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
-  checkpointNums+=" $(find $dir -mindepth 2 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointList+=" $(find "$dir" -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointList+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+  fi
+  checkpointNums+=" $(find "$dir" -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointNums+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  fi
 
   if [ -z "$checkpointList" ]; then
 
@@ -276,7 +301,7 @@ function get_median_timestep {
   fi
 
   # Calculate the median.
-    
+
   median_timestep=$(median "$timesteps")
 
   echo $median_timestep
@@ -382,6 +407,7 @@ function get_remaining_walltime {
       job_number=$1
   else
       echo "Job number not given to get_remaining_walltime" >&2
+      echo ""
       return
   fi
 
@@ -558,19 +584,19 @@ function is_dir_done {
 
       done_status=0
 
-      if [ -e "$directory/$checkpoint/jobIsDone" ]; then
+      if [ ! -z $checkpoint ] && [ -e "$directory/$checkpoint/jobIsDone" ]; then
 
           # The problem has explicitly signalled that the simulation is complete; we can stop here.
 
           done_status=1
 
-      elif [ -e "$directory/$checkpoint/jobIsNotDone" ]; then
+      elif [ ! -z $checkpoint ] && [ -e "$directory/$checkpoint/jobIsNotDone" ]; then
 
           # The problem has explicitly signalled that the simulation is NOT complete; again, we can stop here.
 
           done_status=0
 
-      elif [ -e "$directory/$checkpoint/Header" ]; then
+      elif [ ! -z $checkpoint ] && [ -e "$directory/$checkpoint/Header" ]; then
 
           # Extract the checkpoint time. It is stored in row 3 of the Header file.
 
@@ -930,7 +956,7 @@ function check_to_stop {
   curr_wall_time=$start_wall_time
 
   # Determine how much time the job has, in seconds.
-  
+
   total_time=$(get_remaining_walltime $job_number)
 
   # Account for the possibility that we don't yet have
