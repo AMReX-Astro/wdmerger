@@ -12,6 +12,9 @@ else
   script_dir="$WDMERGER_HOME/job_scripts"
 fi
 
+# Utility shell functions.
+source $script_dir/util.sh
+
 # Functions for working with inputs and probin files.
 source $script_dir/inputs.sh
 source $script_dir/probin.sh
@@ -157,7 +160,7 @@ function get_last_output {
 function get_last_checkpoint {
 
   if [ -z $1 ]; then
-      echo "No directory passed to get_last_checkpoint; exiting." >&2
+      echoerr "No directory passed to get_last_checkpoint; exiting."
       echo ""
       return
   else
@@ -406,7 +409,7 @@ function get_remaining_walltime {
   if [ ! -z $1 ]; then
       job_number=$1
   else
-      echo "Job number not given to get_remaining_walltime" >&2
+      echoerr "Job number not given to get_remaining_walltime"
       echo ""
       return
   fi
@@ -422,7 +425,7 @@ function get_remaining_walltime {
       total_time=$(showq -u $USER | grep $job_number | awk '{ print $5 }')
 
       if [ -z $total_time ]; then
-	  echo "Unable to get total_time from job submission system" >&2
+	  echoerr "Unable to get total_time from job submission system"
       fi
 
       if [ ! -z $total_time ]; then
@@ -461,7 +464,7 @@ function get_remaining_walltime {
 
   else
 
-      echo "Unknown job submission system in get_remaining_walltime" >&2
+      echoerr "Unknown job submission system in get_remaining_walltime"
 
   fi
 
@@ -1462,7 +1465,7 @@ function get_last_submitted_job {
 
   else
 
-      echo "No jobs_submitted.txt file to obtain last job number from" >&2
+      echoerr "No jobs_submitted.txt file to obtain last job number from"
 
       job_number=-1
 
