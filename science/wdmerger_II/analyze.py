@@ -5,22 +5,39 @@ matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import os
 
-linestyles = ['-', '--', ':', '-', '--', ':']
-markers = ['', '', '', 'o', 's', 'D']
-colors = ['b', 'g', 'r', 'c', 'm', 'k']
+linestyles = ['-', '--', ':,' ':']
+markers = ['', '', '', 'o']
 
-def get_ni56(results_dir):
+# Colors are chosen with the assistance of colorbrewer2.org,
+# using 4 qualitative classes.
+
+colors = ['#1f78b4', '#33a02c', '#a6cee3', '#b2df8a']
+
+def get_ni56(results_dir, prefix = ''):
     """Return a list of maximum 56Ni production from all completed sub-directories in results_dir."""
 
     import wdmerger_spec_diag_analysis as spec_diag
     import numpy as np
 
+    ni56_arr = []
+
     dir_list = wdmerger.get_parameter_list(results_dir)
 
+    # Strip out those directories that don't match the prefix.
+
+    if (prefix != ''):
+        dir_list = [dir for dir in dir_list if dir[0:len(prefix)] == prefix]
+
     if (dir_list == []):
-        return
+        return ni56_arr
 
     diag_filename_list = [results_dir + '/' + directory + '/output/species_diag.out' for directory in dir_list]
+
+    # Ensure all of the output files are there.
+
+    for diag_file in diag_filename_list:
+        if not os.path.isfile(diag_file):
+            return ni56_arr
 
     ni56_arr = [np.amax(wdmerger.get_column('Mass ni56', diag_filename)) - np.amin(wdmerger.get_column('Mass ni56', diag_filename))
                 for diag_filename in diag_filename_list]
@@ -197,6 +214,8 @@ def burning_limiter_e(eps_filename, results_base):
 
     if (os.path.isfile(eps_filename)):
         return
+    else:
+        print("Generating file %s" % eps_filename)
 
     results_dir = results_base + 'burning_limiter_e/'
 
@@ -216,15 +235,17 @@ def burning_limiter_e(eps_filename, results_base):
     ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
     dtnuc_list = sorted(dtnuc_list)
 
-    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0)
+    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{be}$", fontsize=20)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    plt.tick_params(labelsize=20)
+    plt.tick_params(labelsize=16)
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+    png_filename = eps_filename[0:-3] + "png"
+    plt.savefig(png_filename)
 
     plt.close()
 
@@ -235,6 +256,8 @@ def burning_limiter_X(eps_filename, results_base):
 
     if (os.path.isfile(eps_filename)):
         return
+    else:
+        print("Generating file %s" % eps_filename)
 
     results_dir = results_base + 'burning_limiter_X/'
 
@@ -254,15 +277,17 @@ def burning_limiter_X(eps_filename, results_base):
     ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
     dtnuc_list = sorted(dtnuc_list)
 
-    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0)
+    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{bX}$", fontsize=20)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    plt.tick_params(labelsize=20)
+    plt.tick_params(labelsize=16)
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+    png_filename = eps_filename[0:-3] + "png"
+    plt.savefig(png_filename)
 
     plt.close()
 
@@ -275,6 +300,8 @@ def burning_limiter(eps_filename, results_base):
 
     if (os.path.isfile(eps_filename)):
         return
+    else:
+        print("Generating file %s" % eps_filename)
 
     results_dir = results_base + 'burning_limiter_e/'
 
@@ -314,17 +341,19 @@ def burning_limiter(eps_filename, results_base):
     ni56_X_arr = np.array([x for _,x in sorted(zip(dtnuc_X_list,ni56_X_arr))])
     dtnuc_X_list = sorted(dtnuc_X_list)
 
-    plt.plot(dtnuc_e_list, ni56_e_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$')
-    plt.plot(dtnuc_X_list, ni56_X_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$')
+    plt.plot(dtnuc_e_list, ni56_e_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$', color = colors[0])
+    plt.plot(dtnuc_X_list, ni56_X_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$', color = colors[1])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    plt.tick_params(labelsize=20)
+    plt.tick_params(labelsize=16)
     plt.legend(loc='best', prop={'size':20})
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+    png_filename = eps_filename[0:-3] + "png"
+    plt.savefig(png_filename)
 
     plt.close()
 
@@ -339,6 +368,8 @@ def burning_limiter_mode(out_filename, results_base):
 
     if os.path.isfile(out_filename):
         return
+    else:
+        print("Generating file %s" % out_filename)
 
     # Get the list of parameter values we have tried
 
@@ -380,6 +411,8 @@ def ode_tolerances(eps_filename, results_base):
 
     if (os.path.isfile(eps_filename)):
         return
+    else:
+        print("Generating file %s" % eps_filename)
 
     results_dir = results_base + 'spec_tol/'
 
@@ -458,6 +491,8 @@ def ode_tolerances(eps_filename, results_base):
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+    png_filename = eps_filename[0:-3] + "png"
+    plt.savefig(png_filename)
 
     plt.close()
 
@@ -470,6 +505,8 @@ def t_min(out_filename, results_base):
 
     if (os.path.isfile(out_filename)):
         return
+    else:
+        print("Generating file %s" % out_filename)
 
     # Get the list of parameter values we have tried
 
@@ -518,6 +555,8 @@ def rho_min(out_filename, results_base):
 
     if (os.path.isfile(out_filename)):
         return
+    else:
+        print("Generating file %s" % out_filename)
 
     # Get the list of parameter values we have tried
 
@@ -567,6 +606,8 @@ def burning_mode(out_filename, results_base):
 
     if (os.path.isfile(out_filename)):
         return
+    else:
+        print("Generating file %s" % out_filename)
 
     # Get the list of parameter values we have tried
 
@@ -624,7 +665,7 @@ def burning_mode(out_filename, results_base):
 
     label = 'burningmode'
 
-    precision = 4 # Because burning mode 3 creates so little nickel
+    precision = 5 # Because the suppressed burning mode creates so little nickel
 
     write_ni56_table(results_dir, out_filename, mode_list, ni56_list, comment, col1title, label, precision = precision, title = title, caption = caption)
 
@@ -637,6 +678,8 @@ def amr(eps_filename, results_base):
 
     if os.path.isfile(eps_filename):
         return
+    else:
+        print("Generating file %s" % eps_filename)
 
     import math
     import numpy as np
@@ -660,12 +703,19 @@ def amr(eps_filename, results_base):
 
         r_list = wdmerger.get_parameter_list(results_dir)
 
+        # Strip out the non-refinement directories
+
+        r_list = [r for r in r_list if r[0] == 'r']
+
         if (r_list == []):
             return
 
         r_list = [float(r[1:]) for r in r_list]
 
-        ni56_arr = get_ni56(results_dir)
+        ni56_arr = get_ni56(results_dir, 'r')
+
+        if ni56_arr == []:
+            return
 
         # Sort the lists
 
@@ -689,11 +739,13 @@ def amr(eps_filename, results_base):
     plt.ylim([0.0, 0.6])
     plt.xlabel(r"Effective zones/dimension", fontsize=24)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=24)
-    plt.tick_params(labelsize=20)
+    plt.tick_params(labelsize=16)
     plt.legend(loc='best', prop={'size':20})
     plt.tight_layout()
     plt.savefig(eps_filename)
     wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+    png_filename = eps_filename[0:-3] + "png"
+    plt.savefig(png_filename)
 
     plt.close()
 
@@ -713,14 +765,18 @@ def rho_T_sliceplots(output_base, results_base, smallplt = True, prefix = "",
     if (smallplt):
         plt_prefix = 'smallplt'
 
-    param_list = wdmerger.get_parameter_list(results_base)
+    r_list = wdmerger.get_parameter_list(results_base)
 
-    if (param_list == []):
+    # Strip out the non-refinement directories
+
+    r_list = [r for r in r_list if r[0] == 'r']
+
+    if (r_list == []):
         return
 
-    dir_list = [results_base + param + '/output/' for param in param_list]
+    dir_list = [results_base + r + '/output/' for r in r_list]
 
-    for param, directory in zip(param_list, dir_list):
+    for param, directory in zip(r_list, dir_list):
 
         output_dir = output_base + param
 
@@ -750,6 +806,7 @@ def rho_T_sliceplots(output_base, results_base, smallplt = True, prefix = "",
         mpg_filename = output_dir + "/rho_T_slice" + prefix + "_" + param + ".mpg"
 
         if not os.path.isfile(mpg_filename):
+            print("Generating file %s" % mpg_filename)
             wdmerger.make_movie(output_dir, jpg_list, mpg_filename)
 
 
@@ -758,6 +815,8 @@ def rho_T_sliceplots(output_base, results_base, smallplt = True, prefix = "",
 
 if __name__ == "__main__":
     """Generate the plots and tables for the collision tests."""
+
+    import os
 
     results_base = 'results/'
     plots_dir = 'plots/'
@@ -770,4 +829,11 @@ if __name__ == "__main__":
     rho_min(plots_dir + "rho_min.tbl", results_base)
     ode_tolerances(plots_dir + "ode_tolerance.eps", results_base)
     amr(plots_dir + "amr.eps", results_base)
-    rho_T_sliceplots(plots_dir + "amr/", results_base + "amr/n256/")
+
+    ncell_list = os.listdir(results_base + "amr/")
+
+    for n in ncell_list:
+        plot_dir = plots_dir + "slices/amr/" + n + "/"
+        results_dir = results_base + "amr/" + n + "/"
+        prefix = "_" + n
+        #rho_T_sliceplots(plot_dir, results_dir, prefix = prefix)
