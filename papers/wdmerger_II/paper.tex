@@ -699,6 +699,30 @@ and \cite{kushnir:2013} is appropriate.
 \section{Spatial Resolution}
 \label{sec:spatialresolution}
 
+Now we turn to an examination of the effect of spatial resolution on the detonation.
+The first question we want to answer is: at reasonable uniform spatial resolution, is
+the simulation converged when a detonation occurs? If the answer is no, then the
+follow-up question is: can adaptive mesh refinement help achieve a converged simulation?
+
+To answer these questions we performed a series of simulations at varying base
+resolutions. In each case we ran the simulation to the point when the density
+at the collision point reached $10^7\ \text{g / cm}^{-3}$, which we will informally
+call the collision time, $t_{\rm c}$. The collision time is about $t_{\rm c} = 6.85\ \text{s}$
+at high resolution. At low resolution, the simulation is slightly different because
+of the distortion imposed by a rectangular grid representing initially spherical stars,
+so the collision time is slightly later. Then, we restarted the run from this checkpoint
+and reset the time to zero (such that $t_{\rm c} = 0$). The new simulation runs until about
+$t = 2.15\ \text{s}$, so that the full 9 seconds are simulated. During this second phase
+the detonation occurs. An estimate of the detonation time, $t_{\rm d}$, that serves well
+is the time when the peak density on the grid first reaches $5 \times 10^9\ \text{K}$.
+We measure the detonation time relative to $t_{\rm c}$. Approximately speaking, the later
+$t_{\rm d}$ is, the more nickel is produced. As time passes, more white dwarf material
+slams into the center, compressing and heating up the gas. Both effects are favorable
+to production of nickel. So, a later $t_{\rm d}$ implies that more material can be converted
+to nickel. Similarly, the speed of the detonation matters. A slower speed detonation prolongs
+the collision event, allowing more gas to be processed into nickel.
+
+
 \begin{figure}[ht]
   \centering
   \includegraphics[scale=0.425]{{{plots/amr}}}
