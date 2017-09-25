@@ -309,7 +309,6 @@ def get_last_output(directory):
     files = sorted(filter(lambda s: s[0:9] == "wdmerger.",files))
 
     if (len(files) == 0):
-        print("Error: No wdmerger output files in directory " + directory)
         exit()
 
     return directory + "/" + files[len(files)-1]
