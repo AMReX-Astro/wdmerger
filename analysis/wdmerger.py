@@ -324,9 +324,10 @@ def get_last_checkpoint(directory):
 
     import os
 
+    checkpoint = ""
+
     if (not os.path.isdir(directory)):
-        print("Error: directory " + directory + " does not exist in get_last_checkpoint().")
-        return
+        return checkpoint
 
     # Doing a search this way will treat first any checkpoint files 
     # with seven digits, and then will fall back to ones with six and then five digits.
@@ -354,12 +355,9 @@ def get_last_checkpoint(directory):
     add_to_list(checkpointList, checkpointNums, directory + '/*/*chk?????')
 
     if not checkpointList or not checkpointNums:
-        print("Error: no checkpoints found in directory " + directory)
-        return
+        return checkpoint
 
     # Match up the last checkpoint number with the actual file path location. 
-
-    checkpoint = ""
 
     for chkNum in checkpointNums:
 
@@ -832,9 +830,10 @@ def is_dir_done(directory):
 
     import os
 
+    done_status = 0
+
     if not os.path.isdir(directory):
-        print("Error: directory " + directory + " does not exist in is_dir_done().")
-        return
+        return done_status
 
     if os.path.isfile(directory + '/jobIsDone'):
 
@@ -860,7 +859,6 @@ def is_dir_done(directory):
             pass
 
         if not checkpoint and not last_output:
-            print("Error: no checkpoint or stdout in directory " + directory)
             done_status = 0
             return done_status
 
