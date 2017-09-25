@@ -552,6 +552,12 @@ function is_dir_done {
       directory=$dir
   fi
 
+  if [ ! -d $directory ]; then
+      done_flag=0
+      echo $done_flag
+      return
+  fi
+
   if [ -e "$directory/jobIsDone" ]; then
 
       # The user has explicitly signalled that the simulation is complete; we can stop here.
@@ -2163,7 +2169,14 @@ function run {
       DIM="3"
   fi
 
-  set_up_problem_dir
+  # There's much we can skip here if the
+  # job is already done.
+
+  done_flag=$(is_dir_done)
+
+  if [ $done_flag -ne 1 ]; then
+      set_up_problem_dir
+  fi
 
   if [ -z $nprocs ]; then
       nprocs=$ppn
@@ -2203,8 +2216,6 @@ function run {
 
       rm -f $dir/dump_and_stop
 
-      done_flag=$(is_dir_done)
-
       if [ $done_flag -eq 0 ] || [ "$submit_even_if_done" == "1" ]; then
 
   	  echo "Continuing job in directory $dir."
@@ -2232,11 +2243,13 @@ function run {
       fi
   fi
 
-  copy_files $dir
+  if [ $done_flag -ne 1 ]; then
+      copy_files $dir
 
-  if [ -z "$inputs_only" ]; then
-      if [ ! -e "$dir/$job_script" ]; then
-	  create_job_script $dir $nprocs $walltime
+      if [ -z "$inputs_only" ]; then
+          if [ ! -e "$dir/$job_script" ]; then
+	      create_job_script $dir $nprocs $walltime
+          fi
       fi
   fi
 
