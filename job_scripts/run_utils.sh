@@ -532,6 +532,8 @@ function is_job_running {
       num_jobs_in_dir=$(cat $dir/jobs_submitted.txt | wc -l)
       jobs_in_directory=$(cat $dir/jobs_submitted.txt | awk '{print $1}')
 
+      get_submitted_jobs
+
       for job1 in ${job_arr[@]}
       do
 	  for job2 in $jobs_in_directory
@@ -2181,11 +2183,19 @@ function run {
   # job is already done, or if a job is
   # currently running.
 
-  done_flag=$(is_dir_done)
+  done_flag=''
   job_running_status=$(is_job_running $dir)
 
-  if [ $done_flag -ne 1 ] && [ $job_running_status -ne 1 ]; then
-      set_up_problem_dir
+  if [ $job_running_status -ne 1 ]; then
+
+      if [ "$done_flag" == '' ]; then
+          done_flag=$(is_dir_done)
+      fi
+
+      if [ $done_flag -ne 1 ]; then
+          set_up_problem_dir
+      fi
+
   fi
 
   if [ -z $nprocs ]; then
@@ -2222,6 +2232,10 @@ function run {
 
       rm -f $dir/dump_and_stop
 
+      if [ "$done_flag" == '' ]; then
+          done_flag=$(is_dir_done)
+      fi
+
       if [ $done_flag -eq 0 ] || [ "$submit_even_if_done" == "1" ]; then
 
   	  echo "Continuing job in directory $dir."
@@ -2243,20 +2257,28 @@ function run {
 
   # Optionally, the user can force a recompile from the run script.
 
-  if [ $done_flag -ne 1 ] && [ $job_running_status -ne 1 ]; then
+  if [ $job_running_status -ne 1 ]; then
 
-      if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
-          if [ "$local_compile" -eq "1" ]; then
-	      compile_in_job_directory $dir
-          fi
+      if [ "$done_flag" == '' ]; then
+          done_flag=$(is_dir_done)
       fi
 
-      copy_files $dir
+      if [ $done_flag -ne 1 ]; then
 
-      if [ -z "$inputs_only" ]; then
-          if [ ! -e "$dir/$job_script" ]; then
-	      create_job_script $dir $nprocs $walltime
+          if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
+              if [ "$local_compile" -eq "1" ]; then
+	          compile_in_job_directory $dir
+              fi
           fi
+
+          copy_files $dir
+
+          if [ -z "$inputs_only" ]; then
+              if [ ! -e "$dir/$job_script" ]; then
+	          create_job_script $dir $nprocs $walltime
+              fi
+          fi
+
       fi
   fi
 
