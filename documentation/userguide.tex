@@ -242,9 +242,9 @@ to modify them for basic analysis. We may be able to provide others upon request
 This software assumes that you have set several environment variables:
 \begin{itemize}
   \item \texttt{AMREX\_HOME}, the location of the \amrex\ code's top-level directory
-  \item \texttt{CASTRO\_DIR}, the location of the \castro\ code's top-level directory
+  \item \texttt{CASTRO\_HOME}, the location of the \castro\ code's top-level directory
   \item \texttt{WDMERGER\_HOME}, the location of this software's top-level directory
-  \item \texttt{MICROPHYSICS\_DIR}, the location of the \texttt{Microphysics} code's top-level directory
+  \item \texttt{MICROPHYSICS\_HOME}, the location of the \texttt{Microphysics} code's top-level directory
 \end{itemize}
 
 In addition, you should include in your \texttt{PYTHONPATH} the location of the 
@@ -256,10 +256,9 @@ In addition, you should include in your \texttt{PYTHONPATH} the location of the
 A note on machine compatibility: this software is currently only developed and tested on
 machines that run Linux and come with the common GNU flavors of most pieces of software
 like \texttt{sed}. We do not guarantee that this software will work out of the box on OS X
-or other Unix derivatives; however, we generally try to avoid GNU-specific options, so that 
-trying to run this software on OS X will not be too painful. With that being said, this 
-software does heavily rely on \texttt{bash} and at present there are no plans to maintain
-compatibility with any other shell.
+or other Unix derivatives; however, we have generally tried to avoid GNU-specific options
+where possible. This software does heavily rely on \texttt{bash} and at present there are
+no plans to maintain compatibility with any other shell.
 
 \chapter{Directory Layout}
 
@@ -306,13 +305,11 @@ be the rotation axis, with the stars initially aligned along the $x$ axis. We se
 orbital period of the system, and the masses of the \textit{primary} (more massive) and 
 \textit{secondary} (less massive) white dwarfs. We then use Kepler's third law to determine the 
 appropriate initial orbital distance. The center of mass of the system corresponds with the center 
-of the domain, which is the origin; the domain is $1.024 \times 10^{10}\ \text{cm}$ wide in each 
-coordinate direction, so that each dimension runs from $-5.12 \times 10^{9}\ \text{cm}$ to 
-$+5.12 \times 10^{9}\ \text{cm}$. In a rotating reference frame, we set the stars at rest. 
+of the domain, which is the origin. In a rotating reference frame, we set the stars at rest. 
 We can instead run a simulation in the inertial reference frame. To make it equivalent, we
 start all zones in the domain with a velocity corresponding to the equivalent rotating 
 reference frame velocity. This means that the stars will be synchronously rotating (though we
-may relax this assumption in future work).
+may relax this assumption in the future).
 
 Though we are mainly interested in 3D simulations, it is sometimes useful to compare to 2D
 simulations which are much cheaper and can be run at higher resolutions. The only physically
@@ -631,7 +628,7 @@ do
   dir=results/period$period/
   castro_rotational_period=$period
   stop_time=$period
-  run $dir $nprocs $walltime
+  run
 done
 \end{lstlisting}%$
 This will create the subdirectories \texttt{results/period25.0} through \texttt{results/period100.0}
@@ -827,8 +824,9 @@ and \texttt{archive} functions.
 \chapter{Contributors}
 \label{sec:contributors}
 
-This project was started as the Ph.D. dissertation project for Max Katz at Stony Brook University. 
-Michael Zingale is Max's primary thesis advisor. Correspondence and requests for information 
+This project was started as the Ph.D. dissertation project for Max Katz at Stony Brook University;
+Max now continues work on it, though he is no longer physically at Stony Brook.
+Michael Zingale is the other main contact at Stony Brook. Correspondence and requests for information 
 about this software should be directed to them; their e-mail addresses are maximilian.katz@stonybrook.edu
 and michael.zingale@stonybrook.edu, respectively. Alan Calder and Doug Swesty at Stony Brook are 
 also co-investigators on this project. The \castro\ code was developed primarily at the 
