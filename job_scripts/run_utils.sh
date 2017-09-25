@@ -511,6 +511,11 @@ function is_job_running {
 
   job_status=0
 
+  if [ ! -d $dir ]; then
+      echo $job_status
+      return
+  fi
+
   # Check if a file with the appropriate run extension exists in that directory.
   # If not, check if there is an active job yet to be completed or started 
   # in the directory using the results of the queue information (showq, qstat, etc.).
@@ -2170,11 +2175,13 @@ function run {
   fi
 
   # There's much we can skip here if the
-  # job is already done.
+  # job is already done, or if a job is
+  # currently running.
 
   done_flag=$(is_dir_done)
+  job_running_status=$(is_job_running $dir)
 
-  if [ $done_flag -ne 1 ]; then
+  if [ $done_flag -ne 1 ] && [ $job_running_status -ne 1 ]; then
       set_up_problem_dir
   fi
 
@@ -2201,10 +2208,6 @@ function run {
     do_job=1
 
   elif [ -z "$inputs_only" ] && [ -z "$no_submit" ]; then
-
-    # First as a sanity check, make sure the desired job isn't already running.
-
-    job_running_status=$(is_job_running $dir)
 
     if [ $job_running_status -eq 1 ]; then
 
@@ -2237,13 +2240,14 @@ function run {
 
   # Optionally, the user can force a recompile from the run script.
 
-  if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
-      if [ "$local_compile" -eq "1" ]; then
-	  compile_in_job_directory $dir
-      fi
-  fi
+  if [ $done_flag -ne 1 ] && [ $job_running_status -ne 1 ]; then
 
-  if [ $done_flag -ne 1 ]; then
+      if [ ! -z "$local_compile" ] && [ -z "$inputs_only" ]; then
+          if [ "$local_compile" -eq "1" ]; then
+	      compile_in_job_directory $dir
+          fi
+      fi
+
       copy_files $dir
 
       if [ -z "$inputs_only" ]; then
