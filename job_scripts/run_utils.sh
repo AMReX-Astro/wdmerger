@@ -527,7 +527,7 @@ function is_job_running {
 
       job_status=1
 
-  elif [ -e $dir/jobs_submitted.txt ] && [ ! -z $num_jobs ]; then
+  elif [ -e $dir/jobs_submitted.txt ]; then
 
       num_jobs_in_dir=$(cat $dir/jobs_submitted.txt | wc -l)
       jobs_in_directory=$(cat $dir/jobs_submitted.txt | awk '{print $1}')
