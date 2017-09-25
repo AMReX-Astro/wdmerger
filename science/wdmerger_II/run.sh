@@ -5,8 +5,40 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 function set_run_opts {
 
     if [ -z $ncell ]; then
-	echo "ncell not set; exiting."
+	echoerr "ncell not set; exiting."
 	exit
+    fi
+
+    to_run=1
+
+    # The following assumes we are using SeaWulf.
+
+    if [ $MACHINE == "SEAWULF" ]; then
+
+        OMP_NUM_THREADS=1
+
+        if [ $ncell -gt 1024 ]; then
+            queue="short"
+            nprocs="224"
+            walltime="4:00:00"
+        elif [ $ncell -eq 1024 ]; then
+            queue="short"
+            nprocs="112"
+            walltime="4:00:00"
+        elif [ $ncell -eq 512 ]; then
+            queue="short"
+            nprocs="56"
+            walltime="4:00:00"
+        else
+            queue="long"
+            nprocs="28"
+            walltime="24:00:00"
+        fi
+
+    else
+
+        echoerr "This machine is not set up for this job."
+
     fi
 
     # Set up the 2D geometry appropriately.
@@ -280,32 +312,6 @@ function set_run_opts {
 
     fi
 
-    if [ $MACHINE == "LIRED" ]; then
-
-	queue="extended"
-        nprocs="24"
-        walltime="24:00:00"
-        OMP_NUM_THREADS=1
-
-    elif [ $MACHINE == "SEAWULF" ]; then
-
-        if [ $ncell -gt 512 ]; then
-            queue="short"
-            nprocs="112"
-            walltime="4:00:00"
-        elif [ $ncell -gt 256 ]; then
-            queue="short"
-            nprocs="56"
-            walltime="4:00:00"
-        else
-            queue="long"
-            nprocs="28"
-            walltime="24:00:00"
-            OMP_NUM_THREADS=1
-        fi
-
-    fi
-
 }
 
 # Specify the problem directory.
@@ -367,11 +373,9 @@ castro_init_shrink="0.1"
 
 castro_sum_interval="1"
 
-# The interesting part of the evolution in this problem finishes by t = 10s.
-# Since we know this in advance, we do not need to use the stopping criterion.
+# The interesting part of the evolution in this problem finishes by t = 9s.
 
-stop_time="10.0"
-castro_use_stopping_criterion="0"
+stop_time="9.0"
 
 # Enable reactions.
 
@@ -388,9 +392,13 @@ castro_do_rotation="0"
 co_wd_c_frac="0.5d0"
 co_wd_o_frac="0.5d0"
 
-# Turn off the sponge, it doesn't matter for collisions.
+# Use the sponge to damp out noise in the ambient medium,
+# which can be rather violent due to how much churn
+# the colliding white dwarfs create.
 
-castro_do_sponge="0"
+castro_do_sponge="1"
+sponge_lower_density="1.0d-1"
+sponge_upper_density="1.0d0"
 
 # The timesteps can get quite small if you're fully 
 # resolving the burning, so allow for this.
@@ -435,13 +443,19 @@ castro_small_temp=$small_temp_default
 
 
 
+# The flag we will use to determine whether to run the job.
+
+to_run=1
+
+
+
 # Test the effect of the burning resolution limiter.
 
 amr_max_level=9
 
 castro_dxnuc="1.0e-1"
 
-ncell_list="256 512 1024 2048 4096 8192 16384"
+ncell_list="256 512 1024 2048 4096"
 
 for ncell in $ncell_list
 do
@@ -458,39 +472,183 @@ do
     fi
 
     if   [ $ncell -eq 256 ]; then
-        refinement_list="1 2 4 8 16 32 64 128 256 512"
-    elif [ $ncell -eq 512 ]; then
-        refinement_list="1 2 4 8 16 32 64 128 256"
-    elif [ $ncell -eq 1024 ]; then
-        refinement_list="1 2 4 8 16 32 64 128"
-    elif [ $ncell -eq 2048 ]; then
-        refinement_list="1 2 4 8 16 32"
-    elif [ $ncell -eq 4096 ]; then
         refinement_list="1 2 4 8 16"
-    elif [ $ncell -eq 8192 ]; then
+    elif [ $ncell -eq 512 ]; then
         refinement_list="1 2 4 8"
-    elif [ $ncell -eq 16384 ]; then
+    elif [ $ncell -eq 1024 ]; then
+        refinement_list="1 2 4"
+    elif [ $ncell -eq 2048 ]; then
         refinement_list="1 2"
+    elif [ $ncell -eq 4096 ]; then
+        refinement_list="1"
     fi
 
-    for refinement in $refinement_list
-    do
+    base_dir=$results_dir/amr/n$ncell
+    start_dir=$base_dir/start
+    save_dir=$base_dir/save
 
-        # Don't run the large jobs on SeaWulf,
-        # and don't run the small jobs on Titan.
+    start_done="0"
 
-        if [ $ncell -gt 1024 ] && [ $MACHINE == "SEAWULF" ]; then
-            continue
-        elif [ $ncell -lt 2048 ] && [ $MACHINE == "TITAN" ]; then
-            continue
+    if [ -d $start_dir ]; then
+        dir=$start_dir
+        start_done=$(is_dir_done)
+    fi
+
+    save_done="0"
+
+    if [ -d "$save_dir/chk00000" ] || [ -d "$save_dir/output/chk00000" ]; then
+        save_done="1"
+    fi
+
+    if [ $start_done -ne 1 ]; then
+
+        # First, we need to do the initial run, up to a point
+        # just prior to the detonation. We'll run up until the
+        # density reaches 10^7 g/cc.
+
+        castro_density_stopping_criterion="1.e7"
+
+        dir=$start_dir
+        set_run_opts
+        if [ $to_run -eq 1 ]; then
+            run
         fi
 
-        dir=$results_dir/amr/n$ncell/r$refinement
+        unset castro_density_stopping_criterion
 
+    elif [ $save_done -ne 1 ]; then
+
+        # Now, if we have completed this step, the next step is
+        # to relabel this checkpoint as step 0 at time 0.
+
+        checkpoint=$(get_last_checkpoint $start_dir)
+
+        old_stop_time=$stop_time
+
+        amr_regrid_on_restart="1"
+        amr_checkpoint_on_restart="1"
+        castro_reset_checkpoint_time="0.0"
+        castro_reset_checkpoint_step="0"
+        stop_time="0.0"
+        max_step="0"
+        amr_check_int="1" # So no checkpoints get deleted by the run scripts
+
+        dir=$save_dir
         set_run_opts
-        run
 
-    done
+        # First, create the directory without submitting the job.
+
+        no_submit=1
+
+        if [ $to_run -eq 1 ]; then
+            run
+        fi
+
+        unset no_submit
+
+        # Now, with the directory created, copy the source checkpoint and do the run.
+
+        if [ ! -d "$save_dir/$checkpoint" ]; then
+            echo "Copying final checkpoint to" $save_dir "for relabelling."
+            cp -r "$start_dir/$checkpoint" "$save_dir"
+            rm -f "$save_dir/$checkpoint/jobIsDone"
+        fi
+
+        submit_even_if_done="1"
+        if [ $to_run -eq 1 ]; then
+            run
+        fi
+        unset submit_even_if_done
+
+        unset amr_regrid_on_restart
+        unset amr_checkpoint_on_restart
+        unset castro_reset_checkpoint_time
+        unset castro_reset_checkpoint_step
+        unset max_step
+        unset amr_check_int
+        stop_time=$old_stop_time
+
+    else
+
+        # At this point we should have a chk00000 in $save_dir. The final step is to
+        # create the run directory (without submitting the job), and copy the checkpoint
+        # into it.
+
+        for refinement in $refinement_list
+        do
+
+            dir=$base_dir/r$refinement
+
+            job_flag=$(is_job_running $dir)
+
+            if [ $job_flag -ne 1 ]; then
+
+                done_flag=$(is_dir_done)
+
+                if [ $done_flag -ne 1 ]; then
+
+                    no_submit=1
+
+                    set_run_opts
+                    if [ $to_run -eq 1 ]; then
+                        run
+                    fi
+
+                    unset no_submit
+
+                    if [ ! -d "$dir/chk00000" ] && [ ! -d "$dir/output/chk00000" ]; then
+
+                        echo "Copying initial checkpoint to" $dir"."
+
+                        if [ -d "$save_dir/chk00000" ]; then
+                            cp -r "$save_dir/chk00000" $dir
+                        elif [ -d "$save_dir/output/chk00000" ]; then
+                            cp -r "$save_dir/output/chk00000" $dir
+                        else
+                            echoerr "No initial checkpoint available, exiting."
+                            exit
+                        fi
+
+                    fi
+
+                    # Before we submit the job, we need to know how long to run.
+                    # To figure this out, we'll subtract from the final stop time
+                    # the amount already completed.
+
+                    checkpoint=$(get_last_checkpoint $save_dir)
+                    chk_time=$(awk 'NR==3' $save_dir/$checkpoint/Header)
+
+                    old_stop_time=$stop_time
+                    stop_time=$(echo "$stop_time - $chk_time" | bc -l)
+
+                    replace_inputs_var "stop_time"
+
+                    stop_time=$old_stop_time
+
+                    # We also want to make sure that we get a final plotfile,
+                    # since the new stop_time might not be a regular multiple
+                    # of the plotting interval.
+
+                    castro_output_at_completion=1
+
+                    replace_inputs_var "castro_output_at_completion"
+
+                    unset castro_output_at_completion
+
+                fi
+
+            fi
+
+            # Now we can submit the job.
+
+            if [ $to_run -eq 1 ]; then
+                run
+            fi
+
+        done
+
+    fi
+
 done
 
 ncell=$ncell_default
@@ -523,7 +681,9 @@ do
     dir=$results_dir/burning_limiter_mode/mode$castro_dtnuc_mode
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
@@ -534,7 +694,7 @@ castro_dtnuc_mode=$limiter_mode_default
 
 # Test the effect of the burning timestep limiter parameter values.
 
-dtnuc_list="10000.0 5000.0 2000.0 1000.0 500.0 200.0 100.0 50.0 20.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.05 0.02 0.01 0.005 0.002 0.001 0.0005 0.0002 0.0001"
+dtnuc_list="10000.0 1000.0 100.0 10.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001"
 
 for dtnuc in $dtnuc_list
 do
@@ -544,15 +704,15 @@ do
     dir=$results_dir/burning_limiter_e/dt$castro$dtnuc
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
 castro_dtnuc_e=$dtnuc_e_default
 
 
-
-dtnuc_list="10000.0 5000.0 2000.0 1000.0 500.0 200.0 100.0 50.0 20.0 10.0 5.0 2.0 1.0 0.5 0.4 0.3 0.2 0.1 0.05 0.02 0.01 0.005 0.002 0.001"
 
 for dtnuc in $dtnuc_list
 do
@@ -562,7 +722,9 @@ do
     dir=$results_dir/burning_limiter_X/dt$castro$dtnuc
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
@@ -580,7 +742,9 @@ do
     dir=$results_dir/burning_mode/$burning_mode
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
@@ -590,7 +754,7 @@ burning_mode=$burning_mode_default
 
 # Test the dependence on the minimum temperature for reactions.
 
-T_min_list="2.0e7 4.0e7 6.0e7 8.0e7 1.0e8 2.0e8 3.0e8 4.0e8"
+T_min_list="1.0e7 1.0e8"
 
 for castro_react_T_min in $T_min_list
 do
@@ -598,7 +762,9 @@ do
     dir=$results_dir/T_min/T$castro_react_T_min
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
@@ -608,7 +774,7 @@ castro_react_T_min=$T_min_default
 
 # Test the dependence on the minimum density for reactions.
 
-rho_min_list="1.0e0 1.0e1 1.0e2 1.0e3 1.0e4 1.0e5 1.0e6"
+rho_min_list="1.0e0 1.0e6"
 
 for castro_react_rho_min in $rho_min_list
 do
@@ -616,7 +782,9 @@ do
     dir=$results_dir/rho_min/rho$castro_react_rho_min
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
@@ -626,7 +794,9 @@ castro_react_rho_min=$rho_min_default
 
 # Test the effect of ODE solver tolerance.
 
-for enuc_tol in 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4 1.d-3
+tol_list="1.d-12 1.d-10 1.d-8 1.d-6 1.d-4"
+
+for enuc_tol in $tol_list
 do
 
     atol_enuc=$enuc_tol
@@ -635,7 +805,9 @@ do
     dir=$results_dir/enuc_tol/tol$enuc_tol
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
@@ -644,7 +816,7 @@ rtol_enuc=$enuc_tol_default
 
 
 
-for temp_tol in 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4 1.d-3
+for temp_tol in $tol_list
 do
 
     atol_temp=$temp_tol
@@ -653,7 +825,9 @@ do
     dir=$results_dir/temp_tol/tol$temp_tol
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
@@ -662,7 +836,7 @@ rtol_temp=$temp_tol_default
 
 
 
-for spec_tol in 1.d-12 1.d-11 1.d-10 1.d-9 1.d-8 1.d-7 1.d-6 1.d-5 1.d-4
+for spec_tol in $tol_list
 do
 
     atol_spec=$spec_tol
@@ -671,7 +845,9 @@ do
     dir=$results_dir/spec_tol/tol$spec_tol
 
     set_run_opts
-    run
+    if [ $to_run -eq 1 ]; then
+        run
+    fi
 
 done
 
