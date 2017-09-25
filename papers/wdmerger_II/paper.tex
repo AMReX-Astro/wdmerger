@@ -299,8 +299,10 @@ with \vode\ and Stoer and Bulirsch. We keep doing this until either we have loos
 the tolerances enough for one of the two methods to succeed, or until we have loosened
 the tolerances by two orders of magnitude, at which point we finally give up. We have
 found that this scheme is resilient enough to handle all of the simulations shown below.
-We have also verified that our results do not depend much on the tolerances when they
-are tighter than $10^{-4}$.
+We have also verified that our results do not depend strongly on the tolerances when they
+are tighter than $10^{-4}$. For the typical collision problem we discuss below, the
+nucleosynthetic yield for nickel varies by less than 5\% between a tolerance of $10^{-4}$
+and a tolerance of $10^{-12}$.
 
 \subsection{Coupling to the Hydrodynamics}
 \label{sec:hydrocoupling}
