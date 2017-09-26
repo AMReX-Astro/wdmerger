@@ -463,22 +463,24 @@ do
     # For the higher resolution runs, the tolerance
     # on the gravity solve needs to be loosened a little.
 
-    if   [ $ncell -gt 8192 ]; then
+    if   [ $ncell -ge 8192 ]; then
         gravity_abs_tol="1.e-8"
-    elif [ $ncell -gt 2048 ]; then
+    elif [ $ncell -eq 4096 ]; then
         gravity_abs_tol="1.e-9"
+    elif [ $ncell -eq 2048 ]; then
+        gravity_abs_tol="5.e-9"
     else
         gravity_abs_tol=$grav_tol_default
     fi
 
     if   [ $ncell -eq 256 ]; then
-        refinement_list="1 2 4 8 16"
+        refinement_list="1 2 4 8 16 32 64 128"
     elif [ $ncell -eq 512 ]; then
-        refinement_list="1 2 4 8"
+        refinement_list="1 2 4 8 16 32 64"
     elif [ $ncell -eq 1024 ]; then
-        refinement_list="1 2 4"
+        refinement_list="1 2 4 8 16"
     elif [ $ncell -eq 2048 ]; then
-        refinement_list="1 2"
+        refinement_list="1 2 4"
     elif [ $ncell -eq 4096 ]; then
         refinement_list="1"
     fi
