@@ -11,28 +11,29 @@ function set_run_opts {
 
     to_run=1
 
-    # The following assumes we are using SeaWulf.
+    # The following assumes we are using Titan.
 
-    if [ $MACHINE == "SEAWULF" ]; then
+    if [ $MACHINE == "TITAN" ]; then
 
-        OMP_NUM_THREADS=1
+        queue="batch"
 
-        if [ $ncell -gt 1024 ]; then
-            queue="short"
-            nprocs="224"
-            walltime="4:00:00"
+        if   [ $ncell -eq 4096 ]; then
+            nprocs="2048"
+            walltime="6:00:00"
+        elif [ $ncell -eq 2048 ]; then
+            nprocs="2048"
+            walltime="6:00:00"
         elif [ $ncell -eq 1024 ]; then
-            queue="short"
-            nprocs="112"
-            walltime="4:00:00"
+            nprocs="512"
+            walltime="2:00:00"
         elif [ $ncell -eq 512 ]; then
-            queue="short"
-            nprocs="56"
-            walltime="4:00:00"
+            nprocs="128"
+            walltime="2:00:00"
+        elif [ $ncell -eq 256 ]; then
+            nprocs="32"
+            walltime="2:00:00"
         else
-            queue="long"
-            nprocs="28"
-            walltime="24:00:00"
+            echoerr "Unknown number of cells per dimension."
         fi
 
     else
@@ -480,7 +481,7 @@ do
     elif [ $ncell -eq 1024 ]; then
         refinement_list="1 2 4 8 16"
     elif [ $ncell -eq 2048 ]; then
-        refinement_list="1 2 4"
+        refinement_list="1 2 4 8"
     elif [ $ncell -eq 4096 ]; then
         refinement_list="1"
     fi
