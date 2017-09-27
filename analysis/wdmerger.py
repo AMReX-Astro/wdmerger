@@ -629,7 +629,7 @@ def get_plotfiles(directory, prefix = 'plt'):
 
     # List all of the files in the directory.
 
-    dir_contents = os.listdir(directory)
+    dir_contents = os.listdir(directory + '/output')
 
     # Strip out non-plotfiles.
 
@@ -746,6 +746,22 @@ def get_star_locs(plotfile):
     zz_S_com = np.sum( dens[S_idx] * zz[S_idx] ) / np.sum(dens[S_idx])
 
     return [xx_P_com, yy_P_com, zz_P_com, xx_S_com, yy_S_com, zz_S_com]
+
+
+
+#
+# Given a plotfile, return the location of the maximum value of the given field.
+#
+
+def get_maxloc(plotfile, field):
+    """Given a plotfile, return the location of the maximum value of the given field."""
+
+    import yt
+
+    ds = yt.load(plotfile)
+    ad = ds.all_data()
+
+    return ad.quantities.max_location(field)
 
 
 
