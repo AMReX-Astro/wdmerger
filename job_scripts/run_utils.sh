@@ -1160,6 +1160,7 @@ function check_to_stop {
   # AMReX's framework requires a particular file name to exist in the local directory, 
   # to trigger a checkpoint and quit.
 
+  rm -f "dump_and_continue"
   touch "dump_and_stop"
 
   # Now handle the case where the job is running on one timestep so long that dump_and_stop
