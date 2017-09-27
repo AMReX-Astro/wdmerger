@@ -1052,9 +1052,12 @@ function check_to_stop {
 
       # Periodically dump checkpoints as a safeguard against system crashes.
       # Obviously for this to work properly, we need sleepInterval << checkpointInterval.
+      # Skip this step if there's already a dump_and_stop, though.
 
       if [ $curr_wall_time -gt $nextCheckpointTime ]; then
-	  touch "dump_and_continue"
+          if [ ! -e "dump_and_stop" ]; then
+	      touch "dump_and_continue"
+          fi
 	  nextCheckpointTime=$(echo "$curr_wall_time + $checkpointInterval" | bc)
       fi
 
@@ -1154,7 +1157,7 @@ function check_to_stop {
 
   done
 
-  # BoxLib's framework requires a particular file name to exist in the local directory, 
+  # AMReX's framework requires a particular file name to exist in the local directory, 
   # to trigger a checkpoint and quit.
 
   touch "dump_and_stop"
