@@ -1110,6 +1110,12 @@ def rho_T_sliceplot(output_filename, pltfile,
     from yt.visualization.api import get_multi_plot
     from matplotlib.colors import LogNorm
 
+    # Complain if the file type is not EPS
+
+    if output_filename[-2:0] != "eps":
+        print("Error: expecting an EPS output file.")
+        return
+
     fig, axes, colorbars = get_multi_plot(2, 1, colorbar = 'horizontal', bw = 6)
 
     ds = yt.load(pltfile)
@@ -1208,9 +1214,9 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     insert_commits_into_eps(output_filename, pltfile, 'plot')
 
-    # Save as JPG
+    # Save as PNG
 
-    fig.savefig(output_filename.replace('eps', 'jpg'), bbox_inches='tight')
+    fig.savefig(output_filename.replace('eps', 'png'), bbox_inches='tight')
 
     plt.close()
 
