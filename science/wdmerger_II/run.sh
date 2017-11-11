@@ -17,14 +17,17 @@ function set_run_opts {
 
         queue="batch"
 
-        if   [ $ncell -eq 4096 ]; then
+        if   [ $ncell -eq 8192 ]; then
             nprocs="2048"
             walltime="6:00:00"
+        elif [ $ncell -eq 4096 ]; then
+            nprocs="1024"
+            walltime="2:00:00"
         elif [ $ncell -eq 2048 ]; then
-            nprocs="2048"
-            walltime="6:00:00"
-        elif [ $ncell -eq 1024 ]; then
             nprocs="512"
+            walltime="2:00:00"
+        elif [ $ncell -eq 1024 ]; then
+            nprocs="256"
             walltime="2:00:00"
         elif [ $ncell -eq 512 ]; then
             nprocs="128"
@@ -32,6 +35,17 @@ function set_run_opts {
         elif [ $ncell -eq 256 ]; then
             nprocs="32"
             walltime="2:00:00"
+
+            # For large enough refinement ratios,
+            # use more processors to compensate
+            # for the walltime limit.
+
+            if [ ! -z $refinement ]; then
+                if [ $refinement -eq 128 ]; then
+                    nprocs="128"
+                fi
+            fi
+
         else
             echoerr "Unknown number of cells per dimension."
         fi
@@ -48,268 +62,131 @@ function set_run_opts {
     geometry_prob_lo="0.0 $prob_lo"
     geometry_prob_hi="$prob_hi $prob_hi"
 
-    # Defaults for the coarse uniform grid.
+    if [ $ncell -eq 256 ]; then
 
-    amr_max_level="0"
-    amr_ref_ratio="2"
-    amr_blocking_factor="8"
-    amr_max_grid_size="32"
+        amr_blocking_factor="8"
+	amr_max_grid_size="32 32 64 64 128 128 256 256 512 512"
 
-    # If we specify a refinement parameter,
-    # we can use that to control amr_ref_ratio.
+    elif [ $ncell -eq 512 ]; then
+
+	amr_blocking_factor="16"
+        amr_max_grid_size="64 64 128 128 256 256 512 512 1024 1024"
+
+    elif [ $ncell -eq 1024 ]; then
+
+        amr_blocking_factor="32"
+        amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
+
+    elif [ $ncell -eq 2048 ]; then
+
+        amr_blocking_factor="64"
+	amr_max_grid_size="256 256 512 512 1024 1024 2048 2048 4096 4096"
+
+    elif [ $ncell -eq 4096 ]; then
+
+        amr_blocking_factor="128"
+	amr_max_grid_size="512 512 1024 1024 2048 2048 4096 4096 8192 8192"
+
+    elif [ $ncell -eq 8192 ]; then
+
+        amr_blocking_factor="256"
+	amr_max_grid_size="1024 1024 2048 2048 4096 4096 8192 8192 16384 16384"
+
+    elif [ $ncell -eq 16384 ]; then
+
+        amr_blocking_factor="512"
+	amr_max_grid_size="2048 2048 4096 4096 8192 8192 16384 16384 32768 32768"
+
+    fi
 
     if [ ! -z $refinement ]; then
+    
+        if [ $refinement -eq 1 ]; then
+            amr_max_level=0
+        elif [ $refinement -eq 2 ]; then
+            amr_max_level=1
+            amr_ref_ratio="2"
+        elif [ $refinement -eq 4 ]; then
+            amr_max_level=1
+            amr_ref_ratio="4"
+        elif [ $refinement -eq 8 ]; then
+            amr_max_level=2
+            amr_ref_ratio="4 2"
+        elif [ $refinement -eq 16 ]; then
+            amr_max_level=2
+            amr_ref_ratio="4 4"
+        elif [ $refinement -eq 32 ]; then
+            amr_max_level=3
+            amr_ref_ratio="4 4 2"
+        elif [ $refinement -eq 64 ]; then
+            amr_max_level=3
+            amr_ref_ratio="4 4 4"
+        elif [ $refinement -eq 128 ]; then
+            amr_max_level=4
+            amr_ref_ratio="4 4 4 2"
+        elif [ $refinement -eq 256 ]; then
+            amr_max_level=4
+            amr_ref_ratio="4 4 4 4"
+        elif [ $refinement -eq 512 ]; then
+            amr_max_level=5
+            amr_ref_ratio="4 4 4 4 2"
+        elif [ $refinement -eq 1024 ]; then
+            amr_max_level=5
+            amr_ref_ratio="4 4 4 4 4"
+        fi
 
-        # Disable refinement based on non-burning criteria.
+    fi
 
-        max_stellar_tagging_level="0"
-        max_temperature_tagging_level="0"
-        max_center_tagging_level="0"
+}
 
-	if [ $ncell -eq 256 ]; then
+function copy_checkpoint() {
 
-            amr_blocking_factor="8"
+    # Copy the initial checkpoint to the directory if it's not there yet.
 
-	    if [ $refinement -eq 1 ]; then
-		amr_max_level=0
-		amr_max_grid_size="32"
-	    elif [ $refinement -eq 2 ]; then
-		amr_max_level=1
-		amr_ref_ratio="2"
-		amr_max_grid_size="32 32"
-	    elif [ $refinement -eq 4 ]; then
-		amr_max_level=1
-		amr_ref_ratio="4"
-		amr_max_grid_size="32 32"
-	    elif [ $refinement -eq 8 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 2"
-		amr_max_grid_size="32 32 64"
-	    elif [ $refinement -eq 16 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 4"
-		amr_max_grid_size="32 32 64"
-	    elif [ $refinement -eq 32 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 2"
-		amr_max_grid_size="32 32 64 64"
-	    elif [ $refinement -eq 64 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 4"
-		amr_max_grid_size="32 32 64 64"
-	    elif [ $refinement -eq 128 ]; then
-		amr_max_level=4
-		amr_ref_ratio="4 4 4 2"
-		amr_max_grid_size="32 32 64 64 128"
-	    elif [ $refinement -eq 256 ]; then
-		amr_max_level=4
-		amr_ref_ratio="4 4 4 4"
-		amr_max_grid_size="32 32 64 64 128"
-	    elif [ $refinement -eq 512 ]; then
-		amr_max_level=5
-		amr_ref_ratio="4 4 4 4 2"
-		amr_max_grid_size="32 32 64 64 128 128"
-	    elif [ $refinement -eq 1024 ]; then
-		amr_max_level=5
-		amr_ref_ratio="4 4 4 4 4"
-		amr_max_grid_size="32 32 64 64 128 128"
-	    fi
+    job_flag=$(is_job_running $dir)
 
-        elif [ $ncell -eq 512 ]; then
+    if [ $job_flag -ne 1 ]; then
 
-	    amr_blocking_factor="16"
+        done_flag=$(is_dir_done)
 
-	    if [ $refinement -eq 1 ]; then
-		amr_max_level=0
-		amr_max_grid_size="64"
-	    elif [ $refinement -eq 2 ]; then
-		amr_max_level=1
-		amr_ref_ratio="2"
-		amr_max_grid_size="64 64"
-	    elif [ $refinement -eq 4 ]; then
-		amr_max_level=1
-		amr_ref_ratio="4"
-		amr_max_grid_size="64 64"
-	    elif [ $refinement -eq 8 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 2"
-		amr_max_grid_size="64 64 128"
-	    elif [ $refinement -eq 16 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 4"
-		amr_max_grid_size="64 64 128"
-	    elif [ $refinement -eq 32 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 2"
-		amr_max_grid_size="64 64 128 128"
-	    elif [ $refinement -eq 64 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 4"
-		amr_max_grid_size="64 64 128 128"
-            elif [ $refinement -eq 128 ]; then
-                amr_max_level=4
-                amr_ref_ratio="4 4 4 2"
-                amr_max_grid_size="64 64 128 128 256"
-            elif [ $refinement -eq 256 ]; then
-                amr_max_level=4
-                amr_ref_ratio="4 4 4 4"
-                amr_max_grid_size="64 64 128 128 256"
-	    fi
+        if [ $done_flag -ne 1 ]; then
 
-	elif [ $ncell -eq 1024 ]; then
+            no_submit=1
 
-            amr_blocking_factor="32"
+            if [ $to_run -eq 1 ]; then
+                run
+            fi
 
-	    if [ $refinement -eq 1 ]; then
-		amr_max_level=0
-		amr_max_grid_size="128"
-	    elif [ $refinement -eq 2 ]; then
-		amr_max_level=1
-		amr_ref_ratio="2"
-		amr_max_grid_size="128 128"
-	    elif [ $refinement -eq 4 ]; then
-		amr_max_level=1
-		amr_ref_ratio="4"
-		amr_max_grid_size="128 128"
-	    elif [ $refinement -eq 8 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 2"
-		amr_max_grid_size="128 128 256"
-	    elif [ $refinement -eq 16 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 4"
-		amr_max_grid_size="128 128 256"
-	    elif [ $refinement -eq 32 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 2"
-		amr_max_grid_size="128 128 256 256"
-	    elif [ $refinement -eq 64 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 4"
-		amr_max_grid_size="128 128 256 256"
-            elif [ $refinement -eq 128 ]; then
-                amr_max_level=4
-                amr_ref_ratio="4 4 4 2"
-                amr_max_grid_size="128 128 256 256 512"
-	    fi
+            unset no_submit
 
-        elif [ $ncell -eq 2048 ]; then
+            # Skip the saved checkpoint copy if there's already a checkpoint
+            # in the target directory (either it's the saved checkpoint, or it
+            # is a later one because we've already started the run).
 
-            amr_blocking_factor="64"
+            checkpoint=$(get_last_checkpoint $dir)
 
-	    if [ $refinement -eq 1 ]; then
-		amr_max_level=0
-		amr_max_grid_size="256"
-	    elif [ $refinement -eq 2 ]; then
-		amr_max_level=1
-		amr_ref_ratio="2"
-		amr_max_grid_size="256 256"
-	    elif [ $refinement -eq 4 ]; then
-		amr_max_level=1
-		amr_ref_ratio="4"
-		amr_max_grid_size="256 256"
-	    elif [ $refinement -eq 8 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 2"
-		amr_max_grid_size="256 256 512"
-	    elif [ $refinement -eq 16 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 4"
-		amr_max_grid_size="256 256 512"
-	    elif [ $refinement -eq 32 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 2"
-		amr_max_grid_size="256 256 512 512"
-	    elif [ $refinement -eq 64 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 4"
-		amr_max_grid_size="256 256 512 512"
-	    fi
+            if [ "$checkpoint" == "" ]; then
 
-        elif [ $ncell -eq 4096 ]; then
+                start_checkpoint=$(get_last_checkpoint $start_dir)
 
-            amr_blocking_factor="128"
+                echo "Copying initial checkpoint to" $dir"."
 
-	    if [ $refinement -eq 1 ]; then
-		amr_max_level=0
-		amr_max_grid_size="512"
-	    elif [ $refinement -eq 2 ]; then
-		amr_max_level=1
-		amr_ref_ratio="2"
-		amr_max_grid_size="512 512"
-	    elif [ $refinement -eq 4 ]; then
-		amr_max_level=1
-		amr_ref_ratio="4"
-		amr_max_grid_size="512 512"
-	    elif [ $refinement -eq 8 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 2"
-		amr_max_grid_size="512 512 1024"
-	    elif [ $refinement -eq 16 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 4"
-		amr_max_grid_size="512 512 1024"
-	    elif [ $refinement -eq 32 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 2"
-		amr_max_grid_size="512 512 1024 1024"
-	    elif [ $refinement -eq 64 ]; then
-		amr_max_level=3
-		amr_ref_ratio="4 4 4"
-		amr_max_grid_size="512 512 1024 1024"
-	    fi
+                if [ -d "$start_dir/$start_checkpoint" ]; then
+                    cp -r "$start_dir/$start_checkpoint" $dir
+                    rm -f "$dir/$start_checkpoint/jobIsDone"
 
-        elif [ $ncell -eq 8192 ]; then
+                    # Also, copy the diagnostic output files
+                    # so there is an apparently continuous record.
 
-            amr_blocking_factor="256"
+                    cp $start_dir/*diag.out $dir
+                else
+                    echoerr "No initial checkpoint available, exiting."
+                    exit
+                fi
 
-	    if [ $refinement -eq 1 ]; then
-		amr_max_level=0
-		amr_max_grid_size="1024"
-	    elif [ $refinement -eq 2 ]; then
-		amr_max_level=1
-		amr_ref_ratio="2"
-		amr_max_grid_size="1024 1024"
-	    elif [ $refinement -eq 4 ]; then
-		amr_max_level=1
-		amr_ref_ratio="4"
-		amr_max_grid_size="1024 1024"
-	    elif [ $refinement -eq 8 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 2"
-		amr_max_grid_size="1024 1024 2048"
-	    elif [ $refinement -eq 16 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 4"
-		amr_max_grid_size="1024 1024 2048"
-	    fi
+            fi
 
-        elif [ $ncell -eq 16384 ]; then
-
-            amr_blocking_factor="512"
-
-	    if [ $refinement -eq 1 ]; then
-		amr_max_level=0
-		amr_max_grid_size="2048"
-	    elif [ $refinement -eq 2 ]; then
-		amr_max_level=1
-		amr_ref_ratio="2"
-		amr_max_grid_size="2048 2048"
-	    elif [ $refinement -eq 4 ]; then
-		amr_max_level=1
-		amr_ref_ratio="4"
-		amr_max_grid_size="2048 2048"
-	    elif [ $refinement -eq 8 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 2"
-		amr_max_grid_size="2048 2048 4096"
-	    elif [ $refinement -eq 16 ]; then
-		amr_max_level=2
-		amr_ref_ratio="4 4"
-		amr_max_grid_size="2048 2048 4096"
-	    fi
-
-	fi
+        fi
 
     fi
 
@@ -344,6 +221,13 @@ problem="0"
 collision_separation="4.0"
 collision_impact_parameter="0.0"
 
+# Disable refinement based on non-burning criteria.
+# These can be re-enabled later for specific tests.
+
+max_stellar_tagging_level="0"
+max_temperature_tagging_level="0"
+max_center_tagging_level="0"
+
 # Make a full plotfile every second.
 
 amr_plot_per="1.0"
@@ -353,7 +237,7 @@ amr_derive_plot_vars="ALL"
 # Make small plotfiles rapidly.
 
 amr_small_plot_per="0.01"
-amr_small_plot_vars="density Temp"
+amr_small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr_derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
 # Ensure that plotting intervals are hit exactly.
@@ -418,19 +302,9 @@ ncell_default="256"
 dtnuc_e_default="1.e200"
 dtnuc_X_default="1.e200"
 dxnuc_default="1.0e200"
+dxnuc_max_default="1.0e200"
 mass_P_default="0.64"
 mass_S_default="0.64"
-limiter_mode_default="1"
-burning_mode_default="1"
-T_min_default="1.0e8"
-rho_min_default="1.0e6"
-small_temp_default="1.0e7"
-spec_tol_default="1.0e-6"
-enuc_tol_default="1.0e-6"
-temp_tol_default="1.0e-6"
-grav_tol_default="1.0e-10"
-react_T_min_default="1.0e8"
-react_rho_min_default="1.0e6"
 
 ncell=$ncell_default
 mass_P=$mass_P_default
@@ -438,9 +312,10 @@ mass_S=$mass_S_default
 castro_dtnuc_e=$dtnuc_e_default
 castro_dtnuc_X=$dtnuc_X_default
 castro_dxnuc=$dxnuc_default
-castro_react_T_min=$react_T_min_default
-castro_react_rho_min=$react_rho_min_default
-castro_small_temp=$small_temp_default
+castro_dxnuc_max=$dxnuc_max_default
+castro_react_T_min="1.0e8"
+castro_react_rho_min="1.0e6"
+castro_small_temp="1.0e7"
 
 
 
@@ -450,19 +325,15 @@ to_run=1
 
 
 
-# Test the effect of the burning resolution limiter.
-
-amr_max_level=9
-
-castro_dxnuc="1.0e-1"
-
-ncell_list="256 512 1024 2048 4096"
+ncell_list="256 512 1024 8192" # 2048 4096"
 
 for ncell in $ncell_list
 do
 
-    # For the higher resolution runs, the tolerance
-    # on the gravity solve needs to be loosened a little.
+    # The tolerance on the gravity solve needs to
+    # be loosened with resolution, we have found
+    # experimentally. This is mostly a problem with
+    # the cylindrical grid we are using.
 
     if   [ $ncell -ge 8192 ]; then
         gravity_abs_tol="1.e-8"
@@ -471,24 +342,11 @@ do
     elif [ $ncell -eq 2048 ]; then
         gravity_abs_tol="5.e-9"
     else
-        gravity_abs_tol=$grav_tol_default
+        gravity_abs_tol="1.e-10"
     fi
 
-    if   [ $ncell -eq 256 ]; then
-        refinement_list="1 2 4 8 16 32 64 128"
-    elif [ $ncell -eq 512 ]; then
-        refinement_list="1 2 4 8 16 32 64"
-    elif [ $ncell -eq 1024 ]; then
-        refinement_list="1 2 4 8 16"
-    elif [ $ncell -eq 2048 ]; then
-        refinement_list="1 2 4 8"
-    elif [ $ncell -eq 4096 ]; then
-        refinement_list="1"
-    fi
-
-    base_dir=$results_dir/amr/n$ncell
+    base_dir=$results_dir/collision_2D/mass_P_$mass_P/mass_S_$mass_S/n$ncell
     start_dir=$base_dir/start
-    save_dir=$base_dir/save
 
     start_done="0"
 
@@ -497,152 +355,54 @@ do
         start_done=$(is_dir_done)
     fi
 
-    save_done="0"
-
-    if [ -d "$save_dir/chk00000" ] || [ -d "$save_dir/output/chk00000" ]; then
-        save_done="1"
-    fi
-
     if [ $start_done -ne 1 ]; then
-
-        # First, we need to do the initial run, up to a point
-        # just prior to the detonation. We'll run up until the
-        # density reaches 10^7 g/cc.
-
-        castro_density_stopping_criterion="1.e7"
 
         dir=$start_dir
         set_run_opts
-        if [ $to_run -eq 1 ]; then
-            run
-        fi
 
-        unset castro_density_stopping_criterion
+        # First, we need to do the initial run, up to the point
+        # when burning starts.
 
-    elif [ $save_done -ne 1 ]; then
+        castro_ts_te_stopping_criterion="1.0e-6"
 
-        # Now, if we have completed this step, the next step is
-        # to relabel this checkpoint as step 0 at time 0.
+        # Ensure that we are using a uniform grid.
 
-        checkpoint=$(get_last_checkpoint $start_dir)
-
-        old_stop_time=$stop_time
-
-        amr_regrid_on_restart="1"
-        amr_checkpoint_on_restart="1"
-        castro_reset_checkpoint_time="0.0"
-        castro_reset_checkpoint_step="0"
-        stop_time="0.0"
-        max_step="0"
-        amr_check_int="1" # So no checkpoints get deleted by the run scripts
-
-        dir=$save_dir
-        set_run_opts
-
-        # First, create the directory without submitting the job.
-
-        no_submit=1
+        amr_max_level=0
 
         if [ $to_run -eq 1 ]; then
             run
         fi
 
-        unset no_submit
-
-        # Now, with the directory created, copy the source checkpoint and do the run.
-
-        if [ ! -d "$save_dir/$checkpoint" ]; then
-            echo "Copying final checkpoint to" $save_dir "for relabelling."
-            cp -r "$start_dir/$checkpoint" "$save_dir"
-            rm -f "$save_dir/$checkpoint/jobIsDone"
-        fi
-
-        submit_even_if_done="1"
-        if [ $to_run -eq 1 ]; then
-            run
-        fi
-        unset submit_even_if_done
-
-        unset amr_regrid_on_restart
-        unset amr_checkpoint_on_restart
-        unset castro_reset_checkpoint_time
-        unset castro_reset_checkpoint_step
-        unset max_step
-        unset amr_check_int
-        stop_time=$old_stop_time
+        unset castro_ts_te_stopping_criterion
 
     else
 
-        # At this point we should have a chk00000 in $save_dir. The final step is to
-        # create the run directory (without submitting the job), and copy the checkpoint
-        # into it.
+        # At this point we should have our starting checkpoint in $start_dir.
+        # Now we can do the runs by copying the checkpoint.
 
-        for refinement in $refinement_list
+
+
+        # Test the effect of the burning timestep limiter parameter values.
+
+        dtnuc_e_list=""
+        dtnuc_X_list=""
+
+        if [ $ncell -eq 256 ]; then
+
+            dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1"
+            dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1"
+
+        fi
+
+        for dtnuc in $dtnuc_e_list
         do
 
-            dir=$base_dir/r$refinement
+            castro_dtnuc_e=$dtnuc
 
-            job_flag=$(is_job_running $dir)
+            dir=$base_dir/burning_limiter_e/dt$dtnuc
+            set_run_opts
 
-            if [ $job_flag -ne 1 ]; then
-
-                done_flag=$(is_dir_done)
-
-                if [ $done_flag -ne 1 ]; then
-
-                    no_submit=1
-
-                    set_run_opts
-                    if [ $to_run -eq 1 ]; then
-                        run
-                    fi
-
-                    unset no_submit
-
-                    if [ ! -d "$dir/chk00000" ] && [ ! -d "$dir/output/chk00000" ]; then
-
-                        echo "Copying initial checkpoint to" $dir"."
-
-                        if [ -d "$save_dir/chk00000" ]; then
-                            cp -r "$save_dir/chk00000" $dir
-                        elif [ -d "$save_dir/output/chk00000" ]; then
-                            cp -r "$save_dir/output/chk00000" $dir
-                        else
-                            echoerr "No initial checkpoint available, exiting."
-                            exit
-                        fi
-
-                    fi
-
-                    # Before we submit the job, we need to know how long to run.
-                    # To figure this out, we'll subtract from the final stop time
-                    # the amount already completed.
-
-                    checkpoint=$(get_last_checkpoint $save_dir)
-                    chk_time=$(awk 'NR==3' $save_dir/$checkpoint/Header)
-
-                    old_stop_time=$stop_time
-                    stop_time=$(echo "$stop_time - $chk_time" | bc -l)
-
-                    replace_inputs_var "stop_time"
-
-                    stop_time=$old_stop_time
-
-                    # We also want to make sure that we get a final plotfile,
-                    # since the new stop_time might not be a regular multiple
-                    # of the plotting interval.
-
-                    castro_output_at_completion=1
-
-                    replace_inputs_var "castro_output_at_completion"
-
-                    unset castro_output_at_completion
-
-                fi
-
-            fi
-
-            # Now we can submit the job.
+            copy_checkpoint
 
             if [ $to_run -eq 1 ]; then
                 run
@@ -650,209 +410,107 @@ do
 
         done
 
+        castro_dtnuc_e=$dtnuc_e_default
+
+
+
+        for dtnuc in $dtnuc_X_list
+        do
+
+            castro_dtnuc_X=$dtnuc
+
+            dir=$base_dir/burning_limiter_X/dt$dtnuc
+            set_run_opts
+
+            copy_checkpoint
+
+            if [ $to_run -eq 1 ]; then
+                run
+            fi
+
+        done
+
+        castro_dtnuc_X=$dtnuc_X_default
+
+
+
+        # Do runs with burning-based AMR up to a selected level.
+        # Do this for both the self-heating and suppressed burns.
+
+        amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+
+        for burning_mode_str in "self-heat"
+        do
+
+            refinement_list=""
+
+            if   [ $ncell -eq 256 ]; then
+                refinement_list="1 2 4 8 16 32 64 128"
+            elif [ $ncell -eq 512 ]; then
+                refinement_list="1 2 4 8 16 32 64"
+            elif [ $ncell -eq 1024 ]; then
+                refinement_list="1 2 4 8 16 32"
+            elif [ $ncell -eq 2048 ]; then
+                refinement_list="1 2 4 8 16"
+            elif [ $ncell -eq 4096 ]; then
+                refinement_list="1 2 4 8"
+            elif [ $ncell -eq 8192 ]; then
+                refinement_list="1"
+            fi
+
+            for refinement in $refinement_list
+            do
+
+                if [ $burning_mode_str == "self-heat" ]; then
+                    burning_mode="1"
+                else
+                    burning_mode="3"
+                fi
+
+                castro_dxnuc="1.0e-6"
+                castro_dxnuc_max="1.0e0"
+
+                dir=$base_dir/$burning_mode_str/dxnuc/r$refinement/
+                set_run_opts
+
+                copy_checkpoint
+
+                if [ $to_run -eq 1 ]; then
+                    run
+                fi
+
+                castro_dxnuc=$dxnuc_default
+                castro_dxnuc_max=$dxnuc_max_default
+
+
+
+                if [ $ncell -eq 256 ]; then
+
+                    max_center_tagging_level=20
+                    center_tagging_radius=2.0d8
+
+                    dir=$base_dir/$burning_mode_str/center/r$refinement/
+                    set_run_opts
+
+                    copy_checkpoint
+
+                    if [ $to_run -eq 1 ]; then
+                        run
+                    fi
+
+                    center_tagging_radius=0.0d0
+                    max_center_tagging_level=0
+
+                fi
+
+            done
+
+            unset refinement
+
+        done
+
+        burning_mode=$burning_mode_default
+
     fi
 
 done
-
-ncell=$ncell_default
-castro_dxnuc=$dxnuc_default
-gravity_abs_tol=$grav_tol_default
-
-unset refinement
-unset castro_max_dt
-unset amr_max_level
-
-
-
-# Fix the resolution for the remainder of the runs.
-
-ncell=$ncell_default
-amr_max_level=0
-
-
-
-# Test the effect of the different timestep limiter methods. For this we
-# will only limit the timestep based on internal energy, for comparison
-# to previous work.
-
-castro_dtnuc_e="0.3"
-dtnuc_mode_list="1 2 3 4"
-
-for castro_dtnuc_mode in $dtnuc_mode_list
-do
-
-    dir=$results_dir/burning_limiter_mode/mode$castro_dtnuc_mode
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-castro_dtnuc_e=$dtnuc_e_default
-castro_dtnuc_mode=$limiter_mode_default
-
-
-
-# Test the effect of the burning timestep limiter parameter values.
-
-dtnuc_list="10000.0 1000.0 100.0 10.0 1.0 0.5 0.4 0.3 0.2 0.1 0.01 0.001"
-
-for dtnuc in $dtnuc_list
-do
-
-    castro_dtnuc_e=$dtnuc
-
-    dir=$results_dir/burning_limiter_e/dt$castro$dtnuc
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-castro_dtnuc_e=$dtnuc_e_default
-
-
-
-for dtnuc in $dtnuc_list
-do
-
-    castro_dtnuc_X=$dtnuc
-
-    dir=$results_dir/burning_limiter_X/dt$castro$dtnuc
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-castro_dtnuc_X=$dtnuc_X_default
-
-
-
-# Test the effect of the various burning modes.
-
-burning_mode_list="0 1 2 3"
-
-for burning_mode in $burning_mode_list
-do
-
-    dir=$results_dir/burning_mode/$burning_mode
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-burning_mode=$burning_mode_default
-
-
-
-# Test the dependence on the minimum temperature for reactions.
-
-T_min_list="1.0e7 1.0e8"
-
-for castro_react_T_min in $T_min_list
-do
-
-    dir=$results_dir/T_min/T$castro_react_T_min
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-castro_react_T_min=$T_min_default
-
-
-
-# Test the dependence on the minimum density for reactions.
-
-rho_min_list="1.0e0 1.0e6"
-
-for castro_react_rho_min in $rho_min_list
-do
-
-    dir=$results_dir/rho_min/rho$castro_react_rho_min
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-castro_react_rho_min=$rho_min_default
-
-
-
-# Test the effect of ODE solver tolerance.
-
-tol_list="1.d-12 1.d-10 1.d-8 1.d-6 1.d-4"
-
-for enuc_tol in $tol_list
-do
-
-    atol_enuc=$enuc_tol
-    rtol_enuc=$enuc_tol
-
-    dir=$results_dir/enuc_tol/tol$enuc_tol
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-atol_enuc=$enuc_tol_default
-rtol_enuc=$enuc_tol_default
-
-
-
-for temp_tol in $tol_list
-do
-
-    atol_temp=$temp_tol
-    rtol_temp=$temp_tol
-
-    dir=$results_dir/temp_tol/tol$temp_tol
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-atol_temp=$temp_tol_default
-rtol_temp=$temp_tol_default
-
-
-
-for spec_tol in $tol_list
-do
-
-    atol_spec=$spec_tol
-    rtol_spec=$spec_tol
-
-    dir=$results_dir/spec_tol/tol$spec_tol
-
-    set_run_opts
-    if [ $to_run -eq 1 ]; then
-        run
-    fi
-
-done
-
-atol_spec=$spec_tol_default
-rtol_spec=$spec_tol_default
