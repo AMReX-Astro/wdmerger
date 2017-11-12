@@ -41,8 +41,10 @@ function set_run_opts {
             # for the walltime limit.
 
             if [ ! -z $refinement ]; then
-                if [ $refinement -eq 128 ]; then
+                if   [ $refinement -eq 128 ]; then
                     nprocs="128"
+                elif [ $refinement -eq 256 ]; then
+                    nprocs="256"
                 fi
             fi
 
@@ -455,7 +457,7 @@ do
             elif [ $ncell -eq 4096 ]; then
                 refinement_list="1 2 4 8"
             elif [ $ncell -eq 8192 ]; then
-                refinement_list="1"
+                refinement_list="1 2 4"
             fi
 
             for refinement in $refinement_list

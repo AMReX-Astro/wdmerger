@@ -5,7 +5,7 @@ matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import os
 
-linestyles = ['-', '--', ':,' ':']
+linestyles = ['-', '--', ':', '-.']
 markers = ['', '', '', 'o']
 
 # Colors are chosen with the assistance of colorbrewer2.org,
@@ -219,6 +219,9 @@ def burning_limiter_e(eps_filename, results_base):
 
     results_dir = results_base + 'burning_limiter_e/'
 
+    if not os.path.isdir(results_dir):
+        return
+
     # Get the list of parameter values we have tried
 
     dtnuc_list = wdmerger.get_parameter_list(results_dir)
@@ -260,6 +263,9 @@ def burning_limiter_X(eps_filename, results_base):
         print("Generating file %s" % eps_filename)
 
     results_dir = results_base + 'burning_limiter_X/'
+
+    if not os.path.isdir(results_dir):
+        return
 
     # Get the list of parameter values we have tried
 
@@ -305,6 +311,9 @@ def burning_limiter(eps_filename, results_base):
 
     results_dir = results_base + 'burning_limiter_e/'
 
+    if not os.path.isdir(results_dir):
+        return
+
     # Get the list of parameter values we have tried
 
     dtnuc_e_list = wdmerger.get_parameter_list(results_dir)
@@ -324,6 +333,9 @@ def burning_limiter(eps_filename, results_base):
 
 
     results_dir = results_base + 'burning_limiter_X/'
+
+    if not os.path.isdir(results_dir):
+        return
 
     # Get the list of parameter values we have tried
 
@@ -375,6 +387,9 @@ def burning_limiter_mode(out_filename, results_base):
 
     results_dir = results_base + '/burning_limiter_mode'
 
+    if not os.path.isdir(results_dir):
+        return
+
     param_list = wdmerger.get_parameter_list(results_dir)
 
     if (param_list == []):
@@ -416,73 +431,79 @@ def ode_tolerances(eps_filename, results_base):
 
     results_dir = results_base + 'spec_tol/'
 
-    # Get the list of parameter values we have tried
-
-    tol_list = wdmerger.get_parameter_list(results_dir)
-
-    if (tol_list == []):
+    if not os.path.isdir(results_dir):
         return
 
-    ni56_arr = np.array(get_ni56(results_dir))
+    # Get the list of parameter values we have tried
 
-    tol_list = [tol[len('tol'):] for tol in tol_list]
-    tol_list = np.array([float(tol.replace('d','e')) for tol in tol_list])
+    s_tol_list = wdmerger.get_parameter_list(results_dir)
+
+    if (s_tol_list == []):
+        return
+
+    ni56_s_arr = np.array(get_ni56(results_dir))
+
+    tol_s_list = [tol[len('tol'):] for tol in tol_s_list]
+    tol_s_list = np.array([float(tol.replace('d','e')) for tol in tol_s_list])
 
     # Sort the lists
 
-    ni56_arr = np.array([x for _,x in sorted(zip(tol_list,ni56_arr))])
-    tol_list = sorted(tol_list)
-
-    plt.plot(tol_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, label=r'Species Tolerance')
+    ni56_s_arr = np.array([x for _,x in sorted(zip(tol_s_list,ni56_s_arr))])
+    tol_s_list = sorted(tol_s_list)
 
 
 
     results_dir = results_base + 'temp_tol/'
 
-    # Get the list of parameter values we have tried
-
-    tol_list = wdmerger.get_parameter_list(results_dir)
-
-    if (tol_list == []):
+    if not os.path.isdir(results_dir):
         return
 
-    ni56_arr = np.array(get_ni56(results_dir))
+    # Get the list of parameter values we have tried
 
-    tol_list = [tol[len('tol'):] for tol in tol_list]
-    tol_list = np.array([float(tol.replace('d','e')) for tol in tol_list])
+    tol_t_list = wdmerger.get_parameter_list(results_dir)
+
+    if (tol_t_list == []):
+        return
+
+    ni56_t_arr = np.array(get_ni56(results_dir))
+
+    tol_t_list = [tol[len('tol'):] for tol in tol_t_list]
+    tol_t_list = np.array([float(tol.replace('d','e')) for tol in tol_t_list])
 
     # Sort the lists
 
-    ni56_arr = np.array([x for _,x in sorted(zip(tol_list,ni56_arr))])
-    tol_list = sorted(tol_list)
-
-    plt.plot(tol_list, ni56_arr, linestyle=linestyles[1], lw = 4.0, label=r'Temperature Tolerance')
+    ni56_t_arr = np.array([x for _,x in sorted(zip(tol_t_list,ni56_t_arr))])
+    tol_t_list = sorted(tol_t_list)
 
 
 
     results_dir = results_base + 'enuc_tol/'
 
-    # Get the list of parameter values we have tried
-
-    tol_list = wdmerger.get_parameter_list(results_dir)
-
-    if (tol_list == []):
+    if not os.path.isdir(results_dir):
         return
 
-    ni56_arr = np.array(get_ni56(results_dir))
+    # Get the list of parameter values we have tried
 
-    tol_list = [tol[len('tol'):] for tol in tol_list]
-    tol_list = np.array([float(tol.replace('d','e')) for tol in tol_list])
+    tol_e_list = wdmerger.get_parameter_list(results_dir)
+
+    if (tol_e_list == []):
+        return
+
+    ni56_e_arr = np.array(get_ni56(results_dir))
+
+    tol_e_list = [tol[len('tol'):] for tol in tol_e_list]
+    tol_e_list = np.array([float(tol.replace('d','e')) for tol in tol_e_list])
 
     # Sort the lists
 
-    ni56_arr = np.array([x for _,x in sorted(zip(tol_list,ni56_arr))])
-    tol_list = sorted(tol_list)
-
-    plt.plot(tol_list, ni56_arr, linestyle=linestyles[2], lw = 4.0, label=r'Energy Tolerance')
+    ni56_e_arr = np.array([x for _,x in sorted(zip(tol_e_list,ni56_e_arr))])
+    tol_e_list = sorted(tol_e_list)
 
 
 
+    plt.plot(tol_s_list, ni56_s_arr, linestyle=linestyles[0], lw = 4.0, label=r'Species Tolerance')
+    plt.plot(tol_t_list, ni56_t_arr, linestyle=linestyles[1], lw = 4.0, label=r'Temperature Tolerance')
+    plt.plot(tol_e_list, ni56_e_arr, linestyle=linestyles[2], lw = 4.0, label=r'Energy Tolerance')
     plt.xscale('log')
     plt.xlabel(r"ODE Error Tolerance", fontsize=20)
     plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
@@ -511,6 +532,9 @@ def t_min(out_filename, results_base):
     # Get the list of parameter values we have tried
 
     results_dir = results_base + '/T_min'
+
+    if not os.path.isdir(results_dir):
+        return
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
@@ -562,6 +586,9 @@ def rho_min(out_filename, results_base):
 
     results_dir = results_base + '/rho_min'
 
+    if not os.path.isdir(results_dir):
+        return
+
     param_list = wdmerger.get_parameter_list(results_dir)
 
     if (param_list == []):
@@ -612,6 +639,9 @@ def burning_mode(out_filename, results_base):
     # Get the list of parameter values we have tried
 
     results_dir = results_base + '/burning_mode'
+
+    if not os.path.isdir(results_dir):
+        return
 
     param_list = wdmerger.get_parameter_list(results_dir)
 
@@ -671,8 +701,8 @@ def burning_mode(out_filename, results_base):
 
 
 
-def amr(eps_filename, results_base):
-    """Plot the effect of the refinement based on the nuclear burning rate."""
+def amr_nickel(eps_filename, results_base):
+    """Plot the effect of the refinement based on the nuclear burning rate on the nickel generation."""
 
     import os
 
@@ -685,19 +715,23 @@ def amr(eps_filename, results_base):
     import numpy as np
     from matplotlib import pyplot as plt
 
-    results_dir = results_base + 'amr'
+    if not os.path.isdir(results_base):
+        return
 
-    # Loop over base number of zones per dimension.
+    diag_file = None
 
-    ncell_list = sorted([int(n[1:]) for n in os.listdir(results_dir)])
+    # First, generate a plot of nickel production.
 
-    coarse_list = []
+    ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
 
     i = 0
 
     for ncell in ncell_list:
 
-        results_dir = results_base + 'amr/n' + str(ncell)
+        results_dir = results_base + 'n' + str(ncell) + '/self-heat/dxnuc/'
+
+        if not os.path.isdir(results_dir):
+            continue
 
         # Get the list of parameter values we have tried
 
@@ -708,14 +742,17 @@ def amr(eps_filename, results_base):
         r_list = [r for r in r_list if r[0] == 'r']
 
         if (r_list == []):
-            return
+            continue
 
         r_list = [float(r[1:]) for r in r_list]
 
         ni56_arr = get_ni56(results_dir, 'r')
 
         if ni56_arr == []:
-            return
+            continue
+
+        if diag_file == None and get_diagfile(results_dir) != None:
+            diag_file = get_diagfile(results_dir)
 
         # Sort the lists
 
@@ -728,12 +765,6 @@ def amr(eps_filename, results_base):
 
         i += 1
 
-        coarse_list.append(ni56_arr[0])
-
-    # Add a plot connecting the uniform grid cases
-
-    plt.plot(ncell_list, coarse_list, lw = 4.0, color = 'black', marker = 'o', markersize = 12, label = 'Uniform grid')
-
     plt.tick_params(axis='both', which='major', pad=10)
     plt.xscale('log', basex=2)
     plt.ylim([0.0, 0.6])
@@ -743,11 +774,85 @@ def amr(eps_filename, results_base):
     plt.legend(loc='best', prop={'size':20})
     plt.tight_layout()
     plt.savefig(eps_filename)
-    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
+    wdmerger.insert_commits_into_eps(eps_filename, diag_file, 'diag')
     png_filename = eps_filename[0:-3] + "png"
     plt.savefig(png_filename)
 
     plt.close()
+
+
+
+def amr_detonation(eps_filename, results_base):
+    """Plot the effect of the refinement based on the nuclear burning rate on the detonation conditions."""
+
+    import os
+
+    if os.path.isfile(eps_filename):
+        return
+    else:
+        print("Generating file %s" % eps_filename)
+
+    import math
+    import numpy as np
+    from matplotlib import pyplot as plt
+
+    if not os.path.isdir(results_base):
+        return
+
+    diag_file = None
+
+    # First, generate a plot of nickel production.
+
+    ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
+
+    # Now, generate a plot of the distance from the center of the ignition point.
+    
+    i = 0
+
+    for ncell in ncell_list:
+
+        results_dir = results_base + 'n' + str(ncell) + '/self-heat/dxnuc/'
+
+        if not os.path.isdir(results_dir):
+            continue
+
+        # Get the list of parameter values we have tried
+
+        r_list = wdmerger.get_parameter_list(results_dir)
+
+        # Strip out the non-refinement directories
+
+        r_list = [r for r in r_list if r[0] == 'r']
+
+        if (r_list == []):
+            continue
+
+        # Sort them numerically.
+
+        r_list = ['r' + str(r) for r in sorted([int(r[1:]) for r in r_list])]
+
+        # Cycle through the plot files.
+        # Get the maximum value of t_sound_t_enuc, and its distance from the origin.
+        # Stop if we hit a detonation (t_sound_t_enuc > 1).
+
+        for r in r_list:
+            results_dir = results_base + 'n' + str(ncell) + '/self-heat/dxnuc/' + r
+
+            prefix = 'smallplt'
+            plt_list = [results_dir + '/output/' + plt for plt in wdmerger.get_plotfiles(results_dir, prefix = prefix)]
+
+            for plt in plt_list:
+                [ts_te_max, x, y, z] = wdmerger.get_maxloc(plt, 't_sound_t_enuc')
+
+                if ts_te_max > 1.0:
+                    [rho_max, x, y, z] = wdmerger.get_maxloc(plt, 'density')
+                    dist = np.sqrt(x**2 + y**2)
+                    time = wdmerger.get_time_from_plotfile(plt)
+                    print(ncell, r, time, rho_max, ts_te_max, dist.v / 1.e5)
+
+                    break
+
+        i += 1
 
 
 
@@ -818,22 +923,18 @@ if __name__ == "__main__":
 
     import os
 
-    results_base = 'results/'
+    results_base = 'results/collision_2D/mass_P_0.64/mass_S_0.64/'
     plots_dir = 'plots/'
 
-    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56.eps", results_base)
-    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56.eps", results_base)
+    ncell_list = os.listdir(results_base)
+
+    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56.eps", results_base + 'n256/')
+    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56.eps", results_base + 'n256/')
     burning_limiter(plots_dir + "dtnuc_max_Ni56.eps", results_base)
-    burning_mode(plots_dir + "burning_mode.tbl", results_base)
-    t_min(plots_dir + "t_min.tbl", results_base)
-    rho_min(plots_dir + "rho_min.tbl", results_base)
-    ode_tolerances(plots_dir + "ode_tolerance.eps", results_base)
-    amr(plots_dir + "amr.eps", results_base)
+    amr_nickel(plots_dir + "amr_nickel.eps", results_base)
+    amr_detonation(plots_dir + "amr_detonation.eps", results_base)
 
-    ncell_list = os.listdir(results_base + "amr/")
-
-    for n in ncell_list:
-        plot_dir = plots_dir + "slices/amr/" + n + "/"
-        results_dir = results_base + "amr/" + n + "/"
-        prefix = "_" + n
+    #for n in ncell_list:
+        #plot_dir = plots_dir + "slices/dxnuc/" + n + "/"
+        #prefix = "_" + n
         #rho_T_sliceplots(plot_dir, results_dir, prefix = prefix)
