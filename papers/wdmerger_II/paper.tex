@@ -234,10 +234,10 @@ $10^{51}$ ergs, and has stopped increasing. This means that the system has becom
 unbound due to nuclear energy release, and that no further meaningful nuclear energy
 generation is occurring. In our discussions below, it helps to have some other
 anchoring points in time when significant events occur. We (arbitrarily) define the
-collision time, $t_c$, as the first time when the maximum density on the grid reaches
+collision time, $t_{\rm c}$, as the first time when the maximum density on the grid reaches
 $5 \times 10^6\ \text{g / cm}^3$. This is slightly larger than the initial maximum
 density of the two WDs, and is reached only when the WDs meet at the center of the
-domain. We define the detonation time, $t_d$, as the time when the temperature
+domain. We define the detonation time, $t_{\rm d}$, as the time when the temperature
 first reaches $4 \times 10^9\ \text{K}$.
 
 As in Paper I, the region outside the WDs is filled with a low-density ambient
@@ -269,8 +269,8 @@ Now let us examine the results for a collision of two 0.64 $\msolar$ WDs. We use
 Timesteps are limited only by the hydrodynamic stability constraint (and the plotfile
 interval constraint). Resolutions in the range of a few hundred km have been a common
 choice in earlier papers on white dwarf mergers and collisions. No adaptive mesh
-refinement is used. For this configuration, the collision time is $t_c = 6.47\ \text{s}$,
-and the detonation time is $t_d = 7.43\ \text{s}$. The peak density at the detonation time
+refinement is used. For this configuration, the collision time is $t_{\rm c} = 6.47\ \text{s}$,
+and the detonation time is $t_{\rm d} = 7.43\ \text{s}$. The peak density at the detonation time
 is $2.3 \times 10^7\ \text{g / cm}^3$. The detonation occurs at the center of the domain
 where the two WDs initially meet.
 
@@ -710,21 +710,15 @@ to the refinement through the refinement factor, $r$. This factor is the jump in
 resolution between the coarse grid and the finest grid. The uniform base grid case is $r = 1$.
 Meanwhile, $r = 16$ means a uniform coarse grid plus two levels of 4x refinement.
 
-The collision time is about $t_{\rm c} = 6.85\ \text{s}$
-at high resolution. At low resolution, the simulation is slightly different because
-of the distortion imposed by a rectangular grid representing initially spherical stars,
-so the collision time is slightly later. Then, we restarted the run from this checkpoint
-and reset the time to zero (such that $t_{\rm c} = 0$). The new simulation runs until about
-$t = 2.15\ \text{s}$, so that the full 9 seconds are simulated. During this second phase
-the detonation occurs. An estimate of the detonation time, $t_{\rm d}$, that serves well
-is the time when the peak density on the grid first reaches $5 \times 10^9\ \text{K}$.
-We measure the detonation time relative to $t_{\rm c}$. Approximately speaking, the later
-$t_{\rm d}$ is, the more nickel is produced. As time passes, more white dwarf material
-slams into the center, compressing and heating up the gas. Both effects are favorable
-to production of nickel. So, a later $t_{\rm d}$ implies that more material can be converted
-to nickel. Similarly, the speed of the detonation matters. A slower speed detonation prolongs
-the collision event, allowing more gas to be processed into nickel.
-
+At high resolution the collision time is $t_{\rm c} = 6.41\ \text{s}$, which is similar to the
+collision time at low resolution. However, the detonation time is around $t_{\rm d} = 6.62\ \text{s}$,
+which is significantly earlier than at low resolution due to the high resolution simulations
+being better able to resolve the point of contact between the WDs. The peak density crosses
+$10^7\ \text{g / cm}^3$ significantly earlier, and this is what triggers the burning sufficient
+to generate an earlier detonation. Approximately speaking, the later $t_{\rm d}$ is, the more
+nickel is produced. As time passes, more white dwarf material slams into the center, compressing
+and heating up the gas. Both effects are favorable to production of nickel. So, a later $t_{\rm d}$
+implies that more material can be converted to nickel.
 
 \begin{figure}[ht]
   \centering
