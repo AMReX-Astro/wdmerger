@@ -327,7 +327,7 @@ to_run=1
 
 
 
-ncell_list="256 512 1024 8192" # 2048 4096"
+ncell_list="256 512 1024 2048 4096 8192"
 
 for ncell in $ncell_list
 do
@@ -391,8 +391,8 @@ do
 
         if [ $ncell -eq 256 ]; then
 
-            dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1"
-            dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1"
+            dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
+            dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
 
         fi
 
@@ -447,17 +447,17 @@ do
             refinement_list=""
 
             if   [ $ncell -eq 256 ]; then
-                refinement_list="1 2 4 8 16 32 64 128"
+                refinement_list="1 2 4 8 16 32 64 128 256"
             elif [ $ncell -eq 512 ]; then
-                refinement_list="1 2 4 8 16 32 64"
+                refinement_list="1 2 4 8 16 32 64 128"
             elif [ $ncell -eq 1024 ]; then
-                refinement_list="1 2 4 8 16 32"
+                refinement_list="1 2 4 8 16 32 64"
             elif [ $ncell -eq 2048 ]; then
-                refinement_list="1 2 4 8 16"
+                refinement_list="1"
             elif [ $ncell -eq 4096 ]; then
-                refinement_list="1 2 4 8"
+                refinement_list="1"
             elif [ $ncell -eq 8192 ]; then
-                refinement_list="1 2 4"
+                refinement_list="1"
             fi
 
             for refinement in $refinement_list

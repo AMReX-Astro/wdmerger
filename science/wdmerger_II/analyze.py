@@ -930,9 +930,9 @@ if __name__ == "__main__":
 
     burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56.eps", results_base + 'n256/')
     burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56.eps", results_base + 'n256/')
-    burning_limiter(plots_dir + "dtnuc_max_Ni56.eps", results_base)
-    amr_nickel(plots_dir + "amr_nickel.eps", results_base)
-    amr_detonation(plots_dir + "amr_detonation.eps", results_base)
+    burning_limiter(plots_dir + "dtnuc_max_Ni56.eps", results_base + 'n256/')
+    #amr_nickel(plots_dir + "amr_nickel.eps", results_base)
+    #amr_detonation(plots_dir + "amr_detonation.eps", results_base)
 
     #for n in ncell_list:
         #plot_dir = plots_dir + "slices/dxnuc/" + n + "/"
