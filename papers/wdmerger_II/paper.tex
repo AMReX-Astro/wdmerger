@@ -515,6 +515,33 @@ rather separate discrete burning and hydro steps, and the nature of
 the burning evolution will be quite different. As the timestep becomes
 smaller, the evolution becomes smoother and the splitting error decreases.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.425]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
+  \caption{Nickel production as a function of the timestep factors $f_{be}$
+           (solid blue, limiting the timestep on changes in internal energy) and
+           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
+           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
+           the timestep by at least an order of magnitude more.
+           \label{fig:timestep_factor}}
+\end{figure}
+\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
+production for the baseline collision case. These limiters are somewhat redundant in
+the sense that a given $f_{bX}$ roughly corresponds to another (higher) $f_{be}$, as
+is evident by the fact that on the plot the curves look qualitatively similar in
+shape but with a horizontal offset. As either $f$ becomes small, the restriction on
+the timestep becomes more severe: for $f_{bX} = 0.1$, the full simulation requires
+nearly 30,000 timesteps, compared to just over 1,000 for the baseline case.
+Such a simulation would be quite expensive for a high resolution 3D calculation.
+It is clear, though, that even though the simulation is not converged when the
+timestep is not limited due to burning, the effect is small in absolute terms.
+So we agree that the use of values in this range by \cite{raskin:2010},
+\cite{hawley:2012}, and \cite{kushnir:2013} is appropriate. However, for reasons of
+computational expense we do not use the timestep limiter in the high resolution
+simulations that follow. The error due to this choice should be small, because
+the effect is not that large to begin with, and because the higher resolution
+decreases the timestep anyway due to the hydrodynamic stability constraint.
+
 Other approaches to the coupling 
 between reactions and hydrodynamics have been proposed in the 
 broader literature, especially iterative methods such as 
@@ -649,43 +676,6 @@ $f_{s}$ is the ratio of the sound crossing time to the energy injection
 time. We do not target zones for refinement with $f_{s} > 1$ since
 at that point a detonation is locked in. We refine up to a specified
 maximum resolution ratio relative to the coarse grid.
-
-
-
-%==========================================================================
-% Temporal Resolution
-%==========================================================================
-\section{Temporal Resolution}
-\label{sec:temporalresolution}
-
-For the standard self-heating burns that we use, the timestep limiting scheme
-described in \autoref{sec:hydrocoupling} has a significant effect on the evolution.
-The parameters $f_{be}$ (from \autoref{eq:timestep_e}) and $f_{bX}$ (from
-\autoref{eq:timestep_X}) control the size of the timestep as a function of the
-burning rate. As the timestep gets smaller, the error due to the Strang splitting
-scheme coupling the reactions and the hydro also gets smaller, and we expect
-that the results become more accurate.
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.425]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
-  \caption{Nickel production as a function of the timestep factors $f_{be}$
-           (solid blue, limiting the timestep on changes in internal energy) and
-           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
-           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
-           the timestep by at least an order of magnitude more.
-           \label{fig:timestep_factor}}
-\end{figure}
-\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
-production (these limiters are somewhat redundant in the sense that a given $f_{bX}$
-roughly corresponds to another (higher) $f_{be}$, as is evident by the fact that on
-the graph the curves look qualitatively similar in shape but with a horizontal offset.
-As either $f$ becomes small, the restriction on the timestep becomes quite severe:
-for $f_{be} = 0.001$, the minimum timestep in the simulation is smaller than
-$5 \times 10^{-9}\ \text{s}$ and the full simulation requires over 100,000 timesteps.
-Such a simulation would be prohibitively expensive for a high resolution 3D calculation.
-It is clear, though, that the timestep effect has converged when $f_{be} \sim 0.1$. We
-agree that the use of values in this range by \cite{raskin:2010}, \cite{hawley:2012},
-and \cite{kushnir:2013} is appropriate.
 
 
 
