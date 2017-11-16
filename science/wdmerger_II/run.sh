@@ -447,15 +447,15 @@ do
             refinement_list=""
 
             if   [ $ncell -eq 256 ]; then
-                refinement_list="1 2 4 8 16 32 64 128 256"
+                refinement_list="1 2 4 8 16"
             elif [ $ncell -eq 512 ]; then
-                refinement_list="1 2 4 8 16 32 64 128"
+                refinement_list="1 2 4 8 16"
             elif [ $ncell -eq 1024 ]; then
-                refinement_list="1 2 4 8 16 32 64"
+                refinement_list="1 2 4 8 16"
             elif [ $ncell -eq 2048 ]; then
-                refinement_list="1"
+                refinement_list="1 2"
             elif [ $ncell -eq 4096 ]; then
-                refinement_list="1"
+                refinement_list="1 2"
             elif [ $ncell -eq 8192 ]; then
                 refinement_list="1"
             fi
