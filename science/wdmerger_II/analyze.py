@@ -923,14 +923,17 @@ if __name__ == "__main__":
 
     import os
 
-    results_base = 'results/collision_2D/mass_P_0.64/mass_S_0.64/'
+    mass_P = '0.64'
+    mass_S = '0.64'
+
+    results_base = 'results/collision_2D/mass_P_' + mass_P + '/mass_S_' + mass_S + '/'
     plots_dir = 'plots/'
 
     ncell_list = os.listdir(results_base)
 
-    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56.eps", results_base + 'n256/')
-    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56.eps", results_base + 'n256/')
-    burning_limiter(plots_dir + "dtnuc_max_Ni56.eps", results_base + 'n256/')
+    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/')
+    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/')
+    burning_limiter(plots_dir + "dtnuc_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/')
     #amr_nickel(plots_dir + "amr_nickel.eps", results_base)
     #amr_detonation(plots_dir + "amr_detonation.eps", results_base)
 
