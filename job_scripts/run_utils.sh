@@ -1720,7 +1720,7 @@ function create_job_script {
 	  launcher_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
 	  redirect=""
       elif [ $launcher == "mpirun" ]; then
-	  launcher_opts="-np $num_mpi_tasks --map-by ppr:$threads_per_task"
+	  launcher_opts="-np $num_mpi_tasks"
 	  redirect="> $job_name.OU"
       fi
 
