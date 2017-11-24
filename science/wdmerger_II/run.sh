@@ -17,7 +17,12 @@ function set_run_opts {
 
         queue="batch"
 
-        if   [ $ncell -eq 8192 ]; then
+        threads_per_task=4
+
+        if   [ $ncell -eq 16384 ]; then
+            nprocs="2048"
+            walltime="6:00:00"
+        elif [ $ncell -eq 8192 ]; then
             nprocs="2048"
             walltime="6:00:00"
         elif [ $ncell -eq 4096 ]; then
@@ -35,19 +40,6 @@ function set_run_opts {
         elif [ $ncell -eq 256 ]; then
             nprocs="32"
             walltime="2:00:00"
-
-            # For large enough refinement ratios,
-            # use more processors to compensate
-            # for the walltime limit.
-
-            if [ ! -z $refinement ]; then
-                if   [ $refinement -eq 128 ]; then
-                    nprocs="128"
-                elif [ $refinement -eq 256 ]; then
-                    nprocs="256"
-                fi
-            fi
-
         else
             echoerr "Unknown number of cells per dimension."
         fi
@@ -66,38 +58,38 @@ function set_run_opts {
 
     if [ $ncell -eq 256 ]; then
 
-        amr_blocking_factor="8"
+        amr_blocking_factor="32"
 	amr_max_grid_size="32 32 64 64 128 128 256 256 512 512"
 
     elif [ $ncell -eq 512 ]; then
 
-	amr_blocking_factor="16"
-        amr_max_grid_size="64 64 128 128 256 256 512 512 1024 1024"
+	amr_blocking_factor="32"
+        amr_max_grid_size="32 32 64 64 128 128 256 256 512 512"
 
     elif [ $ncell -eq 1024 ]; then
 
-        amr_blocking_factor="32"
-        amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
+        amr_blocking_factor="64"
+        amr_max_grid_size="64 64 128 128 256 256 512 512 1024 1024"
 
     elif [ $ncell -eq 2048 ]; then
 
         amr_blocking_factor="64"
-	amr_max_grid_size="256 256 512 512 1024 1024 2048 2048 4096 4096"
+	amr_max_grid_size="64 64 128 128 256 256 512 512 1024 1024"
 
     elif [ $ncell -eq 4096 ]; then
 
         amr_blocking_factor="128"
-	amr_max_grid_size="512 512 1024 1024 2048 2048 4096 4096 8192 8192"
+	amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
 
     elif [ $ncell -eq 8192 ]; then
 
-        amr_blocking_factor="256"
-	amr_max_grid_size="1024 1024 2048 2048 4096 4096 8192 8192 16384 16384"
+        amr_blocking_factor="128"
+	amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
 
     elif [ $ncell -eq 16384 ]; then
 
-        amr_blocking_factor="512"
-	amr_max_grid_size="2048 2048 4096 4096 8192 8192 16384 16384 32768 32768"
+        amr_blocking_factor="128"
+	amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
 
     fi
 
@@ -327,7 +319,7 @@ to_run=1
 
 
 
-ncell_list="256 512 1024 2048 4096 8192"
+ncell_list="256 512 1024 2048 4096 8192 16384"
 
 for ncell in $ncell_list
 do
@@ -449,14 +441,16 @@ do
             if   [ $ncell -eq 256 ]; then
                 refinement_list="1 2 4 8 16"
             elif [ $ncell -eq 512 ]; then
-                refinement_list="1 2 4 8 16"
+                refinement_list="1 2 4 8 16 32"
             elif [ $ncell -eq 1024 ]; then
-                refinement_list="1 2 4 8 16"
+                refinement_list="1 2 4 8 16 32"
             elif [ $ncell -eq 2048 ]; then
-                refinement_list="1 2"
+                refinement_list="1 2 4 8"
             elif [ $ncell -eq 4096 ]; then
-                refinement_list="1 2"
+                refinement_list="1 2 4"
             elif [ $ncell -eq 8192 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 16384 ]; then
                 refinement_list="1"
             fi
 
@@ -470,7 +464,6 @@ do
                 fi
 
                 castro_dxnuc="1.0e-6"
-                castro_dxnuc_max="1.0e0"
 
                 dir=$base_dir/$burning_mode_str/dxnuc/r$refinement/
                 set_run_opts
