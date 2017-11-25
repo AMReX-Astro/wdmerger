@@ -93,40 +93,192 @@ function set_run_opts {
 
     fi
 
-    if [ ! -z $refinement ]; then
-    
-        if [ $refinement -eq 1 ]; then
-            amr_max_level=0
-        elif [ $refinement -eq 2 ]; then
-            amr_max_level=1
-            amr_ref_ratio="2"
-        elif [ $refinement -eq 4 ]; then
-            amr_max_level=1
-            amr_ref_ratio="4"
-        elif [ $refinement -eq 8 ]; then
-            amr_max_level=2
-            amr_ref_ratio="4 2"
-        elif [ $refinement -eq 16 ]; then
-            amr_max_level=2
-            amr_ref_ratio="4 4"
-        elif [ $refinement -eq 32 ]; then
-            amr_max_level=3
-            amr_ref_ratio="4 4 2"
-        elif [ $refinement -eq 64 ]; then
-            amr_max_level=3
-            amr_ref_ratio="4 4 4"
-        elif [ $refinement -eq 128 ]; then
-            amr_max_level=4
-            amr_ref_ratio="4 4 4 2"
-        elif [ $refinement -eq 256 ]; then
-            amr_max_level=4
-            amr_ref_ratio="4 4 4 4"
-        elif [ $refinement -eq 512 ]; then
-            amr_max_level=5
-            amr_ref_ratio="4 4 4 4 2"
-        elif [ $refinement -eq 1024 ]; then
-            amr_max_level=5
-            amr_ref_ratio="4 4 4 4 4"
+    if [ ! -z $stellar_refinement ]; then
+
+        if [ $stellar_refinement -eq 1 ]; then
+
+            max_stellar_tagging_level="0"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=0
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=1
+                    amr_ref_ratio="2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=1
+                    amr_ref_ratio="4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 2 ]; then
+
+            max_stellar_tagging_level="1"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=1
+                    amr_ref_ratio="2"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="2 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="2 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="2 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="2 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="2 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="2 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="2 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="2 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="2 4 4 4 4 2"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 4 ]; then
+
+            max_stellar_tagging_level="1"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=1
+                    amr_ref_ratio="4"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="4 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="4 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 8 ]; then
+
+            max_stellar_tagging_level="2"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="4 2"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 2 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 2 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 2 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 2 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 2 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 2 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 2 4 4 4 2"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 16 ]; then
+
+            max_stellar_tagging_level="2"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=2
+                    amr_ref_ratio="4 4"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 4"
+                fi
+
+            fi
+
         fi
 
     fi
@@ -319,7 +471,7 @@ to_run=1
 
 
 
-ncell_list="256 512 1024 2048 4096 8192 16384"
+ncell_list="256 512 1024 2048 4096 8192"
 
 for ncell in $ncell_list
 do
@@ -339,133 +491,68 @@ do
         gravity_abs_tol="1.e-10"
     fi
 
-    base_dir=$results_dir/collision_2D/mass_P_$mass_P/mass_S_$mass_S/n$ncell
-    start_dir=$base_dir/start
+    stellar_refinement_list=""
 
-    start_done="0"
-
-    if [ -d $start_dir ]; then
-        dir=$start_dir
-        start_done=$(is_dir_done)
+    if   [ $ncell -eq 256 ]; then
+        stellar_refinement_list="1"
+    else
+        stellar_refinement_list="1"
     fi
 
-    if [ $start_done -ne 1 ]; then
+    for stellar_refinement in $stellar_refinement_list
+    do
 
-        dir=$start_dir
-        set_run_opts
+        base_dir=$results_dir/collision_2D/mass_P_$mass_P/mass_S_$mass_S/n$ncell/r$stellar_refinement
+        start_dir=$base_dir/start
 
-        # First, we need to do the initial run, up to the point
-        # when burning starts.
+        start_done="0"
 
-        castro_ts_te_stopping_criterion="1.0e-6"
-
-        # Ensure that we are using a uniform grid.
-
-        amr_max_level=0
-
-        if [ $to_run -eq 1 ]; then
-            run
+        if [ -d $start_dir ]; then
+            dir=$start_dir
+            start_done=$(is_dir_done)
         fi
 
-        unset castro_ts_te_stopping_criterion
+        if [ $start_done -ne 1 ]; then
 
-    else
-
-        # At this point we should have our starting checkpoint in $start_dir.
-        # Now we can do the runs by copying the checkpoint.
-
-
-
-        # Test the effect of the burning timestep limiter parameter values.
-
-        dtnuc_e_list=""
-        dtnuc_X_list=""
-
-        if [ $ncell -eq 256 ]; then
-
-            dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
-            dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
-
-        fi
-
-        for dtnuc in $dtnuc_e_list
-        do
-
-            castro_dtnuc_e=$dtnuc
-
-            dir=$base_dir/burning_limiter_e/dt$dtnuc
+            dir=$start_dir
             set_run_opts
 
-            copy_checkpoint
+            # First, we need to do the initial run, up to the point
+            # when burning starts.
+
+            castro_ts_te_stopping_criterion="1.0e-6"
 
             if [ $to_run -eq 1 ]; then
                 run
             fi
 
-        done
+            unset castro_ts_te_stopping_criterion
 
-        castro_dtnuc_e=$dtnuc_e_default
+        else
+
+            # At this point we should have our starting checkpoint in $start_dir.
+            # Now we can do the runs by copying the checkpoint.
 
 
 
-        for dtnuc in $dtnuc_X_list
-        do
+            # Test the effect of the burning timestep limiter parameter values.
 
-            castro_dtnuc_X=$dtnuc
+            dtnuc_e_list=""
+            dtnuc_X_list=""
 
-            dir=$base_dir/burning_limiter_X/dt$dtnuc
-            set_run_opts
+            if [ $ncell -eq 256 ] && [ $stellar_refinement -eq 1 ]; then
 
-            copy_checkpoint
+                dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
+                dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
 
-            if [ $to_run -eq 1 ]; then
-                run
             fi
 
-        done
-
-        castro_dtnuc_X=$dtnuc_X_default
-
-
-
-        # Do runs with burning-based AMR up to a selected level.
-        # Do this for both the self-heating and suppressed burns.
-
-        amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-
-        for burning_mode_str in "self-heat"
-        do
-
-            refinement_list=""
-
-            if   [ $ncell -eq 256 ]; then
-                refinement_list="1 2 4 8 16"
-            elif [ $ncell -eq 512 ]; then
-                refinement_list="1 2 4 8 16 32"
-            elif [ $ncell -eq 1024 ]; then
-                refinement_list="1 2 4 8 16 32"
-            elif [ $ncell -eq 2048 ]; then
-                refinement_list="1 2 4 8"
-            elif [ $ncell -eq 4096 ]; then
-                refinement_list="1 2 4"
-            elif [ $ncell -eq 8192 ]; then
-                refinement_list="1"
-            elif [ $ncell -eq 16384 ]; then
-                refinement_list="1"
-            fi
-
-            for refinement in $refinement_list
+            for dtnuc in $dtnuc_e_list
             do
 
-                if [ $burning_mode_str == "self-heat" ]; then
-                    burning_mode="1"
-                else
-                    burning_mode="3"
-                fi
+                castro_dtnuc_e=$dtnuc
 
-                castro_dxnuc="1.0e-6"
-
-                dir=$base_dir/$burning_mode_str/dxnuc/r$refinement/
+                dir=$base_dir/burning_limiter_e/dt$dtnuc
                 set_run_opts
 
                 copy_checkpoint
@@ -474,17 +561,70 @@ do
                     run
                 fi
 
-                castro_dxnuc=$dxnuc_default
-                castro_dxnuc_max=$dxnuc_max_default
+            done
+
+            castro_dtnuc_e=$dtnuc_e_default
 
 
 
-                if [ $ncell -eq 256 ]; then
+            for dtnuc in $dtnuc_X_list
+            do
 
-                    max_center_tagging_level=20
-                    center_tagging_radius=2.0d8
+                castro_dtnuc_X=$dtnuc
 
-                    dir=$base_dir/$burning_mode_str/center/r$refinement/
+                dir=$base_dir/burning_limiter_X/dt$dtnuc
+                set_run_opts
+
+                copy_checkpoint
+
+                if [ $to_run -eq 1 ]; then
+                    run
+                fi
+
+            done
+
+            castro_dtnuc_X=$dtnuc_X_default
+
+
+
+            # Do runs with burning-based AMR up to a selected level.
+            # Do this for both the self-heating and suppressed burns.
+
+            amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+
+            for burning_mode_str in "self-heat"
+            do
+
+                refinement_list=""
+
+                if   [ $ncell -eq 256 ]; then
+                    refinement_list="1 2 4 8 16"
+                elif [ $ncell -eq 512 ]; then
+                    refinement_list="1 2 4 8 16"
+                elif [ $ncell -eq 1024 ]; then
+                    refinement_list="1 2 4 8 16"
+                elif [ $ncell -eq 2048 ]; then
+                    refinement_list="1"
+                elif [ $ncell -eq 4096 ]; then
+                    refinement_list="1"
+                elif [ $ncell -eq 8192 ]; then
+                    refinement_list="1"
+                elif [ $ncell -eq 16384 ]; then
+                    refinement_list="1"
+                fi
+
+                for refinement in $refinement_list
+                do
+
+                    if [ $burning_mode_str == "self-heat" ]; then
+                        burning_mode="1"
+                    else
+                        burning_mode="3"
+                    fi
+
+                    castro_dxnuc="1.0e-6"
+
+                    dir=$base_dir/$burning_mode_str/dxnuc/r$refinement/
                     set_run_opts
 
                     copy_checkpoint
@@ -493,19 +633,39 @@ do
                         run
                     fi
 
-                    center_tagging_radius=0.0d0
-                    max_center_tagging_level=0
+                    castro_dxnuc=$dxnuc_default
 
-                fi
+
+
+                    if [ $ncell -eq 256 ] && [ $stellar_refinement -eq 1 ]; then
+
+                        max_center_tagging_level=20
+                        center_tagging_radius=2.0d8
+
+                        dir=$base_dir/$burning_mode_str/center/r$refinement/
+                        set_run_opts
+
+                        copy_checkpoint
+
+                        if [ $to_run -eq 1 ]; then
+                            run
+                        fi
+
+                        center_tagging_radius=0.0d0
+                        max_center_tagging_level=0
+
+                    fi
+
+                done
+
+                unset refinement
 
             done
 
-            unset refinement
+            burning_mode=$burning_mode_default
 
-        done
+        fi
 
-        burning_mode=$burning_mode_default
-
-    fi
+    done
 
 done
