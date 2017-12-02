@@ -2188,17 +2188,31 @@ function run {
   # currently running.
 
   done_flag=''
-  job_running_status=$(is_job_running $dir)
 
-  if [ $job_running_status -ne 1 ]; then
+  # Take a shortcut if the job is completely done.
 
-      if [ "$done_flag" == '' ]; then
-          done_flag=$(is_dir_done)
-      fi
+  if [ -e "$dir/jobIsDone" ]; then
 
-      if [ $done_flag -ne 1 ]; then
-          set_up_problem_dir
-      fi
+      done_flag='1'
+
+      echo "Full run is completed in directory $dir."
+      return
+
+  fi
+
+  if [ "$done_flag" == '' ]; then
+
+    job_running_status=$(is_job_running $dir)
+
+    if [ $job_running_status -ne 1 ]; then
+
+        done_flag=$(is_dir_done)
+
+        if [ $done_flag -ne 1 ]; then
+            set_up_problem_dir
+        fi
+
+    fi
 
   fi
 
