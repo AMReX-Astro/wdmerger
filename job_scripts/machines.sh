@@ -197,4 +197,46 @@ function set_machine_params {
 	allocation="wdmerger"
 
     fi
+
+
+
+    # Allow the user to request notification e-mails about jobs.
+    # Requires the environment variable EMAIL_ADDRESS.
+
+    if [ ! -z $EMAIL_ADDRESS ]; then
+
+        if [ $exec == "qsub" ]; then
+            opts_flag="-M $EMAIL_ADDRESS "
+
+            mail_opts=""
+
+            if [ ! -z $EMAIL_ON_ABORT ]; then
+                mail_opts+="a"
+            fi
+
+            if [ ! -z $EMAIL_ON_START ]; then
+                mail_opts+="b"
+            fi
+
+            if [ ! -z $EMAIL_ON_TERMINATE ]; then
+                mail_opts+="e"
+            fi
+
+            if [ ! -z $EMAIL_ON_BAD_TERMINATE ]; then
+                mail_opts+="f"
+            fi
+
+            if [ ! -z $NO_EMAIL ]; then
+                mail_opts="p"
+            fi
+
+            if [ ! -z $mail_opts ]; then
+                opts_flag+="-m $mail_opts "
+            fi
+
+            exec="qsub $opts_flag"
+
+        fi
+
+    fi
 }
