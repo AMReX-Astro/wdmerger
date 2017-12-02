@@ -289,6 +289,10 @@ function copy_checkpoint() {
 
     # Copy the initial checkpoint to the directory if it's not there yet.
 
+    if [ -e "$dir/jobIsDone" ]; then
+        return
+    fi
+
     job_flag=$(is_job_running $dir)
 
     if [ $job_flag -ne 1 ]; then
