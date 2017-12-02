@@ -518,6 +518,8 @@ do
 
         if [ $start_done -ne 1 ]; then
 
+            refinement=1
+
             dir=$start_dir
             set_run_opts
 
