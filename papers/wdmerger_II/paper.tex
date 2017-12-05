@@ -628,15 +628,25 @@ simulation that was performed. If the results do not match what occurs at higher
 resolution, then the simulation is not converged and the results are not reliable.
 However, it may also be the case that a higher resolution simulation will yield
 similar results, for example because even at the higher resolution, the physical
-size of the hotspot stays the same. One cannot appeal to the numerical instability
-criterion alone to make a decision in this context.
+size of the hotspot stays the same. Additionally, one might think that simply
+adding adaptive mesh refinement in the burning region could help, because then
+$\Delta x$ decreases, so the ratio of $\tau_s$ to $\tau_e$ should decrease.
+We developed an AMR criterion to do just this: we tag on regions suggested by
+the burning stability criterion, \autoref{eq:burning_limiter_2}. But
+if a low resolution simulation develops a very large hotspot that violates the
+stability criterion, adding refinement inside this region will likely not help,
+because the energy trapped in the center of the region may not be able to escape
+before ignition occurs. So for low resolution simulations, even adding a significant
+amount of refinement (say, refining by a factor of 64 or 128) did not change the
+propagation of a detonation.
 
-Furthermore, we find that \textit{all} of the detonations we have seen at low
-and moderate resolution inevitably violate the stability criterion. This is true
-even if the prompt detonation is suppressed: the delayed detonation also is
-numerically unstable. For comparison purposes, we developed an option for our
-burner to use a ``suppressed'' burning mode. In a suppressed burn, we limit
-the changes to the state so that \autoref{eq:burning_limiter_2}
+For the above reasons, an appeal to the numerical instability criterion alone is
+insufficient to understand whether a given ignition is real. We find that \textit{all}
+of the detonations we have seen at low and moderate resolution inevitably violate
+the stability criterion. This is true even if the prompt detonation is suppressed:
+the delayed detonation also is numerically unstable. For comparison purposes, we
+developed an option for our burner to use a ``suppressed'' burning mode. In a
+suppressed burn, we limit the changes to the state so that \autoref{eq:burning_limiter_2}
 is always satisfied\footnote{To achieve this we directly multiply the
 right-hand-side vector in the integration by a factor $F$
 for all variables, where $F$ is the multiplicative factor needed to
@@ -667,19 +677,14 @@ So, as pointed out by \citeauthor{kushnir:2013}, this numerical
 stability issue is mainly a concern for simulations with
 resolution of O(10 km) or worse. Detonations observed at higher
 resolution are physically plausible because the critical temperature
-gradient will be resolved. We have developed an AMR criterion
-to help achieve this resolution: we tag on regions suggested by
-the burning stability criterion, \autoref{eq:burning_limiter_2}.
-The original motivation for this choice was that by lowering
-$\Delta x$ and thus the sound-crossing time, we could reach
-the point where the detonation was occurring in a numerically stable
-region. This goal was not realized due to the reasons discussed above.
-Instead, we simply use it as a guide for where to refine. We tag
-for refinement all zones with $10^{-6} \leq f_{s} \leq 1$, where
-$f_{s}$ is the ratio of the sound crossing time to the energy injection
-time. We do not target zones for refinement with $f_{s} > 1$ since
-at that point a detonation is locked in. We refine up to a specified
-maximum resolution ratio relative to the coarse grid.
+gradient will be resolved. The high resolution needs to be achieved
+with some combination of high resolution of the collision process
+itself, and perhaps AMR based on the stability criterion as described
+above, where we tag for refinement all zones above some $f_{s}$, the
+ratio of the sound crossing time to the energy injection time. It
+cannot be solely based on the burning stability criterion for the reason
+described above, that a detonation may be spuriously locked in by
+the low resolution regardless of how much resolution we add to it.
 
 
 
