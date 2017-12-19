@@ -28,18 +28,76 @@ function set_run_opts {
         elif [ $ncell -eq 4096 ]; then
             nprocs="1024"
             walltime="2:00:00"
+
+            if [ $stellar_refinement -eq 8 ]; then
+                nprocs="2048"
+                walltime="6:00:00"
+            elif [ $stellar_refinement -eq 16 ]; then
+                nprocs="2048"
+                walltime="6:00:00"
+            fi
         elif [ $ncell -eq 2048 ]; then
             nprocs="512"
             walltime="2:00:00"
+
+            if [ ! -z $stellar_refinement ]; then
+                if [ $stellar_refinement -eq 16 ]; then
+                    nprocs="1024"
+                    walltime="2:00:00"
+                fi
+            fi
         elif [ $ncell -eq 1024 ]; then
             nprocs="256"
             walltime="2:00:00"
+
+            if [ ! -z $stellar_refinement ]; then
+                if   [ $stellar_refinement -eq 4 ]; then
+                    nprocs="512"
+                    walltime="2:00:00"
+                elif [ $stellar_refinement -eq 8 ]; then
+                    nprocs="512"
+                    walltime="2:00:00"
+                elif [ $stellar_refinement -eq 16 ]; then
+                    nprocs="512"
+                    walltime="2:00:00"
+                
+#                     if [ ! -z $refinement ]; then
+#                         if   [ $refinement -eq 2 ]; then
+#                             nprocs="2048"
+#                             walltime="6:00:00"
+#                         elif [ $refinement -eq 4 ]; then
+#                             nprocs="2048"
+#                             walltime="6:00:00"
+#                         fi
+#                     fi
+                fi
+            fi
         elif [ $ncell -eq 512 ]; then
             nprocs="128"
             walltime="2:00:00"
+
+            if [ ! -z $stellar_refinement ]; then
+                if [ $stellar_refinement -eq 4 ]; then
+                    nprocs="512"
+                    walltime="2:00:00"
+                elif [ $stellar_refinement -eq 8 ]; then
+                    nprocs="512"
+                    walltime="2:00:00"
+                fi
+            fi
         elif [ $ncell -eq 256 ]; then
             nprocs="32"
             walltime="2:00:00"
+
+            if [ ! -z $stellar_refinement ]; then
+                if [ $stellar_refinement -eq 16 ]; then
+                    nprocs="128"
+                    walltime="2:00:00"
+                elif [ $stellar_refinement -eq 32 ]; then
+                    nprocs="256"
+                    walltime="2:00:00"
+                fi
+            fi
         else
             echoerr "Unknown number of cells per dimension."
         fi
@@ -78,7 +136,7 @@ function set_run_opts {
 
     elif [ $ncell -eq 4096 ]; then
 
-        amr_blocking_factor="128"
+        amr_blocking_factor="64"
 	amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
 
     elif [ $ncell -eq 8192 ]; then
@@ -279,6 +337,45 @@ function set_run_opts {
 
             fi
 
+        elif [ $stellar_refinement -eq 32 ]; then
+
+            max_stellar_tagging_level="3"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 2"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 2 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 2 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 2 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 2 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 2 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 2 4 4 4"
+                fi
+
+            fi
+
+        fi
+
+        # Allow stellar refinement all the way up to the max level.
+
+        if [ ! -z $full_stellar_refinement ]; then
+            if [ $full_stellar_refinement -eq 1 ]; then
+                max_stellar_tagging_level=$amr_max_level
+            fi
         fi
 
     fi
@@ -499,6 +596,14 @@ do
 
     if   [ $ncell -eq 256 ]; then
         stellar_refinement_list="1"
+    elif [ $ncell -eq 512 ]; then
+        stellar_refinement_list="1"
+    elif [ $ncell -eq 1024 ]; then
+        stellar_refinement_list="1 16"
+    elif [ $ncell -eq 2048 ]; then
+        stellar_refinement_list="1 16"
+    elif [ $ncell -eq 4096 ]; then
+        stellar_refinement_list="1"
     else
         stellar_refinement_list="1"
     fi
@@ -533,32 +638,40 @@ do
             fi
 
             unset castro_ts_te_stopping_criterion
+            unset refinement
 
         else
 
             # At this point we should have our starting checkpoint in $start_dir.
             # Now we can do the runs by copying the checkpoint.
 
+            burning_mode_list="self-heat suppressed"
 
-
-            # Test the effect of the burning timestep limiter parameter values.
-
-            dtnuc_e_list=""
-            dtnuc_X_list=""
-
-            if [ $ncell -eq 256 ] && [ $stellar_refinement -eq 1 ]; then
-
-                dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
-                dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
-
-            fi
-
-            for dtnuc in $dtnuc_e_list
+            for burning_mode_str in $burning_mode_list
             do
 
-                castro_dtnuc_e=$dtnuc
+                if [ $burning_mode_str == "self-heat" ]; then
+                    burning_mode="1"
+                elif [ $burning_mode_str == "suppressed" ]; then
+                    burning_mode="3"
+                fi
 
-                dir=$base_dir/burning_limiter_e/dt$dtnuc
+                # Only do the suppressed burn at certain resolutions.
+
+                if [ $burning_mode_str == "suppressed" ]; then
+                    if [ $ncell -gt 2048 ]; then
+                        continue
+                    fi
+                    if [ $stellar_refinement -gt 1 ]; then
+                        continue
+                    fi
+                fi
+
+                # Complete the run with no special options.
+
+                refinement=1
+
+                dir=$base_dir/$burning_mode_str/finish
                 set_run_opts
 
                 copy_checkpoint
@@ -567,70 +680,34 @@ do
                     run
                 fi
 
-            done
-
-            castro_dtnuc_e=$dtnuc_e_default
 
 
+                # The above is the only run we want to do with the suppressed burn.
 
-            for dtnuc in $dtnuc_X_list
-            do
-
-                castro_dtnuc_X=$dtnuc
-
-                dir=$base_dir/burning_limiter_X/dt$dtnuc
-                set_run_opts
-
-                copy_checkpoint
-
-                if [ $to_run -eq 1 ]; then
-                    run
+                if [ $burning_mode_str == "suppressed" ]; then
+                    continue
                 fi
 
-            done
-
-            castro_dtnuc_X=$dtnuc_X_default
 
 
+                # Test the effect of the burning timestep limiter parameter values.
 
-            # Do runs with burning-based AMR up to a selected level.
-            # Do this for both the self-heating and suppressed burns.
+                dtnuc_e_list=""
+                dtnuc_X_list=""
 
-            amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                if [ $ncell -eq 256 ] && [ $stellar_refinement -eq 1 ]; then
 
-            for burning_mode_str in "self-heat"
-            do
+                    dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
+                    dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
 
-                refinement_list=""
-
-                if   [ $ncell -eq 256 ]; then
-                    refinement_list="1 2 4 8 16"
-                elif [ $ncell -eq 512 ]; then
-                    refinement_list="1 2 4 8 16"
-                elif [ $ncell -eq 1024 ]; then
-                    refinement_list="1 2 4 8 16"
-                elif [ $ncell -eq 2048 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 4096 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 8192 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 16384 ]; then
-                    refinement_list="1"
                 fi
 
-                for refinement in $refinement_list
+                for dtnuc in $dtnuc_e_list
                 do
 
-                    if [ $burning_mode_str == "self-heat" ]; then
-                        burning_mode="1"
-                    else
-                        burning_mode="3"
-                    fi
+                    castro_dtnuc_e=$dtnuc
 
-                    castro_dxnuc="1.0e-6"
-
-                    dir=$base_dir/$burning_mode_str/dxnuc/r$refinement/
+                    dir=$base_dir/$burning_mode_str/burning_limiter_e/dt$dtnuc
                     set_run_opts
 
                     copy_checkpoint
@@ -639,16 +716,124 @@ do
                         run
                     fi
 
-                    castro_dxnuc=$dxnuc_default
+                done
+
+                castro_dtnuc_e=$dtnuc_e_default
 
 
 
-                    if [ $ncell -eq 256 ] && [ $stellar_refinement -eq 1 ]; then
+                for dtnuc in $dtnuc_X_list
+                do
 
-                        max_center_tagging_level=20
-                        center_tagging_radius=2.0d8
+                    castro_dtnuc_X=$dtnuc
 
-                        dir=$base_dir/$burning_mode_str/center/r$refinement/
+                    dir=$base_dir/$burning_mode_str/burning_limiter_X/dt$dtnuc
+                    set_run_opts
+
+                    copy_checkpoint
+
+                    if [ $to_run -eq 1 ]; then
+                        run
+                    fi
+
+                done
+
+                castro_dtnuc_X=$dtnuc_X_default
+
+
+
+                # Do runs with stellar refinement up to a selected level.
+
+                refinement_list=""
+
+                if [ $ncell -eq 256 ]; then
+                    if [ $stellar_refinement -eq 1 ]; then
+                        refinement_list="2 4 8 16"
+                    fi
+                fi
+
+                for refinement in $refinement_list
+                do
+
+                    full_stellar_refinement=1
+
+                    dir=$base_dir/$burning_mode_str/stellar/r$refinement
+                    set_run_opts
+
+                    copy_checkpoint
+
+                    if [ $to_run -eq 1 ]; then
+                        run
+                    fi
+
+                    unset full_stellar_refinement
+
+                done
+
+
+
+                # Do the runs with temperature-based refinement.
+
+                temp_list="1.0d9"
+
+                for temperature_tagging_threshold in $temp_list
+                do
+
+                    refinement_list=""
+
+                    if [ $ncell -eq 1024 ]; then
+                        if [ $stellar_refinement -eq 16 ]; then
+                            refinement_list="4"
+                        fi
+                    fi
+
+                    for refinement in $refinement_list
+                    do
+
+                        dir=$base_dir/$burning_mode_str/temperature/r$refinement
+                        set_run_opts
+
+                        max_temperature_tagging_level=$amr_max_level
+
+                        copy_checkpoint
+
+                        if [ $to_run -eq 1 ]; then
+                            run
+                        fi
+
+                        unset max_temperature_tagging_level
+
+                    done
+
+                done
+
+                max_temperature_tagging_level="0"
+
+
+
+                # Do runs with burning-based AMR up to a selected level.
+
+                dxnuc_list="1.0e-2"
+
+                for castro_dxnuc in $dxnuc_list
+                do
+
+                    refinement_list=""
+
+                    if [ $ncell -eq 256 ]; then
+                        if [ $stellar_refinement -eq 1 ]; then
+                            refinement_list="2 4 8 16"
+                        fi
+                    elif [ $ncell -eq 1024 ]; then
+                         if [ $stellar_refinement -eq 16 ]; then
+                             refinement_list="4 8 16"
+                         fi
+                     fi
+
+                    for refinement in $refinement_list
+                    do
+
+                        dir=$base_dir/$burning_mode_str/dxnuc/f$castro_dxnuc/r$refinement/
                         set_run_opts
 
                         copy_checkpoint
@@ -657,14 +842,11 @@ do
                             run
                         fi
 
-                        center_tagging_radius=0.0d0
-                        max_center_tagging_level=0
-
-                    fi
+                    done
 
                 done
 
-                unset refinement
+                castro_dxnuc=$dxnuc_default
 
             done
 
