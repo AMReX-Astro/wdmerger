@@ -996,6 +996,11 @@ function check_to_stop {
 
   end_wall_time=$(printf "%.0f" $end_wall_time)
 
+  # Also save the halfway point for a check later on.
+
+  half_time=$(echo "($end_wall_time + $start_wall_time) / 2.0" | bc -l)
+  half_time=$(printf "%.0f" $half_time)
+
   # We'll subdivide the remaining interval into a given number of chunks,
   # and periodically wake up to check if we're past the time limit. This
   # is intended to deal with potential issues where the function doesn't
@@ -1047,6 +1052,20 @@ function check_to_stop {
 	      echo ""
 	      break
 	  fi
+
+      else
+
+          # Another condition to check: if a single step has already used up more
+          # than half of the total wall time, we probably won't be able to fit
+          # another one in, so in that case, we should just declare this single
+          # timestep the last one.
+
+          if [ "$curr_wall_time" -ge "$half_time" ]; then
+              echo ""
+              echo "Stopping run since half the allocation has expired and we have not yet completed a step."
+              echo ""
+              break
+          fi
 
       fi
 
