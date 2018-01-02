@@ -87,7 +87,7 @@ function set_machine_params {
 
     elif [ $MACHINE == "TITAN" ]; then
 
-	allocation="ast106sbu"
+	allocation="ast106"
 	exec="qsub"
 	cancel_job="qdel"
 	pause_job="qhold"
