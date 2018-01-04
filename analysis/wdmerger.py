@@ -1112,7 +1112,7 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     # Complain if the file type is not EPS
 
-    if output_filename[-2:0] != "eps":
+    if output_filename[-3:] != "eps":
         print("Error: expecting an EPS output file.")
         return
 
