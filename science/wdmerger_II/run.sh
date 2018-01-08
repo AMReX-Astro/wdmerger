@@ -60,16 +60,6 @@ function set_run_opts {
                 elif [ $stellar_refinement -eq 16 ]; then
                     nprocs="512"
                     walltime="2:00:00"
-                
-#                     if [ ! -z $refinement ]; then
-#                         if   [ $refinement -eq 2 ]; then
-#                             nprocs="2048"
-#                             walltime="6:00:00"
-#                         elif [ $refinement -eq 4 ]; then
-#                             nprocs="2048"
-#                             walltime="6:00:00"
-#                         fi
-#                     fi
                 fi
             fi
         elif [ $ncell -eq 512 ]; then
@@ -564,6 +554,17 @@ castro_react_T_min="1.0e8"
 castro_react_rho_min="1.0e6"
 castro_small_temp="1.0e7"
 
+spec_tol_default="1.d-6"
+temp_tol_default="1.d-6"
+enuc_tol_default="1.d-6"
+
+rtol_spec=$spec_tol_default
+atol_spec=$spec_tol_default
+rtol_temp=$temp_tol_default
+atol_temp=$temp_tol_default
+rtol_enuc=$enuc_tol_default
+atol_enuc=$enuc_tol_default
+
 
 
 # The flag we will use to determine whether to run the job.
@@ -651,15 +652,36 @@ do
             do
 
                 if [ $burning_mode_str == "self-heat" ]; then
+
                     burning_mode="1"
+
+                    rtol_spec="1.d-6"
+                    atol_spec="1.d-6"
+                    rtol_temp="1.d-6"
+                    atol_temp="1.d-6"
+                    rtol_enuc="1.d-6"
+                    atol_enuc="1.d-6"
+
                 elif [ $burning_mode_str == "suppressed" ]; then
+
                     burning_mode="3"
+
+                    # Use tighter tolerances for the suppressed burn;
+                    # this seems to prevent integration failures.
+
+                    rtol_spec="1.d-8"
+                    atol_spec="1.d-8"
+                    rtol_temp="1.d-8"
+                    atol_temp="1.d-8"
+                    rtol_enuc="1.d-8"
+                    atol_enuc="1.d-8"
+
                 fi
 
                 # Only do the suppressed burn at certain resolutions.
 
                 if [ $burning_mode_str == "suppressed" ]; then
-                    if [ $ncell -gt 2048 ]; then
+                    if [ $ncell -gt 4096 ]; then
                         continue
                     fi
                     if [ $stellar_refinement -gt 1 ]; then
@@ -694,11 +716,30 @@ do
 
                 dtnuc_e_list=""
                 dtnuc_X_list=""
+                dtnuc_eX_list=""
 
                 if [ $ncell -eq 256 ] && [ $stellar_refinement -eq 1 ]; then
 
-                    dtnuc_e_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
-                    dtnuc_X_list="100.0 10.0 5.0 2.0 1.0 0.5 0.2 0.1 0.05 0.02 0.01"
+                    dtnuc_e_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1 5.0e-2 2.0e-2 1.0e-2"
+                    dtnuc_X_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1"
+                    dtnuc_eX_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1"
+
+                elif [ $ncell -eq 512 ] && [ $stellar_refinement -eq 1 ]; then
+
+                    dtnuc_e_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
+                    dtnuc_X_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
+                    dtnuc_eX_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
+
+                elif [ $ncell -eq 1024 ] && [ $stellar_refinement -eq 1 ]; then
+
+                    dtnuc_e_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                    dtnuc_X_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                    dtnuc_eX_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+
+                elif [ $ncell -eq 2048 ] && [ $stellar_refinement -eq 1 ]; then
+
+                    dtnuc_e_list="1.0e4"
+                    dtnuc_X_list="1.0e4"
 
                 fi
 
@@ -706,6 +747,14 @@ do
                 do
 
                     castro_dtnuc_e=$dtnuc
+
+                    # For this test only, disable timestep limiting for the plotting,
+                    # since the whole point is to test the effect of the timestep.
+                    # We'll still get enough plotfiles to examine the evolution if
+                    # we choose to do so.
+
+                    castro_plot_per_is_exact="0"
+                    castro_small_plot_per_is_exact="0"
 
                     dir=$base_dir/$burning_mode_str/burning_limiter_e/dt$dtnuc
                     set_run_opts
@@ -715,6 +764,9 @@ do
                     if [ $to_run -eq 1 ]; then
                         run
                     fi
+
+                    castro_plot_per_is_exact="1"
+                    castro_small_plot_per_is_exact="1"
 
                 done
 
@@ -738,6 +790,28 @@ do
 
                 done
 
+                castro_dtnuc_X=$dtnuc_X_default
+
+
+
+                for dtnuc in $dtnuc_eX_list
+                do
+
+                    castro_dtnuc_e=$dtnuc
+                    castro_dtnuc_X=$dtnuc
+
+                    dir=$base_dir/$burning_mode_str/burning_limiter_eX/dt$dtnuc
+                    set_run_opts
+
+                    copy_checkpoint
+
+                    if [ $to_run -eq 1 ]; then
+                        run
+                    fi
+
+                done
+
+                castro_dtnuc_e=$dtnuc_e_default
                 castro_dtnuc_X=$dtnuc_X_default
 
 
@@ -826,7 +900,7 @@ do
                         fi
                     elif [ $ncell -eq 1024 ]; then
                          if [ $stellar_refinement -eq 16 ]; then
-                             refinement_list="4 8 16"
+                             refinement_list="2 4 8 16 32"
                          fi
                      fi
 
@@ -848,9 +922,50 @@ do
 
                 castro_dxnuc=$dxnuc_default
 
+
+
+                # Do runs with static refinement in the center up to a selected level.
+
+                center_tagging_radius="2.0d8"
+
+                refinement_list=""
+
+                if [ $ncell -eq 1024 ]; then
+                    if [ $stellar_refinement -eq 16 ]; then
+                        refinement_list="2 4"
+                    fi
+                fi
+
+                for refinement in $refinement_list
+                do
+
+                    max_center_tagging_level=$amr_max_level
+
+                    dir=$base_dir/$burning_mode_str/center/d$center_tagging_radius/r$refinement/
+                    set_run_opts
+
+                    copy_checkpoint
+
+                    if [ $to_run -eq 1 ]; then
+                        run
+                    fi
+
+                    unset max_center_tagging_level
+
+                done
+
+                unset center_tagging_radius
+
             done
 
             burning_mode=$burning_mode_default
+
+            rtol_spec=$spec_tol_default
+            atol_spec=$spec_tol_default
+            rtol_temp=$temp_tol_default
+            atol_temp=$temp_tol_default
+            rtol_enuc=$enuc_tol_default
+            atol_enuc=$enuc_tol_default
 
         fi
 
