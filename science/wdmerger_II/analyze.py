@@ -931,9 +931,9 @@ if __name__ == "__main__":
 
     ncell_list = os.listdir(results_base)
 
-    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/')
-    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/')
-    burning_limiter(plots_dir + "dtnuc_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/')
+    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/r1/self-heat/')
+    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/r1/self-heat/')
+    burning_limiter(plots_dir + "dtnuc_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/r1/self-heat/')
     #amr_nickel(plots_dir + "amr_nickel.eps", results_base)
     #amr_detonation(plots_dir + "amr_detonation.eps", results_base)
 
