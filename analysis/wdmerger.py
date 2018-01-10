@@ -1091,6 +1091,7 @@ def rho_T_sliceplot(output_filename, pltfile,
                     dens_range = [1.e-4, 1.e8], temp_range = [1.e7, 1.e10],
                     x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9],
                     n_dens_ticks = 4, n_temp_ticks = 4,
+                    do_ts_te_contours = False, ts_te_contours = [0.1],
                     domain_frac = 1.0):
     """Create a slice plot of rho and T using yt.
 
@@ -1168,17 +1169,21 @@ def rho_T_sliceplot(output_filename, pltfile,
     aspect = 1.0
 
     if negate_left:
-        left_bound = [ bounds[0] / scale, -bounds[1] / scale, bounds[2] / scale, bounds[3] / scale]
+        left_bound = [ bounds[0].v / scale, -bounds[1].v / scale, bounds[2].v / scale, bounds[3].v / scale]
     else:
-        left_bound = [ bounds[0] / scale, bounds[1] / scale, bounds[2] / scale, bounds[3] / scale]
+        left_bound = [ bounds[0].v / scale, bounds[1].v / scale, bounds[2].v / scale, bounds[3].v / scale]
     plots.append(dens_axis.imshow(dens, norm=LogNorm(), extent=left_bound, aspect=aspect))
     plots[-1].set_clim(dens_range[0], dens_range[1])
     plots[-1].set_cmap('bone')
 
-    right_bound = [ bounds[0] / scale, bounds[1] / scale, bounds[2] / scale, bounds[3] / scale ]
+    right_bound = [ bounds[0].v / scale, bounds[1].v / scale, bounds[2].v / scale, bounds[3].v / scale ]
     plots.append(temp_axis.imshow(temp, norm=LogNorm(), extent=right_bound, aspect=aspect))
     plots[-1].set_clim(temp_range[0], temp_range[1])
     plots[-1].set_cmap("hot")
+
+    if do_ts_te_contours:
+        ts_te = np.array(frb['t_sound_t_enuc'])
+        temp_axis.contour(ts_te, levels=ts_te_contours, extent=right_bound)
 
     dens_ticks = np.logspace(np.log10(dens_range[0]), np.log10(dens_range[1]), num=n_dens_ticks)
 
