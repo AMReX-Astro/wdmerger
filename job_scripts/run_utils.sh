@@ -1116,11 +1116,12 @@ function check_to_stop {
 
 	  elif [ $chk_int -gt 0 ]; then
 
-              # Note the special case of chk_int == 1, we never want to apply the
+              # Note the special case of chk_int == 1: we never want to apply the
               # deletion in that case, but the modular arithmetic would get it wrong
-              # for chk00000.
+              # for chk00000. We'll use ${} to ensure that the quantities get treated
+              # as integers, and $(( )) around it to get an arithmetic evaluation.
 
-	      if [ $chk_int -gt 1 ] && [ $(( $chk_step % $chk_int )) -eq 0 ]; then
+	      if [ $chk_int -gt 1 ] && [ $(( ${chk_step} % ${chk_int} )) -eq 0 ]; then
 
 		  rm -rf $checkpoint
 
