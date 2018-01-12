@@ -1104,11 +1104,14 @@ function check_to_stop {
 	  # just capture everything after the 'k' of 'chk'.
 
 	  chk_step=$(echo $checkpoint | cut -d"k" -f2)
+          chk_step=$(echo $chk_step | bc) # Convert to integer, i.e. no leading zeros
 
 	  # Now get the I/O parameters from the inputs file.
 
 	  chk_int=$(get_inputs_var "amr_check_int" .)
+          chk_int=$(echo $chk_int | bc)
 	  chk_per=$(get_inputs_var "amr_check_per" .)
+          chk_per=$(echo $chk_per | bc)
 
 	  if [ $chk_int -le 0 ] && [ $(echo "$chk_per <= 0" | bc -l) -eq 1 ]; then
 
@@ -1118,10 +1121,9 @@ function check_to_stop {
 
               # Note the special case of chk_int == 1: we never want to apply the
               # deletion in that case, but the modular arithmetic would get it wrong
-              # for chk00000. We'll use ${} to ensure that the quantities get treated
-              # as integers, and $(( )) around it to get an arithmetic evaluation.
+              # for chk00000.
 
-	      if [ $chk_int -gt 1 ] && [ $(( ${chk_step} % ${chk_int} )) -eq 0 ]; then
+              if [ $chk_int -gt 1 ] && [ $(( $chk_step % $chk_int )) -eq 0 ]; then
 
 		  rm -rf $checkpoint
 
