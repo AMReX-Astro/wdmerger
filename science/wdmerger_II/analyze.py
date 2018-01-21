@@ -1010,9 +1010,26 @@ if __name__ == "__main__":
 
     ncell_list = os.listdir(results_base)
 
-    burning_limiter_e(plots_dir + "dtnuc_e_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/r1/self-heat/')
-    burning_limiter_X(plots_dir + "dtnuc_X_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/r1/self-heat/')
-    burning_limiter(plots_dir + "dtnuc_max_Ni56_m_P_" + mass_P + "_m_S_" + mass_S + ".eps", results_base + 'n256/r1/self-heat/')
+    for ncell in ncell_list:
+
+        r_list = os.listdir(results_base + ncell)
+
+        for r in r_list:
+
+            results_dir = results_base + ncell + '/' + r + '/self-heat/'
+
+            for do_ni56 in [True, False]:
+
+                if (do_ni56):
+                    label = 'max_Ni56'
+                else:
+                    label = 'abar'
+
+                burning_limiter_e(plots_dir + "dtnuc_e_" + label + "_m_P_" + mass_P + "_m_S_" + mass_S + "_" + ncell + "_" + r + ".eps", results_base + ncell + '/' + r + '/self-heat/', do_ni56 = do_ni56)
+                burning_limiter_X(plots_dir + "dtnuc_X_" + label + "_m_P_" + mass_P + "_m_S_" + mass_S + "_" + ncell + "_" + r + ".eps", results_base + ncell + '/' + r + '/self-heat/', do_ni56 = do_ni56)
+                burning_limiter(plots_dir + "dtnuc_" + label + "_m_P_" + mass_P + "_m_S_" + mass_S + "_" + ncell + "_" + r + ".eps", results_base + ncell + '/' + r + '/self-heat/', do_ni56 = do_ni56)
+
+
     #amr_nickel(plots_dir + "amr_nickel.eps", results_base)
     #amr_detonation(plots_dir + "amr_detonation.eps", results_base)
 
