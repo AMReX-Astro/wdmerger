@@ -389,20 +389,20 @@ def get_last_checkpoint(directory):
     return checkpoint
 
 
-
 #
-# Get the data column from a wdmerger diagnostic output file whose header name is col_name.
+# Get all of the data columns from a diagnostic output file.
 #
-
-def get_column(col_name, diag_filename):
-    """Get a column of data from a diagnostic file."""
+def get_column_data(diag_filename):
+    """Get all columns of data from a diagnostic file."""
 
     import numpy as np
+
+    data = None
 
     # Open up the file for reading. Get the names of the columns, as well as a 2D list
     # with all the data.
 
-    diag_file = open(diag_filename,'r')
+    diag_file = open(diag_filename, 'r')
 
     vc_line = 'git'
 
@@ -436,9 +436,31 @@ def get_column(col_name, diag_filename):
     col_names = [string.strip() for string in col_names]    # Remove any leading or trailing whitespace
     col_names = list(filter(None, col_names))               # Remove any remaining blank entries
 
-    # Obtain the column index and then return the column with that index.
+    return col_names, data
 
-    col_index = col_names.index(col_name)
+
+
+#
+# Get a data column from a wdmerger diagnostic output file, either using the header name
+# of the column, or using the column number.
+#
+
+def get_column(col, diag_filename):
+    """Get a column of data from a diagnostic file."""
+
+    col_names, data = get_column_data(diag_filename)
+
+    # If our input is the column number, then we can just return the column.
+    # Otherwise, obtain the column index from the name and then return the
+    # column with that index.
+
+    if isinstance(col, int):
+        col_index = col
+    elif isinstance(col, str):
+        col_index = col_names.index(col)
+    else:
+        print("Error: column must either be a number or a string.")
+        exit()
 
     return data[:,col_index]
 
