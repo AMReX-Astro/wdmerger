@@ -1004,7 +1004,10 @@ def get_parameter_list(directory):
     import os
 
     param_list = []
-    dirList = os.listdir(directory)
+    if (os.path.isdir(directory)):
+        dirList = os.listdir(directory)
+    else:
+        return param_list
 
     for sub_directory in dirList:
         if is_dir_done(directory + '/' + sub_directory):
