@@ -51,13 +51,7 @@ function set_run_opts {
             walltime="2:00:00"
 
             if [ ! -z $stellar_refinement ]; then
-                if   [ $stellar_refinement -eq 4 ]; then
-                    nprocs="512"
-                    walltime="2:00:00"
-                elif [ $stellar_refinement -eq 8 ]; then
-                    nprocs="512"
-                    walltime="2:00:00"
-                elif [ $stellar_refinement -eq 16 ]; then
+                if [ $stellar_refinement -eq 16 ]; then
                     nprocs="512"
                     walltime="2:00:00"
                 fi
@@ -67,10 +61,7 @@ function set_run_opts {
             walltime="2:00:00"
 
             if [ ! -z $stellar_refinement ]; then
-                if [ $stellar_refinement -eq 4 ]; then
-                    nprocs="512"
-                    walltime="2:00:00"
-                elif [ $stellar_refinement -eq 8 ]; then
+                if [ $stellar_refinement -eq 8 ]; then
                     nprocs="512"
                     walltime="2:00:00"
                 fi
@@ -107,12 +98,12 @@ function set_run_opts {
     if [ $ncell -eq 256 ]; then
 
         amr_blocking_factor="32"
-	amr_max_grid_size="32 32 64 64 128 128 256 256 512 512"
+	amr_max_grid_size="64 64 64 64 128 128 256 256 512 512"
 
     elif [ $ncell -eq 512 ]; then
 
 	amr_blocking_factor="32"
-        amr_max_grid_size="32 32 64 64 128 128 256 256 512 512"
+        amr_max_grid_size="64 64 64 64 128 128 256 256 512 512"
 
     elif [ $ncell -eq 1024 ]; then
 
@@ -596,11 +587,11 @@ do
     stellar_refinement_list=""
 
     if   [ $ncell -eq 256 ]; then
-        stellar_refinement_list="1"
+        stellar_refinement_list="1 4"
     elif [ $ncell -eq 512 ]; then
-        stellar_refinement_list="1"
+        stellar_refinement_list="1 4"
     elif [ $ncell -eq 1024 ]; then
-        stellar_refinement_list="1 16"
+        stellar_refinement_list="1 4 8 16"
     elif [ $ncell -eq 2048 ]; then
         stellar_refinement_list="1 16"
     elif [ $ncell -eq 4096 ]; then
@@ -718,28 +709,37 @@ do
                 dtnuc_X_list=""
                 dtnuc_eX_list=""
 
-                if [ $ncell -eq 256 ] && [ $stellar_refinement -eq 1 ]; then
+                if [ $ncell -eq 256 ]; then
 
-                    dtnuc_e_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1 5.0e-2 2.0e-2 1.0e-2"
-                    dtnuc_X_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1"
-                    dtnuc_eX_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1"
+                    if [ $stellar_refinement -eq 1 ]; then
 
-                elif [ $ncell -eq 512 ] && [ $stellar_refinement -eq 1 ]; then
+                        dtnuc_e_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1 5.0e-2 2.0e-2 1.0e-2"
+                        dtnuc_X_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1"
+                        dtnuc_eX_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 5.0e0 2.0e0 1.0e0 5.0e-1 2.0e-1 1.0e-1"
 
-                    dtnuc_e_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
-                    dtnuc_X_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
-                    dtnuc_eX_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
+                    elif [ $stellar_refinement -eq 4 ]; then
 
-                elif [ $ncell -eq 1024 ] && [ $stellar_refinement -eq 1 ]; then
+                        dtnuc_e_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                        dtnuc_X_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                        dtnuc_eX_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
 
-                    dtnuc_e_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
-                    dtnuc_X_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
-                    dtnuc_eX_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                    fi
 
-                elif [ $ncell -eq 2048 ] && [ $stellar_refinement -eq 1 ]; then
+                elif [ $ncell -eq 512 ]; then
 
-                    dtnuc_e_list="1.0e4"
-                    dtnuc_X_list="1.0e4"
+                    if [ $stellar_refinement -eq 1 ]; then
+
+                        dtnuc_e_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
+                        dtnuc_X_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
+                        dtnuc_eX_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1"
+
+                    elif [ $stellar_refinement -eq 4 ]; then
+
+                        dtnuc_e_list="1.0e4"
+                        dtnuc_X_list="1.0e4"
+                        dtnuc_eX_list="1.0e4"
+
+                    fi
 
                 fi
 
@@ -748,7 +748,7 @@ do
 
                     castro_dtnuc_e=$dtnuc
 
-                    # For this test only, disable timestep limiting for the plotting,
+                    # For these tests only, disable timestep limiting for the plotting,
                     # since the whole point is to test the effect of the timestep.
                     # We'll still get enough plotfiles to examine the evolution if
                     # we choose to do so.
@@ -779,6 +779,9 @@ do
 
                     castro_dtnuc_X=$dtnuc
 
+                    castro_plot_per_is_exact="0"
+                    castro_small_plot_per_is_exact="0"
+
                     dir=$base_dir/$burning_mode_str/burning_limiter_X/dt$dtnuc
                     set_run_opts
 
@@ -787,6 +790,9 @@ do
                     if [ $to_run -eq 1 ]; then
                         run
                     fi
+
+                    castro_plot_per_is_exact="1"
+                    castro_small_plot_per_is_exact="1"
 
                 done
 
@@ -800,6 +806,9 @@ do
                     castro_dtnuc_e=$dtnuc
                     castro_dtnuc_X=$dtnuc
 
+                    castro_plot_per_is_exact="0"
+                    castro_small_plot_per_is_exact="0"
+
                     dir=$base_dir/$burning_mode_str/burning_limiter_eX/dt$dtnuc
                     set_run_opts
 
@@ -808,6 +817,9 @@ do
                     if [ $to_run -eq 1 ]; then
                         run
                     fi
+
+                    castro_plot_per_is_exact="1"
+                    castro_small_plot_per_is_exact="1"
 
                 done
 
@@ -896,13 +908,25 @@ do
 
                     if [ $ncell -eq 256 ]; then
                         if [ $stellar_refinement -eq 1 ]; then
-                            refinement_list="2 4 8 16"
+                            refinement_list="2 4 8 16 32"
+                        fi
+                    elif [ $ncell -eq 512 ]; then
+                        if [ $stellar_refinement -eq 1 ]; then
+                            refinement_list="2 4 8 16 32"
                         fi
                     elif [ $ncell -eq 1024 ]; then
-                         if [ $stellar_refinement -eq 16 ]; then
-                             refinement_list="2 4 8 16 32"
-                         fi
-                     fi
+                        if [ $stellar_refinement -eq 1 ]; then
+                            refinement_list="2 4 8 16 32 64 128"
+                        elif [ $stellar_refinement -eq 4 ]; then
+                            refinement_list="2 4 8 16 32 64"
+                        elif [ $stellar_refinement -eq 16 ]; then
+                            refinement_list="2 4 8 16 32"
+                        fi
+                    elif [ $ncell -eq 2048 ]; then
+                        if [ $stellar_refinement -eq 1 ]; then
+                            refinement_list="2 4 8 16 32 64"
+                        fi
+                    fi
 
                     for refinement in $refinement_list
                     do
@@ -932,7 +956,7 @@ do
 
                 if [ $ncell -eq 1024 ]; then
                     if [ $stellar_refinement -eq 16 ]; then
-                        refinement_list="2 4"
+                        refinement_list="2"
                     fi
                 fi
 
