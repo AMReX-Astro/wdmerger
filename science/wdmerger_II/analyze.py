@@ -264,7 +264,7 @@ def write_ni56_table(results_dir, out_filename, v_list, n_list, comment, col1tit
 
 
 
-def burning_limiter_e(eps_filename, results_base):
+def burning_limiter_e(eps_filename, results_base, do_ni56 = True):
     """Plot the effect of the burning timestep factor castro.dtnuc_e."""
 
     if (os.path.isfile(eps_filename)):
@@ -284,20 +284,29 @@ def burning_limiter_e(eps_filename, results_base):
     if (dtnuc_list == []):
         return
 
-    ni56_arr = np.array(get_ni56(results_dir))
+    # We have two options: plot the total amount of nickel generated,
+    # or plot the average atomic mass number at the end of the simulation.
+
+    if (do_ni56):
+        result_arr = np.array(get_ni56(results_dir))
+    else:
+        result_arr = np.array(get_abar(results_dir))
 
     dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
     # Sort the lists
 
-    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
+    result_arr = np.array([x for _,x in sorted(zip(dtnuc_list,result_arr))])
     dtnuc_list = sorted(dtnuc_list)
 
-    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
+    plt.plot(dtnuc_list, result_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{be}$", fontsize=20)
-    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
+    if (do_ni56):
+        plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
+    else:
+        plt.ylabel(r"$\overline{A}$", fontsize=20)
     plt.tick_params(labelsize=16)
     plt.tight_layout()
     plt.savefig(eps_filename)
@@ -309,7 +318,7 @@ def burning_limiter_e(eps_filename, results_base):
 
 
 
-def burning_limiter_X(eps_filename, results_base):
+def burning_limiter_X(eps_filename, results_base, do_ni56 = True):
     """Plot the effect of the burning timestep limiter castro.dtnuc_X."""
 
     if (os.path.isfile(eps_filename)):
@@ -329,20 +338,26 @@ def burning_limiter_X(eps_filename, results_base):
     if (dtnuc_list == []):
         return
 
-    ni56_arr = np.array(get_ni56(results_dir))
+    if (do_ni56):
+        result_arr = np.array(get_ni56(results_dir))
+    else:
+        result_arr = np.array(get_abar(results_dir))
 
     dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
     # Sort the lists
 
-    ni56_arr = np.array([x for _,x in sorted(zip(dtnuc_list,ni56_arr))])
+    result_arr = np.array([x for _,x in sorted(zip(dtnuc_list,result_arr))])
     dtnuc_list = sorted(dtnuc_list)
 
-    plt.plot(dtnuc_list, ni56_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
+    plt.plot(dtnuc_list, result_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{bX}$", fontsize=20)
-    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
+    if (do_ni56):
+        plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
+    else:
+        plt.ylabel(r"$\overline{A}$", fontsize=20)
     plt.tick_params(labelsize=16)
     plt.tight_layout()
     plt.savefig(eps_filename)
@@ -356,7 +371,7 @@ def burning_limiter_X(eps_filename, results_base):
 
 # Combined plot of both burning timestep factors
 
-def burning_limiter(eps_filename, results_base):
+def burning_limiter(eps_filename, results_base, do_ni56 = True):
     """Plot the effects of both burning timestep limiters (castro.dtnuc_e and castro.dtnuc_X)."""
 
     if (os.path.isfile(eps_filename)):
@@ -376,13 +391,16 @@ def burning_limiter(eps_filename, results_base):
     if (dtnuc_e_list == []):
         return
 
-    ni56_e_arr = np.array(get_ni56(results_dir))
+    if (do_ni56):
+        result_e_arr = np.array(get_ni56(results_dir))
+    else:
+        result_e_arr = np.array(get_abar(results_dir))
 
     dtnuc_e_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_e_list])
 
     # Sort the lists
 
-    ni56_e_arr = np.array([x for _,x in sorted(zip(dtnuc_e_list,ni56_e_arr))])
+    result_e_arr = np.array([x for _,x in sorted(zip(dtnuc_e_list,result_e_arr))])
     dtnuc_e_list = sorted(dtnuc_e_list)
 
 
@@ -399,21 +417,27 @@ def burning_limiter(eps_filename, results_base):
     if (dtnuc_X_list == []):
         return
 
-    ni56_X_arr = np.array(get_ni56(results_dir))
+    if (do_ni56):
+        result_X_arr = np.array(get_ni56(results_dir))
+    else:
+        result_X_arr = np.array(get_abar(results_dir))
 
     dtnuc_X_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_X_list])
 
     # Sort the lists
 
-    ni56_X_arr = np.array([x for _,x in sorted(zip(dtnuc_X_list,ni56_X_arr))])
+    result_X_arr = np.array([x for _,x in sorted(zip(dtnuc_X_list,result_X_arr))])
     dtnuc_X_list = sorted(dtnuc_X_list)
 
-    plt.plot(dtnuc_e_list, ni56_e_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$', color = colors[0])
-    plt.plot(dtnuc_X_list, ni56_X_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$', color = colors[1])
+    plt.plot(dtnuc_e_list, result_e_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$', color = colors[0])
+    plt.plot(dtnuc_X_list, result_X_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$', color = colors[1])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
-    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
+    if (do_ni56):
+        plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
+    else:
+        plt.ylabel(r"$\overline{A}$", fontsize=20)
     plt.tick_params(labelsize=16)
     plt.legend(loc='best', prop={'size':20})
     plt.tight_layout()
