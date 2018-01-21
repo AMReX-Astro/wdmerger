@@ -16,7 +16,6 @@ colors = ['#1f78b4', '#33a02c', '#a6cee3', '#b2df8a']
 def get_ni56(results_dir, prefix = ''):
     """Return a list of maximum 56Ni production from all completed sub-directories in results_dir."""
 
-    import wdmerger_spec_diag_analysis as spec_diag
     import numpy as np
 
     ni56_arr = []
@@ -43,6 +42,62 @@ def get_ni56(results_dir, prefix = ''):
                 for diag_filename in diag_filename_list]
 
     return ni56_arr
+
+
+
+def get_abar(results_dir, prefix = ''):
+    """Return a list of maximum 56Ni production from all completed sub-directories in results_dir."""
+
+    import numpy as np
+
+    abar_arr = []
+
+    dir_list = wdmerger.get_parameter_list(results_dir)
+
+    # Strip out those directories that don't match the prefix.
+
+    if (prefix != ''):
+        dir_list = [dir for dir in dir_list if dir[0:len(prefix)] == prefix]
+
+    if (dir_list == []):
+        return abar_arr
+
+    diag_filename_list = [results_dir + '/' + directory + '/output/species_diag.out' for directory in dir_list]
+
+    # Ensure all of the output files are there.
+
+    for diag_file in diag_filename_list:
+        if not os.path.isfile(diag_file):
+            return abar_arr
+
+    abar_arr = []
+
+    for diag_filename in diag_filename_list:
+
+        col_names, col_data = wdmerger.get_column_data(diag_filename)
+
+        # The only thing we need is the last row, and we can
+        # skip the first two columns (timestep, simulation time).
+
+        spec_names = col_names[2:]
+        spec_data = col_data[-1, 2:]
+
+        # Normalize the species by the total mass.
+
+        spec_data /= sum(spec_data)
+
+        # Get the atomic masses of each element by stripping out
+        # only the digits from each column header.
+
+        spec_masses = [int(''.join(c for c in s if c.isdigit())) for s in spec_names]
+
+        # Now compute abar.
+
+        abar = sum(spec_masses * spec_data)
+
+        abar_arr.append(abar)
+
+    return abar_arr
 
 
 
