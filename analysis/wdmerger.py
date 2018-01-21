@@ -467,6 +467,21 @@ def get_column(col, diag_filename):
 
 
 #
+# Get the number of data columns in a wdmerger diagnostic output file.
+#
+
+def get_ncols(diag_filename):
+    """Return the number of columns of data in a diagnostic file."""
+
+    col_names, data = get_column_data(diag_filename)
+
+    # Return the number of columns.
+
+    return data.shape[1]
+
+
+
+#
 # Get the timing data for a wdmerger output file.
 # Return the median timestep wall clock length.
 #
