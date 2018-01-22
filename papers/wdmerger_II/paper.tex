@@ -237,12 +237,13 @@ this point, the total energy on the domain has become positive, typically about
 $10^{51}$ ergs, and has stopped increasing. This means that the system has become
 unbound due to nuclear energy release, and that no further meaningful nuclear energy
 generation is occurring. In our discussions below, it helps to have some other
-anchoring points in time when significant events occur. We (arbitrarily) define the
-collision time, $t_{\rm c}$, as the first time when the maximum density on the grid reaches
-$5 \times 10^6\ \text{g / cm}^3$. This is slightly larger than the initial maximum
-density of the two WDs, and is reached only when the WDs meet at the center of the
-domain. We define the detonation time, $t_{\rm d}$, as the time when the temperature
-first reaches $4 \times 10^9\ \text{K}$.
+anchoring points in time when significant events occur. We arbitrarily define the
+collision time, $t_{\rm c}$, as the time when the density at the center of the grid
+first reaches $10^2\ \text{g / cm}^3$. This is reached only when the WDs meet at the
+center of the domain. We define the detonation time, $t_{\rm d}$, as the time when the
+temperature first reaches $4.5 \times 10^9\ \text{K}$. This is also an arbitrary
+threshold, but we have found empirically that this temperature is only reached in
+the collision when a detonation is formed.
 
 As in Paper I, the region outside the WDs is filled with a low-density ambient
 material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition and temperature is the
@@ -273,7 +274,7 @@ Now let us examine the results for a collision of two 0.64 $\msolar$ WDs. We use
 Timesteps are limited only by the hydrodynamic stability constraint (and the plotfile
 interval constraint). Resolutions in the range of a few hundred km have been a common
 choice in earlier papers on white dwarf mergers and collisions. No adaptive mesh
-refinement is used. For this configuration, the collision time is $t_{\rm c} = 6.47\ \text{s}$,
+refinement is used. For this configuration, the collision time is approximately $t_{\rm c} = 4.6\ \text{s}$,
 and the detonation time is $t_{\rm d} = 7.43\ \text{s}$. The peak density at the detonation time
 is $2.3 \times 10^7\ \text{g / cm}^3$. The detonation occurs at the center of the domain
 where the two WDs initially meet.
@@ -711,7 +712,7 @@ to the refinement through the refinement factor, $r$. This factor is the jump in
 resolution between the coarse grid and the finest grid. The uniform base grid case is $r = 1$.
 Meanwhile, $r = 16$ means a uniform coarse grid plus two levels of 4x refinement.
 
-At high resolution the collision time is $t_{\rm c} = 6.41\ \text{s}$, which is similar to the
+At high resolution the collision time, $t_{\rm c} = 4.6\ \text{s}$, is similar to the
 collision time at low resolution. However, the detonation time is around $t_{\rm d} = 6.62\ \text{s}$,
 which is significantly earlier than at low resolution due to the high resolution simulations
 being better able to resolve the point of contact between the WDs. The peak density crosses
