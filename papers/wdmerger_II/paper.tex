@@ -238,22 +238,22 @@ unbound due to nuclear energy release, and that no further meaningful nuclear en
 generation is occurring. In our discussions below, it helps to have some other
 anchoring points in time when significant events occur. We arbitrarily define the
 collision time, $t_{\rm c}$, as the time when the density at the center of the grid
-first reaches $10^2\ \text{g / cm}^3$. This is reached only when the WDs meet at the
+first reaches $10^2\ \text{g\,/\,cm}^3$. This is reached only when the WDs meet at the
 center of the domain. We define the detonation time, $t_{\rm d}$, as the time when the
 temperature first reaches $4.5 \times 10^9\ \text{K}$. This is also an arbitrary
 threshold, but we have found empirically that this temperature is only reached in
 the collision when a detonation is formed.
 
 As in Paper I, the region outside the WDs is filled with a low-density ambient
-material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition and temperature is the
+material with $\rho = 10^{-4}\ \text{g\,/\,cm}^{3}$ whose composition and temperature is the
 same as that of the WDs. Reactions in this region are unimportant, so for
 computational efficiency, we disable all nuclear burning for zones that have
-$\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. We have confirmed that
+$\rho < 10^6\ \text{g\,/\,cm}^{3}$ and $T < 10^8\ \text{K}$. We have confirmed that
 the results do not depend on this choice. A sponge is applied to all gas of density
-lower than $1\ \text{g / cm}^{-3}$. The sponge damps out the velocity in these zones
+lower than $1\ \text{g\,/\,cm}^{3}$. The sponge damps out the velocity in these zones
 (see Paper I) to prevent spurious numerical error in low-density gas from dragging
 down the global timestep. The density floor for the simulation is set
-at $10^{-5}\ \text{g / cm}^{-3}$ and the temperature floor is $10^7$ K.
+at $10^{-5}\ \text{g\,/\,cm}^{3}$ and the temperature floor is $10^7$ K.
 
 Our primary metric for this test is the amount of $^{56}$Ni generated in the collision,
 as this is the parameter most directly related to the observable quantities of interest
@@ -275,7 +275,7 @@ interval constraint). Resolutions in the range of a few hundred km have been a c
 choice in earlier papers on white dwarf mergers and collisions. No adaptive mesh
 refinement is used. For this configuration, the collision time is approximately $t_{\rm c} = 4.6\ \text{s}$,
 and the detonation time is $t_{\rm d} = 7.43\ \text{s}$. The peak density at the detonation time
-is $2.3 \times 10^7\ \text{g / cm}^3$. The detonation occurs at the center of the domain
+is $2.3 \times 10^7\ \text{g\,/\,cm}^3$. The detonation occurs at the center of the domain
 where the two WDs initially meet.
 
 
@@ -673,7 +673,7 @@ The upshot of this discussion is that the only way to resolve the
 question is with higher resolution simulations. The semi-analytic
 criterion provided by \cite{garg:2017}, and the numerical calculations
 of \cite{seitenzahl:2009}, give critical radii for spontaneous detonation.
-For the densities we are interested in ($\sim 10^7\ \text{g / cm}^3$),
+For the densities we are interested in ($\sim 10^7\ \text{g\,/\,cm}^3$),
 assuming equal C/O material, the critical radii are in the range 1-10 km.
 So, as pointed out by \citeauthor{kushnir:2013}, this numerical
 stability issue is mainly a concern for simulations with
@@ -715,7 +715,7 @@ At high resolution the collision time, $t_{\rm c} = 4.6\ \text{s}$, is similar t
 collision time at low resolution. However, the detonation time is around $t_{\rm d} = 6.62\ \text{s}$,
 which is significantly earlier than at low resolution due to the high resolution simulations
 being better able to resolve the point of contact between the WDs. The peak density crosses
-$10^7\ \text{g / cm}^3$ significantly earlier, and this is what triggers the burning sufficient
+$10^7\ \text{g\,/\,cm}^3$ significantly earlier, and this is what triggers the burning sufficient
 to generate an earlier detonation. Approximately speaking, the later $t_{\rm d}$ is, the more
 nickel is produced. As time passes, more white dwarf material slams into the center, compressing
 and heating up the gas. Both effects are favorable to production of nickel. So, a later $t_{\rm d}$
