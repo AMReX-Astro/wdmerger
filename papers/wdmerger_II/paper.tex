@@ -312,8 +312,8 @@ particles between ${}^4$He and ${}^{56}$Ni. This network was used by \citet{hawl
 and \citet{raskin:2010}. \citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a
 very similar network that additionally included ${}^{60}$Zn. This network has been
 ported into a form that is consistent with the \amrex\ codes, in the freely available
-\microphysics\ code repository
-\footnote{\microphysics\ can be obtained at \url{https://github.com/starkiller-astro/Microphysics}.},
+\microphysics\ code repository\footnote{\microphysics\ can be obtained at
+\url{https://github.com/starkiller-astro/Microphysics}.},
 a collection of microphysical routines that are designed to be used in our
 hydrodynamics codes. In our \microphysics\ repository we have also ported \aproxnineteen\
 \citep{timmes:1999}, which was used in a few previous collision papers, and \aproxtwentyone.
@@ -460,8 +460,8 @@ $f_{be}$ and $f_{bX}$ smaller, we can control the magnitude of the decoupling
 between the reactions and the hydro. A typical choice for $f_{be}$ in the
 literature is in the range of 0.1 to 0.3, while to our knowledge a limiter based on
 $f_{bX}$ has not been used by others performing these types of calculations. The sensitivity
-of results to the value of these timestep limiters will be discussed in 
-\autoref{sec:temporalresolution}. The factors $f_{be}$ and $f_{bX}$ can be set at runtime in \castro.
+of results to the value of these timestep limiters will be discussed later in the
+results. The factors $f_{be}$ and $f_{bX}$ can be set at runtime in \castro.
 
 At the start of each advance, we limit the size of the timestep to be the smaller
 of the minimum hydro timestep (limited by the CFL condition), and the minimum of all the
