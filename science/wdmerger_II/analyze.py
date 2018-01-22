@@ -1039,7 +1039,7 @@ def collision_time(results_dir):
         rho_max = sph.max("density")
 
         if rho_max < density_threshold:
-            idx = i + 1
+            idx = i - 1
             break
 
     ds = yt.load(results_dir + '/output/' + plots[idx])
