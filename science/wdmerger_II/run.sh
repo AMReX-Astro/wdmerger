@@ -719,9 +719,9 @@ do
 
                     elif [ $stellar_refinement -eq 4 ]; then
 
-                        dtnuc_e_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
-                        dtnuc_X_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
-                        dtnuc_eX_list="1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                        dtnuc_e_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                        dtnuc_X_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
+                        dtnuc_eX_list="1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0"
 
                     fi
 
