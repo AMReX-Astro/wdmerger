@@ -186,18 +186,8 @@ typically available for contemporary hydrodynamics simulations.
 %==========================================================================
 % Problem Setup
 %==========================================================================
-\section{White Dwarf Collisions}
+\section{White Dwarf Collision Setup}
 \label{sec:collisions}
-
-We start with a description of the problem setup and results of a typical collision
-at low resolution. These results set the stage for our numerical methodology. This enables
-a concrete discussion about the methodology using the language of how it affects the
-collision outcome. In this setting, a concrete discussion is more fruitful than an abstract one.
-
-
-
-\subsection{Problem Setup}
-\label{sec:problemsetup}
 
 We implement the white dwarf collision problem in \castro\ in the \wdmerger\ problem
 directory. We prepare the domain in the way most previous papers have done so:
@@ -255,28 +245,30 @@ lower than $1\ \text{g\,/\,cm}^{3}$. The sponge damps out the velocity in these 
 down the global timestep. The density floor for the simulation is set
 at $10^{-5}\ \text{g\,/\,cm}^{3}$ and the temperature floor is $10^7$ K.
 
-Our primary metric for this test is the amount of $^{56}$Ni generated in the collision,
-as this is the parameter most directly related to the observable quantities of interest
-for Type Ia supernovae. We collect information at the end of every timestep about the
-total amount of nickel on the grid (in solar masses), and we use the maximum value of
-this nickel mass. Plotfiles of relevant quantities are created every 0.01 seconds.
+We collect information at the end of every timestep about the total amount of
+all of the species on the grid (in solar masses), and we use the mass of $^{56}$Ni
+generated as a metric for this test, as this is the parameter most directly related
+to the observable quantities of interest for Type Ia supernovae. Since, as we will see
+below, not all of our simulations detonate at a density high enough to generate substantial
+amounts of nickel, we employ the mass-weighted average atomic mass number on the domain,
+$\bar{A}$, as a more general metric describing the outcome of the simulation. A
+final relevant metric is the total amount of energy $E$ released by the detonation.
+
+Plotfiles of relevant quantities are created every 0.01 seconds.
 The timesteps are limited to ensure that every multiple of this plotfile interval is
-reached exactly, which means an effective maximum timestep of 0.01 seconds.
+reached exactly, which means an effective maximum timestep of 0.01 seconds. Timesteps
+are by default limited only by the hydrodynamic stability constraint and this plotfile
+interval constraint, except where noted otherwise.
 
-
-
-\subsection{Baseline Results}
-\label{sec:baseline_results}
-
-Now let us examine the results for a collision of two 0.64 $\msolar$ WDs. We use
-128 zones in the radial dimension, corresponding to a spatial resolution of 312.5 km.
-Timesteps are limited only by the hydrodynamic stability constraint (and the plotfile
-interval constraint). Resolutions in the range of a few hundred km have been a common
-choice in earlier papers on white dwarf mergers and collisions. No adaptive mesh
-refinement is used. For this configuration, the collision time is approximately $t_{\rm c} = 4.6\ \text{s}$,
-and the detonation time is $t_{\rm d} = 7.43\ \text{s}$. The peak density at the detonation time
-is $2.3 \times 10^7\ \text{g\,/\,cm}^3$. The detonation occurs at the center of the domain
-where the two WDs initially meet.
+For a collision of two 0.64 $\msolar$ WDs with 128 zones in the radial dimension,
+corresponding to a uniform spatial resolution of 312.5 km, the collision time is
+$t_{\rm c} = 4.16\ \text{s}$, and the detonation time is $t_{\rm d} = 7.43\ \text{s}$.
+The peak density at the detonation time is $2.3 \times 10^7\ \text{g\,/\,cm}^3$.
+Approximately $0.21\ \msolar$ of nickel and $0.46\ \msolar$ of silicon is created,
+corresponding to an $\bar{A}$ of about 29. Approximately $1.3 \times 10^{51}$
+ergs of energy are released. Simulations with resolutions in this few hundred kilometer
+range have been a common choice in earlier papers on white dwarf mergers and collisions
+due to computational constraints; our goal is to see how higher resolution runs differ.
 
 
 
@@ -711,12 +703,12 @@ to the refinement through the refinement factor, $r$. This factor is the jump in
 resolution between the coarse grid and the finest grid. The uniform base grid case is $r = 1$.
 Meanwhile, $r = 16$ means a uniform coarse grid plus two levels of 4x refinement.
 
-At high resolution the collision time, $t_{\rm c} = 4.6\ \text{s}$, is similar to the
-collision time at low resolution. However, the detonation time is around $t_{\rm d} = 6.62\ \text{s}$,
-which is significantly earlier than at low resolution due to the high resolution simulations
-being better able to resolve the point of contact between the WDs. The peak density crosses
-$10^7\ \text{g\,/\,cm}^3$ significantly earlier, and this is what triggers the burning sufficient
-to generate an earlier detonation. Approximately speaking, the later $t_{\rm d}$ is, the more
+At high resolution the collision time, $t_{\rm c} = 4.6\ \text{s}$, is later than the
+collision time at low resolution, due to a sharper view of the contact point. However,
+for the same reason, the detonation time is significantly earlier at $t_{\rm d} = 6.62\ \text{s}$,
+as the peak density reaches the key density range of $10^7\ \text{g\,/\,cm}^3$ significantly earlier,
+and this is what triggers the burning sufficient to generate an earlier detonation.
+Approximately speaking, the later $t_{\rm d}$ is, the more
 nickel is produced. As time passes, more white dwarf material slams into the center, compressing
 and heating up the gas. Both effects are favorable to production of nickel. So, a later $t_{\rm d}$
 implies that more material can be converted to nickel.
