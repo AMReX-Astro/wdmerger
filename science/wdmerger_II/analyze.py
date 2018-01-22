@@ -995,6 +995,63 @@ def rho_T_sliceplots(output_base, results_base, smallplt = True, prefix = "",
 
 
 
+#
+# Calculate the collision time.
+#
+
+def collision_time(results_dir):
+    """Calculate the time of the collision."""
+
+    out_file = results_dir + '/collision_time.txt'
+
+    if os.path.isfile(out_file):
+        return
+
+    print("Calculating collision time in directory " + results_dir)
+
+    import yt
+
+    # Load all the output files in the output directory.
+    # Search them one by one (in reverse) until we find
+    # the time where the density threshold is crossed
+    # at the center of the simulation.
+
+    density_threshold = 1.0e2
+
+    plots = wdmerger.get_plotfiles(results_dir, prefix = 'smallplt')
+    plots.reverse()
+
+    if (plots == []) or (plots == None):
+        return
+
+    for i, plot in enumerate(plots):
+
+        ds = yt.load(results_dir + '/output/' + plot)
+
+        # Get a region that is only one coarse zone-width wide
+
+        dx = ds.domain_width / ds.domain_dimensions
+
+        sph = ds.sphere([0.0, 0.0, 0.0], max(dx))
+
+        # Find the maximum density in that region
+
+        rho_max = sph.max("density")
+
+        if rho_max < density_threshold:
+            idx = i + 1
+            break
+
+    ds = yt.load(results_dir + '/output/' + plots[idx])
+
+    file = open(out_file, 'w')
+
+    file.write(str(ds.current_time.v))
+
+    file.close()
+
+
+
 # Main execution: do all of the analysis routines.
 
 if __name__ == "__main__":
