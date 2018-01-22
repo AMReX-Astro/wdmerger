@@ -1075,6 +1075,8 @@ if __name__ == "__main__":
 
             results_dir = results_base + ncell + '/' + r + '/self-heat/'
 
+            # Plot the effect of the burning timestep limiters
+
             for do_ni56 in [True, False]:
 
                 if (do_ni56):
@@ -1082,15 +1084,26 @@ if __name__ == "__main__":
                 else:
                     label = 'abar'
 
-                burning_limiter_e(plots_dir + "dtnuc_e_" + label + "_m_P_" + mass_P + "_m_S_" + mass_S + "_" + ncell + "_" + r + ".eps", results_base + ncell + '/' + r + '/self-heat/', do_ni56 = do_ni56)
-                burning_limiter_X(plots_dir + "dtnuc_X_" + label + "_m_P_" + mass_P + "_m_S_" + mass_S + "_" + ncell + "_" + r + ".eps", results_base + ncell + '/' + r + '/self-heat/', do_ni56 = do_ni56)
-                burning_limiter(plots_dir + "dtnuc_" + label + "_m_P_" + mass_P + "_m_S_" + mass_S + "_" + ncell + "_" + r + ".eps", results_base + ncell + '/' + r + '/self-heat/', do_ni56 = do_ni56)
+                out_file_base = label + '_m_P_' + mass_P + '_m_S_' + mass_S + '_' + ncell + '_' + r + '.eps'
+
+                burning_limiter_e(plots_dir + 'dtnuc_e_' + out_file_base, results_dir, do_ni56 = do_ni56)
+                burning_limiter_X(plots_dir + 'dtnuc_X_' + out_file_base, results_dir, do_ni56 = do_ni56)
+                burning_limiter(plots_dir + 'dtnuc_' + out_file_base, results_dir, do_ni56 = do_ni56)
 
 
-    #amr_nickel(plots_dir + "amr_nickel.eps", results_base)
-    #amr_detonation(plots_dir + "amr_detonation.eps", results_base)
+
+            # Calculate the collision time
+
+            results_dir = results_base + ncell + '/' + r + '/start/'
+
+            collision_time(results_dir)
+
+
+
+    #amr_nickel(plots_dir + 'amr_nickel.eps', results_base)
+    #amr_detonation(plots_dir + 'amr_detonation.eps', results_base)
 
     #for n in ncell_list:
-        #plot_dir = plots_dir + "slices/dxnuc/" + n + "/"
-        #prefix = "_" + n
+        #plot_dir = plots_dir + 'slices/dxnuc/' + n + '/'
+        #prefix = '_' + n
         #rho_T_sliceplots(plot_dir, results_dir, prefix = prefix)
