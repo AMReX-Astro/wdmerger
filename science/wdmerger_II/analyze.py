@@ -429,8 +429,37 @@ def burning_limiter(eps_filename, results_base, do_ni56 = True):
     result_X_arr = np.array([x for _,x in sorted(zip(dtnuc_X_list,result_X_arr))])
     dtnuc_X_list = sorted(dtnuc_X_list)
 
-    plt.plot(dtnuc_e_list, result_e_arr, linestyle=linestyles[0], lw = 4.0, label=r'$\Delta t_{be}$', color = colors[0])
-    plt.plot(dtnuc_X_list, result_X_arr, linestyle=linestyles[1], lw = 4.0, label=r'$\Delta t_{bX}$', color = colors[1])
+
+
+    results_dir = results_base + 'burning_limiter_eX/'
+
+    if not os.path.isdir(results_dir):
+        return
+
+    # Get the list of parameter values we have tried
+
+    dtnuc_eX_list = wdmerger.get_parameter_list(results_dir)
+
+    if (dtnuc_eX_list == []):
+        return
+
+    if (do_ni56):
+        result_eX_arr = np.array(get_ni56(results_dir))
+    else:
+        result_eX_arr = np.array(get_abar(results_dir))
+
+    dtnuc_eX_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_eX_list])
+
+    # Sort the lists
+
+    result_eX_arr = np.array([x for _,x in sorted(zip(dtnuc_eX_list,result_eX_arr))])
+    dtnuc_eX_list = sorted(dtnuc_X_list)
+
+
+
+    plt.plot(dtnuc_e_list, result_e_arr, linestyle=linestyles[2], lw = 4.0, label='Energy limiting', color = colors[0])
+    plt.plot(dtnuc_X_list, result_X_arr, linestyle=linestyles[1], lw = 4.0, label='Species limiting', color = colors[1])
+    plt.plot(dtnuc_eX_list, result_eX_arr, linestyle=linestyles[0], lw = 4.0, label='Combined limiting', color = colors[2])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
