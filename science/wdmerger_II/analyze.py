@@ -292,6 +292,11 @@ def burning_limiter_e(eps_filename, results_base, do_ni56 = True):
     else:
         result_arr = np.array(get_abar(results_dir))
 
+    # Don't make the plot if we have fewer than two data points.
+
+    if len(result_arr) < 2:
+        return
+
     dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
     # Sort the lists
@@ -342,6 +347,11 @@ def burning_limiter_X(eps_filename, results_base, do_ni56 = True):
         result_arr = np.array(get_ni56(results_dir))
     else:
         result_arr = np.array(get_abar(results_dir))
+
+    # Don't make the plot if we have fewer than two data points.
+
+    if len(result_arr) < 2:
+        return
 
     dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
 
@@ -396,6 +406,11 @@ def burning_limiter(eps_filename, results_base, do_ni56 = True):
     else:
         result_e_arr = np.array(get_abar(results_dir))
 
+    # Don't make the plot if we have fewer than two data points.
+
+    if len(result_e_arr) < 2:
+        return
+
     dtnuc_e_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_e_list])
 
     # Sort the lists
@@ -422,6 +437,11 @@ def burning_limiter(eps_filename, results_base, do_ni56 = True):
     else:
         result_X_arr = np.array(get_abar(results_dir))
 
+    # Don't make the plot if we have fewer than two data points.
+
+    if len(result_X_arr) < 2:
+        return
+
     dtnuc_X_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_X_list])
 
     # Sort the lists
@@ -447,6 +467,11 @@ def burning_limiter(eps_filename, results_base, do_ni56 = True):
         result_eX_arr = np.array(get_ni56(results_dir))
     else:
         result_eX_arr = np.array(get_abar(results_dir))
+
+    # Don't make the plot if we have fewer than two data points.
+
+    if len(result_eX_arr) < 2:
+        return
 
     dtnuc_eX_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_eX_list])
 
