@@ -293,17 +293,13 @@ system. We will deal with each of these in turn in the following subsections.
 \subsection{Nuclear Network}
 \label{sec:network}
 
-White dwarfs are primarily composed of the $\alpha$-chain particles ${}^4$He,
-${}^{12}$C, ${}^{16}$O, ${}^{20}$Ne, and ${}^{24}$Mg. Therefore the core of
-any network appropriate for modeling nuclear burning in white dwarfs will be
-these alpha chain nuclides, with the idea being that links up the $\alpha$-chain
-will eventually get us to ${}^{56}$Ni, the nuclide responsible for the
-energy output of Type Ia supernovae. In this paper we use the \aproxthirteen\
-network\ \citep{timmes:1999,timmes:2000}. This includes all thirteen $\alpha$-chain
-particles between ${}^4$He and ${}^{56}$Ni. This network was used by \citet{hawley:2012}
+In this paper we use the \aproxthirteen\ network\ \citep{timmes:1999,timmes:2000}.
+This includes all thirteen $\alpha$-chain particles between ${}^4$He and ${}^{56}$Ni.
+These $\alpha$-chain particles capture the most important pathway connecting a WD
+and its thermonuclear detonation. This network was used by \citet{hawley:2012}
 and \citet{raskin:2010}. \citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a
-very similar network that additionally included ${}^{60}$Zn. This network has been
-ported into a form that is consistent with the \amrex\ codes, in the freely available
+very similar network that additionally included ${}^{60}$Zn. The \aproxthirteen\ network has been
+ported into a form that is consistent with the \amrex\ codes in the freely available
 \microphysics\ code repository\footnote{\microphysics\ can be obtained at
 \url{https://github.com/starkiller-astro/Microphysics}.},
 a collection of microphysical routines that are designed to be used in our
@@ -313,9 +309,9 @@ The isotopes added by these networks relative to \aproxthirteen\ are not particu
 to the problem of head-on white dwarf collisions, so we do not discuss results with these networks
 here (though we have verified for this problem that these larger networks do not significantly change
 the answer). We also make available \isoseven\ \citep{timmes:2000}, which skips the nuclides between
-silicon and nickel, and was used by \citet{rosswog:2009}. \isoseven\ gives significantly different
-quantitative results than \aproxthirteen\ for this problem, due to the inapplicable assumption of
-an equilibrium abundance of the unused isotopes, but the results are still qualitatively similar.
+silicon and nickel, and which was used by \citet{rosswog:2009}. \isoseven\ gives significantly different
+quantitative results than \aproxthirteen\ for this problem, due to its inapplicable assumption of
+an equilibrium abundance of the unsimulated isotopes, but the results are still qualitatively similar.
 
 \subsection{Nuclear Burning}
 \label{sec:burner}
@@ -387,7 +383,7 @@ a net negative energy release from the hydrostatic burn, which occurs only after
 we have burned to NSE. The hybrid burn was mainly implemented by \citet{raskin:2010}
 for making it easier to numerically complete a burn, rather than because of the
 effects it has on the outcome of the simulation. The suppressed burn has separate
-issues which we defer to \autoref{sec:unstable_burning}
+issues which we defer to \autoref{sec:unstable_burning}.
 
 In our \microphysics\ repository we provide several software options for
 solving a set of coupled stiff ODEs. For this work our primary integrator
