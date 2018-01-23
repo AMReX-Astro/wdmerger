@@ -302,7 +302,7 @@ def burning_limiter_e(eps_filename, results_base, do_ni56 = True):
     plt.plot(dtnuc_list, result_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
 
     plt.xscale('log')
-    plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{be}$", fontsize=20)
+    plt.xlabel(r"Nuclear burning timestep factor $f_{be}$", fontsize=20)
     if (do_ni56):
         plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
     else:
@@ -353,7 +353,7 @@ def burning_limiter_X(eps_filename, results_base, do_ni56 = True):
     plt.plot(dtnuc_list, result_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
 
     plt.xscale('log')
-    plt.xlabel(r"Nuclear burning timestep factor $\Delta t_{bX}$", fontsize=20)
+    plt.xlabel(r"Nuclear burning timestep factor $f_{bX}$", fontsize=20)
     if (do_ni56):
         plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
     else:
@@ -458,8 +458,8 @@ def burning_limiter(eps_filename, results_base, do_ni56 = True):
 
 
     plt.plot(dtnuc_e_list, result_e_arr, linestyle=linestyles[2], lw = 4.0, label='Energy limiting', color = colors[0])
-    plt.plot(dtnuc_X_list, result_X_arr, linestyle=linestyles[1], lw = 4.0, label='Species limiting', color = colors[1])
-    plt.plot(dtnuc_eX_list, result_eX_arr, linestyle=linestyles[0], lw = 4.0, label='Combined limiting', color = colors[2])
+    plt.plot(dtnuc_X_list, result_X_arr, linestyle=linestyles[0], lw = 4.0, label='Species limiting', color = colors[1])
+    plt.plot(dtnuc_eX_list, result_eX_arr, linestyle=linestyles[1], lw = 4.0, label='Combined limiting', color = colors[2])
 
     plt.xscale('log')
     plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
