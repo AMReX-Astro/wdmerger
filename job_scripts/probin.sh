@@ -38,6 +38,30 @@ function replace_probin_var {
 
     if (grep -q "[[:space:]]$var[[:space:]]*=" $dir/$probin); then
 	sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/$probin
+        return
+    fi
+
+    # Also allow for the possibility of a newly added probin variable.
+    # We will detect this using syntax where the variable must be
+    # prepended with probin_<namelist>_, where <namelist> is the name
+    # of the specific Fortran namelist you want to add to.
+
+    if [[ $var == "probin_"* ]]; then
+
+        # Extract the namelist
+        namelist=$(echo $var | cut -d'_' -f 2)
+
+        # Extract the actual name of the variable
+        actual_var=$(echo $var | cut -d'_' -f 3-)
+
+        # Insert the variable into the probin file inside the matching namelist
+        sed -i "/&$namelist/ a \ \ $actual_var = ${!var}" $dir/$probin
+
+        # Insert newline before it for aesthetics
+        sed -i "/&$namelist/ a \ \ " $dir/$probin
+
+        return
+
     fi
 
 }
