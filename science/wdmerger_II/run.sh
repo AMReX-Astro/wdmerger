@@ -717,9 +717,9 @@ do
 
                 elif [ $ncell -eq 512 ] && [ $stellar_refinement -eq 1 ]; then
 
-                    dtnuc_e_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1 2.0e-1"
-                    dtnuc_X_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1 2.0e-1"
-                    dtnuc_eX_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1 2.0e-1"
+                    dtnuc_e_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1 2.0e-1 1.0e-1"
+                    dtnuc_X_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1 2.0e-1 1.0e-1"
+                    dtnuc_eX_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 5.0e-1 2.0e-1 1.0e-1"
 
                 elif [ $ncell -eq 1024 ] && [ $stellar_refinement -eq 1 ]; then
 
@@ -729,9 +729,9 @@ do
 
                 elif [ $ncell -eq 2048 ] && [ $stellar_refinement -eq 1 ]; then
 
-                    dtnuc_e_list="1.0e6 1.0e5 1.0e4"
-                    dtnuc_X_list="1.0e6 1.0e5 1.0e4"
-                    dtnuc_eX_list="1.0e6 1.0e5 1.0e4"
+                    dtnuc_e_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2"
+                    dtnuc_X_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2"
+                    dtnuc_eX_list="1.0e6 1.0e5 1.0e4 1.0e3 1.0e2"
 
                 fi
 
