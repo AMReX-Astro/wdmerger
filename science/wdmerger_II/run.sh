@@ -395,18 +395,42 @@ function copy_checkpoint() {
 
             if [ "$checkpoint" == "" ]; then
 
-                start_checkpoint=$(get_last_checkpoint $start_dir)
+                # By default the starting checkpoint is the last checkpoint
+                # from the start directory, but this can be overridden if
+                # the user prefers a different starting checkpoint.
+
+                if [ -z $start_checkpoint ]; then
+                    start_checkpoint=$(get_last_checkpoint $start_dir)
+                fi
+
+                if [ -z $checkpoint_dir ]; then
+                    checkpoint_dir=$start_dir
+                fi
 
                 echo "Copying initial checkpoint to" $dir"."
 
-                if [ -d "$start_dir/$start_checkpoint" ]; then
-                    cp -r "$start_dir/$start_checkpoint" $dir
+                if [ -d "$checkpoint_dir/$start_checkpoint" ]; then
+
+                    cp -r "$checkpoint_dir/$start_checkpoint" $dir
                     rm -f "$dir/$start_checkpoint/jobIsDone"
 
                     # Also, copy the diagnostic output files
                     # so there is an apparently continuous record.
 
-                    cp $start_dir/*diag.out $dir
+                    cp $checkpoint_dir/*diag.out $dir
+
+                    # Strip out any data in the diagnostics files
+                    # that is after the copied checkpoint, to
+                    # ensure apparent continuity.
+
+                    chk_step=$(echo $start_checkpoint | cut -d"k" -f2)
+                    chk_step=$(echo $chk_step | bc) # Strip leading zeros
+
+                    for diag in $(find $dir -name "*diag.out");
+                    do
+                        sed -i "/\ $chk_step \ /q" $diag
+                    done
+
                 else
                     echoerr "No initial checkpoint available, exiting."
                     exit
@@ -416,6 +440,14 @@ function copy_checkpoint() {
 
         fi
 
+    fi
+
+    if [ ! -z $start_checkpoint ]; then
+        unset start_checkpoint
+    fi
+
+    if [ ! -z $checkpoint_dir ]; then
+        unset checkpoint_dir
     fi
 
 }
