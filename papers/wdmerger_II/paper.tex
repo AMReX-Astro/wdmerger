@@ -697,8 +697,8 @@ follow-up question is: can adaptive mesh refinement help achieve a converged sim
 
 To answer these questions we performed a series of simulations at varying base
 resolutions, augmented with additional runs with AMR. In each case we ran the
-simulation to the point at which unstable burning was approached:
-$\tau_{s} / \tau_{e} = 10^{-6}$. Then we stopped
+simulation to a point just after the burning started, but before a detonation
+had occurred. Then we stopped
 the run and created a checkpoint. Starting from that checkpoint, we did a simulation
 at varying levels of refinement based on the unstable burning criterion. We will refer
 to the refinement through the refinement factor, $r$. This factor is the jump in
