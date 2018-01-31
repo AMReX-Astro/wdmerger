@@ -19,68 +19,77 @@ function set_run_opts {
 
         threads_per_task=4
 
-        if   [ $ncell -eq 16384 ]; then
-            nprocs="2048"
-            walltime="6:00:00"
-        elif [ $ncell -eq 8192 ]; then
-            nprocs="2048"
-            walltime="6:00:00"
-        elif [ $ncell -eq 4096 ]; then
-            nprocs="1024"
+        if [ $DIM -eq 2 ]; then
+
+          if   [ $ncell -eq 16384 ]; then
+              nprocs="2048"
+              walltime="6:00:00"
+          elif [ $ncell -eq 8192 ]; then
+              nprocs="2048"
+              walltime="6:00:00"
+          elif [ $ncell -eq 4096 ]; then
+              nprocs="1024"
+              walltime="2:00:00"
+
+              if [ $stellar_refinement -eq 8 ]; then
+                  nprocs="2048"
+                  walltime="6:00:00"
+              elif [ $stellar_refinement -eq 16 ]; then
+                  nprocs="2048"
+                  walltime="6:00:00"
+              fi
+          elif [ $ncell -eq 2048 ]; then
+              nprocs="512"
+              walltime="2:00:00"
+
+              if [ ! -z $stellar_refinement ]; then
+                  if [ $stellar_refinement -eq 16 ]; then
+                      nprocs="1024"
+                      walltime="2:00:00"
+                  fi
+              fi
+          elif [ $ncell -eq 1024 ]; then
+              nprocs="256"
+              walltime="2:00:00"
+
+              if [ ! -z $stellar_refinement ]; then
+                  if [ $stellar_refinement -eq 16 ]; then
+                      nprocs="512"
+                      walltime="2:00:00"
+                  fi
+              fi
+          elif [ $ncell -eq 512 ]; then
+              nprocs="128"
+              walltime="2:00:00"
+
+              if [ ! -z $stellar_refinement ]; then
+                  if [ $stellar_refinement -eq 8 ]; then
+                      nprocs="512"
+                      walltime="2:00:00"
+                  fi
+              fi
+          elif [ $ncell -eq 256 ]; then
+              nprocs="32"
+              walltime="2:00:00"
+
+              if [ ! -z $stellar_refinement ]; then
+                  if [ $stellar_refinement -eq 16 ]; then
+                      nprocs="128"
+                      walltime="2:00:00"
+                  elif [ $stellar_refinement -eq 32 ]; then
+                      nprocs="256"
+                      walltime="2:00:00"
+                  fi
+              fi
+          else
+              echoerr "Unknown number of cells per dimension."
+          fi
+
+        elif [ $DIM -eq 1 ]; then
+
+            nprocs="16"
             walltime="2:00:00"
 
-            if [ $stellar_refinement -eq 8 ]; then
-                nprocs="2048"
-                walltime="6:00:00"
-            elif [ $stellar_refinement -eq 16 ]; then
-                nprocs="2048"
-                walltime="6:00:00"
-            fi
-        elif [ $ncell -eq 2048 ]; then
-            nprocs="512"
-            walltime="2:00:00"
-
-            if [ ! -z $stellar_refinement ]; then
-                if [ $stellar_refinement -eq 16 ]; then
-                    nprocs="1024"
-                    walltime="2:00:00"
-                fi
-            fi
-        elif [ $ncell -eq 1024 ]; then
-            nprocs="256"
-            walltime="2:00:00"
-
-            if [ ! -z $stellar_refinement ]; then
-                if [ $stellar_refinement -eq 16 ]; then
-                    nprocs="512"
-                    walltime="2:00:00"
-                fi
-            fi
-        elif [ $ncell -eq 512 ]; then
-            nprocs="128"
-            walltime="2:00:00"
-
-            if [ ! -z $stellar_refinement ]; then
-                if [ $stellar_refinement -eq 8 ]; then
-                    nprocs="512"
-                    walltime="2:00:00"
-                fi
-            fi
-        elif [ $ncell -eq 256 ]; then
-            nprocs="32"
-            walltime="2:00:00"
-
-            if [ ! -z $stellar_refinement ]; then
-                if [ $stellar_refinement -eq 16 ]; then
-                    nprocs="128"
-                    walltime="2:00:00"
-                elif [ $stellar_refinement -eq 32 ]; then
-                    nprocs="256"
-                    walltime="2:00:00"
-                fi
-            fi
-        else
-            echoerr "Unknown number of cells per dimension."
         fi
 
     else
@@ -89,11 +98,21 @@ function set_run_opts {
 
     fi
 
-    # Set up the 2D geometry appropriately.
+    # Set up the geometry appropriately.
 
-    amr_n_cell="$(echo "$ncell / 2" | bc) $ncell"
-    geometry_prob_lo="0.0 $prob_lo"
-    geometry_prob_hi="$prob_hi $prob_hi"
+    if [ $DIM -eq 2 ]; then
+
+        amr_n_cell="$(echo "$ncell / 2" | bc) $ncell"
+        geometry_prob_lo="0.0 $prob_lo"
+        geometry_prob_hi="$prob_hi $prob_hi"
+
+    elif [ $DIM -eq 1 ]; then
+
+        amr_n_cell="$ncell"
+        geometry_prob_lo="$prob_lo"
+        geometry_prob_hi="$prob_hi"
+
+    fi
 
     if [ $ncell -eq 256 ]; then
 
@@ -122,12 +141,12 @@ function set_run_opts {
 
     elif [ $ncell -eq 8192 ]; then
 
-        amr_blocking_factor="128"
+        amr_blocking_factor="64"
 	amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
 
     elif [ $ncell -eq 16384 ]; then
 
-        amr_blocking_factor="128"
+        amr_blocking_factor="64"
 	amr_max_grid_size="128 128 256 256 512 512 1024 1024 2048 2048"
 
     fi
@@ -1135,5 +1154,204 @@ do
        done
 
    done
+
+done
+
+
+
+
+
+
+
+
+# Now set up the 1D problem
+
+DIM="1"
+
+inputs="inputs_3d"
+probin="probin"
+
+collision_separation="2.0"
+collision_impact_parameter="0.0"
+
+max_stellar_tagging_level="0"
+max_temperature_tagging_level="0"
+max_center_tagging_level="0"
+
+castro_react_T_min="1.0e8"
+castro_react_rho_min="1.0e0"
+
+mass_list="0.60 0.65 0.70"
+
+prob_lo="-8e9"
+prob_hi="8e9"
+
+castro_plot_per_is_exact="0"
+castro_small_plot_per_is_exact="0"
+
+# Disable gravity for these 1D tests, because
+# it doesn't make much sense anyway in 1D Cartesian.
+
+castro_do_grav="0"
+
+for mass in $mass_list
+do
+
+    mass_P=$mass
+    mass_S=$mass
+
+    ncell_list=""
+
+    if   [[ $mass =~ ("0.60"|"0.65"|"0.70") ]]; then
+
+        stop_time="5.0"
+        ncell_list="256 512 1024 2048 4096 8192 16384"
+
+    fi
+
+    for ncell in $ncell_list
+    do
+
+       stellar_refinement_list=""
+
+       if   [[ $mass =~ ("0.60"|"0.65"|"0.70") ]]; then
+
+           if   [ $ncell -eq 256 ]; then
+               stellar_refinement_list="1"
+           elif [ $ncell -eq 512 ]; then
+               stellar_refinement_list="1"
+           elif [ $ncell -eq 1024 ]; then
+               stellar_refinement_list="1"
+           elif [ $ncell -eq 2048 ]; then
+               stellar_refinement_list="1"
+           elif [ $ncell -eq 4096 ]; then
+               stellar_refinement_list="1 2 4 8 16"
+           fi
+
+       fi
+
+       for stellar_refinement in $stellar_refinement_list
+       do
+
+           base_dir=$results_dir/collision_1D/mass_P_$mass_P/mass_S_$mass_S/n$ncell/r$stellar_refinement
+           start_dir=$base_dir/start
+
+           start_done="0"
+
+           if [ -d $start_dir ]; then
+               dir=$start_dir
+               start_done=$(is_dir_done)
+           fi
+
+           burning_mode_list="self-heat suppressed"
+
+           for burning_mode_str in $burning_mode_list
+           do
+
+               if [ $burning_mode_str == "self-heat" ]; then
+
+                   burning_mode="1"
+
+                   rtol_spec="1.d-6"
+                   atol_spec="1.d-6"
+                   rtol_temp="1.d-6"
+                   atol_temp="1.d-6"
+                   rtol_enuc="1.d-6"
+                   atol_enuc="1.d-6"
+
+               elif [ $burning_mode_str == "suppressed" ]; then
+
+                   burning_mode="3"
+
+                   # Use tighter tolerances for the suppressed burn;
+                   # this seems to prevent integration failures.
+
+                   rtol_spec="1.d-8"
+                   atol_spec="1.d-8"
+                   rtol_temp="1.d-8"
+                   atol_temp="1.d-8"
+                   rtol_enuc="1.d-8"
+                   atol_enuc="1.d-8"
+
+               fi
+
+               if [ $burning_mode_str == "suppressed" ]; then
+                   continue
+               fi
+
+
+               # Do runs with burning-based AMR up to a selected level.
+
+               dxnuc_list="1.0e-2"
+
+               for castro_dxnuc in $dxnuc_list
+               do
+
+                   refinement_list=""
+
+                   if   [[ $mass =~ ("0.60"|"0.65"|"0.70") ]]; then
+
+                      if   [ $ncell -eq 256 ]; then
+                          if [ $stellar_refinement -eq 1 ]; then
+                              refinement_list="1"
+                          fi
+                      elif [ $ncell -eq 512 ]; then
+                          if [ $stellar_refinement -eq 1 ]; then
+                              refinement_list="1"
+                          fi
+                      elif [ $ncell -eq 1024 ]; then
+                          if [ $stellar_refinement -eq 1 ]; then
+                              refinement_list="1"
+                          fi
+                      elif [ $ncell -eq 2048 ]; then
+                          if [ $stellar_refinement -eq 1 ]; then
+                              refinement_list="1"
+                          fi
+                      elif [ $ncell -eq 4096 ]; then
+                          if [ $stellar_refinement -eq 1 ]; then
+                              refinement_list="1"
+                          elif [ $stellar_refinement -eq 2 ]; then
+                              refinement_list="1 2 4"
+                          elif [ $stellar_refinement -eq 4 ]; then
+                              refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
+                          elif [ $stellar_refinement -eq 8 ]; then
+                              refinement_list="1 2 4 8 16"
+                          elif [ $stellar_refinement -eq 16 ]; then
+                              refinement_list="1 2 4 8 16"
+                          fi
+                      fi
+
+                   fi
+
+                   for refinement in $refinement_list
+                   do
+
+                       dir=$base_dir/$burning_mode_str/dxnuc/f$castro_dxnuc/r$refinement/
+                       set_run_opts
+
+                       if [ $to_run -eq 1 ]; then
+                           run
+                       fi
+
+                   done
+
+               done
+
+               castro_dxnuc=$dxnuc_default
+
+           done
+
+           burning_mode=$burning_mode_default
+
+           rtol_spec=$spec_tol_default
+           atol_spec=$spec_tol_default
+           rtol_temp=$temp_tol_default
+           atol_temp=$temp_tol_default
+           rtol_enuc=$enuc_tol_default
+           atol_enuc=$enuc_tol_default
+
+       done
+
+    done
 
 done
