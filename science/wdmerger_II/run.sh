@@ -90,6 +90,16 @@ function set_run_opts {
             nprocs="16"
             walltime="2:00:00"
 
+            if [ $ncell -eq 256 ]; then
+                if [ ! -z $stellar_refinement ]; then
+                    if [ $stellar_refinement -eq 2048 ]; then
+                        nprocs="32"
+                    elif [ $stellar_refinement -eq 4096 ]; then
+                        nprocs="64"
+                    fi
+                fi
+            fi
+
         fi
 
     else
@@ -191,6 +201,18 @@ function set_run_opts {
                 elif [ $refinement -eq 1024 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -231,6 +253,27 @@ function set_run_opts {
                 elif [ $refinement -eq 512 ]; then
                     amr_max_level=6
                     amr_ref_ratio="2 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="2 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="2 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="2 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="2 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="2 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32768 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="2 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 65536 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="2 4 4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -268,6 +311,24 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -302,6 +363,9 @@ function set_run_opts {
                 elif [ $refinement -eq 128 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 2 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 2 4 4 4 4"
                 fi
 
             fi
@@ -333,6 +397,12 @@ function set_run_opts {
                 elif [ $refinement -eq 64 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 4"
                 fi
 
             fi
@@ -364,6 +434,259 @@ function set_run_opts {
                 elif [ $refinement -eq 64 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 2 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 2 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 2 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 64 ]; then
+
+            max_stellar_tagging_level="3"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=3
+                    amr_ref_ratio="4 4 4"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 128 ]; then
+
+            max_stellar_tagging_level="4"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 2"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 2 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 2 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 2 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 2 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 2 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 2 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 2 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 2 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 256 ]; then
+
+            max_stellar_tagging_level="4"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=4
+                    amr_ref_ratio="4 4 4 4"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 512 ]; then
+
+            max_stellar_tagging_level="5"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 2"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 2 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 2 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 2 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 2 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 2 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 2 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 2 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 2 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 1024 ]; then
+
+            max_stellar_tagging_level="5"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=5
+                    amr_ref_ratio="4 4 4 4 4"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 2048 ]; then
+
+            max_stellar_tagging_level="6"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 2"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 2 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 2 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 2 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 2 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 2 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 2 4 4 4"
+                fi
+
+            fi
+
+        elif [ $stellar_refinement -eq 4096 ]; then
+
+            max_stellar_tagging_level="6"
+
+            if [ ! -z $refinement ]; then
+
+                if [ $refinement -eq 1 ]; then
+                    amr_max_level=6
+                    amr_ref_ratio="4 4 4 4 4 4"
+                elif [ $refinement -eq 2 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 2"
+                elif [ $refinement -eq 4 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 4"
+                elif [ $refinement -eq 8 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 64 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -1181,7 +1504,7 @@ max_center_tagging_level="0"
 castro_react_T_min="1.0e8"
 castro_react_rho_min="1.0e0"
 
-mass_list="0.60 0.65 0.70"
+mass_list="0.50 0.55 0.60 0.75 0.90 1.00"
 
 prob_lo="-8e9"
 prob_hi="8e9"
@@ -1194,6 +1517,11 @@ castro_small_plot_per_is_exact="0"
 
 castro_do_grav="0"
 
+# Disable subcycling, so that we can watch the evolution
+# of a detonation, and so that timesteps don't get too long.
+
+amr_subcycling_mode="None"
+
 for mass in $mass_list
 do
 
@@ -1202,10 +1530,10 @@ do
 
     ncell_list=""
 
-    if   [[ $mass =~ ("0.60"|"0.65"|"0.70") ]]; then
+    if   [[ $mass =~ ("0.50"|"0.55"|"0.60"|"0.75"|"0.90"|"1.00") ]]; then
 
-        stop_time="5.0"
-        ncell_list="256 512 1024 2048 4096 8192 16384"
+        stop_time="4.0"
+        ncell_list="256"
 
     fi
 
@@ -1214,18 +1542,10 @@ do
 
        stellar_refinement_list=""
 
-       if   [[ $mass =~ ("0.60"|"0.65"|"0.70") ]]; then
+       if   [[ $mass =~ ("0.50"|"0.55"|"0.60"|"0.75"|"0.90"|"1.00") ]]; then
 
            if   [ $ncell -eq 256 ]; then
-               stellar_refinement_list="1"
-           elif [ $ncell -eq 512 ]; then
-               stellar_refinement_list="1"
-           elif [ $ncell -eq 1024 ]; then
-               stellar_refinement_list="1"
-           elif [ $ncell -eq 2048 ]; then
-               stellar_refinement_list="1"
-           elif [ $ncell -eq 4096 ]; then
-               stellar_refinement_list="1 2 4 8 16"
+               stellar_refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096"
            fi
 
        fi
@@ -1289,37 +1609,87 @@ do
 
                    refinement_list=""
 
-                   if   [[ $mass =~ ("0.60"|"0.65"|"0.70") ]]; then
+                   if   [ $ncell -eq 256 ]; then
 
-                      if   [ $ncell -eq 256 ]; then
-                          if [ $stellar_refinement -eq 1 ]; then
-                              refinement_list="1"
-                          fi
-                      elif [ $ncell -eq 512 ]; then
-                          if [ $stellar_refinement -eq 1 ]; then
-                              refinement_list="1"
-                          fi
-                      elif [ $ncell -eq 1024 ]; then
-                          if [ $stellar_refinement -eq 1 ]; then
-                              refinement_list="1"
-                          fi
-                      elif [ $ncell -eq 2048 ]; then
-                          if [ $stellar_refinement -eq 1 ]; then
-                              refinement_list="1"
-                          fi
-                      elif [ $ncell -eq 4096 ]; then
-                          if [ $stellar_refinement -eq 1 ]; then
-                              refinement_list="1"
-                          elif [ $stellar_refinement -eq 2 ]; then
-                              refinement_list="1 2 4"
-                          elif [ $stellar_refinement -eq 4 ]; then
-                              refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
-                          elif [ $stellar_refinement -eq 8 ]; then
-                              refinement_list="1 2 4 8 16"
-                          elif [ $stellar_refinement -eq 16 ]; then
-                              refinement_list="1 2 4 8 16"
-                          fi
-                      fi
+                       if [ $stellar_refinement -le 128 ]; then
+                           refinement_list+="1 "
+                       fi
+
+                       if [ $stellar_refinement -eq 256 ]; then
+
+                           if [[ $mass =~ ("0.50"|"0.55"|"0.75"|"0.90"|"1.00") ]]; then
+                               refinement_list+="1 "
+                           fi
+
+                       fi
+
+                       if [ $stellar_refinement -eq 512 ]; then
+
+                           if [[ $mass =~ ("0.50"|"0.90"|"1.00") ]]; then
+                               refinement_list+="1 "
+                           fi
+
+                       fi
+
+                       if [ $stellar_refinement -eq 1024 ]; then
+
+                           if [[ $mass =~ ("0.50"|"0.90"|"1.00") ]]; then
+                               refinement_list+="1 "
+                           fi
+
+                       fi
+
+                       if [ $stellar_refinement -eq 2048 ]; then
+
+                           if [[ $mass =~ ("0.90"|"1.00") ]]; then
+                               refinement_list+="1 "
+                           fi
+
+                       fi
+
+                       if [ $stellar_refinement -eq 4096 ]; then
+
+                           if [[ $mass =~ ("1.00") ]]; then
+                               refinement_list+="1 "
+                           fi
+
+                       fi
+
+                       if   [[ $mass =~ ("0.50"|"0.61"|"0.62"|"0.90"|"1.00") ]]; then
+
+                           if [ $stellar_refinement -eq 128 ]; then
+                               refinement_list+="2 4 "
+                           elif [ $stellar_refinement -eq 256 ]; then
+                               refinement_list+="2 4 "
+                           fi
+
+                       fi
+
+                       if  [[ $mass =~ ("0.50"|"0.90") ]]; then
+
+                           if [ $stellar_refinement -eq 256 ]; then
+                               refinement_list+="8 16 "
+                           elif [ $stellar_refinement -eq 512 ]; then
+                               refinement_list+="2 4 8 16 "
+                           fi
+
+                       fi
+
+                       if [[ $mass =~ ("0.50") ]]; then
+
+                           if [ $stellar_refinement -eq 512 ]; then
+                               refinement_list+="32 64 "
+                           fi
+
+                       fi
+
+                       if [[ $mass =~ ("0.90") ]]; then
+
+                           if [ $stellar_refinement -eq 1024 ]; then
+                               refinement_list+="2 4 "
+                           fi
+
+                       fi
 
                    fi
 
