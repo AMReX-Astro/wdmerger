@@ -213,6 +213,27 @@ function set_run_opts {
                 elif [ $refinement -eq 16384 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32768 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 65536 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 131072 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 262144 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 524288 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 1048576 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 2097152 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 fi
 
             fi
@@ -274,6 +295,18 @@ function set_run_opts {
                 elif [ $refinement -eq 65536 ]; then
                     amr_max_level=9
                     amr_ref_ratio="2 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 131072 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="2 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 262144 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="2 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 524288 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="2 4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 1048576 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="2 4 4 4 4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -329,6 +362,21 @@ function set_run_opts {
                 elif [ $refinement -eq 16384 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32768 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 65536 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 131072 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 262144 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 524288 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 fi
 
             fi
@@ -366,6 +414,36 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 2 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 2 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 2 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 2 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 2 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 2 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 2 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32768 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 2 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 65536 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 2 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 131072 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 2 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 262144 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 2 4 4 4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -403,6 +481,33 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=7
+                    amr_ref_ratio="4 4 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32768 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 65536 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 131072 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 fi
 
             fi
@@ -440,6 +545,30 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 2 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 2 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 2 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 2 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 2 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 2 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 2 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32768 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 2 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 65536 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 2 4 4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -477,6 +606,27 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=8
+                    amr_ref_ratio="4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 32768 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 fi
 
             fi
@@ -514,6 +664,24 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 2 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 2 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 2 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 2 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 2 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 2 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 16384 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 2 4 4 4 4 4 4 4"
                 fi
 
             fi
@@ -551,6 +719,21 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=9
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 8192 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 fi
 
             fi
@@ -588,6 +771,18 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 2 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 2 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 2 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 2 4 4 4 4 4 2"
+                elif [ $refinement -eq 4096 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 2 4 4 4 4 4 4"
                 fi
 
             fi
@@ -625,6 +820,15 @@ function set_run_opts {
                 elif [ $refinement -eq 256 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 2048 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 fi
 
             fi
@@ -656,6 +860,18 @@ function set_run_opts {
                 elif [ $refinement -eq 64 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 2 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 2 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 2 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 2 4 4 4 4 2"
+                elif [ $refinement -eq 1024 ]; then
+                    amr_max_level=11
+                    amr_ref_ratio="4 4 4 4 4 2 4 4 4 4 4"
                 fi
 
             fi
@@ -687,6 +903,15 @@ function set_run_opts {
                 elif [ $refinement -eq 64 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 128 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
+                elif [ $refinement -eq 256 ]; then
+                    amr_max_level=10
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
+                elif [ $refinement -eq 512 ]; then
+                    amr_ref_ratio=11
+                    amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 fi
 
             fi
