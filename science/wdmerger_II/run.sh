@@ -1768,13 +1768,10 @@ max_center_tagging_level="0"
 castro_react_T_min="1.0e8"
 castro_react_rho_min="1.0e0"
 
-mass_list="0.50 0.55 0.60 0.75 0.90 1.00"
+mass_list="0.50 0.60 0.70 0.80 0.90 1.00"
 
-prob_lo="-8e9"
-prob_hi="8e9"
-
-castro_plot_per_is_exact="0"
-castro_small_plot_per_is_exact="0"
+prob_lo="-2.56e9"
+prob_hi="2.56e9"
 
 # Disable gravity for these 1D tests, because
 # it doesn't make much sense anyway in 1D Cartesian.
@@ -1785,6 +1782,8 @@ castro_do_grav="0"
 # of a detonation, and so that timesteps don't get too long.
 
 amr_subcycling_mode="None"
+
+castro_output_at_completion="1"
 
 for mass in $mass_list
 do
@@ -1822,167 +1821,160 @@ do
 
            start_done="0"
 
+           if [ $mass == "1.00" ]; then
+
+               if [ $stellar_refinement -le 128 ]; then
+                   stop_time="0.25"
+               elif [ $stellar_refinement -le 256 ]; then
+                   stop_time="0.245"
+               else
+                   stop_time="0.26"
+               fi
+
+           elif [ $mass == "0.50" ]; then
+
+               if [ $stellar_refinement -le 64 ]; then
+                   stop_time="1.15"
+               elif [ $stellar_refinement -le 256 ]; then
+                   stop_time="1.35"
+               else
+                   stop_time="1.45"
+               fi
+
+           fi
+
            if [ -d $start_dir ]; then
                dir=$start_dir
                start_done=$(is_dir_done)
            fi
 
-           burning_mode_list="self-heat suppressed"
+           if [ $start_done -ne 1 ]; then
 
-           for burning_mode_str in $burning_mode_list
-           do
+               refinement="1"
 
-               if [ $burning_mode_str == "self-heat" ]; then
+               dir=$start_dir
+               set_run_opts
 
-                   burning_mode="1"
-
-                   rtol_spec="1.d-6"
-                   atol_spec="1.d-6"
-                   rtol_temp="1.d-6"
-                   atol_temp="1.d-6"
-                   rtol_enuc="1.d-6"
-                   atol_enuc="1.d-6"
-
-               elif [ $burning_mode_str == "suppressed" ]; then
-
-                   burning_mode="3"
-
-                   # Use tighter tolerances for the suppressed burn;
-                   # this seems to prevent integration failures.
-
-                   rtol_spec="1.d-8"
-                   atol_spec="1.d-8"
-                   rtol_temp="1.d-8"
-                   atol_temp="1.d-8"
-                   rtol_enuc="1.d-8"
-                   atol_enuc="1.d-8"
-
+               if [ $to_run -eq 1 ]; then
+                   run
                fi
 
-               if [ $burning_mode_str == "suppressed" ]; then
-                   continue
-               fi
+               unset refinement
 
+           else
 
-               # Do runs with burning-based AMR up to a selected level.
+               stop_time=$(echo "$stop_time + 1.0" | bc -l)
 
-               dxnuc_list="1.0e-2"
+               burning_mode_list="self-heat suppressed"
 
-               for castro_dxnuc in $dxnuc_list
+               for burning_mode_str in $burning_mode_list
                do
 
-                   refinement_list=""
+                   if [ $burning_mode_str == "self-heat" ]; then
 
-                   if   [ $ncell -eq 256 ]; then
+                       burning_mode="1"
 
-                       if [ $stellar_refinement -le 128 ]; then
-                           refinement_list+="1 "
-                       fi
+                       rtol_spec="1.d-6"
+                       atol_spec="1.d-6"
+                       rtol_temp="1.d-6"
+                       atol_temp="1.d-6"
+                       rtol_enuc="1.d-6"
+                       atol_enuc="1.d-6"
 
-                       if [ $stellar_refinement -eq 256 ]; then
+                   elif [ $burning_mode_str == "suppressed" ]; then
 
-                           if [[ $mass =~ ("0.50"|"0.55"|"0.75"|"0.90"|"1.00") ]]; then
-                               refinement_list+="1 "
-                           fi
+                       burning_mode="3"
 
-                       fi
+                       # Use tighter tolerances for the suppressed burn;
+                       # this seems to prevent integration failures.
 
-                       if [ $stellar_refinement -eq 512 ]; then
-
-                           if [[ $mass =~ ("0.50"|"0.90"|"1.00") ]]; then
-                               refinement_list+="1 "
-                           fi
-
-                       fi
-
-                       if [ $stellar_refinement -eq 1024 ]; then
-
-                           if [[ $mass =~ ("0.50"|"0.90"|"1.00") ]]; then
-                               refinement_list+="1 "
-                           fi
-
-                       fi
-
-                       if [ $stellar_refinement -eq 2048 ]; then
-
-                           if [[ $mass =~ ("0.90"|"1.00") ]]; then
-                               refinement_list+="1 "
-                           fi
-
-                       fi
-
-                       if [ $stellar_refinement -eq 4096 ]; then
-
-                           if [[ $mass =~ ("1.00") ]]; then
-                               refinement_list+="1 "
-                           fi
-
-                       fi
-
-                       if   [[ $mass =~ ("0.50"|"0.61"|"0.62"|"0.90"|"1.00") ]]; then
-
-                           if [ $stellar_refinement -eq 128 ]; then
-                               refinement_list+="2 4 "
-                           elif [ $stellar_refinement -eq 256 ]; then
-                               refinement_list+="2 4 "
-                           fi
-
-                       fi
-
-                       if  [[ $mass =~ ("0.50"|"0.90") ]]; then
-
-                           if [ $stellar_refinement -eq 256 ]; then
-                               refinement_list+="8 16 "
-                           elif [ $stellar_refinement -eq 512 ]; then
-                               refinement_list+="2 4 8 16 "
-                           fi
-
-                       fi
-
-                       if [[ $mass =~ ("0.50") ]]; then
-
-                           if [ $stellar_refinement -eq 512 ]; then
-                               refinement_list+="32 64 "
-                           fi
-
-                       fi
-
-                       if [[ $mass =~ ("0.90") ]]; then
-
-                           if [ $stellar_refinement -eq 1024 ]; then
-                               refinement_list+="2 4 "
-                           fi
-
-                       fi
+                       rtol_spec="1.d-8"
+                       atol_spec="1.d-8"
+                       rtol_temp="1.d-8"
+                       atol_temp="1.d-8"
+                       rtol_enuc="1.d-8"
+                       atol_enuc="1.d-8"
 
                    fi
 
-                   for refinement in $refinement_list
+                   if [ $burning_mode_str == "suppressed" ]; then
+                       continue
+                   fi
+
+
+
+                   # Complete the run with no special options.
+
+                   refinement=1
+
+                   dir=$base_dir/$burning_mode_str/finish
+                   set_run_opts
+
+                   copy_checkpoint
+
+                   if [ $to_run -eq 1 ]; then
+                       run
+                   fi
+
+
+
+                   # Do runs with burning-based AMR up to a selected level.
+
+                   dxnuc_list="5.0e-2 1.0e-2"
+                   dxnuc_list="1.0e0 5.0e-1 4.0e-1 3.0e-1 2.0e-1 1.0e-1 5.0e-2"
+                   dxnuc_list="1.0e-1"
+
+                   refinement_list=""
+
+                   for castro_dxnuc in $dxnuc_list
                    do
 
-                       dir=$base_dir/$burning_mode_str/dxnuc/f$castro_dxnuc/r$refinement/
-                       set_run_opts
+                       if   [ $ncell -eq 256 ]; then
 
-                       if [ $to_run -eq 1 ]; then
-                           run
+                           if   [ $stellar_refinement -eq 32 ]; then
+                               refinement_list="2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
+                           elif [ $stellar_refinement -eq 64 ]; then
+                               refinement_list="2 4 8 16 32768"
+                           elif [ $stellar_refinement -eq 128 ]; then
+                               refinement_list="16384"
+                           elif [ $stellar_refinement -eq 256 ]; then
+                               refinement_list="8192"
+                           fi
+
                        fi
+
+                       for refinement in $refinement_list
+                       do
+
+                           dir=$base_dir/$burning_mode_str/dxnuc/f$castro_dxnuc/r$refinement/
+                           set_run_opts
+
+                           copy_checkpoint
+
+                           if [ $to_run -eq 1 ]; then
+                               run
+                           fi
+
+                       done
+
+                       castro_dxnuc=$dxnuc_default
+
+                       to_run="1"
 
                    done
 
+                   burning_mode=$burning_mode_default
+
+                   rtol_spec=$spec_tol_default
+                   atol_spec=$spec_tol_default
+                   rtol_temp=$temp_tol_default
+                   atol_temp=$temp_tol_default
+                   rtol_enuc=$enuc_tol_default
+                   atol_enuc=$enuc_tol_default
+
                done
 
-               castro_dxnuc=$dxnuc_default
-
-           done
-
-           burning_mode=$burning_mode_default
-
-           rtol_spec=$spec_tol_default
-           atol_spec=$spec_tol_default
-           rtol_temp=$temp_tol_default
-           atol_temp=$temp_tol_default
-           rtol_enuc=$enuc_tol_default
-           atol_enuc=$enuc_tol_default
+           fi
 
        done
 
