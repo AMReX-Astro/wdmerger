@@ -1791,21 +1791,20 @@ do
     mass_P=$mass
     mass_S=$mass
 
-    ncell_list=""
-
-    if   [[ $mass =~ ("0.50"|"0.55"|"0.60"|"0.75"|"0.90"|"1.00") ]]; then
-
-        stop_time="4.0"
-        ncell_list="256"
-
-    fi
+    ncell_list="256"
 
     for ncell in $ncell_list
     do
 
        stellar_refinement_list=""
 
-       if   [[ $mass =~ ("0.50"|"0.55"|"0.60"|"0.75"|"0.90"|"1.00") ]]; then
+       if   [ $mass == "0.70" ]; then
+
+           if   [ $ncell -eq 256 ]; then
+               stellar_refinement_list="1 2 4 8 16 32 64 128 256 512"
+           fi
+
+       elif [ $mass == "1.00" ]; then
 
            if   [ $ncell -eq 256 ]; then
                stellar_refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096"
@@ -1834,7 +1833,27 @@ do
                elif [ $stellar_refinement -eq 2048 ]; then
                    stop_time="0.295"
                elif [ $stellar_refinement -eq 4096 ]; then
-                   stop_time="0.28"
+                   stop_time="0.3035"
+               fi
+
+           elif [ $mass == "0.70" ]; then
+
+               if   [ $stellar_refinement -le 4 ]; then
+                   stop_time="0.92"
+               elif [ $stellar_refinement -eq 8 ]; then
+                   stop_time="0.89"
+               elif [ $stellar_refinement -eq 16 ]; then
+                   stop_time="0.85"
+               elif [ $stellar_refinement -eq 32 ]; then
+                   stop_time="0.82"
+               elif [ $stellar_refinement -eq 64 ]; then
+                   stop_time="0.795"
+               elif [ $stellar_refinement -eq 128 ]; then
+                   stop_time="0.79"
+               elif [ $stellar_refinement -eq 256 ]; then
+                   stop_time="0.84"
+               elif [ $stellar_refinement -eq 512 ]; then
+                   stop_time="0.80"
                fi
 
            elif [ $mass == "0.50" ]; then
@@ -1951,6 +1970,8 @@ do
                                refinement_list="4 16 64 256 1024 2048"
                            elif [ $stellar_refinement -eq 2048 ]; then
                                refinement_list="4 16 64 256 1024"
+                           elif [ $stellar_refinement -eq 4096 ]; then
+                               refinement_list="512"
                            fi
 
                        fi
