@@ -946,7 +946,7 @@ function set_run_opts {
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
                 elif [ $refinement -eq 512 ]; then
-                    amr_ref_ratio=11
+                    amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
                     echo "Unknown refinement factor: "$refinement"; exiting."
