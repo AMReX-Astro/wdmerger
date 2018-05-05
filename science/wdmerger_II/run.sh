@@ -1820,54 +1820,6 @@ do
 
            start_done="0"
 
-           if [ $mass == "1.00" ]; then
-
-               if [ $stellar_refinement -le 128 ]; then
-                   stop_time="0.25"
-               elif [ $stellar_refinement -le 256 ]; then
-                   stop_time="0.245"
-               elif [ $stellar_refinement -eq 512 ]; then
-                   stop_time="0.26"
-               elif [ $stellar_refinement -eq 1024 ]; then
-                   stop_time="0.285"
-               elif [ $stellar_refinement -eq 2048 ]; then
-                   stop_time="0.295"
-               elif [ $stellar_refinement -eq 4096 ]; then
-                   stop_time="0.3035"
-               fi
-
-           elif [ $mass == "0.70" ]; then
-
-               if   [ $stellar_refinement -le 4 ]; then
-                   stop_time="0.92"
-               elif [ $stellar_refinement -eq 8 ]; then
-                   stop_time="0.89"
-               elif [ $stellar_refinement -eq 16 ]; then
-                   stop_time="0.85"
-               elif [ $stellar_refinement -eq 32 ]; then
-                   stop_time="0.82"
-               elif [ $stellar_refinement -eq 64 ]; then
-                   stop_time="0.795"
-               elif [ $stellar_refinement -eq 128 ]; then
-                   stop_time="0.79"
-               elif [ $stellar_refinement -eq 256 ]; then
-                   stop_time="0.84"
-               elif [ $stellar_refinement -eq 512 ]; then
-                   stop_time="0.80"
-               fi
-
-           elif [ $mass == "0.50" ]; then
-
-               if [ $stellar_refinement -le 64 ]; then
-                   stop_time="1.15"
-               elif [ $stellar_refinement -le 256 ]; then
-                   stop_time="1.35"
-               else
-                   stop_time="1.45"
-               fi
-
-           fi
-
            if [ -d $start_dir ]; then
                dir=$start_dir
                start_done=$(is_dir_done)
@@ -1880,15 +1832,31 @@ do
                dir=$start_dir
                set_run_opts
 
+               # First, we need to do the initial run, up to the point
+               # when burning starts.
+
+               castro_ts_te_stopping_criterion="9.0e-3"
+
                if [ $to_run -eq 1 ]; then
                    run
                fi
 
+               unset castro_ts_te_stopping_criterion
                unset refinement
 
            else
 
-               stop_time=$(echo "$stop_time + 1.0" | bc -l)
+               # Set the stop time one second later than the end
+               # of the starting directory.
+
+               last_checkpoint=$(get_last_checkpoint $start_dir)
+
+               chk_time=$(awk 'NR==3' $start_dir/$last_checkpoint/Header)
+               chk_time=$(printf "%f" $chk_time)
+
+               stop_time=$(echo "$chk_time + 1.0" | bc -l)
+
+
 
                burning_mode_list="self-heat suppressed"
 
