@@ -2387,7 +2387,15 @@ function set_up_problem_dir {
 
 	get_submitted_jobs
 
-	if [ -e $compile_dir/GNUmakefile ]; then
+        # We can either just grab the first CASTRO executable
+        # we find in the directory, or we can ask make to give
+        # us the executable name.
+
+        if [ ! -z $use_first_castro_ex ]; then
+
+            CASTRO=$(ls $compile_dir/ | grep Castro | head -n 1)
+
+        elif [ -e $compile_dir/GNUmakefile ]; then
 
 	    CASTRO=$(get_make_var executable)
 
