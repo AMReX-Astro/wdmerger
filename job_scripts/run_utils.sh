@@ -861,7 +861,7 @@ function archive_all {
 
   # Same strategy for the inputs and probin files.
 
-  inputs_list=$(find $directory -maxdepth 1 -name "$inputs")
+  inputs_list=$(find $directory -maxdepth 1 -name "inputs")
 
   for file in $inputs_list
   do
@@ -875,7 +875,7 @@ function archive_all {
       archivelist=$archivelist" "$f
   done
 
-  probin_list=$(find $directory -maxdepth 1 -name "*probin*")
+  probin_list=$(find $directory -maxdepth 1 -name "probin")
 
   for file in $probin_list
   do
@@ -1298,27 +1298,33 @@ function copy_files {
 
   new_inputs="F"
 
-  if [ ! -e "$dir/$inputs" ]; then
+  if [ ! -e "$dir/inputs" ]; then
 
       new_inputs="T"
 
       if [ -e "$compile_dir/$inputs" ]; then
-          cp $compile_dir/$inputs $dir/$inputs
+          cp $compile_dir/$inputs $dir/inputs
       else
-	  cp $problem_dir/$inputs $dir/$inputs
+	  cp $problem_dir/$inputs $dir/inputs
       fi
+
+      # Since we are renaming the probin (see below), make sure
+      # that we update this in the inputs file. It will be updated
+      # in the variable replacement loop below.
+
+      amr_probin_file="probin"
   fi
 
   new_probin="F"
 
-  if [ ! -e "$dir/$probin" ]; then
+  if [ ! -e "$dir/probin" ]; then
 
       new_probin="T"
 
       if [ -e "$compile_dir/$probin" ]; then
-	  cp $compile_dir/$probin $dir/$probin
+	  cp $compile_dir/$probin $dir/probin
       else
-	  cp $problem_dir/$probin $dir/$probin
+	  cp $problem_dir/$probin $dir/probin
       fi
   fi
 
@@ -1683,19 +1689,6 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi
 
-      # Set the name of the inputs and probin files, in case they are 
-      # unique for this problem.
-
-      if [ $inputs != "inputs" ]; then
-	  echo "inputs=$inputs" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
-      fi
-
-      if [ $probin != "probin" ]; then
-	  echo "probin=$probin" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
-      fi
-
       # Indicate if we don't want to continue the run.
 
       if [ ! -z $no_continue ]; then
@@ -1748,7 +1741,7 @@ function create_job_script {
 
       # Main job execution.
 
-      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
+      echo "$launcher $launcher_opts $CASTRO inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       echo "pid=\$!" >> $dir/$job_script
@@ -1882,19 +1875,6 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi
 
-      # Set the name of the inputs and probin files, in case they are 
-      # unique for this problem.
-
-      if [ $inputs != "inputs" ]; then
-	  echo "inputs=$inputs" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
-      fi
-
-      if [ $probin != "probin" ]; then
-	  echo "probin=$probin" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
-      fi
-
       # Indicate if we don't want to continue the run.
 
       if [ ! -z $no_continue ]; then
@@ -1938,7 +1918,7 @@ function create_job_script {
 
       # Main job execution.
 
-      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
+      echo "$launcher $launcher_opts $CASTRO inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       echo "pid=\$!" >> $dir/$job_script
@@ -1981,19 +1961,6 @@ function create_job_script {
 	  echo "" >> $dir/$job_script
       fi
 
-      # Set the name of the inputs and probin files, in case they are 
-      # unique for this problem.
-
-      if [ $inputs != "inputs" ]; then
-	  echo "inputs=$inputs" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
-      fi
-
-      if [ $probin != "probin" ]; then
-	  echo "probin=$probin" >> $dir/$job_script
-	  echo "" >> $dir/$job_script
-      fi
-
       # Indicate if we don't want to continue the run.
 
       if [ ! -z $no_continue ]; then
@@ -2021,7 +1988,7 @@ function create_job_script {
 
       # Main job execution.
 
-      echo "$launcher $launcher_opts $CASTRO $inputs \$(get_restart_string) $redirect" >> $dir/$job_script
+      echo "$launcher $launcher_opts $CASTRO inputs \$(get_restart_string) $redirect" >> $dir/$job_script
       echo "" >> $dir/$job_script
 
       echo "pid=\$!" >> $dir/$job_script
@@ -2038,7 +2005,7 @@ function create_job_script {
 
    elif [ $batch_system == "batch" ]; then
 
-      echo "echo \"mpiexec -n $nprocs $CASTRO $inputs > $job_name$run_ext\" | batch" > $dir/$job_script
+      echo "echo \"mpiexec -n $nprocs $CASTRO inputs > $job_name$run_ext\" | batch" > $dir/$job_script
 
    fi
 
