@@ -21,11 +21,7 @@ function replace_probin_var {
 	return
     fi
 
-    if [ -z $probin ]; then
-	probin=probin
-    fi
-
-    if [ ! -e $dir/$probin ]; then
+    if [ ! -e $dir/probin ]; then
 	echo "No probin file exists in directory "$dir"; exiting."
 	return
     fi
@@ -36,8 +32,8 @@ function replace_probin_var {
     # at least one space behind them and after them.
     # The equals sign cannot be adjacent to the name.
 
-    if (grep -q "[[:space:]]$var[[:space:]]*=" $dir/$probin); then
-	sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/$probin
+    if (grep -q "[[:space:]]$var[[:space:]]*=" $dir/probin); then
+	sed -i "s/ $var .*=.*/ $var = ${!var}/g" $dir/probin
         return
     fi
 
@@ -55,10 +51,10 @@ function replace_probin_var {
         actual_var=$(echo $var | cut -d'_' -f 3-)
 
         # Insert the variable into the probin file inside the matching namelist
-        sed -i "/&$namelist/ a \ \ $actual_var = ${!var}" $dir/$probin
+        sed -i "/&$namelist/ a \ \ $actual_var = ${!var}" $dir/probin
 
         # Insert newline before it for aesthetics
-        sed -i "/&$namelist/ a \ \ " $dir/$probin
+        sed -i "/&$namelist/ a \ \ " $dir/probin
 
         return
 

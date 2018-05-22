@@ -23,11 +23,7 @@ function get_inputs_var {
 	return
     fi
 
-    if [ -z $inputs ]; then
-	inputs=inputs
-    fi
-
-    if [ ! -e $directory/$inputs ]; then
+    if [ ! -e $directory/inputs ]; then
 	echo "No inputs file exists in directory "$dir"; exiting."
 	return
     fi
@@ -39,9 +35,9 @@ function get_inputs_var {
     # To get the value of the inputs variable, 
     # we need to get everything after the equals sign.
 
-    if (grep -q "$inputs_var_name[[:space:]]*=" $directory/$inputs); then
+    if (grep -q "inputs_var_name[[:space:]]*=" $directory/inputs); then
 
-	var=$(grep "$inputs_var_name" $directory/$inputs | awk -F"=" '{print $2}')
+	var=$(grep "$inputs_var_name" $directory/inputs | awk -F"=" '{print $2}')
 
     fi
 
@@ -67,8 +63,7 @@ function fix_inputs_var_name {
 
     inputs_var_name=""
 
-    # We need to be careful with stop_time and max_step,
-    # since these don't have an associated namespace.
+    # We need to be careful with variables that don't have a namespace.
     # Otherwise, check on the namespaces we know from the inputs file.
 
     if ([ $var == "stop_time" ] || [ $var == "max_step" ])
@@ -117,11 +112,7 @@ function replace_inputs_var {
 	return
     fi
 
-    if [ -z $inputs ]; then
-	inputs=inputs
-    fi
-
-    if [ ! -e $dir/$inputs ]; then
+    if [ ! -e $dir/inputs ]; then
 	echo "No inputs file exists in directory "$dir"; exiting."
 	return
     fi
@@ -139,7 +130,7 @@ function replace_inputs_var {
     # variable and the equals sign. See:
     # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
 
-    if (grep -q "$inputs_var_name[[:space:]]*=" $dir/$inputs)
+    if (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)
     then
 
 	# OK, so the parameter name does exist in the inputs file;
@@ -149,10 +140,10 @@ function replace_inputs_var {
 	# http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
 	# http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
 
-	old_string=$(grep "$inputs_var_name[[:space:]]" $dir/$inputs)
+	old_string=$(grep "$inputs_var_name[[:space:]]" $dir/inputs)
 	new_string="$inputs_var_name = ${!var}"
 
-	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/$inputs
+	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/inputs
 
     # If the inputs variable doesn't exist in the inputs file, but we got to this point,
     # it had a legitimate BoxLib or CASTRO namespace. We assume the user wants to add 
@@ -161,7 +152,7 @@ function replace_inputs_var {
     else
 
 	string="$inputs_var_name = ${!var}"
-	echo $string >> $dir/$inputs
+	echo $string >> $dir/inputs
 
     fi
 
