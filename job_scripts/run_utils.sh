@@ -1109,8 +1109,15 @@ function check_to_stop {
 	  # Now get the I/O parameters from the inputs file.
 
 	  chk_int=$(get_inputs_var "amr_check_int" .)
+          if [ -z "$chk_int" ]; then
+              chk_int="-1"
+          fi
           chk_int=$(echo $chk_int | bc)
-	  chk_per=$(get_inputs_var "amr_check_per" .)
+
+          chk_per=$(get_inputs_var "amr_check_per" .)
+          if [ -z "$chk_per" ]; then
+              chk_per="-1.0"
+          fi
           chk_per=$(echo $chk_per | bc)
 
 	  if [ $chk_int -le 0 ] && [ $(echo "$chk_per <= 0" | bc -l) -eq 1 ]; then
