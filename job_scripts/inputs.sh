@@ -35,7 +35,7 @@ function get_inputs_var {
     # To get the value of the inputs variable, 
     # we need to get everything after the equals sign.
 
-    if (grep -q "inputs_var_name[[:space:]]*=" $directory/inputs); then
+    if (grep -q "$inputs_var_name[[:space:]]*=" $directory/inputs); then
 
 	var=$(grep "$inputs_var_name" $directory/inputs | awk -F"=" '{print $2}')
 
