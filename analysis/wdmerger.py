@@ -995,7 +995,7 @@ def is_dir_done(directory):
 
 
 
-def get_parameter_list(directory):
+def get_parameter_list(directory, include_incomplete = False):
     """Return the list of parameters used in a directory.
 
     Skip all directories that do not contain a completed simulation.
@@ -1010,7 +1010,7 @@ def get_parameter_list(directory):
         return param_list
 
     for sub_directory in dirList:
-        if is_dir_done(directory + '/' + sub_directory):
+        if include_incomplete or is_dir_done(directory + '/' + sub_directory):
             param_list.append(sub_directory)
 
     return param_list
