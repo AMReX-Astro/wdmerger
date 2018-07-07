@@ -9,8 +9,6 @@ if [ -z $ncell ]; then
     exit
 fi
 
-to_run=1
-
 # The following assumes we are using Titan.
 
 if [ $MACHINE == "TITAN" ]; then
@@ -31,6 +29,7 @@ fi
 # Set up the gridding.
 
 amr_n_cell="$ncell"
+amr_ref_ratio="2"
 
 if [ ! -z $refinement ]; then
 
@@ -38,82 +37,57 @@ if [ ! -z $refinement ]; then
         amr_max_level=0
     elif [ $refinement -eq 2 ]; then
         amr_max_level=1
-        amr_ref_ratio="2"
     elif [ $refinement -eq 4 ]; then
-        amr_max_level=1
-        amr_ref_ratio="4"
+        amr_max_level=2
     elif [ $refinement -eq 8 ]; then
-        amr_max_level=2
-        amr_ref_ratio="4 2"
+        amr_max_level=3
     elif [ $refinement -eq 16 ]; then
-        amr_max_level=2
-        amr_ref_ratio="4 4"
+        amr_max_level=4
     elif [ $refinement -eq 32 ]; then
-        amr_max_level=3
-        amr_ref_ratio="4 4 2"
+        amr_max_level=5
     elif [ $refinement -eq 64 ]; then
-        amr_max_level=3
-        amr_ref_ratio="4 4 4"
+        amr_max_level=6
     elif [ $refinement -eq 128 ]; then
-        amr_max_level=4
-        amr_ref_ratio="4 4 4 2"
+        amr_max_level=7
     elif [ $refinement -eq 256 ]; then
-        amr_max_level=4
-        amr_ref_ratio="4 4 4 4"
+        amr_max_level=8
     elif [ $refinement -eq 512 ]; then
-        amr_max_level=5
-        amr_ref_ratio="4 4 4 4 2"
+        amr_max_level=9
     elif [ $refinement -eq 1024 ]; then
-        amr_max_level=5
-        amr_ref_ratio="4 4 4 4 4"
+        amr_max_level=10
     elif [ $refinement -eq 2048 ]; then
-        amr_max_level=6
-        amr_ref_ratio="4 4 4 4 4 2"
+        amr_max_level=11
     elif [ $refinement -eq 4096 ]; then
-        amr_max_level=6
-        amr_ref_ratio="4 4 4 4 4 4"
-    elif [ $refinement -eq 8192 ]; then
-        amr_max_level=7
-        amr_ref_ratio="4 4 4 4 4 4 2"
-    elif [ $refinement -eq 16384 ]; then
-        amr_max_level=7
-        amr_ref_ratio="4 4 4 4 4 4 4"
-    elif [ $refinement -eq 32768 ]; then
-        amr_max_level=8
-        amr_ref_ratio="4 4 4 4 4 4 4 2"
-    elif [ $refinement -eq 65536 ]; then
-        amr_max_level=8
-        amr_ref_ratio="4 4 4 4 4 4 4 4"
-    elif [ $refinement -eq 131072 ]; then
-        amr_max_level=9
-        amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-    elif [ $refinement -eq 262144 ]; then
-        amr_max_level=9
-        amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-    elif [ $refinement -eq 524288 ]; then
-        amr_max_level=10
-        amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-    elif [ $refinement -eq 1048576 ]; then
-        amr_max_level=10
-        amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-    elif [ $refinement -eq 2097152 ]; then
-        amr_max_level=11
-        amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-    elif [ $refinement -eq 4194304 ]; then
-        amr_max_level=11
-        amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 4"
-    elif [ $refinement -eq 8388608 ]; then
         amr_max_level=12
-        amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 4 2"
+    elif [ $refinement -eq 8192 ]; then
+        amr_max_level=13
+    elif [ $refinement -eq 16384 ]; then
+        amr_max_level=14
+    elif [ $refinement -eq 32768 ]; then
+        amr_max_level=15
+    elif [ $refinement -eq 65536 ]; then
+        amr_max_level=16
+    elif [ $refinement -eq 131072 ]; then
+        amr_max_level=17
+    elif [ $refinement -eq 262144 ]; then
+        amr_max_level=18
+    elif [ $refinement -eq 524288 ]; then
+        amr_max_level=19
+    elif [ $refinement -eq 1048576 ]; then
+        amr_max_level=20
+    elif [ $refinement -eq 2097152 ]; then
+        amr_max_level=21
+    elif [ $refinement -eq 4194304 ]; then
+        amr_max_level=22
+    elif [ $refinement -eq 8388608 ]; then
+        amr_max_level=23
     else
         echo "Unknown refinement factor: "$refinement"; exiting."
         exit
     fi
 
+    max_temperr_lev=$amr_max_level
     max_tempgrad_rel_lev=$amr_max_level
-
-    probin_tagging_tempgrad=$tempgrad
-    probin_tagging_max_tempgrad_rel_lev=$max_tempgrad_rel_lev
 
 fi
 
@@ -170,23 +144,6 @@ if [ $job_flag -ne 1 ]; then
                 cp -r "$checkpoint_dir/$start_checkpoint" $dir
                 rm -f "$dir/$start_checkpoint/jobIsDone"
 
-                # Also, copy the diagnostic output files
-                # so there is an apparently continuous record.
-
-                cp $checkpoint_dir/*diag.out $dir
-
-                # Strip out any data in the diagnostics files
-                # that is after the copied checkpoint, to
-                # ensure apparent continuity.
-
-                chk_step=$(echo $start_checkpoint | cut -d"k" -f2)
-                chk_step=$(echo $chk_step | bc) # Strip leading zeros
-
-                for diag in $(find $dir -name "*diag.out");
-                do
-                    sed -i "/\ $chk_step \ /q" $diag
-                done
-
             else
                 echoerr "No initial checkpoint available, exiting."
                 exit
@@ -229,7 +186,7 @@ amr_plot_per="-1.0"
 amr_plot_vars="ALL"
 amr_derive_plot_vars="ALL"
 
-amr_small_plot_per="-1.0"
+amr_small_plot_per="1.0e-2"
 amr_small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr_derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
@@ -298,8 +255,7 @@ amr_subcycling_mode="None"
 stop_time="10.0"
 max_step="10000000"
 
-ncell_list="32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
-ncell_list="32 64 128 256 512 1024 2048 4096"
+size_list="8.192e8"
 
 dens_list="5.d6"
 
@@ -310,164 +266,188 @@ v_list="0.0d0"
 T_l="1.0d7"
 T_r="1.0d7"
 
-dtnuc_list="1.0e200 1.0e10 1.0e4 1.0e3 1.0e2 1.0e1 1.0e0 1.0e-1"
-dtnuc_list="1.0e200"
+ncell_list="32 64 128 256 512 1024 2048 4096"
 
-dxnuc_list="1.0e-1"
+dtnuc_list="1.0e200"
 
 burning_mode_list="self-heat suppressed"
 
-size_list="8.192e8"
-
-tempgrad_list="1.d20 2.0 0.5"
+dxnuc_list="1.0e200 1.0e-1"
+temperr_list="1.0d20"
+tempgrad_rel_list="1.0d20 0.5"
 
 amr_n_error_buf="2"
+
+# This loop nest covers all of the runs we will do,
+# and is split into two basic parts. The outer loops
+# govern the high level problem setup choices --
+# the size of the domain, the initial velocity
+# and gravitational acceleration, and the type
+# of nuclear burning we are doing. We'll also cover
+# the temporal resolution in this section.
+
+# The inner part of the loop nest covers the
+# spatial resolution options.
+
+# We split it up this way because for all of
+# the options that don't involve AMR, we can
+# group the runs together in a single base
+# case with uniform resolution, rather than
+# redundantly calculate this uniform grid
+# case for each one of those options.
 
 for size in $size_list
 do
 
-   geometry_prob_lo="0.0"
-   geometry_prob_hi="$size"
+    geometry_prob_lo="0.0"
+    geometry_prob_hi="$size"
 
-   for burning_mode_str in $burning_mode_list
-   do
+    for dens in $dens_list
+    do
 
-       if [ $burning_mode_str == "self-heat" ]; then
-           burning_mode="1"
-       elif [ $burning_mode_str == "suppressed" ]; then
-           burning_mode="3"
-       fi
+        for g in $g_list
+        do
 
-       if [ $burning_mode_str == "suppressed" ]; then
-           continue
-       fi
+            gravity_const_grav=-$g
 
-       for dtnuc in $dtnuc_list
-       do
+            for vel in $v_list
+            do
 
-           castro_dtnuc_e=$dtnuc
-           castro_dtnuc_X=$dtnuc
+                for burning_mode_str in $burning_mode_list
+                do
 
-           for castro_dxnuc in $dxnuc_list
-           do
+                    if [ $burning_mode_str == "self-heat" ]; then
+                        burning_mode="1"
+                    elif [ $burning_mode_str == "suppressed" ]; then
+                        burning_mode="3"
+                    fi
 
-               for tempgrad in $tempgrad_list
-               do
+                    if [ $burning_mode_str == "suppressed" ]; then
+                        continue
+                    fi
 
-                   for dens in $dens_list
-                   do
+                    # Now we'll do the time resolution options.
 
-                       for g in $g_list
-                       do
+                    for dtnuc in $dtnuc_list
+                    do
 
-                           gravity_const_grav=-$g
+                        castro_dtnuc_e=$dtnuc
+                        castro_dtnuc_X=$dtnuc
 
-                           for vel in $v_list
-                           do
+                        # At this point we've completed all the non-spatial resolution
+                        # options, and we move on to the number of zones in the coarse
+                        # grid, and what AMR we will be doing.
 
-                               for ncell in $ncell_list
-                               do
+                        base_dir=$results_dir/size$size/dens$dens/g$g/vel$vel/$burning_mode_str/dtnuc$dtnuc
 
-                                   refinement_list="1"
+                        for ncell in $ncell_list
+                        do
 
-                                   if   [ $ncell -eq 32 ]; then
-                                       refinement_list="1 8388608"
-                                       refinement_list="1 4 16 64 256 1024 4096"
-                                   elif [ $ncell -eq 64 ]; then
-                                       refinement_list="1 4194304"
-                                       refinement_list="1 4 16 64 256 1024 4096"
-                                   elif [ $ncell -eq 128 ]; then
-                                       refinement_list="1 2097152"
-                                       refinement_list="1 4 16 64 256 1024 4096"
-                                   elif [ $ncell -eq 256 ]; then
-                                       refinement_list="1 4 16 64 256 1024 4096 16384 65536 262144"
-                                       refinement_list="1 4 16 64 256 1024 4096"
-                                   elif [ $ncell -eq 512 ]; then
-                                       refinement_list="1 524288"
-                                       refinement_list="1 4 16 64 256 1024 4096 16384"
-                                       refinement_list="1"
-                                   elif [ $ncell -eq 1024 ]; then
-                                       refinement_list="1 4 16 262144"
-                                       refinement_list="1 4 16 64 256 1024"
-                                       refinement_list="1"
-                                   elif [ $ncell -eq 2048 ]; then
-                                       refinement_list="1 131072"
-                                       refinement_list="1 4 16 64 256 1024"
-                                       refinement_list="1"
-                                   elif [ $ncell -eq 4096 ]; then
-                                       refinement_list="1 65536"
-                                       refinement_list="1"
-                                   elif [ $ncell -eq 8192 ]; then
-                                       refinement_list="1 32768"
-                                       refinement_list="1"
-                                   elif [ $ncell -eq 16384 ]; then
-                                       refinement_list="1 16384"
-                                       refinement_list="1"
-                                   elif [ $ncell -eq 32768 ]; then
-                                       refinement_list="1"
-                                   elif [ $ncell -eq 65536 ]; then
-                                       refinement_list="1"
-                                   fi
+                            # Before we reach the AMR section, complete a run
+                            # using only the coarse grid.
 
-                                   for refinement in $refinement_list
-                                   do
+                            refinement=1
 
-                                       dir=$results_dir/size$size/$burning_mode_str/dtnuc$dtnuc/dxnuc$castro_dxnuc/tempgrad$tempgrad/dens$dens/g$g/v$vel/n$ncell/r$refinement
+                            dir=$base_dir/n$ncell/base
+                            set_run_opts
 
-                                       # Only do high temporal resolution runs for certain parameter combinations.
+                            if [ $to_run -eq 1 ]; then
+                                run
+                            fi
 
-                                       if [ "$dtnuc" != "1.0e200" ]; then
+                            # Keep track of whether any of our inner loops
+                            # actually enable AMR. If not, we don't need to
+                            # do the run.
 
-                                           if [ $refinement -gt 1 ]; then
-                                               continue
-                                           fi
+                            to_run=0
 
-                                           if [ $ncell -gt 1024 ]; then
-                                               continue
-                                           fi
+                            for castro_dxnuc in $dxnuc_list
+                            do
 
-                                       fi
+                                if [ "$castro_dxnuc" != "1.0e200" ]; then
+                                    to_run=1
+                                fi
 
-                                       # Only do temperature gradient refinement for a sufficiently large number of zones;
-                                       # for low zone numbers, it basically results in refining the entire grid.
-                                       # Also avoid it for the high resolution runs to avoid duplication.
+                                for temperr in $temperr_list
+                                do
 
-                                       if [ "$tempgrad" != "1.d20" ]; then
+                                    if [ "$temperr" != "1.0d20" ]; then
+                                        to_run=1
+                                    fi
 
-                                           if [ $ncell -lt 256 ]; then
-                                               continue
-                                           fi
+                                    for tempgrad_rel in $tempgrad_rel_list
+                                    do
 
-                                           if [ $ncell -gt 256 ]; then
-                                               continue
-                                           fi
+                                        if [ "$tempgrad_rel" != "1.0d20" ]; then
+                                            to_run=1
+                                        fi
 
-                                       fi
+                                        refinement_list=""
 
-                                       set_run_opts
+                                        if   [ $ncell -eq 32 ]; then
+                                            refinement_list="2 4 8 16 32 64"
+                                        elif [ $ncell -eq 64 ]; then
+                                            refinement_list="2 4 8 16 32 64"
+                                        elif [ $ncell -eq 128 ]; then
+                                            refinement_list="2 4 8 16 32 64"
+                                        elif [ $ncell -eq 256 ]; then
+                                            refinement_list="2 4 8 16"
+                                        fi
 
-                                       if [ $to_run -eq 1 ]; then
-                                           run
-                                       fi
+                                        for refinement in $refinement_list
+                                        do
 
-                                       to_run="1"
+                                            # Now we've reached the point where we'll actually launch the AMR runs.
 
-                                   done
+                                            # We should not be doing any r == 1 cases here; dummy check against that.
 
-                               done
+                                            if [ $refinement -eq 1 ]; then
+                                                continue
+                                            fi
 
-                           done
+                                            # Only do high temporal resolution runs for certain parameter combinations.
 
-                       done
+                                            if [ "$dtnuc" != "1.0e200" ]; then
 
-                   done
+                                                if [ $refinement -gt 1 ]; then
+                                                    continue
+                                                fi
 
-               done
+                                                if [ $ncell -gt 1024 ]; then
+                                                    continue
+                                                fi
 
-           done
+                                            fi
 
-       done
+                                            dir=$base_dir/n$ncell/dxnuc$castro_dxnuc/temperr$temperr/tempgrad$tempgrad_rel/r$refinement
+                                            set_run_opts
 
-   done
+                                            if [ $to_run -eq 1 ]; then
+                                                run
+                                            fi
 
-done
+                                        done # refinement
+
+                                    done # tempgrad
+
+                                done # temperr
+
+                            done # dxnuc
+
+                            # Reset the run flag for the next series of iterations.
+
+                            to_run=1
+
+                        done # ncell
+
+                    done # dtnuc
+
+                done # burning mode
+
+            done # vel
+
+        done # g
+
+    done # dens
+
+done # size
