@@ -33,15 +33,10 @@ def get_diagfile(results_dir):
 
 
 
-def amr_ignition(eps_filename, results_base):
+def amr_ignition(filename_base, results_base):
     """Plot the effect of the refinement based on the nuclear burning rate on the detonation conditions."""
 
     import os
-
-    if os.path.isfile(eps_filename):
-        return
-    else:
-        print("Generating file %s" % eps_filename)
 
     import math
     import numpy as np
@@ -51,143 +46,197 @@ def amr_ignition(eps_filename, results_base):
     if not os.path.isdir(results_base):
         return
 
-    # Loop over resolutions of the temperature refinement region.
-
-    temperr_r_list = [1, 4, 16, 64, 256, 1024, 4096, 16384]
-
     size = 8.192e8
 
-    for temperr_r in temperr_r_list:
+    dxnuc_list = []
+    tempgrad_list = []
+    temperr_list = []
 
-        filename = eps_filename.replace('.eps', '_temperr_r_' + str(temperr_r) + '_location.eps')
+    # First we need to loop through the directories and figure out
+    # what values we have for dxnuc, temperr, and tempgrad. Then
+    # we can reverse the order and loop through those, and make plots
+    # as a function of ncell.
 
-        if os.path.isfile(filename):
-            continue
+    ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
 
-        ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
+    for i, ncell in enumerate(ncell_list):
 
-        # Generate a plot of the distance from the center of the ignition point,
-        # and also the time of the ignition.
+        dxnuc_list_loc = os.listdir(results_base + '/n' + str(ncell))
 
-        res_lists = [[]] * len(ncell_list)
-        dist_lists = [[]] * len(ncell_list)
-        time_lists = [[]] * len(ncell_list)
+        # Skip the base run with no refinement
 
-        base_res_list = []
+        dxnuc_list_loc.remove('base')
 
-        for i, ncell in enumerate(ncell_list):
+        dxnuc_list_loc = [dxnuc[5:] for dxnuc in dxnuc_list_loc]
 
-            base_res_list.append(size / ncell / 1.e5)
+        for dxnuc in dxnuc_list_loc:
 
-            results_dir = results_base + '/n' + str(ncell)
+            if dxnuc not in dxnuc_list:
+                dxnuc_list.append(dxnuc)
 
-            if not os.path.isdir(results_dir):
-                continue
+            temperr_list_loc = [temperr[7:] for temperr in os.listdir(results_base + '/n' + str(ncell) + '/dxnuc' + str(dxnuc))]
 
-            # Get the list of parameter values we have tried
+            for temperr in temperr_list_loc:
 
-            r_list = wdmerger.get_parameter_list(results_dir, include_incomplete = True)
+                if temperr not in temperr_list:
+                    temperr_list.append(temperr)
 
-            # Strip out the non-refinement directories
+                tempgrad_list_loc = [tempgrad[8:] for tempgrad in os.listdir(results_base + '/n' + str(ncell) + '/dxnuc' + str(dxnuc) + '/temperr' + temperr)]
 
-            r_list = [r for r in r_list if r[0] == 'r']
+                for tempgrad in tempgrad_list_loc:
 
-            if (r_list == []):
-                continue
+                    if tempgrad not in tempgrad_list:
+                        tempgrad_list.append(tempgrad)
 
-            # Sort them numerically.
 
-            r_list = ['r' + str(r) for r in sorted([int(r[1:]) for r in r_list])]
 
-            # Cycle through the plot files.
-            # Get the maximum value of t_sound_t_enuc, and its distance from the origin.
-            # Stop if we hit an ignition (T > 5e9).
+    # Now we can do the actual plot generation.
 
-            zonesPerDim = []
-            res_list = []
-            dist_list = []
-            time_list = []
+    for dxnuc in dxnuc_list:
+        for temperr in temperr_list:
+            for tempgrad in tempgrad_list:
 
-            for r in r_list:
-                results_dir = results_base + '/n' + str(ncell) + '/' + r + '/temperr1.0d8/temperr_r' + str(temperr_r) + '/nbuf4'
+                filename = filename_base + '_dxnuc_' + dxnuc + '_temperr_' + temperr + '_tempgrad_' + tempgrad + '_location.eps'
 
-                if not os.path.isdir(results_dir):
+                if os.path.isfile(filename):
                     continue
 
-                print('Searching in directory ' + results_dir)
+                res_lists = [[]] * len(ncell_list)
+                dist_lists = [[]] * len(ncell_list)
+                time_lists = [[]] * len(ncell_list)
 
-                prefix = 'det_x_plt'
-                plot_list = [results_dir + '/output/' + plot for plot in wdmerger.get_plotfiles(results_dir, prefix = prefix)]
+                base_res_list = []
 
-                # Assume the last output is the one where we cross the temperature threshold.
+                for i, ncell in enumerate(ncell_list):
 
-                if len(plot_list) > 1:
-                    plot = plot_list[-1]
-                elif len(plot_list) == 1:
-                    plot = plot_list[0]
-                else:
-                    continue
+                    dir = results_base + '/n' + str(ncell) + '/dxnuc' + dxnuc + '/temperr' + temperr + '/tempgrad' + tempgrad
+
+                    if not os.path.isdir(dir):
+                        continue
+
+                    # Generate a plot of the distance from the center of the ignition point,
+                    # and also the time of the ignition.
+
+                    base_res_list.append(size / ncell / 1.e5)
+
+                    # Get the list of refinement values we have tried
+
+                    r_list = wdmerger.get_parameter_list(dir)
+
+                    # Strip out the non-refinement directories
+
+                    r_list = [r for r in r_list if r[0] == 'r']
+
+                    if (r_list == []):
+                        continue
+
+                    # Add the base case (r == 1).
+
+                    r_list.append('r1')
+
+                    # Sort them numerically.
+
+                    r_list = ['r' + str(r) for r in sorted([int(r[1:]) for r in r_list])]
+
+                    # Cycle through the plot files.
+                    # Get the maximum value of t_sound_t_enuc, and its distance from the origin.
+                    # Stop if we hit an ignition (T > 5e9).
+
+                    zonesPerDim = []
+                    res_list = []
+                    dist_list = []
+                    time_list = []
+
+                    for r in r_list:
+                        if r == 'r1':
+                            results_dir = results_base + '/n' + str(ncell) + '/base'
+                        else:
+                            results_dir = results_base + '/n' + str(ncell) + '/dxnuc' + dxnuc + '/temperr' + temperr + '/tempgrad' + tempgrad + '/' + r
+
+                        if not os.path.isdir(results_dir):
+                            continue
+
+                        print('Searching in directory ' + results_dir)
+
+                        prefix = 'det_x_plt'
+                        plot_list = [results_dir + '/output/' + plot for plot in wdmerger.get_plotfiles(results_dir, prefix = prefix)]
+
+                        # Assume the last output is the one where we cross the temperature threshold.
+
+                        if len(plot_list) > 1:
+                            plot = plot_list[-1]
+                        elif len(plot_list) == 1:
+                            plot = plot_list[0]
+                        else:
+                            continue
 
 
-                [T_max, x, y, z] = wdmerger.get_maxloc(plot, 'Temp')
+                        [T_max, x, y, z] = wdmerger.get_maxloc(plot, 'Temp')
 
-                if T_max > 5.e9:
-                    dist = abs(x.v) / 1.e5
-                    time = wdmerger.get_time_from_plotfile(plot)
+                        if T_max >= 5.0e9:
+                            dist = abs(x.v) / 1.0e5
+                            time = wdmerger.get_time_from_plotfile(plot)
 
-                    zonesPerDim.append(ncell * int(r[1:]))
+                            zonesPerDim.append(ncell * int(r[1:]))
 
-                    ds = yt.load(plot)
-                    problo = ds.domain_left_edge.v
-                    probhi = ds.domain_right_edge.v
-                    size = probhi[0] - problo[0]
+                            ds = yt.load(plot)
+                            problo = ds.domain_left_edge.v
+                            probhi = ds.domain_right_edge.v
+                            size = probhi[0] - problo[0]
 
-                    res_list.append(size / (ncell * int(r[1:])) / 1.e5)
-                    dist_list.append(dist)
-                    time_list.append(time)
+                            res_list.append(size / (ncell * int(r[1:])) / 1.0e5)
+                            dist_list.append(dist)
+                            time_list.append(time)
 
-            res_lists[i] = res_list
-            dist_lists[i] = dist_list
-            time_lists[i] = time_list
+                    res_lists[i] = res_list
+                    dist_lists[i] = dist_list
+                    time_lists[i] = time_list
 
-        for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
-            if len(res_list) > 1:
-                lbl = '%3.2e' % base_res_list[i]
-                plt.plot(res_list, dist_list, markersize=12, lw=1.0, label=lbl)
+                    print('res', res_list)
+                    print('dist', dist_list)
+                    print('time', time_list)
 
-        plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
-        plt.xscale('log', basex=10)
-        plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
-        plt.ylabel(r"Ignition location (km)", fontsize=24)
-        plt.legend(loc='best', prop={'size':12}, ncol=2, title='Effective base resolution (km)', fontsize=12)
-        plt.rcParams["figure.figsize"] = (11, 8.5)
-        plt.tight_layout()
-        plt.savefig(filename)
-        png_filename = filename[0:-3] + "png"
-        plt.savefig(png_filename)
+                has_plot = False
+                for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
+                    if len(res_list) > 1:
+                        has_plot = True
+                        lbl = '%3.2e' % base_res_list[i]
+                        plt.plot(res_list, dist_list, markersize=12, lw=1.0, label=lbl)
 
-        plt.close()
+                if has_plot:
+                    plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
+                    plt.xscale('log', basex=10)
+                    plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
+                    plt.ylabel(r"Ignition location (km)", fontsize=24)
+                    plt.legend(loc='best', prop={'size':12}, ncol=2, title='Effective base resolution (km)', fontsize=12)
+                    plt.rcParams["figure.figsize"] = (11, 8.5)
+                    plt.tight_layout()
+                    plt.savefig(filename)
+                    plt.savefig(filename.replace('.eps', '.png'))
 
-        filename = filename.replace('location', 'time')
+                    plt.close()
 
-        for i, (res_list, time_list) in enumerate(zip(res_lists, time_lists)):
-            print(i, res_list, time_list)
-            if len(res_list) > 1:
-                lbl = '%3.2e' % base_res_list[i]
-                plt.plot(res_list, time_list, markersize=12, lw=1.0, label=lbl)
+                filename = filename.replace('location', 'time')
 
-        plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
-        plt.xscale('log', basex=10)
-        plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
-        plt.ylabel(r"Ignition time (s)", fontsize=24)
-        plt.legend(loc='best', prop={'size':12}, ncol=2, title='Effective base resolution (km)', fontsize=12)
-        plt.rcParams["figure.figsize"] = (11, 8.5)
-        plt.tight_layout()
-        plt.savefig(filename)
-        png_filename = filename[0:-3] + "png"
-        plt.savefig(png_filename)
+                has_plot = False
+                for i, (res_list, time_list) in enumerate(zip(res_lists, time_lists)):
+                    if len(res_list) > 1:
+                        has_plot = True
+                        lbl = '%3.2e' % base_res_list[i]
+                        plt.plot(res_list, time_list, markersize=12, lw=1.0, label=lbl)
 
-        plt.close()
+                if has_plot:
+                    plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
+                    plt.xscale('log', basex=10)
+                    plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
+                    plt.ylabel(r"Ignition time (s)", fontsize=24)
+                    plt.legend(loc='best', prop={'size':12}, ncol=2, title='Effective base resolution (km)', fontsize=12)
+                    plt.rcParams["figure.figsize"] = (11, 8.5)
+                    plt.tight_layout()
+                    plt.savefig(filename)
+                    plt.savefig(filename.replace('.eps', '.png'))
+
+                    plt.close()
 
 
 
@@ -204,31 +253,74 @@ if __name__ == "__main__":
     burning_mode = 'self-heat'
 
     file_base = burning_mode
-    results_base = 'results/' + 'size' + size + '/' + burning_mode
+    results_base = 'results/' + 'size' + size
 
-    dtnuc_list = os.listdir(results_base)
+    dens_list = os.listdir(results_base)
 
-    for dtnuc in dtnuc_list:
+    run_dir = results_base
+    run_str = file_base
 
-        tempgrad_list = os.listdir(results_base + '/' + dtnuc)
+    for dens in dens_list:
 
-        for tempgrad in tempgrad_list:
+        dens_dir = '/' + dens
+        dens_str = '_dens_' + dens[4:]
 
-            dens_list = os.listdir(results_base + '/' + dtnuc + '/' + tempgrad)
+        run_dir += dens_dir
+        run_str += dens_str
 
-            for dens in dens_list:
+        g_list = os.listdir(run_dir)
 
-                g_list = os.listdir(results_base + '/' + dtnuc + '/' + tempgrad + '/' + dens)
+        for g in g_list:
 
-                for g in g_list:
+            g_dir = '/' + g
+            g_str = '_g_' + g[1:]
 
-                    v_list = os.listdir(results_base + '/' + dtnuc + '/' + tempgrad + '/' + dens + '/' + g + '/')
+            run_dir += g_dir
+            run_str += g_str
 
-                    for v in v_list:
+            v_list = os.listdir(run_dir)
 
-                        file_string = file_base + '_dtnuc_' + dtnuc[5:] + '_tempgrad_' + tempgrad[8:] + '_dens_' + dens[4:] + '_g_' + g[1:] + '_v_' + v[1:]
-                        results_dir = results_base + '/' + dtnuc + '/' + tempgrad + '/' + dens + '/' + g + '/' + v
+            for v in v_list:
 
-                        ncell_list = os.listdir(results_dir)
+                v_dir = '/' + v
+                v_str = '_v_' + v[3:]
 
-                        amr_ignition(plots_dir + 'amr_ignition_' + file_string + '.eps', results_dir)
+                run_dir += v_dir
+                run_str += v_str
+
+                burning_mode_list = os.listdir(run_dir)
+
+                for burning_mode in burning_mode_list:
+
+                    burn_dir = '/' + burning_mode
+                    burn_str = '_' + burning_mode
+
+                    run_dir += burn_dir
+                    run_str += burn_str
+
+                    dtnuc_list = os.listdir(run_dir)
+
+                    for dtnuc in dtnuc_list:
+
+                        dtnuc_dir = '/' + dtnuc
+                        dtnuc_str = '_dtnuc_' + dtnuc[5:]
+
+                        run_dir += dtnuc_dir
+                        run_str += dtnuc_str
+
+                        amr_ignition(plots_dir + 'amr_ignition_' + run_str, run_dir)
+
+                        run_dir = run_dir.strip(dtnuc_dir)
+                        run_str = run_str.strip(dtnuc_dir)
+
+                    run_dir = run_dir.strip(burn_dir)
+                    run_str = run_str.strip(burn_str)
+
+                run_dir = run_dir.strip(v_dir)
+                run_str = run_str.strip(v_str)
+
+            run_dir = run_dir.strip(g_dir)
+            run_str = run_str.strip(g_str)
+
+        run_dir = run_dir.strip(dens_dir)
+        run_str = run_str.strip(dens_str)

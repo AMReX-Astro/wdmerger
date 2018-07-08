@@ -261,12 +261,12 @@ dens_list="5.d6"
 
 g_list="1.1e8"
 
-v_list="0.0d0"
+v_list="0.0d0 1.0d7"
 
 T_l="1.0d7"
 T_r="1.0d7"
 
-ncell_list="32 64 128 256 512 1024 2048 4096"
+ncell_list="32 64 128 256 512 1024 2048 4096 8192"
 
 dtnuc_list="1.0e200"
 
@@ -385,13 +385,23 @@ do
                                         refinement_list=""
 
                                         if   [ $ncell -eq 32 ]; then
-                                            refinement_list="2 4 8 16 32 64"
+                                            refinement_list="2 4 8 16 32 64 128 256"
                                         elif [ $ncell -eq 64 ]; then
-                                            refinement_list="2 4 8 16 32 64"
+                                            refinement_list="2 4 8 16 32 64 128"
                                         elif [ $ncell -eq 128 ]; then
                                             refinement_list="2 4 8 16 32 64"
                                         elif [ $ncell -eq 256 ]; then
+                                            refinement_list="2 4 8 16 32"
+                                        elif [ $ncell -eq 512 ]; then
                                             refinement_list="2 4 8 16"
+                                        elif [ $ncell -eq 1024 ]; then
+                                            refinement_list="2 4 8"
+                                        elif [ $ncell -eq 2048 ]; then
+                                            refinement_list="2 4"
+                                        elif [ $ncell -eq 4096 ]; then
+                                            refinement_list="2 4"
+                                        elif [ $ncell -eq 8192 ]; then
+                                            refinement_list="2 4"
                                         fi
 
                                         for refinement in $refinement_list
