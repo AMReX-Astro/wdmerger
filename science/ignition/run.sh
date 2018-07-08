@@ -261,7 +261,7 @@ dens_list="5.d6"
 
 g_list="1.1e8"
 
-v_list="0.0d0 1.0d7"
+v_list="0.0d0 1.0d8"
 
 T_l="1.0d7"
 T_r="1.0d7"
