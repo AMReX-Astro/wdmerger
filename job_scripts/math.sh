@@ -172,3 +172,28 @@ function hours_to_minutes {
     echo $minutes
 
 }
+
+
+# Calculate the log base 2 of an integer.
+# Assumes the integer is a power of 2; if it
+# is not, it will return the log rounded up.
+
+function log_base_2 {
+
+    if [ ! -z $1 ]; then
+        exp=$1
+    else
+        return
+    fi
+
+    local i=1
+    local lg=0
+
+    while [ $i -lt $exp ]; do
+        i=$(($i * 2))
+        lg=$(($lg + 1))
+    done
+
+    echo $lg
+
+}
