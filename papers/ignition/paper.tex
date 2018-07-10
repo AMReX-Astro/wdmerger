@@ -98,22 +98,19 @@ on a relatively coarse grid.
 \section{Introduction}
 \label{sec:introduction}
 
-Binary white dwarf (WD) systems are a promising progenitor candidate for Type
-Ia supernovae (SNe Ia) for observational reasons, but from the simulation
-perspective there is still significant uncertainty regarding how nuclear
-detonations form in an exploding white dwarf. There is uncertainty in the
-model, regarding whether detonations form on the surface of a star as
-accreting material heats up when it strikes the surface, or at or near the
-center of the star as the accreted material compresses the WD. There is also
-uncertainty in the numerics: given one of these models, can we self-consistently
-demonstrate that a detonation occurs? This question has haunted both single
-WD and double WD progenitor models, because the length and time scale at which
-a detonation forms is orders of magnitude smaller than the resolution that
+Thermonuclear detonations are common to all current likely models of Type Ia
+supernovae (SNe Ia), but how they are actually generated in progenitor systems
+is still an open question. Different models predict different locations for
+the detonation (e.g. in the center of a star or on the edge) and different
+mechanisms for initiating the event (e.g. a prompt detonation in a white dwarf
+collision versus a deflagration to detonation transition in the single degenerate
+model). Common to all of the cases is a severe lack of numerical resolution in
+the location where the detonation is expected to occur. The length and time scale
+at which a detonation forms is orders of magnitude smaller than the resolution that
 typical hydrodynamic simulations can achieve. Furthemore, the approximate equations
-we use at the resolution that we can achieve are still notoriously
-difficult to solve accurately. The mere presence of a detonation
-(or lack thereof) in a simulation is therefore only weak evidence regarding
-whether a detonation would truly occur.
+we use at the resolution that we can achieve are still notoriously difficult to
+solve accurately. The mere presence of a detonation (or lack thereof) in a simulation
+is therefore only weak evidence regarding whether a detonation would truly occur.
 
 In this study we examine the challenges associated with simulating nuclear detonations.
 This paper follows from our first WD merger methodology paper, \citet{wdmergerI}
