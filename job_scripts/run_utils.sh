@@ -568,7 +568,13 @@ function is_dir_done {
       return
   fi
 
-  if [ -e "$directory/jobIsDone" ]; then
+  if [ -e "$directory/jobFailed" ]; then
+
+      # The job failed the last time we tried it; we should consider this done.
+
+      done_status=1
+
+  elif [ -e "$directory/jobIsDone" ]; then
 
       # The user has explicitly signalled that the simulation is complete; we can stop here.
 
@@ -1218,6 +1224,20 @@ function check_to_stop {
 
   done
 
+  # If we get too near to the end of the run and the process is
+  # still running, kill it. If this happens, we do not want to
+  # resubmit the job.
+
+  if [ ! -z "$job_number" ] && [ ! -z "$cancel_job" ]; then
+      if [ ! -z "$pid" ] && [ $(ps -p $pid | wc -l) -ne 1 ]; then
+	  echo "Implementing a hard termination of the job since we are too close to the time limit."
+          no_continue=1
+          touch jobIsDone
+          touch jobFailed
+          $cancel_job $job_number
+      fi
+  fi
+
   # Check to make sure we are done, and if not, re-submit the job.
 
   if [ -z "$no_continue" ]; then
@@ -1262,13 +1282,6 @@ function check_to_stop {
 
   rm -f dump_and_stop
   rm -f dump_and_continue
-
-  if [ ! -z "$job_number" ] && [ ! -z "$cancel_job" ]; then
-      if [ ! -z "$pid" ] && [ $(ps -p $pid | wc -l) -ne 1 ]; then
-	  echo "Implementing a hard termination of the job since we are too close to the time limit."
-	  $cancel_job $job_number
-      fi
-  fi
 
 }
 
@@ -1398,6 +1411,13 @@ function submit_job {
 
   current_date=$(date +%s)
 
+  # Refuse to submit the job if the jobFailed file exists.
+
+  if [ -e "jobFailed" ]; then
+      echoerr "Refusing to continue failed job."
+      return 1
+  fi
+
   # Sometimes the code crashes and we get into an endless cycle of 
   # resubmitting the job and then crashing again soon after,
   # which is liable to make system administrators mad at us.
@@ -1406,7 +1426,8 @@ function submit_job {
   # which we detect with an AMReX backtrace file.
 
   if ls Backtrace* 1> /dev/null 2>&1; then
-      echo "Refusing to submit job because a Backtrace file was found."
+      echoerr "Refusing to submit job because a Backtrace file was found."
+      touch jobFailed
       return 1
   fi
 
@@ -2188,11 +2209,17 @@ function run {
 
   # Take a shortcut if the job is completely done.
 
-  if [ -e "$dir/jobIsDone" ]; then
+  if [ -e "$dir/jobFailed" ]; then
+      done_flag='1'
+
+      echoerr "Last job failed in directory $dir."
+      return
+
+  elif [ -e "$dir/jobIsDone" ]; then
 
       done_flag='1'
 
-      echo "Full run is completed in directory $dir."
+      echoerr "Full run is completed in directory $dir."
       return
 
   fi
