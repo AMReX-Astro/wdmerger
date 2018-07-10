@@ -78,31 +78,17 @@
 % Abstract
 %==========================================================================
 \begin{abstract}
-Simulations of white dwarf mergers that include thermonuclear reactions must
-confront the question of how nuclear detonations form and whether observed
-detonations in a numerical simulation are realistic. We address this question
-by performing simulations of collisions of white dwarfs, a subset of white
-dwarf mergers that occur when the stars approach each other nearly head-on.
-These have the potential for explosive nucleosynthesis, leading to a thermonuclear
-detonation that disrupts both stars, possibly causing a Type Ia supernova.
-While this story is intuitively plasible, demonstrating this in a reacting
-hydrodynamics simulation is challenging due to the rapid evolution of the
-nuclear burning, posing numerical challenges related to both spatial and
-temporal resolution. In this study we explore a number of the algorithmic choices
-that affect the outcome of reacting hydrodynamics simulations, and address
+Some simulations of Type Ia supernovae feature thermonuclear detonations that
+arise naturally during the evolution. It is usually not clear whether these
+detonations occur in the same time and place as they would in a simulation
+that fully resolved the burning length scale (assuming the resolved simulation
+even features a detonation). In this study we explore a number of the algorithmic
+choices that affect the outcome of reacting hydrodynamics simulations, and address
 the question of what is required to ensure that these simulations are properly
-converged. We find that achieving a converged white dwarf collision simulation
-in the code \castro\ is very difficult. The typical timesteps taken by hydrodynamics
-codes are too large, and the achievable spatial resolution is too low, while increasing
-either to the point required to actually obtain a converged simulation is
-prohibitive. We have identified a criterion for adaptive mesh refinement
-that covers the most important regions in the simulation and allows us to
-achieve very high resolution in the burning region. However, even in our
-highest resolution simulations, we do not find a converged result, and
-detonations seem to occur stochastically. Our results point to a path forward
-for astrophysical simulations with thermonuclear detonations, but for now
-they encourage severe caution in interpreting observed detonations in previous
-and current simulations.
+converged. We focus on the spatial and temporal resolution, as well as the coupling
+between the hydrodynamics and the reactions. Adaptive mesh refinement, properly
+targeted at the relevant burning regions, works well for achieving converged simulations
+on a relatively coarse grid.
 \end{abstract}
 \keywords{supernovae: general - white dwarfs}
 
