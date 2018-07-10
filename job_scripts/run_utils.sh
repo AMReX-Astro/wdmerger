@@ -1401,7 +1401,16 @@ function submit_job {
   # Sometimes the code crashes and we get into an endless cycle of 
   # resubmitting the job and then crashing again soon after,
   # which is liable to make system administrators mad at us.
-  # Let's protect against this by putting in a safeguard.
+
+  # Protect against this by checking to see if the code crashed,
+  # which we detect with an AMReX backtrace file.
+
+  if ls Backtrace* 1> /dev/null 2>&1; then
+      echo "Refusing to submit job because a Backtrace file was found."
+      return 1
+  fi
+
+  # We can also protect against this by putting in this safeguard:
   # If the job stops within the first 25% of its requested runtime,
   # it is a safe bet that we are crashing and we don't want to
   # submit a new job. You can set the flag force_submit if you
@@ -1429,14 +1438,6 @@ function submit_job {
 	  return 1
       fi
 
-  fi
-
-  # We can also test directly on whether the code crashed by looking
-  # for a BoxLib Backtrace file.
-
-  if ls Backtrace* 1> /dev/null 2>&1; then
-      echo "Refusing to submit job because a Backtrace file was found."
-      return 1
   fi
 
   # Determine the requested walltime, in seconds.
