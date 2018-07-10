@@ -30,7 +30,7 @@ pdf:	paper.pdf
 
 clean:
 	$(RM) $(pdf_source) *.dvi 
-	$(RM) *.blg *.log *.bib
+	$(RM) *.blg *.log *.bib *.brf
 	$(RM) *.aux *.ps *.bbl
 	$(RM) paper.pdf
 	$(RM) *~
