@@ -344,7 +344,7 @@ do
                         # and have a very rough time with it as a result. Severely
                         # limit the CFL number for these runs to compensate.
 
-                        if [ $ncell -lt 128 ]; then
+                        if [ $ncell -le 128 ]; then
                             castro_cfl="0.01"
                         else
                             castro_cfl="0.5"
@@ -362,11 +362,10 @@ do
                             run
                         fi
 
-                        tempgrad_r_list="1"
+                        tempgrad_r_list="4"
                         dxnuc_r_list="1"
 
-                        if   [ $ncell -eq 256 ]; then
-                            tempgrad_r_list="1 4 16"
+                        if [ $ncell -eq 256 ]; then
                             dxnuc_r_list="1 4 16 64 256"
                         fi
 
@@ -384,19 +383,9 @@ do
                                     for dxnuc_r in $dxnuc_r_list
                                     do
 
-                                        # Now we've reached the point where we'll actually launch the AMR runs.
+                                        # Skip runs where dxnuc_r == tempgrad_r; these add no real extra information.
 
-                                        refinement=$dxnuc_r
-
-                                        # We should not be doing any r == 1 cases here; dummy check against that.
-
-                                        if [ $refinement -eq 1 ]; then
-                                            continue
-                                        fi
-
-                                        # Skip runs where dxnuc refinement doesn't add on top of tempgrad.
-
-                                        if [ $dxnuc_r -lt $tempgrad_r ]; then
+                                        if [ $dxnuc_r -eq $tempgrad_r ]; then
                                             continue
                                         fi
 
