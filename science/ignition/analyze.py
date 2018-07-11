@@ -48,55 +48,59 @@ def amr_ignition(filename_base, results_base):
 
     size = 8.192e8
 
-    dxnuc_list = []
     tempgrad_list = []
-    temperr_list = []
+    dxnuc_list = []
+
+    tempgrad_r_list = []
+    dxnuc_r_list = []
 
     # First we need to loop through the directories and figure out
-    # what values we have for dxnuc, temperr, and tempgrad. Then
-    # we can reverse the order and loop through those, and make plots
+    # what values we have for dxnuc and tempgrad, and their refinements.
+    # Then we can reverse the order and loop through those, and make plots
     # as a function of ncell.
 
     ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
 
     for i, ncell in enumerate(ncell_list):
 
-        dxnuc_list_loc = os.listdir(results_base + '/n' + str(ncell))
+        tempgrad_list_loc = os.listdir(results_base + '/n' + str(ncell))
 
         # Skip the base run with no refinement
 
-        dxnuc_list_loc.remove('base')
+        tempgrad_list_loc.remove('base')
 
-        dxnuc_list_loc = [dxnuc[5:] for dxnuc in dxnuc_list_loc]
+        tempgrad_list_loc = [tempgrad[8:] for tempgrad in tempgrad_list_loc]
 
-        for dxnuc in dxnuc_list_loc:
+        for tempgrad in tempgrad_list_loc:
 
-            if dxnuc not in dxnuc_list:
-                dxnuc_list.append(dxnuc)
+            if tempgrad not in tempgrad_list:
+                tempgrad_list.append(tempgrad)
 
-            temperr_list_loc = [temperr[7:] for temperr in os.listdir(results_base + '/n' + str(ncell) + '/dxnuc' + str(dxnuc))]
+                dxnuc_list_loc = [dxnuc[5:] for dxnuc in os.listdir(results_base + '/n' + str(ncell) + '/tempgrad' + str(tempgrad))]
 
-            for temperr in temperr_list_loc:
+                for dxnuc in dxnuc_list_loc:
 
-                if temperr not in temperr_list:
-                    temperr_list.append(temperr)
+                    if dxnuc not in dxnuc_list:
+                        dxnuc_list.append(dxnuc)
 
-                tempgrad_list_loc = [tempgrad[8:] for tempgrad in os.listdir(results_base + '/n' + str(ncell) + '/dxnuc' + str(dxnuc) + '/temperr' + temperr)]
+                        tempgrad_r_list_loc = [tempgrad_r[10:] for tempgrad_r in os.listdir(results_base + '/n' + str(ncell) + '/tempgrad' + str(tempgrad) + '/dxnuc' + dxnuc)]
 
-                for tempgrad in tempgrad_list_loc:
+                        for tempgrad_r in tempgrad_r_list_loc:
 
-                    if tempgrad not in tempgrad_list:
-                        tempgrad_list.append(tempgrad)
+                            if tempgrad_r not in tempgrad_r_list:
+                                tempgrad_r_list.append(tempgrad_r)
+
+                                dxnuc_r_list_loc = [dxnuc_r[7:] for dxnuc_r in os.listdir(results_base + '/n' + str(ncell) + '/tempgrad' + str(tempgrad) + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r)]
 
 
 
     # Now we can do the actual plot generation.
 
-    for dxnuc in dxnuc_list:
-        for temperr in temperr_list:
-            for tempgrad in tempgrad_list:
+    for tempgrad in tempgrad_list:
+        for dxnuc in dxnuc_list:
+            for tempgrad_r in tempgrad_r_list:
 
-                filename = filename_base + '_dxnuc_' + dxnuc + '_temperr_' + temperr + '_tempgrad_' + tempgrad + '_location.eps'
+                filename = filename_base + '_dxnuc_' + dxnuc + '_tempgrad_' + tempgrad + '_tempgrad_r' + tempgrad_r + '_location.eps'
 
                 if os.path.isfile(filename):
                     continue
@@ -109,15 +113,16 @@ def amr_ignition(filename_base, results_base):
 
                 for i, ncell in enumerate(ncell_list):
 
-                    dir = results_base + '/n' + str(ncell) + '/dxnuc' + dxnuc + '/temperr' + temperr + '/tempgrad' + tempgrad
+                    base_res_list.append(size / ncell / 1.e5)
 
-                    if not os.path.isdir(dir):
+                    base_dir = results_base + '/n' + str(ncell) + '/base'
+                    dir = results_base + '/n' + str(ncell) + '/tempgrad' + tempgrad + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r
+
+                    if not os.path.isdir(dir) and not os.path.isdir(base_dir):
                         continue
 
                     # Generate a plot of the distance from the center of the ignition point,
                     # and also the time of the ignition.
-
-                    base_res_list.append(size / ncell / 1.e5)
 
                     # Get the list of refinement values we have tried
 
@@ -125,18 +130,19 @@ def amr_ignition(filename_base, results_base):
 
                     # Strip out the non-refinement directories
 
-                    r_list = [r for r in r_list if r[0] == 'r']
+                    r_list = [r for r in r_list if r[0:7] == 'dxnuc_r']
+
+                    # Add the base case (r == 1).
+
+                    if os.path.isdir(base_dir):
+                        r_list.append('dxnuc_r1')
 
                     if (r_list == []):
                         continue
 
-                    # Add the base case (r == 1).
-
-                    r_list.append('r1')
-
                     # Sort them numerically.
 
-                    r_list = ['r' + str(r) for r in sorted([int(r[1:]) for r in r_list])]
+                    r_list = ['r' + str(r) for r in sorted([int(r[7:]) for r in r_list])]
 
                     # Cycle through the plot files.
                     # Get the maximum value of t_sound_t_enuc, and its distance from the origin.
@@ -151,7 +157,7 @@ def amr_ignition(filename_base, results_base):
                         if r == 'r1':
                             results_dir = results_base + '/n' + str(ncell) + '/base'
                         else:
-                            results_dir = results_base + '/n' + str(ncell) + '/dxnuc' + dxnuc + '/temperr' + temperr + '/tempgrad' + tempgrad + '/' + r
+                            results_dir = results_base + '/n' + str(ncell) + '/tempgrad' + tempgrad + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r + '/dxnuc_' + r
 
                         if not os.path.isdir(results_dir):
                             continue
@@ -196,47 +202,60 @@ def amr_ignition(filename_base, results_base):
                     print('dist', dist_list)
                     print('time', time_list)
 
-                has_plot = False
                 for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
                     if len(res_list) > 1:
                         has_plot = True
                         lbl = '%3.2e' % base_res_list[i]
-                        plt.plot(res_list, dist_list, markersize=12, lw=1.0, label=lbl)
+                        plt.plot(res_list, dist_list, lw=2.0, label=lbl)
 
-                if has_plot:
-                    plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
-                    plt.xscale('log', basex=10)
-                    plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
-                    plt.ylabel(r"Ignition location (km)", fontsize=24)
-                    plt.legend(loc='best', prop={'size':12}, ncol=2, title='Effective base resolution (km)', fontsize=12)
-                    plt.rcParams["figure.figsize"] = (11, 8.5)
-                    plt.tight_layout()
-                    plt.savefig(filename)
-                    plt.savefig(filename.replace('.eps', '.png'))
+                coarse_list = []
+                r_list = []
+                for i, ncell in enumerate(ncell_list):
+                    if len(dist_lists[i]) > 0:
+                        r_list.append(res_lists[i][0])
+                        coarse_list.append(dist_lists[i][0])
 
-                    plt.close()
+                plt.plot(r_list, coarse_list, color='k', label='Uniform grid', marker='o', markersize=12)
+
+                plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
+                plt.xscale('log', basex=10)
+                plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
+                plt.ylabel(r"Ignition location (km)", fontsize=24)
+                plt.legend(loc='best', prop={'size':12}, ncol=2, title='Base resolution (km)', fontsize=12)
+                plt.rcParams["figure.figsize"] = (11, 8.5)
+                plt.tight_layout()
+                plt.savefig(filename)
+                plt.savefig(filename.replace('.eps', '.png'))
+
+                plt.close()
 
                 filename = filename.replace('location', 'time')
 
-                has_plot = False
                 for i, (res_list, time_list) in enumerate(zip(res_lists, time_lists)):
                     if len(res_list) > 1:
-                        has_plot = True
                         lbl = '%3.2e' % base_res_list[i]
-                        plt.plot(res_list, time_list, markersize=12, lw=1.0, label=lbl)
+                        plt.plot(res_list, time_list, lw=2.0, label=lbl)
 
-                if has_plot:
-                    plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
-                    plt.xscale('log', basex=10)
-                    plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
-                    plt.ylabel(r"Ignition time (s)", fontsize=24)
-                    plt.legend(loc='best', prop={'size':12}, ncol=2, title='Effective base resolution (km)', fontsize=12)
-                    plt.rcParams["figure.figsize"] = (11, 8.5)
-                    plt.tight_layout()
-                    plt.savefig(filename)
-                    plt.savefig(filename.replace('.eps', '.png'))
+                coarse_list = []
+                r_list = []
+                for i, ncell in enumerate(ncell_list):
+                    if len(time_lists[i]) > 0:
+                        r_list.append(res_lists[i][0])
+                        coarse_list.append(time_lists[i][0])
 
-                    plt.close()
+                plt.plot(r_list, coarse_list, color='k', label='Uniform grid', marker='o', markersize=12)
+
+                plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
+                plt.xscale('log', basex=10)
+                plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
+                plt.ylabel(r"Ignition time (s)", fontsize=24)
+                plt.legend(loc='best', prop={'size':12}, ncol=2, title='Base resolution (km)', fontsize=12)
+                plt.rcParams["figure.figsize"] = (11, 8.5)
+                plt.tight_layout()
+                plt.savefig(filename)
+                plt.savefig(filename.replace('.eps', '.png'))
+
+                plt.close()
 
 
 
@@ -249,11 +268,11 @@ if __name__ == "__main__":
         
     plots_dir = 'plots/'
 
-    size = '8.192e8'
+    ofrac = '0.0d0'
     burning_mode = 'self-heat'
 
     file_base = burning_mode
-    results_base = 'results/' + 'size' + size
+    results_base = 'results/' + 'ofrac' + ofrac
 
     dens_list = os.listdir(results_base)
 
@@ -311,7 +330,7 @@ if __name__ == "__main__":
                         amr_ignition(plots_dir + 'amr_ignition_' + run_str, run_dir)
 
                         run_dir = run_dir.strip(dtnuc_dir)
-                        run_str = run_str.strip(dtnuc_dir)
+                        run_str = run_str.strip(dtnuc_str)
 
                     run_dir = run_dir.strip(burn_dir)
                     run_str = run_str.strip(burn_str)

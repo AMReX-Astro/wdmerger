@@ -86,8 +86,17 @@ if [ ! -z $refinement ]; then
         exit
     fi
 
-    max_temperr_lev=$amr_max_level
-    max_tempgrad_rel_lev=$amr_max_level
+    if [ ! -z $dxnuc_r ]; then
+        castro_max_dxnuc_lev=$(log_base_2 $dxnuc_r)
+    else
+        castro_max_dxnuc_lev=0
+    fi
+
+    if [ ! -z $tempgrad_r ]; then
+        max_tempgrad_rel_lev=$(log_base_2 $tempgrad_r)
+    else
+        max_tempgrad_lev=0
+    fi
 
 fi
 
@@ -186,7 +195,7 @@ amr_plot_per="-1.0"
 amr_plot_vars="ALL"
 amr_derive_plot_vars="ALL"
 
-amr_small_plot_per="1.0e-2"
+amr_small_plot_per="-0.01"
 amr_small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr_derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
@@ -255,7 +264,10 @@ amr_subcycling_mode="None"
 stop_time="10.0"
 max_step="10000000"
 
-size_list="8.192e8"
+geometry_prob_lo="0.0"
+geometry_prob_hi="8.192e8"
+
+ofrac_list="0.0d0"
 
 dens_list="5.d6"
 
@@ -266,22 +278,21 @@ v_list="1.0d8"
 T_l="1.0d7"
 T_r="1.0d7"
 
-ncell_list="32 64 128 256 512 1024 2048 4096 8192"
+ncell_list="16 24 32 40 48 56 64 72 80 88 96 104 112 120 128 256 512 1024 2048 4096"
 
 dtnuc_list="1.0e200"
 
 burning_mode_list="self-heat suppressed"
 
-dxnuc_list="1.0e200 1.0e-1"
-temperr_list="1.0d20"
-tempgrad_rel_list="1.0d20 0.5"
+dxnuc_list="1.0e-1"
+tempgrad_rel_list="0.5"
 
 amr_n_error_buf="2"
 
 # This loop nest covers all of the runs we will do,
 # and is split into two basic parts. The outer loops
 # govern the high level problem setup choices --
-# the size of the domain, the initial velocity
+# the oxygen fraction, the initial velocity
 # and gravitational acceleration, and the type
 # of nuclear burning we are doing. We'll also cover
 # the temporal resolution in this section.
@@ -296,11 +307,8 @@ amr_n_error_buf="2"
 # redundantly calculate this uniform grid
 # case for each one of those options.
 
-for size in $size_list
+for ofrac in $ofrac_list
 do
-
-    geometry_prob_lo="0.0"
-    geometry_prob_hi="$size"
 
     for dens in $dens_list
     do
@@ -337,16 +345,34 @@ do
                         # At this point we've completed all the non-spatial resolution
                         # options, and we move on to the number of zones in the coarse
                         # grid, and what AMR we will be doing.
-
-                        base_dir=$results_dir/size$size/dens$dens/g$g/vel$vel/$burning_mode_str/dtnuc$dtnuc
+                        
+                        base_dir=$results_dir/ofrac$ofrac/dens$dens/g$g/vel$vel/$burning_mode_str/dtnuc$dtnuc
 
                         for ncell in $ncell_list
                         do
+
+                            # Low resolution runs tend to skip right through the burning
+                            # and have a very rough time with it as a result. Severely
+                            # limit the CFL number for these runs to compensate.
+
+                            if [ $ncell -lt 128 ]; then
+                                castro_cfl="0.01"
+                            else
+                                castro_cfl="0.5"
+                            fi
 
                             # Before we reach the AMR section, complete a run
                             # using only the coarse grid.
 
                             refinement=1
+
+                            # Don't do the temporal resolution runs at high resolution.
+
+                            if [ $ncell -gt 256 ]; then
+                                if [ "$dtnuc" != "1.0e200" ]; then
+                                    continue
+                                fi
+                            fi
 
                             dir=$base_dir/n$ncell/base
                             set_run_opts
@@ -355,59 +381,31 @@ do
                                 run
                             fi
 
-                            # Keep track of whether any of our inner loops
-                            # actually enable AMR. If not, we don't need to
-                            # do the run.
+                            tempgrad_r_list="1"
+                            dxnuc_r_list="1"
 
-                            to_run=0
-
-                            for castro_dxnuc in $dxnuc_list
+                            if   [ $ncell -eq 256 ]; then
+                                tempgrad_r_list="1 2 4 8 16"
+                                dxnuc_r_list="1 2 4 8 16 32 64 128 256"
+                            fi
+                            
+                            for tempgrad_rel in $tempgrad_rel_list
                             do
 
-                                if [ "$castro_dxnuc" != "1.0e200" ]; then
-                                    to_run=1
-                                fi
-
-                                for temperr in $temperr_list
+                                for dxnuc in $dxnuc_list
                                 do
 
-                                    if [ "$temperr" != "1.0d20" ]; then
-                                        to_run=1
-                                    fi
+                                    castro_dxnuc=$dxnuc
 
-                                    for tempgrad_rel in $tempgrad_rel_list
+                                    for tempgrad_r in $tempgrad_r_list
                                     do
 
-                                        if [ "$tempgrad_rel" != "1.0d20" ]; then
-                                            to_run=1
-                                        fi
-
-                                        refinement_list=""
-
-                                        if   [ $ncell -eq 32 ]; then
-                                            refinement_list="2 4 8 16 32 64 128 256"
-                                        elif [ $ncell -eq 64 ]; then
-                                            refinement_list="2 4 8 16 32 64 128"
-                                        elif [ $ncell -eq 128 ]; then
-                                            refinement_list="2 4 8 16 32 64"
-                                        elif [ $ncell -eq 256 ]; then
-                                            refinement_list="2 4 8 16 32"
-                                        elif [ $ncell -eq 512 ]; then
-                                            refinement_list="2 4 8 16"
-                                        elif [ $ncell -eq 1024 ]; then
-                                            refinement_list="2 4 8"
-                                        elif [ $ncell -eq 2048 ]; then
-                                            refinement_list="2 4"
-                                        elif [ $ncell -eq 4096 ]; then
-                                            refinement_list="2 4"
-                                        elif [ $ncell -eq 8192 ]; then
-                                            refinement_list="2 4"
-                                        fi
-
-                                        for refinement in $refinement_list
+                                        for dxnuc_r in $dxnuc_r_list
                                         do
 
                                             # Now we've reached the point where we'll actually launch the AMR runs.
+
+                                            refinement=$dxnuc_r
 
                                             # We should not be doing any r == 1 cases here; dummy check against that.
 
@@ -415,38 +413,40 @@ do
                                                 continue
                                             fi
 
-                                            # Only do high temporal resolution runs for certain parameter combinations.
+                                            # Skip runs where dxnuc refinement doesn't add on top of tempgrad.
 
-                                            if [ "$dtnuc" != "1.0e200" ]; then
-
-                                                if [ $refinement -gt 1 ]; then
-                                                    continue
-                                                fi
-
-                                                if [ $ncell -gt 1024 ]; then
-                                                    continue
-                                                fi
-
+                                            if [ $dxnuc_r -lt $tempgrad_r ]; then
+                                                continue
                                             fi
 
-                                            dir=$base_dir/n$ncell/dxnuc$castro_dxnuc/temperr$temperr/tempgrad$tempgrad_rel/r$refinement
+                                            # Skip certain runs at low resolution which have very long timesteps due to retries.
+
+                                            if [ $tempgrad_r -ge 8 ] && [ $ncell -lt 128 ]; then
+                                                continue
+                                            fi
+
+                                            # Don't do AMR for the temporal refinement runs.
+
+                                            if [ "$dtnuc" != "1.0e200" ]; then
+                                                continue
+                                            fi
+
+                                            dir=$base_dir/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
                                             set_run_opts
 
                                             if [ $to_run -eq 1 ]; then
                                                 run
                                             fi
 
-                                        done # refinement
+                                            to_run=1
 
-                                    done # tempgrad
+                                        done # dxnuc_r
 
-                                done # temperr
+                                    done # tempgrad_r
 
-                            done # dxnuc
+                                done # dxnuc
 
-                            # Reset the run flag for the next series of iterations.
-
-                            to_run=1
+                            done # tempgrad
 
                         done # ncell
 
@@ -460,4 +460,4 @@ do
 
     done # dens
 
-done # size
+done # ofrac
