@@ -278,7 +278,7 @@ v_list="1.0d8"
 T_l="1.0d7"
 T_r="1.0d7"
 
-ncell_list="16 24 32 40 48 56 64 72 80 88 96 104 112 120 128 256 512 1024 2048 4096"
+ncell_list="16 24 32 48 64 96 128 256 512 1024 2048 4096"
 
 burning_mode_list="self-heat suppressed"
 

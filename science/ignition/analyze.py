@@ -205,7 +205,7 @@ def amr_ignition(filename_base, results_base):
                 for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
                     if len(res_list) > 1:
                         has_plot = True
-                        lbl = '%3.2e' % base_res_list[i]
+                        lbl = '{} km + AMR'.format(base_res_list[i])
                         plt.plot(res_list, dist_list, lw=2.0, label=lbl)
 
                 coarse_list = []
@@ -219,9 +219,9 @@ def amr_ignition(filename_base, results_base):
 
                 plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
                 plt.xscale('log', basex=10)
-                plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
+                plt.xlabel(r"Finest resolution (km)", fontsize=24)
                 plt.ylabel(r"Ignition location (km)", fontsize=24)
-                plt.legend(loc='best', prop={'size':12}, ncol=2, title='Base resolution (km)', fontsize=12)
+                plt.legend(loc='best', prop={'size':12}, fontsize=12)
                 plt.rcParams["figure.figsize"] = (11, 8.5)
                 plt.tight_layout()
                 plt.savefig(filename)
@@ -233,7 +233,7 @@ def amr_ignition(filename_base, results_base):
 
                 for i, (res_list, time_list) in enumerate(zip(res_lists, time_lists)):
                     if len(res_list) > 1:
-                        lbl = '%3.2e' % base_res_list[i]
+                        lbl = '{} km + AMR'.format(base_res_list[i])
                         plt.plot(res_list, time_list, lw=2.0, label=lbl)
 
                 coarse_list = []
@@ -247,9 +247,9 @@ def amr_ignition(filename_base, results_base):
 
                 plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
                 plt.xscale('log', basex=10)
-                plt.xlabel(r"Effective finest resolution (km)", fontsize=24)
+                plt.xlabel(r"Finest resolution (km)", fontsize=24)
                 plt.ylabel(r"Ignition time (s)", fontsize=24)
-                plt.legend(loc='best', prop={'size':12}, ncol=2, title='Base resolution (km)', fontsize=12)
+                plt.legend(loc='best', prop={'size':12}, fontsize=12)
                 plt.rcParams["figure.figsize"] = (11, 8.5)
                 plt.tight_layout()
                 plt.savefig(filename)
