@@ -63,13 +63,7 @@ def amr_ignition(filename_base, results_base):
 
     for i, ncell in enumerate(ncell_list):
 
-        tempgrad_list_loc = os.listdir(results_base + '/n' + str(ncell))
-
-        # Skip the base run with no refinement
-
-        tempgrad_list_loc.remove('base')
-
-        tempgrad_list_loc = [tempgrad[8:] for tempgrad in tempgrad_list_loc]
+        tempgrad_list_loc = [tempgrad[8:] for tempgrad in os.listdir(results_base + '/n' + str(ncell))]
 
         for tempgrad in tempgrad_list_loc:
 
@@ -92,11 +86,6 @@ def amr_ignition(filename_base, results_base):
 
                     dxnuc_r_list_loc = [dxnuc_r[7:] for dxnuc_r in os.listdir(results_base + '/n' + str(ncell) + '/tempgrad' + str(tempgrad) + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r)]
 
-    # Since we always want a plot with the uniform refinement case, ensure that r1 is on the list even if we didn't actually run any of those explicitly.
-
-    if '1' not in tempgrad_r_list:
-        tempgrad_r_list.append('1')
-
     # Now we can do the actual plot generation.
 
     for tempgrad in tempgrad_list:
@@ -118,10 +107,9 @@ def amr_ignition(filename_base, results_base):
 
                     base_res_list.append(size / ncell / 1.e5)
 
-                    base_dir = results_base + '/n' + str(ncell) + '/base'
                     dir = results_base + '/n' + str(ncell) + '/tempgrad' + tempgrad + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r
 
-                    if not os.path.isdir(dir) and not os.path.isdir(base_dir):
+                    if not os.path.isdir(dir):
                         continue
 
                     # Generate a plot of the distance from the center of the ignition point,
@@ -134,11 +122,6 @@ def amr_ignition(filename_base, results_base):
                     # Strip out the non-refinement directories
 
                     r_list = [r for r in r_list if r[0:7] == 'dxnuc_r']
-
-                    # Add the base case (r == 1).
-
-                    if os.path.isdir(base_dir) and tempgrad_r == '1':
-                        r_list.append('dxnuc_r1')
 
                     if (r_list == []):
                         continue
@@ -156,10 +139,7 @@ def amr_ignition(filename_base, results_base):
                     time_list = []
 
                     for r in r_list:
-                        if r == 'r1' and tempgrad_r == '1':
-                            results_dir = results_base + '/n' + str(ncell) + '/base'
-                        else:
-                            results_dir = results_base + '/n' + str(ncell) + '/tempgrad' + tempgrad + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r + '/dxnuc_' + r
+                        results_dir = results_base + '/n' + str(ncell) + '/tempgrad' + tempgrad + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r + '/dxnuc_' + r
 
                         if not os.path.isdir(results_dir):
                             continue
@@ -228,7 +208,7 @@ def amr_ignition(filename_base, results_base):
                 for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
                     if len(res_list) > 1:
                         has_plot = True
-                        lbl = '{} km + auto-ignition AMR'.format(int(base_res_list[i]))
+                        lbl = '{} km base + auto-ignition AMR'.format(int(base_res_list[i]))
                         plt.plot(res_list, dist_list, lw=2.0, label=lbl)
 
                 if has_plot:

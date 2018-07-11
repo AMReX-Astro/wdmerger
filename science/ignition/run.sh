@@ -278,7 +278,7 @@ v_list="1.0d8"
 T_l="1.0d7"
 T_r="1.0d7"
 
-ncell_list="16 24 32 48 64 96 128 256 512 1024 2048 4096"
+ncell_list="16 24 32 48 64 96 128 256 512 1024 2048 4096 8192"
 
 burning_mode_list="self-heat suppressed"
 
@@ -296,13 +296,6 @@ amr_n_error_buf="2"
 
 # The inner part of the loop nest covers the
 # spatial resolution options.
-
-# We split it up this way because for all of
-# the options that don't involve AMR, we can
-# group the runs together in a single base
-# case with uniform resolution, rather than
-# redundantly calculate this uniform grid
-# case for each one of those options.
 
 for ofrac in $ofrac_list
 do
@@ -335,7 +328,7 @@ do
                     # options, and we move on to the number of zones in the coarse
                     # grid, and what AMR we will be doing.
                         
-                    base_dir=$results_dir/ofrac$ofrac/dens$dens/g$g/vel$vel/$burning_mode_str
+                    base_dir=
 
                     for ncell in $ncell_list
                     do
@@ -350,23 +343,15 @@ do
                             castro_cfl="0.5"
                         fi
 
-                        # Before we reach the AMR section, complete a run
-                        # using only the coarse grid.
+                        tempgrad_r_list="1 4 16"
+                        dxnuc_r_list="1 4 16 64 256"
 
-                        refinement=1
+                        # Only allow dxnuc_r > tempgrad_r for certain ncell values.
 
-                        dir=$base_dir/n$ncell/base
-                        set_run_opts
-
-                        if [ $to_run -eq 1 ]; then
-                            run
-                        fi
-
-                        tempgrad_r_list="4"
-                        dxnuc_r_list="1"
+                        allow_extra_dxnuc=0
 
                         if [ $ncell -eq 256 ]; then
-                            dxnuc_r_list="1 4 16 64 256"
+                            allow_extra_dxnuc=1
                         fi
 
                         for tempgrad_rel in $tempgrad_rel_list
@@ -383,13 +368,21 @@ do
                                     for dxnuc_r in $dxnuc_r_list
                                     do
 
-                                        # Skip runs where dxnuc_r == tempgrad_r; these add no real extra information.
+                                        # Skip runs where dxnuc_r < tempgrad_r; these add no real extra information.
 
-                                        if [ $dxnuc_r -eq $tempgrad_r ]; then
+                                        if [ $dxnuc_r -lt $tempgrad_r ]; then
                                             continue
                                         fi
 
-                                        dir=$base_dir/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
+                                        # Skip runs where dxnuc_r > tempgrad_r except in the cases we've explicitly permitted,
+                                        # since we are only intending to demonstrate the benefit from the extra dxnuc
+                                        # in a few cases.
+
+                                        if [ $dxnuc_r -gt $tempgrad_r ] && [ $allow_extra_dxnuc -eq 0 ]; then
+                                            continue
+                                        fi
+
+                                        dir=$results_dir/ofrac$ofrac/dens$dens/g$g/vel$vel/$burning_mode_str/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
                                         set_run_opts
 
                                         if [ $to_run -eq 1 ]; then
