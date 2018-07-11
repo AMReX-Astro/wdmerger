@@ -280,8 +280,6 @@ T_r="1.0d7"
 
 ncell_list="16 24 32 40 48 56 64 72 80 88 96 104 112 120 128 256 512 1024 2048 4096"
 
-dtnuc_list="1.0e200"
-
 burning_mode_list="self-heat suppressed"
 
 dxnuc_list="1.0e-1"
@@ -294,8 +292,7 @@ amr_n_error_buf="2"
 # govern the high level problem setup choices --
 # the oxygen fraction, the initial velocity
 # and gravitational acceleration, and the type
-# of nuclear burning we are doing. We'll also cover
-# the temporal resolution in this section.
+# of nuclear burning we are doing.
 
 # The inner part of the loop nest covers the
 # spatial resolution options.
@@ -334,123 +331,93 @@ do
                         continue
                     fi
 
-                    # Now we'll do the time resolution options.
+                    # At this point we've completed all the non-spatial resolution
+                    # options, and we move on to the number of zones in the coarse
+                    # grid, and what AMR we will be doing.
+                        
+                    base_dir=$results_dir/ofrac$ofrac/dens$dens/g$g/vel$vel/$burning_mode_str
 
-                    for dtnuc in $dtnuc_list
+                    for ncell in $ncell_list
                     do
 
-                        castro_dtnuc_e=$dtnuc
-                        castro_dtnuc_X=$dtnuc
+                        # Low resolution runs tend to skip right through the burning
+                        # and have a very rough time with it as a result. Severely
+                        # limit the CFL number for these runs to compensate.
 
-                        # At this point we've completed all the non-spatial resolution
-                        # options, and we move on to the number of zones in the coarse
-                        # grid, and what AMR we will be doing.
-                        
-                        base_dir=$results_dir/ofrac$ofrac/dens$dens/g$g/vel$vel/$burning_mode_str/dtnuc$dtnuc
+                        if [ $ncell -lt 128 ]; then
+                            castro_cfl="0.01"
+                        else
+                            castro_cfl="0.5"
+                        fi
 
-                        for ncell in $ncell_list
+                        # Before we reach the AMR section, complete a run
+                        # using only the coarse grid.
+
+                        refinement=1
+
+                        dir=$base_dir/n$ncell/base
+                        set_run_opts
+
+                        if [ $to_run -eq 1 ]; then
+                            run
+                        fi
+
+                        tempgrad_r_list="1"
+                        dxnuc_r_list="1"
+
+                        if   [ $ncell -eq 256 ]; then
+                            tempgrad_r_list="1 4 16"
+                            dxnuc_r_list="1 4 16 64 256"
+                        fi
+
+                        for tempgrad_rel in $tempgrad_rel_list
                         do
 
-                            # Low resolution runs tend to skip right through the burning
-                            # and have a very rough time with it as a result. Severely
-                            # limit the CFL number for these runs to compensate.
-
-                            if [ $ncell -lt 128 ]; then
-                                castro_cfl="0.01"
-                            else
-                                castro_cfl="0.5"
-                            fi
-
-                            # Before we reach the AMR section, complete a run
-                            # using only the coarse grid.
-
-                            refinement=1
-
-                            # Don't do the temporal resolution runs at high resolution.
-
-                            if [ $ncell -gt 256 ]; then
-                                if [ "$dtnuc" != "1.0e200" ]; then
-                                    continue
-                                fi
-                            fi
-
-                            dir=$base_dir/n$ncell/base
-                            set_run_opts
-
-                            if [ $to_run -eq 1 ]; then
-                                run
-                            fi
-
-                            tempgrad_r_list="1"
-                            dxnuc_r_list="1"
-
-                            if   [ $ncell -eq 256 ]; then
-                                tempgrad_r_list="1 2 4 8 16"
-                                dxnuc_r_list="1 2 4 8 16 32 64 128 256"
-                            fi
-                            
-                            for tempgrad_rel in $tempgrad_rel_list
+                            for dxnuc in $dxnuc_list
                             do
 
-                                for dxnuc in $dxnuc_list
+                                castro_dxnuc=$dxnuc
+
+                                for tempgrad_r in $tempgrad_r_list
                                 do
 
-                                    castro_dxnuc=$dxnuc
-
-                                    for tempgrad_r in $tempgrad_r_list
+                                    for dxnuc_r in $dxnuc_r_list
                                     do
 
-                                        for dxnuc_r in $dxnuc_r_list
-                                        do
+                                        # Now we've reached the point where we'll actually launch the AMR runs.
 
-                                            # Now we've reached the point where we'll actually launch the AMR runs.
+                                        refinement=$dxnuc_r
 
-                                            refinement=$dxnuc_r
+                                        # We should not be doing any r == 1 cases here; dummy check against that.
 
-                                            # We should not be doing any r == 1 cases here; dummy check against that.
+                                        if [ $refinement -eq 1 ]; then
+                                            continue
+                                        fi
 
-                                            if [ $refinement -eq 1 ]; then
-                                                continue
-                                            fi
+                                        # Skip runs where dxnuc refinement doesn't add on top of tempgrad.
 
-                                            # Skip runs where dxnuc refinement doesn't add on top of tempgrad.
+                                        if [ $dxnuc_r -lt $tempgrad_r ]; then
+                                            continue
+                                        fi
 
-                                            if [ $dxnuc_r -lt $tempgrad_r ]; then
-                                                continue
-                                            fi
+                                        dir=$base_dir/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
+                                        set_run_opts
 
-                                            # Skip certain runs at low resolution which have very long timesteps due to retries.
+                                        if [ $to_run -eq 1 ]; then
+                                            run
+                                        fi
 
-                                            if [ $tempgrad_r -ge 8 ] && [ $ncell -lt 128 ]; then
-                                                continue
-                                            fi
+                                        to_run=1
 
-                                            # Don't do AMR for the temporal refinement runs.
+                                    done # dxnuc_r
 
-                                            if [ "$dtnuc" != "1.0e200" ]; then
-                                                continue
-                                            fi
+                                done # tempgrad_r
 
-                                            dir=$base_dir/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
-                                            set_run_opts
+                            done # dxnuc
 
-                                            if [ $to_run -eq 1 ]; then
-                                                run
-                                            fi
+                        done # tempgrad
 
-                                            to_run=1
-
-                                        done # dxnuc_r
-
-                                    done # tempgrad_r
-
-                                done # dxnuc
-
-                            done # tempgrad
-
-                        done # ncell
-
-                    done # dtnuc
+                    done # ncell
 
                 done # burning mode
 

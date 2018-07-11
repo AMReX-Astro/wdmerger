@@ -317,20 +317,7 @@ if __name__ == "__main__":
                     run_dir += burn_dir
                     run_str += burn_str
 
-                    dtnuc_list = os.listdir(run_dir)
-
-                    for dtnuc in dtnuc_list:
-
-                        dtnuc_dir = '/' + dtnuc
-                        dtnuc_str = '_dtnuc_' + dtnuc[5:]
-
-                        run_dir += dtnuc_dir
-                        run_str += dtnuc_str
-
-                        amr_ignition(plots_dir + 'amr_ignition_' + run_str, run_dir)
-
-                        run_dir = run_dir.strip(dtnuc_dir)
-                        run_str = run_str.strip(dtnuc_str)
+                    amr_ignition(plots_dir + 'amr_ignition_' + run_str, run_dir)
 
                     run_dir = run_dir.strip(burn_dir)
                     run_str = run_str.strip(burn_str)
