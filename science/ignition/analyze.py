@@ -236,9 +236,8 @@ if __name__ == "__main__":
     plots_dir = 'plots/'
 
     ofrac = '0.0d0'
-    burning_mode = 'self-heat'
 
-    file_base = burning_mode
+    file_base = 'amr_ignition'
     results_base = 'results/' + 'ofrac' + ofrac
 
     dens_list = os.listdir(results_base)
@@ -284,7 +283,7 @@ if __name__ == "__main__":
                     run_dir += burn_dir
                     run_str += burn_str
 
-                    amr_ignition(plots_dir + 'amr_ignition_' + run_str, run_dir)
+                    amr_ignition(plots_dir + run_str, run_dir)
 
                     run_dir = run_dir.strip(burn_dir)
                     run_str = run_str.strip(burn_str)
