@@ -320,16 +320,10 @@ do
                         burning_mode="3"
                     fi
 
-                    if [ $burning_mode_str == "suppressed" ]; then
-                        continue
-                    fi
-
                     # At this point we've completed all the non-spatial resolution
                     # options, and we move on to the number of zones in the coarse
                     # grid, and what AMR we will be doing.
                         
-                    base_dir=
-
                     for ncell in $ncell_list
                     do
 
@@ -352,6 +346,21 @@ do
 
                         if [ $ncell -eq 256 ]; then
                             allow_extra_dxnuc=1
+                        fi
+
+                        # Only do refinement for the self-heating burns.
+
+                        if [ $burning_mode -ne 1 ]; then
+                            tempgrad_r_list="1"
+                            dxnuc_r_list="1"
+                        fi
+
+                        # Only do the suppressed burns for low resolution.
+
+                        if [ $burning_mode -ne 1 ]; then
+                            if [ $ncell -gt 256 ]; then
+                                continue
+                            fi
                         fi
 
                         for tempgrad_rel in $tempgrad_rel_list
