@@ -102,7 +102,7 @@ Thermonuclear detonations are common to all current likely models of Type Ia
 supernovae (SNe Ia), but how they are actually generated in progenitor systems
 is still an open question. Different models predict different locations for
 the detonation (e.g. in the center of a star or on the edge) and different
-mechanisms for initiating the event (e.g. a prompt detonation in a white dwarf
+mechanisms for initiating the event (e.g. a prompt detonation in a white dwarf (WD)
 collision versus a deflagration to detonation transition in the single degenerate
 model). Common to all of the cases is a severe lack of numerical resolution in
 the location where the detonation is expected to occur. The length and time scale
@@ -113,38 +113,32 @@ solve accurately. The mere presence of a detonation (or lack thereof) in a simul
 is therefore only weak evidence regarding whether a detonation would truly occur.
 
 In this study we examine the challenges associated with simulating nuclear detonations.
-This paper follows from our first WD merger methodology paper, \citet{wdmergerI}
-(hereafter, Paper I), where we deferred discussion of our nuclear reaction methodology.
-After presenting the burning methodology, we apply it to the problem of collisions of white dwarfs.
-WD collisions can occur in isolated binaries or in hierarchical triple systems, where the WD binary
-system in a tight inner orbit is gravitationally coupled to a third, outer star \citep{thompson:2011,hamers:2013}.
-Whether the rate of these collisions may be high enough to significantly contribute to
-the observed SN Ia rate is debated: \cite{katzdong:2012} suggest that this is plausible,
-but \cite{hamers:2013} and \cite{papish:2015} suggest that the rate is relatively low.
-Regardless, they are a useful vehicle for understanding the problem of nuclear burning.
-Head-on WD collisions rapidly convert a significant amount of kinetic energy into thermal
-energy in a small region and thus set up conditions ripe for a thermonuclear detonation;
-being able to correctly simulate these is in some sense a prerequisite to correct simulation
-of the more complicated general case of white dwarf mergers, where we do not initially know
-under what conditions the seed of a thermonuclear detonation is born.
+The inspiration for this work comes from the literature on head-on collisions of WDs,
+which can occur, for example, in certain triple star systems \citep{thompson:2011,hamers:2013}.
+This problem is useful for understanding the problem of numerical simulation of nuclear
+burning. Head-on WD collisions rapidly convert a significant amount of kinetic energy
+into thermal energy in a small region and thus set up conditions ripe for a thermonuclear
+detonation.
 
-There have been a number of previous studies which provide useful insight into setting up
-the problem and the burning methodology \citep{rosswog:2009,raskin:2010,loren-aguilar:2010,
-hawley:2012,garcia-senz:2013,kushnir:2013,papish:2015,holcomb:2015}. These studies
-found that detonations occur and convert a large amount of carbon/oxygen material into
-iron-group elements. These papers varied significantly in the hydrodynamic methods used
-(Lagrangian versus Eulerian methods), the methodology used for coupling nuclear
-reactions to the hydrodynamics (including variation in the number of isotopes in
-the nuclear network and in the evolution of the temperature), and the temporal and
-spatial resolution. Consequently the detonations they formed varied in location and nature,
-and the resultant estimates of production of nickel-group elements varied significantly,
-leaving much uncertainty about how such an event would appear observationally and whether
-it bears any resemblance to a SN Ia. See Table 4 of \cite{garcia-senz:2013} for a summary
-of the outcome of many of these studies. In this paper we make the case that
-while we can identify the main problems prevent accurate simulation of the collision
-event, there is no clear path to overcoming them using the computational resources
-typically available for contemporary hydrodynamics simulations.
+Early studies on WD collisions \citep{rosswog:2009,raskin:2010,loren-aguilar:2010,
+hawley:2012,garcia-senz:2013} typically had effective spatial resolutions in the
+range 100--500 km, and observed detonations that convert a large amount of
+carbon/oxygen material into iron-group elements. These studies varied in methodology
+(Lagrangian versus Eulerian evolution, nuclear network used) and did not closely agree
+on the final result of the event (see Table 4 of \cite{garcia-senz:2013} for a summary).
+\cite{kushnir:2013} argued that many of these simulations featured numerically unstable
+evolution, ultimately caused by the zone size being significantly larger than the length
+scale over which detonations form. The detonation length scale can vary widely based
+on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally much
+smaller than 100 km. In this paper, we seek to find what numerical methods are required
+to achieve converged detonations.
 
+
+
+\section{Numerical Instability}
+\label{sec:instability}
+
+% Discuss the Kushnir stability argument
 
 
 %==========================================================================
