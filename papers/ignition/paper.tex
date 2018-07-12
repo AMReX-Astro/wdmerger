@@ -135,143 +135,16 @@ to achieve converged detonations.
 
 
 
-\section{Numerical Instability}
-\label{sec:instability}
+\section{Nuclear Burning Methodology}
+\label{sec:methodology}
 
-% Discuss the Kushnir stability argument
-
-
-%==========================================================================
-% Problem Setup
-%==========================================================================
-\section{White Dwarf Collision Setup}
-\label{sec:collisions}
-
-We implement the white dwarf collision problem in \castro\footnote{The main results
-in this paper were generated using the 17.12 releases of \castro, \amrex, and
-\microphysics.} in the \wdmerger\ problem
-directory. We prepare the domain in the way most previous papers have done so:
-the white dwarf centers of mass are initially separated by a distance of four times
-the (secondary) white dwarf radius. Note that the radius of the white dwarf, and
-consequently the initial distance, depends on the equation of state used, and this
-can vary somewhat depending on the relevant physics used, such as Coulomb corrections
-in the Helmholtz equation of state. However, the results do not really depend on the
-exact initial distance as long as there is enough time for the WDs to distort in
-response to tidal forces as they approach. Their initial velocity is that of
-two point-masses in free-fall towards each other coming in from infinity, such that
-the contact point is at the origin, and they approach each other along a coordinate axis.
-In this paper we focus only on head-on collisions of two 0.64 $\msolar$ white dwarfs
-composed of equal parts carbon and oxygen by mass, at an initially uniform temperature
-of $T = 10^7$ K. This choice is for comparison to earlier studies; the code does have
-the ability to vary the impact parameter of the collision and the mass and composition
-of the WDs.
-
-We have added to the \wdmerger\ problem setup the ability to take advantage of 
-the 2D cylindrical ($R-z$) coordinate system evolution in \castro, and we use it
-in this study, because the axisymmetry inherent to the cylindrical coordinate system
-lends itself well to the head-on collision problem. In this coordinate system, we
-align the WDs along the $z$-axis (which is analogous to the $x$-axis in Cartesian
-evolution), with the center of the WDs at $R = 0$. The un-simulated $\phi$ dimension
-then would extend the WDs through a $2\pi$ revolution. The domain has width $4 \times 10^{9}$
-cm along the $z$ axis, and is half as wide along the $R$ axis. The resolution is equal
-in both dimensions, so that there are twice as many zones in the $z$ dimension in
-a uniform grid.
-
-We terminate the simulation at $t = 9$ seconds, as we have found that for this
-particular setup, all of the significant burning has completed by this time\footnote{In
-some simulations we were mainly interested in seeing when the detonation happened, and
-we terminated the simulation at that point. We show nucleosynthesis results only for
-those simulations that had completed nuclear burning.}. At
-this point, the total energy on the domain has become positive, typically about
-$10^{51}$ ergs, and has stopped increasing. This means that the system has become
-unbound due to nuclear energy release, and that no further meaningful nuclear energy
-generation is occurring. In our discussions below, it helps to have some other
-anchoring points in time when significant events occur. We arbitrarily define the
-collision time, $t_{\rm c}$, as the time when the density at the center of the grid
-first reaches $10^2\ \text{g\,/\,cm}^3$. This is reached only when the WDs meet at the
-center of the domain. We define the detonation time, $t_{\rm d}$, as the time when the
-temperature first reaches $4.5 \times 10^9\ \text{K}$. This is also an arbitrary
-threshold, but we have found empirically that this temperature is only reached in
-the collision when a detonation is formed.
-
-The region outside the WDs is filled with a low-density ambient
-material with $\rho = 10^{-4}\ \text{g\,/\,cm}^{3}$ whose composition and temperature is the
-same as that of the WDs. Reactions in this region are unimportant, so for
-computational efficiency, we disable all nuclear burning for zones that have
-$\rho < 10^6\ \text{g\,/\,cm}^{3}$ and $T < 10^8\ \text{K}$. We have confirmed that
-the results do not depend on this choice. A sponge is applied to all gas of density
-lower than $1\ \text{g\,/\,cm}^{3}$. The sponge damps out the velocity in these zones
-(see Paper I) to prevent spurious numerical error in low-density gas from dragging
-down the global timestep. The density floor for the simulation is set
-at $10^{-5}\ \text{g\,/\,cm}^{3}$ and the temperature floor is $10^7$ K.
-
-We collect information at the end of every timestep about the total amount of
-all of the species on the grid (in solar masses), and we use the mass of $^{56}$Ni
-generated as a metric for this test, as this is the parameter most directly related
-to the observable quantities of interest for Type Ia supernovae. Since, as we will see
-below, not all of our simulations detonate at a density high enough to generate substantial
-amounts of nickel, we employ the mass-weighted average atomic mass number on the domain,
-$\bar{A}$, as a more general metric describing the outcome of the simulation. A
-final relevant metric is the total amount of energy $E$ released by the detonation.
-
-Plotfiles of relevant quantities are created every 0.01 seconds.
-The timesteps are limited to ensure that every multiple of this plotfile interval is
-reached exactly, which means an effective maximum timestep of 0.01 seconds. Timesteps
-are by default limited only by the hydrodynamic stability constraint and this plotfile
-interval constraint, except where noted otherwise.
-
-For a collision of two 0.64 $\msolar$ WDs with 128 zones in the radial dimension,
-corresponding to a uniform spatial resolution of 312.5 km, the collision time is
-$t_{\rm c} = 4.16\ \text{s}$, and the detonation time is $t_{\rm d} = 7.43\ \text{s}$.
-The peak density at the detonation time is $2.3 \times 10^7\ \text{g\,/\,cm}^3$.
-Approximately $0.21\ \msolar$ of nickel and $0.46\ \msolar$ of silicon is created,
-corresponding to an $\bar{A}$ of about 29. Approximately $1.3 \times 10^{51}$
-ergs of energy are released. Simulations with resolutions in this few hundred kilometer
-range have been a common choice in earlier papers on white dwarf mergers and collisions
-due to computational constraints; our goal is to see how higher resolution runs differ.
+In this section we discuss several issues in reactive hydrodynamic simulations and
+how we addressed them in the \castro\ code \citep{castro}. We first describe the
+core operation of our burner module, which is implemented in the \microphysics\ code
+repository\footnote{\microphysics\ can be obtained at \url{https://github.com/starkiller-astro/Microphysics}.},
+a collection of microphysical routines that are compatible with \castro.
 
 
-
-%==========================================================================
-% Numerical Implementation
-%==========================================================================
-\section{Numerical Methods}
-\label{sec:numericalmethods}
-
-The hydrodynamical equations solved in this paper were presented in \citet{wdmergerI}
-(hereafter, Paper I) for the reacting hydrodynamics code \castro\ \citep{castro}.
-Only minor revisions to the core hydrodynamic algorithm have since occurred.
-In this paper we focus our discussion on our implementation of the nuclear
-reaction network and integrator. There are three main areas of concern: first,
-specifying what nuclides are in the network and what reaction rates link the
-various nuclides; second, once the system of ODEs governing the evolution of
-the nuclear species has been written down, how to couple them to ODEs governing
-the evolution of the thermodynamics, in particular the temperature; third,
-coupling the nuclear reaction updates to the evolution of the hydrodynamical
-system. We will deal with each of these in turn in the following subsections.
-
-\subsection{Nuclear Network}
-\label{sec:network}
-
-In this paper we use the \aproxthirteen\ network\ \citep{timmes:1999,timmes:2000}.
-This includes all thirteen $\alpha$-chain particles between ${}^4$He and ${}^{56}$Ni.
-These $\alpha$-chain particles capture the most important pathway connecting a WD
-and its thermonuclear detonation. This network was used by \citet{hawley:2012}
-and \citet{raskin:2010}. \citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a
-very similar network that additionally included ${}^{60}$Zn. The \aproxthirteen\ network has been
-ported into a form that is consistent with the \amrex\ codes in the freely available
-\microphysics\ code repository\footnote{\microphysics\ can be obtained at
-\url{https://github.com/starkiller-astro/Microphysics}.},
-a collection of microphysical routines that are designed to be used in our
-hydrodynamics codes. In our \microphysics\ repository we have also ported \aproxnineteen\
-\citep{timmes:1999}, which was used in a few previous collision papers, and \aproxtwentyone.
-The isotopes added by these networks relative to \aproxthirteen\ are not particularly relevant
-to the problem of head-on white dwarf collisions, so we do not discuss results with these networks
-here (though we have verified for this problem that these larger networks do not significantly change
-the answer). We also make available \isoseven\ \citep{timmes:2000}, which skips the nuclides between
-silicon and nickel, and which was used by \citet{rosswog:2009}. \isoseven\ gives significantly different
-quantitative results than \aproxthirteen\ for this problem, due to its inapplicable assumption of
-an equilibrium abundance of the unsimulated isotopes, but the results are still qualitatively similar.
 
 \subsection{Nuclear Burning}
 \label{sec:burner}
@@ -639,6 +512,97 @@ cannot solely rely on a low resolution run with AMR based on the
 burning stability criterion for the reason described above, that a
 detonation may be spuriously locked in by the low resolution regardless
 of how much resolution we can practicably add to it.
+
+
+
+%==========================================================================
+% 1D collision test problem
+%==========================================================================
+\section{Numerical Test Problem}
+\label{sec:collisions}
+
+We implement the white dwarf collision problem in \castro\footnote{The main results
+in this paper were generated using the 17.12 releases of \castro, \amrex, and
+\microphysics.} in the \wdmerger\ problem
+directory. We prepare the domain in the way most previous papers have done so:
+the white dwarf centers of mass are initially separated by a distance of four times
+the (secondary) white dwarf radius. Note that the radius of the white dwarf, and
+consequently the initial distance, depends on the equation of state used, and this
+can vary somewhat depending on the relevant physics used, such as Coulomb corrections
+in the Helmholtz equation of state. However, the results do not really depend on the
+exact initial distance as long as there is enough time for the WDs to distort in
+response to tidal forces as they approach. Their initial velocity is that of
+two point-masses in free-fall towards each other coming in from infinity, such that
+the contact point is at the origin, and they approach each other along a coordinate axis.
+In this paper we focus only on head-on collisions of two 0.64 $\msolar$ white dwarfs
+composed of equal parts carbon and oxygen by mass, at an initially uniform temperature
+of $T = 10^7$ K. This choice is for comparison to earlier studies; the code does have
+the ability to vary the impact parameter of the collision and the mass and composition
+of the WDs.
+
+We have added to the \wdmerger\ problem setup the ability to take advantage of 
+the 2D cylindrical ($R-z$) coordinate system evolution in \castro, and we use it
+in this study, because the axisymmetry inherent to the cylindrical coordinate system
+lends itself well to the head-on collision problem. In this coordinate system, we
+align the WDs along the $z$-axis (which is analogous to the $x$-axis in Cartesian
+evolution), with the center of the WDs at $R = 0$. The un-simulated $\phi$ dimension
+then would extend the WDs through a $2\pi$ revolution. The domain has width $4 \times 10^{9}$
+cm along the $z$ axis, and is half as wide along the $R$ axis. The resolution is equal
+in both dimensions, so that there are twice as many zones in the $z$ dimension in
+a uniform grid.
+
+We terminate the simulation at $t = 9$ seconds, as we have found that for this
+particular setup, all of the significant burning has completed by this time\footnote{In
+some simulations we were mainly interested in seeing when the detonation happened, and
+we terminated the simulation at that point. We show nucleosynthesis results only for
+those simulations that had completed nuclear burning.}. At
+this point, the total energy on the domain has become positive, typically about
+$10^{51}$ ergs, and has stopped increasing. This means that the system has become
+unbound due to nuclear energy release, and that no further meaningful nuclear energy
+generation is occurring. In our discussions below, it helps to have some other
+anchoring points in time when significant events occur. We arbitrarily define the
+collision time, $t_{\rm c}$, as the time when the density at the center of the grid
+first reaches $10^2\ \text{g\,/\,cm}^3$. This is reached only when the WDs meet at the
+center of the domain. We define the detonation time, $t_{\rm d}$, as the time when the
+temperature first reaches $4.5 \times 10^9\ \text{K}$. This is also an arbitrary
+threshold, but we have found empirically that this temperature is only reached in
+the collision when a detonation is formed.
+
+The region outside the WDs is filled with a low-density ambient
+material with $\rho = 10^{-4}\ \text{g\,/\,cm}^{3}$ whose composition and temperature is the
+same as that of the WDs. Reactions in this region are unimportant, so for
+computational efficiency, we disable all nuclear burning for zones that have
+$\rho < 10^6\ \text{g\,/\,cm}^{3}$ and $T < 10^8\ \text{K}$. We have confirmed that
+the results do not depend on this choice. A sponge is applied to all gas of density
+lower than $1\ \text{g\,/\,cm}^{3}$. The sponge damps out the velocity in these zones
+(see Paper I) to prevent spurious numerical error in low-density gas from dragging
+down the global timestep. The density floor for the simulation is set
+at $10^{-5}\ \text{g\,/\,cm}^{3}$ and the temperature floor is $10^7$ K.
+
+We collect information at the end of every timestep about the total amount of
+all of the species on the grid (in solar masses), and we use the mass of $^{56}$Ni
+generated as a metric for this test, as this is the parameter most directly related
+to the observable quantities of interest for Type Ia supernovae. Since, as we will see
+below, not all of our simulations detonate at a density high enough to generate substantial
+amounts of nickel, we employ the mass-weighted average atomic mass number on the domain,
+$\bar{A}$, as a more general metric describing the outcome of the simulation. A
+final relevant metric is the total amount of energy $E$ released by the detonation.
+
+Plotfiles of relevant quantities are created every 0.01 seconds.
+The timesteps are limited to ensure that every multiple of this plotfile interval is
+reached exactly, which means an effective maximum timestep of 0.01 seconds. Timesteps
+are by default limited only by the hydrodynamic stability constraint and this plotfile
+interval constraint, except where noted otherwise.
+
+For a collision of two 0.64 $\msolar$ WDs with 128 zones in the radial dimension,
+corresponding to a uniform spatial resolution of 312.5 km, the collision time is
+$t_{\rm c} = 4.16\ \text{s}$, and the detonation time is $t_{\rm d} = 7.43\ \text{s}$.
+The peak density at the detonation time is $2.3 \times 10^7\ \text{g\,/\,cm}^3$.
+Approximately $0.21\ \msolar$ of nickel and $0.46\ \msolar$ of silicon is created,
+corresponding to an $\bar{A}$ of about 29. Approximately $1.3 \times 10^{51}$
+ergs of energy are released. Simulations with resolutions in this few hundred kilometer
+range have been a common choice in earlier papers on white dwarf mergers and collisions
+due to computational constraints; our goal is to see how higher resolution runs differ.
 
 
 
