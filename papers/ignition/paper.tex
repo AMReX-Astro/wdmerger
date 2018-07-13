@@ -154,15 +154,32 @@ simulations.
 \label{sec:timestep}
 
 In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
-In a given timestep advance $\Delta t$, we first evolve the reactions alone through
-a time interval $\Delta t / 2$. Then, we evolve the hydrodynamics for $\Delta t$,
-and we evolve the reactions again for a further $\Delta t / 2$. The principal
-drawback of this approach is that the reactions and the hydrodynamics can become
-decoupled from each other. A common solution to this problem presented in
-the literature has been to limit the size of the timestep and thereby limit the
-extent of this decoupling \citep{raskin:2010,hawley:2012}, which we adopt here 
-and have implemented in \castro. Defining the nuclear energy injection timescale 
-$\tau_e$, and the species evolution timescale $\tau_{X_k}$,
+Consider the basic outline of a single-level advance in an advection-reaction system:
+\begin{enumerate}
+  \item Evaluate timestep $\Delta t$ for the current advance
+  \item Advance the nuclear burning network by $\Delta t / 2$
+  \item Advance the hydrodynamics by $\Delta t$
+  \item Advance the nuclear burning network by $\Delta t / 2$
+  \item Return to Step 1
+\end{enumerate}
+The principal drawback of this approach is that the reactions and the hydrodynamics
+can become decoupled from each other. For example, consider the example of a head-on
+collision of white dwarfs. Initial nuclear burning will occur at the contact point
+between the two stars. Because of the staggered updates from splitting, the evolution
+effectively progresses as a cycle between burning for $\Delta t$ and getting fresh
+material advected into the contact point by the hydro update for $\Delta t$.
+When the collision begins, $\Delta t$ is controlled by the hydrodynamic stability
+criterion, and may be large enough that it is possible for the burning advance in
+Step 4 to completely burn the freshly advected material all the way to NSE.
+Consequently the evolution is no longer a good approximation to smooth burning of
+the in-falling material but rather separate discrete burning and hydro steps, and
+the nature of the burning evolution will be quite different.
+
+A common solution to this problem presented in the literature has been to limit the
+size of the timestep and thereby limit the extent of this decoupling
+\citep{raskin:2010,hawley:2012}, which we adopt here and have implemented in \castro.
+Defining the nuclear energy injection timescale $\tau_e$, and the species evolution
+timescale $\tau_{X_k}$,
 \begin{align}
   \tau_e &\equiv \frac{e}{|\dot{e}|} \\
   \tau_{X_k} &\equiv \frac{X_k}{|\dot{X_k}|},
@@ -186,9 +203,9 @@ than $10^{-3}$ (this abundance threshold can be changed by the user of the code)
 $f_{be}$ and $f_{bX}$ smaller, we can control the magnitude of the decoupling 
 between the reactions and the hydro. A typical choice for $f_{be}$ in the
 literature is in the range of 0.1 to 0.3, while to our knowledge a limiter based on
-$f_{bX}$ has not been used by others performing these types of calculations. The sensitivity
-of simulations to the value of these timestep limiters will be discussed later in the
-results. The factors $f_{be}$ and $f_{bX}$ can be set at runtime in \castro.
+$f_{bX}$ has not been used by others performing these types of calculations.
+This limiter is complementary to the limiter based on $f_{be}$, and can catch
+certain burning regimes that limiting only based on changes in energy would miss.
 
 At the start of each advance, we limit the size of the timestep to be the smaller
 of the minimum hydro timestep (limited by the CFL condition), and the minimum of all the
@@ -200,6 +217,24 @@ this as a finite difference using the change over the last timestep. Our method
 is more accurate in principle, but in practice for this problem we find no
 meaningful difference between the limiting we propose and other methods of
 estimating the time derivatives.
+
+The size of the splitting error is a function of the advance timestep, and it
+decreases as the timestep becomes smaller. When we add AMR in the regions of
+nuclear burning, the hydrodynamic timestep automatically becomes smaller due
+to the increased resolution, which mitigates the splitting error. In fact, we
+have found that when we have sufficient refinement to achieve a converged
+simulation, the size of the hydrodynamic timestep is already small enough
+that the splitting error is minimal. Consequently this timestep limiter
+is only of great importance for low resolution simulations. Additionally,
+we found that for the test problem described later, where we are only trying
+to locate the point and time of a detonation rather than assess accurate
+nucleosynthetic yields, this timestep limiter has no observable effect,
+so we do not discuss it further in this paper.
+
+
+
+\section{Timestep Retries}
+\label{sec:retries}
 
 To be precise, we note that the timestep
 will only actually satisfy the energy criterion
@@ -244,29 +279,7 @@ and a tolerance of $10^{-12}$.
 
 %TODO: add a ``Nonaka plot''
 
-To understand the consequences of the timestep limiting, and more broadly to 
-understand the limitations of Strang splitting, we consider the 
-basic outline of a single-level advance in an advection-reaction system:
-\begin{enumerate}
-  \item Evaluate timestep $\Delta t$ for the current advance
-  \item Advance the nuclear burning network by $\Delta t / 2$
-  \item Advance the hydrodynamics by $\Delta t$
-  \item Advance the nuclear burning network by $\Delta t / 2$
-  \item Return to Step 1
-\end{enumerate}
-Now, consider that during a head-on collision, initial nuclear burning 
-will occur at the contact point between the two stars. Because of 
-the staggered updates from splitting, the evolution effectively progresses 
-as a cycle between burning for $\Delta t$ and getting fresh material 
-advected into the contact point by the hydro update for $\Delta t$. 
-When the collision begins, $\Delta t$ is controlled by the hydrodynamic 
-stability criterion, and may be large enough that it is possible for 
-the burning advance in Step 4 to completely burn the freshly advected 
-material all the way to NSE. Consequently the evolution is no longer 
-a good approximation to smooth burning of the in-falling material but
-rather separate discrete burning and hydro steps, and the nature of 
-the burning evolution will be quite different. As the timestep becomes
-smaller, the evolution becomes smoother and the splitting error decreases.
+
 
 \begin{figure}[ht]
   \centering
