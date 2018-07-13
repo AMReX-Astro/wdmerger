@@ -134,9 +134,14 @@ on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally much
 smaller than 100 km. In this paper, we seek to find what numerical methods are required
 to achieve converged detonations.
 
+
+
+\section{Coupling Burning and Hydrodynamics}
+\label{sec:hydrocoupling}
+
 The numerical simulations in this paper are performed using the reacting hydrodynamics AMR
 code \castro\ \citep{castro}. \cite{wdmergerI} described updates to the core hydrodynamic
-algorithm since the code's original release. The goal of this paper is to describe several
+algorithm since the code's original release. The goal of this section is to describe several
 limitations we found when coupling the hydrodynamics module to the reactions module for detonation
 problems, and the changes we made to the \castro\ code to deal with those limitations (though
 most of the ideas are applicable to any adaptive mesh-based code). The challenge of accurately
@@ -145,8 +150,8 @@ simulations.
 
 
 
-\section{Coupling Burning and Hydrodynamics}
-\label{sec:hydrocoupling}
+\subsection{Timestep Limiting}
+\label{sec:timestep}
 
 In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
 In a given timestep advance $\Delta t$, we first evolve the reactions alone through
@@ -182,7 +187,7 @@ $f_{be}$ and $f_{bX}$ smaller, we can control the magnitude of the decoupling
 between the reactions and the hydro. A typical choice for $f_{be}$ in the
 literature is in the range of 0.1 to 0.3, while to our knowledge a limiter based on
 $f_{bX}$ has not been used by others performing these types of calculations. The sensitivity
-of results to the value of these timestep limiters will be discussed later in the
+of simulations to the value of these timestep limiters will be discussed later in the
 results. The factors $f_{be}$ and $f_{bX}$ can be set at runtime in \castro.
 
 At the start of each advance, we limit the size of the timestep to be the smaller
