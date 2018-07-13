@@ -134,62 +134,14 @@ on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally much
 smaller than 100 km. In this paper, we seek to find what numerical methods are required
 to achieve converged detonations.
 
-
-
-\section{Nuclear Burning Methodology}
-\label{sec:burner}
-
-We first describe the core operation of our burner module, which is implemented in
-the \microphysics\ code repository\footnote{\microphysics\ can be obtained at
-  \url{https://github.com/starkiller-astro/Microphysics}.}, a collection of microphysical
-routines that are compatible with \castro, \maestro, and other \amrex-based astrophysics
-codes. We review this because, even though the ideas are not new,
-it serves as an update on the state of the \castro\ code since the original release of
-the code paper, similar to the goal of \cite{wdmergerI} for the hydrodynamics and gravity
-modules.
-
-Given a set of nuclides and the reaction links between them, we consider
-how a burning step is performed in our software. The goal is to integrate the
-vector ${\bm{Y}} = (Y_1, Y_2, \ldots, Y_n, e, T)$, where $Y_{n} = X_{n} / A_{n}$
-is the molar fraction of species $n$, with $X_n$ the mass fraction and $A_n$ the
-mass number of that species, $e$ is the energy released during the burn, and
-$T$ is the temperature. The equation describing its evolution is given by
-\begin{equation}
-  \frac{d\bm{Y}}{dt} = f(\mathbf{Y}),
-\end{equation}
-where the components of the right-hand-side for the species come from the particular
-nuclear burning network we are using. The energy $e$ of the zone
-will change when the nuclear abundances evolve, according to
-\begin{equation}
-  \frac{\partial e}{\partial t} = N_A \sum_{n} \frac{\partial Y_{n}}{\partial t} m_{n} c^2,
-\end{equation}
-where $c$ is the speed of light and $m_n$ is the mass of each nuclide.
-
-For most of the problems of interest to \castro\, we employ a self-heating burn,
-where we allow the temperature to evolve in response
-to the burning (see\footnote{In the cited paper, a term based on the
-thermodynamic chemical potential was included; we now believe
-that it is incorrect to include such a term in the burn, since it
-automatically sums to zero analytically.} \citet{maestro3}):
-\begin{equation}
-  \frac{dT}{dt} = \frac{1}{c_V}\frac{\partial e}{\partial t}
-\end{equation}
-Here $c_V$ is the specific heat at constant volume, which
-is provided by the equation of state. During this burn, we re-evaluate $c_V$
-by calling the equation of state using the latest value of $(\rho, T)$.
-The added expense of the equation of state call (relative to keeping $c_V$ fixed
-through the burn) is small in comparison to the more expensive parts of the calculation,
-and it can significantly speed up convergence near NSE. Although $T$ evolves during the
-burn so that the computation of the reaction rates is accurate, we discard the final value
-for $T$ at the end of the burn and recompute a temperature for the zone that is consistent
-with its new internal energy according to the equation of state.
-
-In our \microphysics\ repository we provide several software options for
-solving a set of coupled stiff ODEs. For this work our primary integrator
-is the classic \vode\ integrator \citep{vode}, of which we have a version
-compatible with our software interfaces in the \microphysics\ repository.
-Another option is an implementation of the well known variable-order Richardson
-extrapolation method presented by \citet{stoer:1980}.
+The numerical simulations in this paper are performed using the reacting hydrodynamics AMR
+code \castro\ \citep{castro}. \cite{wdmergerI} described updates to the core hydrodynamic
+algorithm since the code's original release. The goal of this paper is to describe several
+limitations we found when coupling the hydrodynamics module to the reactions module for detonation
+problems, and the changes we made to the \castro\ code to deal with those limitations (though
+most of the ideas are applicable to any adaptive mesh-based code). The challenge of accurately
+capturing this coupling explains most of the difficulty in obtaining converged detonation
+simulations.
 
 
 
