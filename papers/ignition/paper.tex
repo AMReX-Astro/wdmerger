@@ -34,6 +34,7 @@
 \newcommand{\amrex}{\texttt{AMReX}}
 \newcommand{\boxlib}{\texttt{BoxLib}}
 \newcommand{\castro}{\texttt{CASTRO}}
+\newcommand{\maestro}{\texttt{Maestro}}
 \newcommand{\microphysics}{\texttt{Microphysics}}
 \newcommand{\wdmerger}{\texttt{wdmerger}}
 \newcommand{\python}{\texttt{Python}}
@@ -136,20 +137,18 @@ to achieve converged detonations.
 
 
 \section{Nuclear Burning Methodology}
-\label{sec:methodology}
-
-In this section we discuss several issues in reactive hydrodynamic simulations and
-how we addressed them in the \castro\ code \citep{castro}. We first describe the
-core operation of our burner module, which is implemented in the \microphysics\ code
-repository\footnote{\microphysics\ can be obtained at \url{https://github.com/starkiller-astro/Microphysics}.},
-a collection of microphysical routines that are compatible with \castro.
-
-
-
-\subsection{Nuclear Burning}
 \label{sec:burner}
 
-Given a set of nuclides and the reaction links between them, we now consider
+We first describe the core operation of our burner module, which is implemented in
+the \microphysics\ code repository\footnote{\microphysics\ can be obtained at
+  \url{https://github.com/starkiller-astro/Microphysics}.}, a collection of microphysical
+routines that are compatible with \castro, \maestro, and other \amrex-based astrophysics
+codes. We review this because, even though the ideas are not new,
+it serves as an update on the state of the \castro\ code since the original release of
+the code paper, similar to the goal of \cite{wdmergerI} for the hydrodynamics and gravity
+modules.
+
+Given a set of nuclides and the reaction links between them, we consider
 how a burning step is performed in our software. The goal is to integrate the
 vector ${\bm{Y}} = (Y_1, Y_2, \ldots, Y_n, e, T)$, where $Y_{n} = X_{n} / A_{n}$
 is the molar fraction of species $n$, with $X_n$ the mass fraction and $A_n$ the
@@ -166,12 +165,8 @@ will change when the nuclear abundances evolve, according to
 \end{equation}
 where $c$ is the speed of light and $m_n$ is the mass of each nuclide.
 
-We define several burning modes that determine how $T$ and $e$ are evolved
-during a nuclear burn. In a hydrostatic burn, which we call burning mode 0,
-we keep $\rho$ and $T$ fixed throughout, and use 
-the energy released at the end to compute a final temperature that is
-thermodynamically consistent with the new internal energy. By contrast,
-in a self-heating burn (mode 1), we allow the temperature to evolve in response
+For most of the problems of interest to \castro\, we employ a self-heating burn,
+where we allow the temperature to evolve in response
 to the burning (see\footnote{In the cited paper, a term based on the
 thermodynamic chemical potential was included; we now believe
 that it is incorrect to include such a term in the burn, since it
@@ -179,72 +174,26 @@ automatically sums to zero analytically.} \citet{maestro3}):
 \begin{equation}
   \frac{dT}{dt} = \frac{1}{c_V}\frac{\partial e}{\partial t}
 \end{equation}
-(Although $T$ evolves during the burn so that the integration is physically
-accurate, as in the hydrostatic method we discard the final value
-for $T$ at the end of the burn and recompute a temperature for the zone that is
-consistent with its new internal energy.) Here $c_V$ is the specific heat at
-constant volume, which is provided by the equation of state.  During this burn,
-we can keep $c_V$ constant using its initial value, or at each step we
-can choose to re-evaluate the equation of state using the latest value of $(\rho, T)$.
-The latter is more expensive but also more accurate, and we use it in this paper.
-In practice we find that the cost is small in comparison to the more expensive
-parts of the calculation, and it can significantly speed up convergence near NSE.
-A third option (mode 2) presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
-In this mode, by default we do a hydrostatic burn. If that burn fails, or if the net
-energy change is negative, we do the burn again in self-heating mode. A final option (mode 3)
-is a burn that limits the changes due to a burn to avoid numerically unstable burning.
-This mode is discussed in \autoref{sec:unstable_burning} and we will call it a
-``suppressed'' burn for the remainder of this work. All four options
-are implemented in our burner software.
-
-The simulations shown in this work all use the self-heating mode. The hydrostatic
-and hybrid burns are only a slight variation on the self-heating burn in practice
-for this problem.
-The reason that the hydrostatic burn cannot substantially change the outcome is
-that even though the temperature is fixed during the burn, it is \textit{not}
-constant in the rest of the hydrodynamics step. And in the hydrodynamics step,
-the \castro\ algorithm performs multiple EOS calls to ensure that the temperature
-is synchronized with the internal energy at various points in the update. So in
-practice there is a temperature change due to the burn for our problem. This seems
-inevitable for any hydro code unless the hydrodynamics update includes an explicit
-equation for $T$ that is independent of what is happening for the internal energy.
-The hydrostatic burn does slightly limit the energy release during any given burn,
-but summed up over the whole simulation this is not enough to qualitatively affect
-the outcome. The hybrid burn does not affect the simulation outcome at all relative
-to the hydrostatic burn. The difference between them only applies for zones that have
-a net negative energy release from the hydrostatic burn, which occurs only after
-we have burned to NSE. The hybrid burn was mainly implemented by \citet{raskin:2010}
-for making it easier to numerically complete a burn, rather than because of the
-effects it has on the outcome of the simulation. The suppressed burn has separate
-issues which we defer to \autoref{sec:unstable_burning}.
+Here $c_V$ is the specific heat at constant volume, which
+is provided by the equation of state. During this burn, we re-evaluate $c_V$
+by calling the equation of state using the latest value of $(\rho, T)$.
+The added expense of the equation of state call (relative to keeping $c_V$ fixed
+through the burn) is small in comparison to the more expensive parts of the calculation,
+and it can significantly speed up convergence near NSE. Although $T$ evolves during the
+burn so that the computation of the reaction rates is accurate, we discard the final value
+for $T$ at the end of the burn and recompute a temperature for the zone that is consistent
+with its new internal energy according to the equation of state.
 
 In our \microphysics\ repository we provide several software options for
 solving a set of coupled stiff ODEs. For this work our primary integrator
 is the classic \vode\ integrator \citep{vode}, of which we have a version
 compatible with our software interfaces in the \microphysics\ repository.
-We also employ an implementation of the well known variable-order Richardson
-extrapolation method presented by \citet{stoer:1980}, that is similar to the
-integrator which ships with the original versions of the networks mentioned
-above. Our experience shows that relying on a single ODE integrator for the
-variety of stiff ODEs that are present in a collision is insufficient, as we
-sometimes run into integration failures. A combination of the two integrators
-is usually sufficient, however: we first try \vode, and if that fails, we then
-try the Stoer and Bulirsch method. Since it is possible for neither method to
-succeed, we have one more backup scheme. Our specified (relative and absolute)
-error tolerances are uniformly $10^{-6}$ for the energy, temperature, and nuclear
-abundance ODEs. We can loosen these tolerances in an attempt to give the integrator
-an easier time. If both \vode\ and the Stoer and Bulirsch algorithm fail, then we
-loosen the tolerances by a multiplicative factor of 25\%, and then repeat the attempts
-with \vode\ and Stoer and Bulirsch. We keep doing this until either we have loosened
-the tolerances enough for one of the two methods to succeed, or until we have loosened
-the tolerances by two orders of magnitude, at which point we finally give up. We have
-found that this scheme is resilient enough to handle all of the simulations shown below.
-We have also verified that our results do not depend strongly on the tolerances when they
-are tighter than $10^{-4}$. For the typical collision problem we discuss below, the
-nucleosynthetic yield for nickel varies by less than 5\% between a tolerance of $10^{-4}$
-and a tolerance of $10^{-12}$.
+Another option is an implementation of the well known variable-order Richardson
+extrapolation method presented by \citet{stoer:1980}.
 
-\subsection{Coupling to the Hydrodynamics}
+
+
+\section{Coupling Burning and Hydrodynamics}
 \label{sec:hydrocoupling}
 
 In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
@@ -313,6 +262,28 @@ stability criteria as judged from the end of the timestep,
 using subcycled timesteps which individually satisfy the
 stability criterion to the tolerance we have asked for.
 We have found that the benefits for this problem are, however, small.
+
+% Sticking this here for now, needs to be updated with new retry discussion
+
+Our experience shows that relying on a single ODE integrator for the
+variety of stiff ODEs that are present in a collision is insufficient, as we
+sometimes run into integration failures. A combination of the two integrators
+is usually sufficient, however: we first try \vode, and if that fails, we then
+try the Stoer and Bulirsch method. Since it is possible for neither method to
+succeed, we have one more backup scheme. Our specified (relative and absolute)
+error tolerances are uniformly $10^{-6}$ for the energy, temperature, and nuclear
+abundance ODEs. We can loosen these tolerances in an attempt to give the integrator
+an easier time. If both \vode\ and the Stoer and Bulirsch algorithm fail, then we
+loosen the tolerances by a multiplicative factor of 25\%, and then repeat the attempts
+with \vode\ and Stoer and Bulirsch. We keep doing this until either we have loosened
+the tolerances enough for one of the two methods to succeed, or until we have loosened
+the tolerances by two orders of magnitude, at which point we finally give up. We have
+found that this scheme is resilient enough to handle all of the simulations shown below.
+We have also verified that our results do not depend strongly on the tolerances when they
+are tighter than $10^{-4}$. For the typical collision problem we discuss below, the
+nucleosynthetic yield for nickel varies by less than 5\% between a tolerance of $10^{-4}$
+and a tolerance of $10^{-12}$.
+
 
 %TODO: add a ``Nonaka plot''
 
