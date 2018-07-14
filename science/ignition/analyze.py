@@ -131,7 +131,7 @@ def amr_ignition(filename_base, results_base):
                     r_list = ['r' + str(r) for r in sorted([int(r[7:]) for r in r_list])]
 
                     # Cycle through the plot files.
-                    # Get the distance from the origin of the point where T > 5e9 K, if it exists.
+                    # Get the distance from the origin of the point where T > 4e9 K, if it exists.
 
                     zonesPerDim = []
                     res_list = []
@@ -149,32 +149,35 @@ def amr_ignition(filename_base, results_base):
                         prefix = 'det_x_plt'
                         plot_list = [results_dir + '/output/' + plot for plot in wdmerger.get_plotfiles(results_dir, prefix = prefix)]
 
-                        # Assume the last output is the one where we cross the temperature threshold.
+                        # Since most of the time we'll have stopped after the ignition has occurred,
+                        # we'll search through the plotfiles backward.
 
-                        if len(plot_list) > 1:
-                            plot = plot_list[-1]
-                        elif len(plot_list) == 1:
-                            plot = plot_list[0]
-                        else:
-                            continue
+                        T_max = -1.0
+                        T_last = -1.0
 
+                        for plot in reversed(plot_list):
 
-                        [T_max, x, y, z] = wdmerger.get_maxloc(plot, 'Temp')
+                            [T_max, x, y, z] = wdmerger.get_maxloc(plot, 'Temp')
 
-                        if T_max >= 5.0e9:
-                            dist = abs(x.v) / 1.0e5
-                            time = wdmerger.get_time_from_plotfile(plot)
+                            if T_max < 4.0e9 and (T_last < 0.0 or T_last >= 4.0e9):
+                                dist = abs(x.v) / 1.0e5
+                                time = wdmerger.get_time_from_plotfile(plot)
 
-                            zonesPerDim.append(ncell * int(r[1:]))
+                                zonesPerDim.append(ncell * int(r[1:]))
 
-                            ds = yt.load(plot)
-                            problo = ds.domain_left_edge.v
-                            probhi = ds.domain_right_edge.v
-                            size = probhi[0] - problo[0]
+                                ds = yt.load(plot)
+                                problo = ds.domain_left_edge.v
+                                probhi = ds.domain_right_edge.v
+                                size = probhi[0] - problo[0]
 
-                            res_list.append(size / (ncell * max(int(r[1:]), int(tempgrad_r))) / 1.0e5)
-                            dist_list.append(dist)
-                            time_list.append(time)
+                                res_list.append(size / (ncell * max(int(r[1:]), int(tempgrad_r))) / 1.0e5)
+                                dist_list.append(dist)
+                                time_list.append(time)
+
+                                break
+
+                            else:
+                                T_last = T_max
 
                     res_lists[i] = res_list
                     dist_lists[i] = dist_list
@@ -238,61 +241,18 @@ if __name__ == "__main__":
     ofrac = '0.0d0'
 
     file_base = 'amr_ignition'
-    results_base = 'results/' + 'ofrac' + ofrac
+    results_base = 'results/'
 
     dens_list = os.listdir(results_base)
 
-    run_dir = results_base
-    run_str = file_base
+    # Only do the ignition plot for the
+    # self-heating burn, because that's
+    # the only one we actually let
+    # get to ignition.
+    
+    burning_mode = 'self-heat'
 
-    for dens in dens_list:
+    run_dir = results_base + '/' + burning_mode
+    run_str = file_base + '_' + burning_mode
 
-        dens_dir = '/' + dens
-        dens_str = '_dens_' + dens[4:]
-
-        run_dir += dens_dir
-        run_str += dens_str
-
-        g_list = os.listdir(run_dir)
-
-        for g in g_list:
-
-            g_dir = '/' + g
-            g_str = '_g_' + g[1:]
-
-            run_dir += g_dir
-            run_str += g_str
-
-            v_list = os.listdir(run_dir)
-
-            for v in v_list:
-
-                v_dir = '/' + v
-                v_str = '_v_' + v[3:]
-
-                run_dir += v_dir
-                run_str += v_str
-
-                burning_mode_list = os.listdir(run_dir)
-
-                for burning_mode in burning_mode_list:
-
-                    burn_dir = '/' + burning_mode
-                    burn_str = '_' + burning_mode
-
-                    run_dir += burn_dir
-                    run_str += burn_str
-
-                    amr_ignition(plots_dir + run_str, run_dir)
-
-                    run_dir = run_dir.strip(burn_dir)
-                    run_str = run_str.strip(burn_str)
-
-                run_dir = run_dir.strip(v_dir)
-                run_str = run_str.strip(v_str)
-
-            run_dir = run_dir.strip(g_dir)
-            run_str = run_str.strip(g_str)
-
-        run_dir = run_dir.strip(dens_dir)
-        run_str = run_str.strip(dens_str)
+    amr_ignition(plots_dir + run_str, run_dir)
