@@ -191,7 +191,7 @@ probin="probin-collision"
 
 # Set plotfile details.
 
-amr_plot_per="-1.0"
+amr_plot_per="0.01"
 amr_plot_vars="ALL"
 amr_derive_plot_vars="ALL"
 
@@ -256,29 +256,18 @@ to_run=1
 castro_output_at_completion="1"
 
 castro_use_stopping_criterion="1"
-castro_T_stopping_criterion="5.0e9"
+castro_T_stopping_criterion="4.0e9"
 castro_ts_te_stopping_criterion="1.0e200"
 
 amr_subcycling_mode="None"
 
-stop_time="10.0"
+stop_time="3.0"
 max_step="10000000"
 
 geometry_prob_lo="0.0"
 geometry_prob_hi="8.192e8"
 
-ofrac_list="0.0d0"
-
-dens_list="5.d6"
-
-g_list="1.1e8"
-
-v_list="1.0d8"
-
-T_l="1.0d7"
-T_r="1.0d7"
-
-ncell_list="16 24 32 48 64 96 128 256 512 1024 2048 4096 8192"
+ncell_list="16 24 32 48 64 96 128 256 512 1024 2048 4096 8192 16384 32768"
 
 burning_mode_list="self-heat suppressed"
 
@@ -287,135 +276,126 @@ tempgrad_rel_list="0.5"
 
 amr_n_error_buf="2"
 
-# This loop nest covers all of the runs we will do,
-# and is split into two basic parts. The outer loops
-# govern the high level problem setup choices --
-# the oxygen fraction, the initial velocity
-# and gravitational acceleration, and the type
-# of nuclear burning we are doing.
+gravity_const_grav="-1.1e8"
+vel="1.0d8"
+T_l="1.0d7"
+T_r="1.0d7"
+cfrac="0.5d0"
+ofrac="0.0d0"
+dens="5.0d6"
 
-# The inner part of the loop nest covers the
-# spatial resolution options.
-
-for ofrac in $ofrac_list
+for burning_mode_str in $burning_mode_list
 do
+    
+    if [ $burning_mode_str == "self-heat" ]; then
+        burning_mode="1"
+    elif [ $burning_mode_str == "suppressed" ]; then
+        burning_mode="3"
+    fi
 
-    for dens in $dens_list
+    for ncell in $ncell_list
     do
 
-        for g in $g_list
+        # Low resolution runs tend to skip right through the burning
+        # and have a very rough time with it as a result. Severely
+        # limit the CFL number for these runs to compensate.
+
+        if [ $ncell -le 128 ]; then
+            castro_cfl="0.01"
+        else
+            castro_cfl="0.5"
+        fi
+
+        tempgrad_r_list="1 4 16"
+        dxnuc_r_list="1 4 16 64 256"
+        dxnuc_r_list="1"
+
+        # Only allow dxnuc_r > tempgrad_r for certain ncell values.
+
+        allow_extra_dxnuc=0
+
+        if [ $ncell -eq 256 ]; then
+            allow_extra_dxnuc=1
+        fi
+
+        # Only do refinement for the self-heating burns.
+
+        if [ $burning_mode -ne 1 ]; then
+            tempgrad_r_list="1"
+            dxnuc_r_list="1"
+        fi
+
+        for tempgrad_rel in $tempgrad_rel_list
         do
 
-            gravity_const_grav=-$g
-
-            for vel in $v_list
+            for dxnuc in $dxnuc_list
             do
 
-                for burning_mode_str in $burning_mode_list
+                castro_dxnuc=$dxnuc
+
+                for tempgrad_r in $tempgrad_r_list
                 do
 
-                    if [ $burning_mode_str == "self-heat" ]; then
-                        burning_mode="1"
-                    elif [ $burning_mode_str == "suppressed" ]; then
-                        burning_mode="3"
-                    fi
-
-                    # At this point we've completed all the non-spatial resolution
-                    # options, and we move on to the number of zones in the coarse
-                    # grid, and what AMR we will be doing.
-                        
-                    for ncell in $ncell_list
+                    for dxnuc_r in $dxnuc_r_list
                     do
 
-                        # Low resolution runs tend to skip right through the burning
-                        # and have a very rough time with it as a result. Severely
-                        # limit the CFL number for these runs to compensate.
+                        # Skip runs where dxnuc_r < tempgrad_r; these add no real extra information.
 
-                        if [ $ncell -le 128 ]; then
-                            castro_cfl="0.01"
-                        else
-                            castro_cfl="0.5"
+                        if [ $dxnuc_r -lt $tempgrad_r ]; then
+                            continue
                         fi
 
-                        tempgrad_r_list="1 4 16"
-                        dxnuc_r_list="1 4 16 64 256"
+                        # Skip runs where dxnuc_r > tempgrad_r except in the cases we've explicitly permitted,
+                        # since we are only intending to demonstrate the benefit from the extra dxnuc
+                        # in a few cases.
 
-                        # Only allow dxnuc_r > tempgrad_r for certain ncell values.
-
-                        allow_extra_dxnuc=0
-
-                        if [ $ncell -eq 256 ]; then
-                            allow_extra_dxnuc=1
+                        if [ $dxnuc_r -gt $tempgrad_r ] && [ $allow_extra_dxnuc -eq 0 ]; then
+                            continue
                         fi
 
-                        # Only do refinement for the self-heating burns.
+                        # For the suppressed burns, we cannot use a temperature
+                        # stopping criterion in the same way as for the self-heating
+                        # burns, since the suppressed burn gives a qualitatively
+                        # different result. To make the comparison between the two
+                        # fair, we will set the stopping time for the suppressed
+                        # burn to be the same as the stopping time for the self-heating
+                        # burn, which requires the latter to have already finished.
 
-                        if [ $burning_mode -ne 1 ]; then
-                            tempgrad_r_list="1"
-                            dxnuc_r_list="1"
-                        fi
+                        dir_end=n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
 
-                        # Only do the suppressed burns for low resolution.
+                        if [ $burning_mode -eq 3 ]; then
 
-                        if [ $burning_mode -ne 1 ]; then
-                            if [ $ncell -gt 256 ]; then
+                            dir=$results_dir/self-heat/$dir_end
+
+                            if [ $(is_dir_done) -eq 1 ]; then
+                                checkpoint=$(get_last_checkpoint $dir)
+                                stop_time=$(awk 'NR==3' $dir/$checkpoint/Header)
+                                castro_T_stopping_criterion="1.0e200"
+                            else
+                                stop_time=3.0
+                                castro_T_stopping_criterion="4.0e9"
                                 continue
                             fi
+
                         fi
 
-                        for tempgrad_rel in $tempgrad_rel_list
-                        do
+                        dir=$results_dir/$burning_mode_str/$dir_end
+                        set_run_opts
 
-                            for dxnuc in $dxnuc_list
-                            do
+                        if [ $to_run -eq 1 ]; then
+                            run
+                        fi
 
-                                castro_dxnuc=$dxnuc
+                        to_run=1
 
-                                for tempgrad_r in $tempgrad_r_list
-                                do
+                    done # dxnuc_r
 
-                                    for dxnuc_r in $dxnuc_r_list
-                                    do
+                done # tempgrad_r
 
-                                        # Skip runs where dxnuc_r < tempgrad_r; these add no real extra information.
+            done # dxnuc
 
-                                        if [ $dxnuc_r -lt $tempgrad_r ]; then
-                                            continue
-                                        fi
+        done # tempgrad
 
-                                        # Skip runs where dxnuc_r > tempgrad_r except in the cases we've explicitly permitted,
-                                        # since we are only intending to demonstrate the benefit from the extra dxnuc
-                                        # in a few cases.
+    done # ncell
 
-                                        if [ $dxnuc_r -gt $tempgrad_r ] && [ $allow_extra_dxnuc -eq 0 ]; then
-                                            continue
-                                        fi
-
-                                        dir=$results_dir/ofrac$ofrac/dens$dens/g$g/vel$vel/$burning_mode_str/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
-                                        set_run_opts
-
-                                        if [ $to_run -eq 1 ]; then
-                                            run
-                                        fi
-
-                                        to_run=1
-
-                                    done # dxnuc_r
-
-                                done # tempgrad_r
-
-                            done # dxnuc
-
-                        done # tempgrad
-
-                    done # ncell
-
-                done # burning mode
-
-            done # vel
-
-        done # g
-
-    done # dens
-
-done # ofrac
+done # burning mode

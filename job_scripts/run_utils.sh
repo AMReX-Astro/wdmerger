@@ -628,6 +628,11 @@ function is_dir_done {
 
           chk_time=$(printf "%f" $chk_time)
 
+          # This operation will truncate the checkpoint time, so let's truncate
+          # the stopping time so that they're equivalent.
+
+          trunc_stop_time=$(printf "%f" $stop_time)
+
           # Extract the current timestep. We can get it from the 
           # name of the checkpoint file. cut will do the trick;
           # just capture everything after the 'k' of 'chk'.
@@ -635,7 +640,7 @@ function is_dir_done {
           chk_step=$(echo $checkpoint | cut -d"k" -f2)
 
           if [ ! -z $stop_time ]; then
-	      time_flag=$(echo "$chk_time >= $stop_time" | bc -l)
+	      time_flag=$(echo "$chk_time >= $trunc_stop_time" | bc -l)
           fi
 
           if [ ! -z $max_step ]; then
