@@ -197,3 +197,25 @@ function log_base_2 {
     echo $lg
 
 }
+
+# Same as above, but base 4.
+
+function log_base_4 {
+
+    if [ ! -z $1 ]; then
+        exp=$1
+    else
+        return
+    fi
+
+    local i=1
+    local lg=0
+
+    while [ $i -lt $exp ]; do
+        i=$(($i * 4))
+        lg=$(($lg + 1))
+    done
+
+    echo $lg
+
+}
