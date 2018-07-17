@@ -176,6 +176,8 @@ the in-falling material but rather separate discrete burning and hydro steps, an
 the nature of the burning evolution will be quite different. This can have a
 substantial effect on nucleosynthetic yields predicted by white dwarf simulations.
 
+%TODO: add a ``Nonaka plot''
+
 The size of the splitting error is a function of the advance timestep, and it
 decreases as the timestep becomes smaller. When we add AMR in the regions of
 nuclear burning, the hydrodynamic timestep (as set by the CFL criterion)
@@ -235,93 +237,51 @@ between the limiting we propose and other methods of estimating the time derivat
 \subsection{Timestep Retries}
 \label{sec:retries}
 
-To be precise, we note that the timestep
-will only actually satisfy the energy criterion
-$\Delta t \leq f_e \tau_e$ and species criterion
-$\Delta t \leq f_{X_k} \tau_{X_k}$ when the estimates for
-$\dot{e}$ and $\dot{X_k}$ we generate are at least as large
-as the actual rate of change of energy and mass fractions
-over the timestep. However, this can assumption will sometimes fail
-during periods of runaway burning when the rate of change
-of these quantities is highly nonlinear. We may not want
-to neglect the errors caused by this approximation
-because they may build up over an extended period of nonlinear
-evolution and perhaps substantially change the final results.
-To this end, we have implemented a timestep retry option in
-\castro, which re-computes an advance if it violated the
-stability criteria as judged from the end of the timestep,
-using subcycled timesteps which individually satisfy the
-stability criterion to the tolerance we have asked for.
-We have found that the benefits for this problem are, however, small.
+There are many circumstances during a timestep of a hydro code where the advance
+fails. As one common example, in \castro\ timesteps can be subcycled on fine levels,
+so that if the refinement factor between levels is 4, we take four timesteps on
+the fine level for every timestep on the coarse level, each with a quarter the
+size of the coarse level timestep. Then the coarse and fine levels can be
+synchronized \citep{bergercolella:1989}, which requires that we set the fine level
+timestep at the beginning of the first fine level advance and have to use the same
+timestep for each of the four advances. But it can occur that the velocity on the
+fine level grows during these timesteps, such that during the second or later of
+the four advances, the CFL criterion is no longer satisfied.
 
-% Sticking this here for now, needs to be updated with new retry discussion
+Another example of a failure mode comes from the timestep limiting described in
+\ref{sec:timestep}. The timestep will only actually satisfy the energy criterion
+$\Delta t \leq f_e \tau_e$ and species criterion $\Delta t \leq f_{X_k} \tau_{X_k}$
+when the estimates for $\dot{e}$ and $\dot{X_k}$ we generate are at least as large
+as the actual rate of change of energy and mass fractions over the timestep. However,
+this can assumption will sometimes fail during periods of runaway burning when the
+rate of change of these quantities is highly nonlinear. We may not want to neglect
+the errors caused by this approximation because they may build up over an extended
+period of nonlinear evolution and perhaps substantially change the final results.
 
-Our experience shows that relying on a single ODE integrator for the
-variety of stiff ODEs that are present in a collision is insufficient, as we
-sometimes run into integration failures. A combination of the two integrators
-is usually sufficient, however: we first try \vode, and if that fails, we then
-try the Stoer and Bulirsch method. Since it is possible for neither method to
-succeed, we have one more backup scheme. Our specified (relative and absolute)
-error tolerances are uniformly $10^{-6}$ for the energy, temperature, and nuclear
-abundance ODEs. We can loosen these tolerances in an attempt to give the integrator
-an easier time. If both \vode\ and the Stoer and Bulirsch algorithm fail, then we
-loosen the tolerances by a multiplicative factor of 25\%, and then repeat the attempts
-with \vode\ and Stoer and Bulirsch. We keep doing this until either we have loosened
-the tolerances enough for one of the two methods to succeed, or until we have loosened
-the tolerances by two orders of magnitude, at which point we finally give up. We have
-found that this scheme is resilient enough to handle all of the simulations shown below.
-We have also verified that our results do not depend strongly on the tolerances when they
-are tighter than $10^{-4}$. For the typical collision problem we discuss below, the
-nucleosynthetic yield for nickel varies by less than 5\% between a tolerance of $10^{-4}$
-and a tolerance of $10^{-12}$.
+A third, related example comes from the burning module itself. The severe stiffness
+of the nuclear reaction ODEs means that we can sometimes run into integration failures.
+The most common cause of an integration failure is inability to reach the specified
+error tolerance within a specified maximum number of timesteps. These are rare in
+relative terms, but typically we find at least a few occur in any sufficiently long
+simulation, and we either have to deal with these or abort the simulation. In the
+\microphysics\ repository we have constructed a couple of ways of handling these
+failures internal to the burner: we can attempt to loosen the tolerance of the ODEs
+and try again; and, if that repeatedly fails, we can use a different integration method.
+However, we can be a little wiser about this and note that the failures are almost always
+ultimately related to the fact that the advance timestep is so large that the ODE
+integrator has to solve a very challenging problem. For a sufficiently small timestep,
+the size of the change that could occur during the burn would be similarly small,
+and it would be much easier for the integration to succeed.
+
+A natural solution to all of these problems is to be able to detect these failure
+modes, reject the proposed timestep, and subcycle the advance within a level with
+a smaller timestep. To this end, we have implemented a timestep retry option in
+\castro. If a failure is detected, the timestep is cut by a factor of 2 and we
+try again. If this does not work, the timestep is recursively cut until the
+advance succeeds. This approach neatly addresses several different types of
+problems in a single, simple framework.
 
 
-%TODO: add a ``Nonaka plot''
-
-
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.425]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
-  \caption{Nickel production as a function of the timestep factors $f_{be}$
-           (solid blue, limiting the timestep on changes in internal energy) and
-           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
-           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
-           the timestep by at least an order of magnitude more.
-           \label{fig:timestep_factor}}
-\end{figure}
-\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
-production for the baseline collision case. These limiters are somewhat redundant in
-the sense that a given $f_{bX}$ roughly corresponds to another (higher) $f_{be}$, as
-is evident by the fact that on the plot the curves look qualitatively similar in
-shape but with a horizontal offset. As either $f$ becomes small, the restriction on
-the timestep becomes more severe: for $f_{bX} = 0.1$, the full simulation requires
-nearly 30,000 timesteps, compared to just over 1,000 for the baseline case.
-Such a simulation would be quite expensive for a high resolution 3D calculation.
-It is clear, though, that even though the simulation is not converged when the
-timestep is not limited due to burning, the effect is small in absolute terms.
-So we agree that the use of values in this range by \cite{raskin:2010},
-\cite{hawley:2012}, and \cite{kushnir:2013} is appropriate. However, for reasons of
-computational expense we do not use the timestep limiter in the high resolution
-simulations that follow. The error due to this choice should be small, because
-the effect is not that large to begin with, and because the higher resolution
-decreases the timestep anyway due to the hydrodynamic stability constraint.
-
-Other approaches to the coupling 
-between reactions and hydrodynamics have been proposed in the 
-broader literature, especially iterative methods such as 
-deferred corrections that allow each of these operators to 
-feel the lagged effects of the other operators. For example,
-in the context of low Mach number flows, \cite{nonaka:2012} have
-used the method of spectral deferred corrections \citep{SDC} to
-couple their advection-diffusion-reaction equation set. In our
-context this would involve treating the full evolution equation
-for each of the state variables as an ODE with a directly coupled
-burning source term integrated at high order; the advective
-flux is evaluated at the standard second order accuracy
-and is included as an ODE source term.
-We are presently investigating such a method,
-and it may form the basis of further work on this subject.
 
 \subsection{Numerically Unstable Burning}
 \label{sec:unstable_burning}
