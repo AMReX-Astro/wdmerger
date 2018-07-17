@@ -150,7 +150,7 @@ simulations.
 
 
 
-\subsection{Timestep Limiting}
+\subsection{Timestep Size}
 \label{sec:timestep}
 
 In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
@@ -173,11 +173,24 @@ criterion, and may be large enough that it is possible for the burning advance i
 Step 4 to completely burn the freshly advected material all the way to NSE.
 Consequently the evolution is no longer a good approximation to smooth burning of
 the in-falling material but rather separate discrete burning and hydro steps, and
-the nature of the burning evolution will be quite different.
+the nature of the burning evolution will be quite different. This can have a
+substantial effect on nucleosynthetic yields predicted by white dwarf simulations.
 
-A common solution to this problem presented in the literature has been to limit the
-size of the timestep and thereby limit the extent of this decoupling
-\citep{raskin:2010,hawley:2012}, which we adopt here and have implemented in \castro.
+The size of the splitting error is a function of the advance timestep, and it
+decreases as the timestep becomes smaller. When we add AMR in the regions of
+nuclear burning, the hydrodynamic timestep (as set by the CFL criterion)
+automatically becomes smaller due to the increased resolution, which mitigates
+the splitting error. We have found that when we have sufficient refinement to
+achieve a converged simulation, the size of the hydrodynamic timestep is already
+small enough that the splitting error is minimal. For the test problem that we
+will describe later, the operator splitting has no observable effect on the
+physical effect we care about --- the time and location of the detonation --- at
+any resolution. Consequently we do not apply any special timestep limiter based
+on the rate of burning in this paper.
+
+However, for completeness, we describe our implementation of a common approach
+presented in the literature for timestep limiting based on burning, which should
+be used when performing low resolution SN Ia simulations \citep{raskin:2010,hawley:2012}.
 Defining the nuclear energy injection timescale $\tau_e$, and the species evolution
 timescale $\tau_{X_k}$,
 \begin{align}
@@ -214,22 +227,8 @@ $\dot{e}$ and $\dot{X_k}$. We choose to do this with a direct evaluation of the
 right-hand-side of the burning network, given the current state at the time when
 the timestep is evaluated. Other work in the literature has typically evaluated
 this as a finite difference using the change over the last timestep. Our method
-is more accurate in principle, but in practice for this problem we find no
-meaningful difference between the limiting we propose and other methods of
-estimating the time derivatives.
-
-The size of the splitting error is a function of the advance timestep, and it
-decreases as the timestep becomes smaller. When we add AMR in the regions of
-nuclear burning, the hydrodynamic timestep automatically becomes smaller due
-to the increased resolution, which mitigates the splitting error. In fact, we
-have found that when we have sufficient refinement to achieve a converged
-simulation, the size of the hydrodynamic timestep is already small enough
-that the splitting error is minimal. Consequently this timestep limiter
-is only of great importance for low resolution simulations. Additionally,
-we found that for the test problem described later, where we are only trying
-to locate the point and time of a detonation rather than assess accurate
-nucleosynthetic yields, this timestep limiter has no observable effect,
-so we do not discuss it further in this paper.
+is more accurate in principle, but in practice we find no meaningful difference
+between the limiting we propose and other methods of estimating the time derivatives.
 
 
 
