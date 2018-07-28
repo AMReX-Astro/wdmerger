@@ -150,7 +150,7 @@ simulations.
 
 
 
-\subsection{Timestep Limiting}
+\subsection{Timestep Size}
 \label{sec:timestep}
 
 In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
@@ -173,11 +173,26 @@ criterion, and may be large enough that it is possible for the burning advance i
 Step 4 to completely burn the freshly advected material all the way to NSE.
 Consequently the evolution is no longer a good approximation to smooth burning of
 the in-falling material but rather separate discrete burning and hydro steps, and
-the nature of the burning evolution will be quite different.
+the nature of the burning evolution will be quite different. This can have a
+substantial effect on nucleosynthetic yields predicted by white dwarf simulations.
 
-A common solution to this problem presented in the literature has been to limit the
-size of the timestep and thereby limit the extent of this decoupling
-\citep{raskin:2010,hawley:2012}, which we adopt here and have implemented in \castro.
+%TODO: add a ``Nonaka plot''
+
+The size of the splitting error is a function of the advance timestep, and it
+decreases as the timestep becomes smaller. When we add AMR in the regions of
+nuclear burning, the hydrodynamic timestep (as set by the CFL criterion)
+automatically becomes smaller due to the increased resolution, which mitigates
+the splitting error. We have found that when we have sufficient refinement to
+achieve a converged simulation, the size of the hydrodynamic timestep is already
+small enough that the splitting error is minimal. For the test problem that we
+will describe later, the operator splitting has no observable effect on the
+physical effect we care about --- the time and location of the detonation --- at
+any resolution. Consequently we do not apply any special timestep limiter based
+on the rate of burning in this paper.
+
+However, for completeness, we describe our implementation of a common approach
+presented in the literature for timestep limiting based on burning, which should
+be used when performing low resolution SN Ia simulations \citep{raskin:2010,hawley:2012}.
 Defining the nuclear energy injection timescale $\tau_e$, and the species evolution
 timescale $\tau_{X_k}$,
 \begin{align}
@@ -214,115 +229,59 @@ $\dot{e}$ and $\dot{X_k}$. We choose to do this with a direct evaluation of the
 right-hand-side of the burning network, given the current state at the time when
 the timestep is evaluated. Other work in the literature has typically evaluated
 this as a finite difference using the change over the last timestep. Our method
-is more accurate in principle, but in practice for this problem we find no
-meaningful difference between the limiting we propose and other methods of
-estimating the time derivatives.
-
-The size of the splitting error is a function of the advance timestep, and it
-decreases as the timestep becomes smaller. When we add AMR in the regions of
-nuclear burning, the hydrodynamic timestep automatically becomes smaller due
-to the increased resolution, which mitigates the splitting error. In fact, we
-have found that when we have sufficient refinement to achieve a converged
-simulation, the size of the hydrodynamic timestep is already small enough
-that the splitting error is minimal. Consequently this timestep limiter
-is only of great importance for low resolution simulations. Additionally,
-we found that for the test problem described later, where we are only trying
-to locate the point and time of a detonation rather than assess accurate
-nucleosynthetic yields, this timestep limiter has no observable effect,
-so we do not discuss it further in this paper.
+is more accurate in principle, but in practice we find no meaningful difference
+between the limiting we propose and other methods of estimating the time derivatives.
 
 
 
 \subsection{Timestep Retries}
 \label{sec:retries}
 
-To be precise, we note that the timestep
-will only actually satisfy the energy criterion
-$\Delta t \leq f_e \tau_e$ and species criterion
-$\Delta t \leq f_{X_k} \tau_{X_k}$ when the estimates for
-$\dot{e}$ and $\dot{X_k}$ we generate are at least as large
-as the actual rate of change of energy and mass fractions
-over the timestep. However, this can assumption will sometimes fail
-during periods of runaway burning when the rate of change
-of these quantities is highly nonlinear. We may not want
-to neglect the errors caused by this approximation
-because they may build up over an extended period of nonlinear
-evolution and perhaps substantially change the final results.
-To this end, we have implemented a timestep retry option in
-\castro, which re-computes an advance if it violated the
-stability criteria as judged from the end of the timestep,
-using subcycled timesteps which individually satisfy the
-stability criterion to the tolerance we have asked for.
-We have found that the benefits for this problem are, however, small.
+There are many circumstances during a timestep of a hydro code where the advance
+fails. As one common example, in \castro\ timesteps can be subcycled on fine levels,
+so that if the refinement factor between levels is 4, we take four timesteps on
+the fine level for every timestep on the coarse level, each with a quarter the
+size of the coarse level timestep. Then the coarse and fine levels can be
+synchronized \citep{bergercolella:1989}, which requires that we set the fine level
+timestep at the beginning of the first fine level advance and have to use the same
+timestep for each of the four advances. But it can occur that the velocity on the
+fine level grows during these timesteps, such that during the second or later of
+the four advances, the CFL criterion is no longer satisfied.
 
-% Sticking this here for now, needs to be updated with new retry discussion
+Another example of a failure mode comes from the timestep limiting described in
+\autoref{sec:timestep}. The timestep will only actually satisfy the energy criterion
+$\Delta t \leq f_e \tau_e$ and species criterion $\Delta t \leq f_{X_k} \tau_{X_k}$
+when the estimates for $\dot{e}$ and $\dot{X_k}$ we generate are at least as large
+as the actual rate of change of energy and mass fractions over the timestep. However,
+this can assumption will sometimes fail during periods of runaway burning when the
+rate of change of these quantities is highly nonlinear. We may not want to neglect
+the errors caused by this approximation because they may build up over an extended
+period of nonlinear evolution and perhaps substantially change the final results.
 
-Our experience shows that relying on a single ODE integrator for the
-variety of stiff ODEs that are present in a collision is insufficient, as we
-sometimes run into integration failures. A combination of the two integrators
-is usually sufficient, however: we first try \vode, and if that fails, we then
-try the Stoer and Bulirsch method. Since it is possible for neither method to
-succeed, we have one more backup scheme. Our specified (relative and absolute)
-error tolerances are uniformly $10^{-6}$ for the energy, temperature, and nuclear
-abundance ODEs. We can loosen these tolerances in an attempt to give the integrator
-an easier time. If both \vode\ and the Stoer and Bulirsch algorithm fail, then we
-loosen the tolerances by a multiplicative factor of 25\%, and then repeat the attempts
-with \vode\ and Stoer and Bulirsch. We keep doing this until either we have loosened
-the tolerances enough for one of the two methods to succeed, or until we have loosened
-the tolerances by two orders of magnitude, at which point we finally give up. We have
-found that this scheme is resilient enough to handle all of the simulations shown below.
-We have also verified that our results do not depend strongly on the tolerances when they
-are tighter than $10^{-4}$. For the typical collision problem we discuss below, the
-nucleosynthetic yield for nickel varies by less than 5\% between a tolerance of $10^{-4}$
-and a tolerance of $10^{-12}$.
+A third, related example comes from the burning module itself. The severe stiffness
+of the nuclear reaction ODEs means that we can sometimes run into integration failures.
+The most common cause of an integration failure is inability to reach the specified
+error tolerance within a specified maximum number of timesteps. These are rare in
+relative terms, but typically we find at least a few occur in any sufficiently long
+simulation, and we either have to deal with these or abort the simulation. In the
+\microphysics\ repository we have constructed a couple of ways of handling these
+failures internal to the burner: we can attempt to loosen the tolerance of the ODEs
+and try again; and, if that repeatedly fails, we can use a different integration method.
+However, we can be a little wiser about this and note that the failures are almost always
+ultimately related to the fact that the advance timestep is so large that the ODE
+integrator has to solve a very challenging problem. For a sufficiently small timestep,
+the size of the change that could occur during the burn would be similarly small,
+and it would be much easier for the integration to succeed.
+
+A natural solution to all of these problems is to be able to detect these failure
+modes, reject the proposed timestep, and subcycle the advance within a level with
+a smaller timestep. To this end, we have implemented a timestep retry option in
+\castro. If a failure is detected, the timestep is cut by a factor of 2 and we
+try again. If this does not work, the timestep is recursively cut until the
+advance succeeds. This approach neatly addresses several different types of
+problems in a single, simple framework.
 
 
-%TODO: add a ``Nonaka plot''
-
-
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.425]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
-  \caption{Nickel production as a function of the timestep factors $f_{be}$
-           (solid blue, limiting the timestep on changes in internal energy) and
-           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
-           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
-           the timestep by at least an order of magnitude more.
-           \label{fig:timestep_factor}}
-\end{figure}
-\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
-production for the baseline collision case. These limiters are somewhat redundant in
-the sense that a given $f_{bX}$ roughly corresponds to another (higher) $f_{be}$, as
-is evident by the fact that on the plot the curves look qualitatively similar in
-shape but with a horizontal offset. As either $f$ becomes small, the restriction on
-the timestep becomes more severe: for $f_{bX} = 0.1$, the full simulation requires
-nearly 30,000 timesteps, compared to just over 1,000 for the baseline case.
-Such a simulation would be quite expensive for a high resolution 3D calculation.
-It is clear, though, that even though the simulation is not converged when the
-timestep is not limited due to burning, the effect is small in absolute terms.
-So we agree that the use of values in this range by \cite{raskin:2010},
-\cite{hawley:2012}, and \cite{kushnir:2013} is appropriate. However, for reasons of
-computational expense we do not use the timestep limiter in the high resolution
-simulations that follow. The error due to this choice should be small, because
-the effect is not that large to begin with, and because the higher resolution
-decreases the timestep anyway due to the hydrodynamic stability constraint.
-
-Other approaches to the coupling 
-between reactions and hydrodynamics have been proposed in the 
-broader literature, especially iterative methods such as 
-deferred corrections that allow each of these operators to 
-feel the lagged effects of the other operators. For example,
-in the context of low Mach number flows, \cite{nonaka:2012} have
-used the method of spectral deferred corrections \citep{SDC} to
-couple their advection-diffusion-reaction equation set. In our
-context this would involve treating the full evolution equation
-for each of the state variables as an ODE with a directly coupled
-burning source term integrated at high order; the advective
-flux is evaluated at the standard second order accuracy
-and is included as an ODE source term.
-We are presently investigating such a method,
-and it may form the basis of further work on this subject.
 
 \subsection{Numerically Unstable Burning}
 \label{sec:unstable_burning}
@@ -462,134 +421,18 @@ of how much resolution we can practicably add to it.
 \section{Numerical Test Problem}
 \label{sec:collisions}
 
-We implement the white dwarf collision problem in \castro\footnote{The main results
-in this paper were generated using the 17.12 releases of \castro, \amrex, and
-\microphysics.} in the \wdmerger\ problem
-directory. We prepare the domain in the way most previous papers have done so:
-the white dwarf centers of mass are initially separated by a distance of four times
-the (secondary) white dwarf radius. Note that the radius of the white dwarf, and
-consequently the initial distance, depends on the equation of state used, and this
-can vary somewhat depending on the relevant physics used, such as Coulomb corrections
-in the Helmholtz equation of state. However, the results do not really depend on the
-exact initial distance as long as there is enough time for the WDs to distort in
-response to tidal forces as they approach. Their initial velocity is that of
-two point-masses in free-fall towards each other coming in from infinity, such that
-the contact point is at the origin, and they approach each other along a coordinate axis.
-In this paper we focus only on head-on collisions of two 0.64 $\msolar$ white dwarfs
-composed of equal parts carbon and oxygen by mass, at an initially uniform temperature
-of $T = 10^7$ K. This choice is for comparison to earlier studies; the code does have
-the ability to vary the impact parameter of the collision and the mass and composition
-of the WDs.
-
-We have added to the \wdmerger\ problem setup the ability to take advantage of 
-the 2D cylindrical ($R-z$) coordinate system evolution in \castro, and we use it
-in this study, because the axisymmetry inherent to the cylindrical coordinate system
-lends itself well to the head-on collision problem. In this coordinate system, we
-align the WDs along the $z$-axis (which is analogous to the $x$-axis in Cartesian
-evolution), with the center of the WDs at $R = 0$. The un-simulated $\phi$ dimension
-then would extend the WDs through a $2\pi$ revolution. The domain has width $4 \times 10^{9}$
-cm along the $z$ axis, and is half as wide along the $R$ axis. The resolution is equal
-in both dimensions, so that there are twice as many zones in the $z$ dimension in
-a uniform grid.
-
-We terminate the simulation at $t = 9$ seconds, as we have found that for this
-particular setup, all of the significant burning has completed by this time\footnote{In
-some simulations we were mainly interested in seeing when the detonation happened, and
-we terminated the simulation at that point. We show nucleosynthesis results only for
-those simulations that had completed nuclear burning.}. At
-this point, the total energy on the domain has become positive, typically about
-$10^{51}$ ergs, and has stopped increasing. This means that the system has become
-unbound due to nuclear energy release, and that no further meaningful nuclear energy
-generation is occurring. In our discussions below, it helps to have some other
-anchoring points in time when significant events occur. We arbitrarily define the
-collision time, $t_{\rm c}$, as the time when the density at the center of the grid
-first reaches $10^2\ \text{g\,/\,cm}^3$. This is reached only when the WDs meet at the
-center of the domain. We define the detonation time, $t_{\rm d}$, as the time when the
-temperature first reaches $4.5 \times 10^9\ \text{K}$. This is also an arbitrary
-threshold, but we have found empirically that this temperature is only reached in
-the collision when a detonation is formed.
-
-The region outside the WDs is filled with a low-density ambient
-material with $\rho = 10^{-4}\ \text{g\,/\,cm}^{3}$ whose composition and temperature is the
-same as that of the WDs. Reactions in this region are unimportant, so for
-computational efficiency, we disable all nuclear burning for zones that have
-$\rho < 10^6\ \text{g\,/\,cm}^{3}$ and $T < 10^8\ \text{K}$. We have confirmed that
-the results do not depend on this choice. A sponge is applied to all gas of density
-lower than $1\ \text{g\,/\,cm}^{3}$. The sponge damps out the velocity in these zones
-(see Paper I) to prevent spurious numerical error in low-density gas from dragging
-down the global timestep. The density floor for the simulation is set
-at $10^{-5}\ \text{g\,/\,cm}^{3}$ and the temperature floor is $10^7$ K.
-
-We collect information at the end of every timestep about the total amount of
-all of the species on the grid (in solar masses), and we use the mass of $^{56}$Ni
-generated as a metric for this test, as this is the parameter most directly related
-to the observable quantities of interest for Type Ia supernovae. Since, as we will see
-below, not all of our simulations detonate at a density high enough to generate substantial
-amounts of nickel, we employ the mass-weighted average atomic mass number on the domain,
-$\bar{A}$, as a more general metric describing the outcome of the simulation. A
-final relevant metric is the total amount of energy $E$ released by the detonation.
-
 Plotfiles of relevant quantities are created every 0.01 seconds.
 The timesteps are limited to ensure that every multiple of this plotfile interval is
 reached exactly, which means an effective maximum timestep of 0.01 seconds. Timesteps
 are by default limited only by the hydrodynamic stability constraint and this plotfile
-interval constraint, except where noted otherwise.
-
-For a collision of two 0.64 $\msolar$ WDs with 128 zones in the radial dimension,
-corresponding to a uniform spatial resolution of 312.5 km, the collision time is
-$t_{\rm c} = 4.16\ \text{s}$, and the detonation time is $t_{\rm d} = 7.43\ \text{s}$.
-The peak density at the detonation time is $2.3 \times 10^7\ \text{g\,/\,cm}^3$.
-Approximately $0.21\ \msolar$ of nickel and $0.46\ \msolar$ of silicon is created,
-corresponding to an $\bar{A}$ of about 29. Approximately $1.3 \times 10^{51}$
-ergs of energy are released. Simulations with resolutions in this few hundred kilometer
-range have been a common choice in earlier papers on white dwarf mergers and collisions
-due to computational constraints; our goal is to see how higher resolution runs differ.
-
-
-
-%==========================================================================
-% Resolution Dependence
-%==========================================================================
-\section{Spatial Resolution}
-\label{sec:spatialresolution}
-
-Now we turn to an examination of the effect of spatial resolution on the detonation.
-The first question we want to answer is: at reasonable uniform spatial resolution, is
-the simulation converged when a detonation occurs? If the answer is no, then the
-follow-up question is: can adaptive mesh refinement help achieve a converged simulation?
-
-To answer these questions we performed a series of simulations at varying base
-resolutions, augmented with additional runs with AMR. In each case we ran the
-simulation to a point just after the burning started, but before a detonation
-had occurred. Then we stopped
-the run and created a checkpoint. Starting from that checkpoint, we did a simulation
-at varying levels of refinement based on the unstable burning criterion. We will refer
-to the refinement through the refinement factor, $r$. This factor is the jump in
-resolution between the coarse grid and the finest grid. The uniform base grid case is $r = 1$.
-Meanwhile, $r = 16$ means a uniform coarse grid plus two levels of 4x refinement.
-
-At high resolution the collision time, $t_{\rm c} = 4.6\ \text{s}$, is later than the
-collision time at low resolution, due to a sharper view of the contact point. However,
-for the same reason, the detonation time is significantly earlier at $t_{\rm d} = 6.62\ \text{s}$,
-as the peak density reaches the key density range of $10^7\ \text{g\,/\,cm}^3$ significantly earlier,
-and this is what triggers the burning sufficient to generate an earlier detonation.
-Approximately speaking, the later $t_{\rm d}$ is, the more
-nickel is produced. As time passes, more white dwarf material slams into the center, compressing
-and heating up the gas. Both effects are favorable to production of nickel. So, a later $t_{\rm d}$
-implies that more material can be converted to nickel.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.425]{{{plots/amr}}}
-  \caption{Nickel production as a function of the simulation resolution. The solid
-           black curve connects the points at uniform resolution. For each uniform
-           resolution simulation, we include additional simulations using the adaptive
-           mesh refinement criterion described in \autoref{sec:unstable_burning}.
-           The horizontal axis is the effective number of zones per dimension on the
-           finest level, which is the number of zones per dimension that would exist
-           if the finest resolution was uniformly applied on the grid.
-           \label{fig:amr}}
-\end{figure}
+interval constraint. For simulations with resolution better than 64 km, we use a CFL
+number of 0.5. For the simulations with lower resolution, we use a CFL number of 0.01.
+This is because at low resolution, the timestep is so large that the detonation can
+form in a single timestep and represent such a large change that the burning integration
+fails (\autoref{sec:retries}). The timestep retry mechanism can handle this gracefully,
+but the subcycled timestep necessary to do so is usually so small that the full level
+timestep ends up being so long that it just makes more sense to avoid this situation
+entirely and use smaller level advance timesteps.
 
 
 
@@ -620,19 +463,12 @@ Advanced Computational Science at Stony Brook University for access
 to the high-performance LIred and SeaWulf computing systems, the latter
 of which was made possible by a \$1.4M National Science Foundation grant (\#1531492).
 
+The authors thank Chris Malone and Don Willcox for useful discussions
+on the nature of explosive burning, and Doron Kushnir for providing
+clarification on the nature of the burning limiter used in \cite{kushnir:2013}.
+
 This research has made use of NASA's Astrophysics Data System 
-Bibliographic Services. In addition, this research has made use
-of the AstroBetter blog and wiki.
-
-\software{\amrex\ (\url{https://github.com/AMReX-Codes/Amrex}),
-          \castro\ \citep{castro} (\url{https://github.com/AMReX-Astro/Castro}),
-          \wdmerger\ \citep{wdmergerI} (\url{https://github.com/AMReX-Astro/wdmerger}),
-          GCC (\url{https://gcc.gnu.org/}),
-          python (\url{https://www.python.org/}),
-          matplotlib \citep{matplotlib} (\url{http://matplotlib.org/}),
-          yt \citep{yt} (\url{http://yt-project.org/})}
-
-\facilities{OLCF, NERSC}
+Bibliographic Services.
 
 \clearpage
 
