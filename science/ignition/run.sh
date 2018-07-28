@@ -29,71 +29,49 @@ fi
 # Set up the gridding.
 
 amr_n_cell="$ncell"
-amr_ref_ratio="2"
+amr_ref_ratio="4"
 
 if [ ! -z $refinement ]; then
 
+    # Only refinement factors of 4 are allowed.
+
     if [ $refinement -eq 1 ]; then
         amr_max_level=0
-    elif [ $refinement -eq 2 ]; then
-        amr_max_level=1
     elif [ $refinement -eq 4 ]; then
-        amr_max_level=2
-    elif [ $refinement -eq 8 ]; then
-        amr_max_level=3
+        amr_max_level=1
     elif [ $refinement -eq 16 ]; then
-        amr_max_level=4
-    elif [ $refinement -eq 32 ]; then
-        amr_max_level=5
+        amr_max_level=2
     elif [ $refinement -eq 64 ]; then
-        amr_max_level=6
-    elif [ $refinement -eq 128 ]; then
-        amr_max_level=7
+        amr_max_level=3
     elif [ $refinement -eq 256 ]; then
-        amr_max_level=8
-    elif [ $refinement -eq 512 ]; then
-        amr_max_level=9
+        amr_max_level=4
     elif [ $refinement -eq 1024 ]; then
-        amr_max_level=10
-    elif [ $refinement -eq 2048 ]; then
-        amr_max_level=11
+        amr_max_level=5
     elif [ $refinement -eq 4096 ]; then
-        amr_max_level=12
-    elif [ $refinement -eq 8192 ]; then
-        amr_max_level=13
+        amr_max_level=6
     elif [ $refinement -eq 16384 ]; then
-        amr_max_level=14
-    elif [ $refinement -eq 32768 ]; then
-        amr_max_level=15
+        amr_max_level=7
     elif [ $refinement -eq 65536 ]; then
-        amr_max_level=16
-    elif [ $refinement -eq 131072 ]; then
-        amr_max_level=17
+        amr_max_level=8
     elif [ $refinement -eq 262144 ]; then
-        amr_max_level=18
-    elif [ $refinement -eq 524288 ]; then
-        amr_max_level=19
+        amr_max_level=9
     elif [ $refinement -eq 1048576 ]; then
-        amr_max_level=20
-    elif [ $refinement -eq 2097152 ]; then
-        amr_max_level=21
+        amr_max_level=10
     elif [ $refinement -eq 4194304 ]; then
-        amr_max_level=22
-    elif [ $refinement -eq 8388608 ]; then
-        amr_max_level=23
+        amr_max_level=11
     else
         echo "Unknown refinement factor: "$refinement"; exiting."
         exit
     fi
 
     if [ ! -z $dxnuc_r ]; then
-        castro_max_dxnuc_lev=$(log_base_2 $dxnuc_r)
+        castro_max_dxnuc_lev=$(log_base_4 $dxnuc_r)
     else
         castro_max_dxnuc_lev=0
     fi
 
     if [ ! -z $tempgrad_r ]; then
-        max_tempgrad_rel_lev=$(log_base_2 $tempgrad_r)
+        max_tempgrad_rel_lev=$(log_base_4 $tempgrad_r)
     else
         max_tempgrad_lev=0
     fi
@@ -268,11 +246,13 @@ geometry_prob_lo="0.0"
 geometry_prob_hi="8.192e8"
 
 ncell_list="16 24 32 48 64 96 128 256 512 1024 2048 4096 8192 16384 32768"
+ncell_list="64"
 
 burning_mode_list="self-heat suppressed"
 
 dxnuc_list="1.0e-1"
 tempgrad_rel_list="0.5"
+tempgrad_rel_list="0.1 0.2 0.25 0.3 0.4"
 
 amr_n_error_buf="2"
 
@@ -306,16 +286,22 @@ do
             castro_cfl="0.5"
         fi
 
-        tempgrad_r_list="1 4 16"
-        dxnuc_r_list="1 4 16 64 256"
-        dxnuc_r_list="1"
+        tempgrad_r_list="1 4 16 64"
+        dxnuc_r_list="1 4 16 64 256 1024 4096"
+        dxnuc_r_list="1 4 16 64"
 
         # Only allow dxnuc_r > tempgrad_r for certain ncell values.
 
         allow_extra_dxnuc=0
 
-        if [ $ncell -eq 256 ]; then
+        if [ $ncell -eq 64 ] || [ $ncell -eq 256 ] || [ $ncell -eq 8192 ]; then
             allow_extra_dxnuc=1
+        fi
+
+        # Only allow tempgrad_r > 1 for certain ncell values.
+
+        if [ $ncell -gt 8192 ]; then
+            tempgrad_r_list="1"
         fi
 
         # Only do refinement for the self-heating burns.
@@ -339,11 +325,32 @@ do
                     for dxnuc_r in $dxnuc_r_list
                     do
 
+                        # Only do the suppressed burn for certain parameters.
+
+                        if [ $burning_mode -eq 3 ]; then
+
+                            if [ $ncell -gt 8192 ]; then
+                                continue
+                            fi
+
+                            if [ "$tempgrad_rel" != "0.5" ]; then
+                                continue
+                            fi
+
+                        fi
+
+
                         # Skip runs where dxnuc_r < tempgrad_r; these add no real extra information.
 
                         if [ $dxnuc_r -lt $tempgrad_r ]; then
                             continue
                         fi
+
+                        # Set the refinement variable so we know how many levels to add.
+                        # We'll make it equal to dxnuc_r since this will always be at
+                        # least as large as tempgrad_r.
+
+                        refinement=$dxnuc_r
 
                         # Skip runs where dxnuc_r > tempgrad_r except in the cases we've explicitly permitted,
                         # since we are only intending to demonstrate the benefit from the extra dxnuc
@@ -371,6 +378,29 @@ do
                                 checkpoint=$(get_last_checkpoint $dir)
                                 stop_time=$(awk 'NR==3' $dir/$checkpoint/Header)
                                 castro_T_stopping_criterion="1.0e200"
+
+                                # For one particular run, we want to demonstrate
+                                # what happens in the suppressed burn if you let
+                                # it continue to develop. So what we'll do is wait
+                                # until the job has reached the same stop time
+                                # as the self-heating burn, so we can make a fair
+                                # comparison with a plotfile at the same simulation
+                                # time. Then we'll continue the job.
+
+                                if [ $ncell -eq 64 ]; then
+
+                                    dir=$results_dir/suppressed/$dir_end
+
+                                    if [ -d $dir ]; then
+                                        stop_time=$(get_inputs_var "stop_time")
+                                        if [ $(is_dir_done) -eq 1 ] && [ "$stop_time" != "3.0" ]; then
+                                            stop_time=3.0
+                                            replace_inputs_var "stop_time"
+                                            rm -f $dir/jobIsDone
+                                        fi
+                                    fi
+
+                                fi
                             else
                                 stop_time=3.0
                                 castro_T_stopping_criterion="4.0e9"
