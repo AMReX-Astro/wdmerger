@@ -2400,7 +2400,7 @@ function set_up_problem_dir {
 
         if [ ! -z $use_first_castro_ex ]; then
 
-            CASTRO=$(ls $compile_dir/ | grep Castro | head -n 1)
+            CASTRO=$(ls $compile_dir/ | grep Castro$DIM | head -n 1)
 
         elif [ -e $compile_dir/GNUmakefile ]; then
 
