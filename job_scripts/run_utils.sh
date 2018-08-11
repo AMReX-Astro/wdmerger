@@ -192,31 +192,31 @@ function get_last_checkpoint {
   checkpointList=""
   checkpointNums=""
 
-  checkpointList+=" $(find "$dir" -maxdepth 1 -type d -name "*chk???????" | sort -r)"
+  checkpointList+=" $(find -L "$dir" -maxdepth 1 -type d -name "*chk???????" | sort -r)"
   if [ -d "$dir/output" ]; then
-      checkpointList+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk???????" | sort -r)"
+      checkpointList+=" $(find -L "$dir/output" -maxdepth 1 -type d -name "*chk???????" | sort -r)"
   fi
-  checkpointNums+=" $(find "$dir" -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find -L "$dir" -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
   if [ -d "$dir/output" ]; then
-      checkpointNums+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
-  fi
-
-  checkpointList+=" $(find "$dir" -maxdepth 1 -type d -name "*chk??????" | sort -r)"
-  if [ -d "$dir/output" ]; then
-      checkpointList+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk??????" | sort -r)"
-  fi
-  checkpointNums+=" $(find "$dir" -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
-  if [ -d "$dir/output" ]; then
-      checkpointNums+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+      checkpointNums+=" $(find -L "$dir/output" -maxdepth 1 -type d -name "*chk???????" | awk -F/ '{ print $NF }' | sort -r)"
   fi
 
-  checkpointList+=" $(find "$dir" -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+  checkpointList+=" $(find -L "$dir" -maxdepth 1 -type d -name "*chk??????" | sort -r)"
   if [ -d "$dir/output" ]; then
-      checkpointList+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+      checkpointList+=" $(find -L "$dir/output" -maxdepth 1 -type d -name "*chk??????" | sort -r)"
   fi
-  checkpointNums+=" $(find "$dir" -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  checkpointNums+=" $(find -L "$dir" -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
   if [ -d "$dir/output" ]; then
-      checkpointNums+=" $(find "$dir/output" -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+      checkpointNums+=" $(find -L "$dir/output" -maxdepth 1 -type d -name "*chk??????" | awk -F/ '{ print $NF }' | sort -r)"
+  fi
+
+  checkpointList+=" $(find -L "$dir" -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointList+=" $(find -L "$dir/output" -maxdepth 1 -type d -name "*chk?????" | sort -r)"
+  fi
+  checkpointNums+=" $(find -L "$dir" -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
+  if [ -d "$dir/output" ]; then
+      checkpointNums+=" $(find -L "$dir/output" -maxdepth 1 -type d -name "*chk?????" | awk -F/ '{ print $NF }' | sort -r)"
   fi
 
   if [ -z "$checkpointList" ]; then
@@ -832,7 +832,7 @@ function archive_all {
       fi
   done
 
-  diaglist=$(find $directory -maxdepth 1 -name "*diag*.out")
+  diaglist=$(find -L $directory -maxdepth 1 -name "*diag*.out")
 
   # For the diagnostic files, we just want to make a copy and move it to the 
   # output directory; we can't move it, since the same file needs to be there
@@ -856,7 +856,7 @@ function archive_all {
 
   # Same thing for the runtime stdout files.
 
-  outlist=$(find $directory -maxdepth 1 -name "*$job_name*")
+  outlist=$(find -L $directory -maxdepth 1 -name "*$job_name*")
 
   for file in $outlist
   do
@@ -872,7 +872,7 @@ function archive_all {
 
   # Same strategy for the inputs and probin files.
 
-  inputs_list=$(find $directory -maxdepth 1 -name "inputs")
+  inputs_list=$(find -L $directory -maxdepth 1 -name "inputs")
 
   for file in $inputs_list
   do
@@ -886,7 +886,7 @@ function archive_all {
       archivelist=$archivelist" "$f
   done
 
-  probin_list=$(find $directory -maxdepth 1 -name "probin")
+  probin_list=$(find -L $directory -maxdepth 1 -name "probin")
 
   for file in $probin_list
   do
