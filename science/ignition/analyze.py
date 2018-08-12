@@ -159,7 +159,7 @@ def amr_ignition(filename_base, results_base):
 
                             [T_max, x, y, z] = wdmerger.get_maxloc(plot, 'Temp')
 
-                            if T_max < 4.0e9 and (T_last < 0.0 or T_last >= 4.0e9):
+                            if (T_max < 4.0e9 and T_last >= 4.0e9) or (T_max >= 4.0e9 and T_last < 0.0):
                                 dist = abs(x.v) / 1.0e5
                                 time = wdmerger.get_time_from_plotfile(plot)
 
@@ -238,6 +238,7 @@ if __name__ == "__main__":
         
     plots_dir = 'plots/'
 
+    cfrac = '0.5d0'
     ofrac = '0.0d0'
 
     file_base = 'amr_ignition'
@@ -252,7 +253,23 @@ if __name__ == "__main__":
     
     burning_mode = 'self-heat'
 
-    run_dir = results_base + '/' + burning_mode
-    run_str = file_base + '_' + burning_mode
+    g_list = os.listdir(results_base + '/' + burning_mode)
 
-    amr_ignition(plots_dir + run_str, run_dir)
+    for g in g_list:
+
+        v_list = os.listdir(results_base + '/' + burning_mode + '/' + g)
+
+        for v in v_list:
+
+            cfrac_list = os.listdir(results_base + '/' + burning_mode + '/' + g + '/' + v)
+
+            for cfrac in cfrac_list:
+
+                ofrac_list = os.listdir(results_base + '/' + burning_mode + '/' + g + '/' + v + '/' + cfrac)
+
+                for ofrac in ofrac_list:
+
+                    run_dir = results_base + '/' + burning_mode + '/' + g + '/' + v + '/' + cfrac + '/' + ofrac
+                    run_str = file_base + '_' + burning_mode + '_' + g + '_' + v + '_' + cfrac + '_' + ofrac
+
+                    amr_ignition(plots_dir + run_str, run_dir)
