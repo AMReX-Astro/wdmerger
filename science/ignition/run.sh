@@ -147,6 +147,9 @@ function set_run_opts {
                     elif [ $stellar_refinement -eq 512 ]; then
                         nprocs="2048"
                         walltime="6:00:00"
+                    elif [ $stellar_refinement -eq 1024 ]; then
+                        nprocs="2048"
+                        walltime="6:00:00"
                     fi
                 fi
             else
@@ -1534,9 +1537,9 @@ problem_dir=$CASTRO_HOME/Exec/science/wdmerger
 
 DIM="2"
 
-# Use the iso7 network for all the 2D tests.
+# Use the ignition_simple network for all the 2D tests.
 
-NETWORK_DIR="iso7"
+NETWORK_DIR="ignition_simple"
 
 # Get the right inputs and probin files.
 
@@ -1596,6 +1599,10 @@ castro_do_react="1"
 # Disable rotation.
 
 castro_do_rotation="0"
+
+# Subcycle the steps.
+
+amr_subcycling_mode="Auto"
 
 # Disable source term update after refluxes.
 # These are relatively expensive, but not needed
@@ -1691,14 +1698,12 @@ results_dir="results/2D"
 mass_P=0.64
 mass_S=0.64
 
-ncell_list=""
-
 ncell_list="64"
 stop_time="9.0"
 prob_lo="0.0"
 prob_hi="2.0e9"
 stellar_density_threshold_list="5.0d6"
-castro_T_stopping_criterion="4.0e9"
+castro_T_stopping_criterion="3.25e9"
 castro_dxnuc="1.0e-2"
 
 for ncell in $ncell_list
@@ -1770,7 +1775,7 @@ do
         stellar_refinement_list=""
 
         if   [ $ncell -eq 64 ]; then
-            stellar_refinement_list="1"
+            stellar_refinement_list="1 2 4 8 16 32 64 128 256 512"
         elif [ $ncell -eq 128 ]; then
             stellar_refinement_list="1"
         elif [ $ncell -eq 256 ]; then
@@ -1861,14 +1866,10 @@ do
             refinement_list=1
 
             if [ $ncell -eq 64 ]; then
-                if [ $stellar_refinement -eq 64 ]; then
-                    refinement_list="1"
+                if [ $stellar_refinement -eq 256 ]; then
+                    refinement_list="1 2 4"
                 fi
             fi
-
-            # Do not subcycle this test.
-
-            amr_subcycling_mode="None"
 
             for refinement in $refinement_list
             do
@@ -1909,6 +1910,8 @@ do
                         dir=$end_dir
                         set_run_opts
 
+                        castro_max_dxnuc_lev=$amr_max_level
+
                         copy_checkpoint
 
                         if [ $to_run -eq 1 ]; then
@@ -1921,7 +1924,6 @@ do
 
             done
 
-            unset amr_subcycling_mode
             unset refinement
 
         done # stellar_refinement
