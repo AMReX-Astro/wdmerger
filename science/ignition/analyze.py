@@ -238,11 +238,8 @@ if __name__ == "__main__":
         
     plots_dir = 'plots/'
 
-    cfrac = '0.5d0'
-    ofrac = '0.0d0'
-
     file_base = 'amr_ignition'
-    results_base = 'results/'
+    results_base = 'results/1D'
 
     dens_list = os.listdir(results_base)
 

@@ -1177,6 +1177,27 @@ function copy_checkpoint() {
                     cp -r "$checkpoint_dir/$start_checkpoint" $dir
                     rm -f "$dir/$start_checkpoint/jobIsDone"
 
+                    # Also, copy the diagnostic output files
+                    # so there is an apparently continuous record.
+
+                    if [ $DIM -eq 2 ]; then
+
+                        cp $checkpoint_dir/*diag.out $dir
+
+                        # Strip out any data in the diagnostics files
+                        # that is after the copied checkpoint, to
+                        # ensure apparent continuity.
+
+                        chk_step=$(echo $start_checkpoint | cut -d"k" -f2)
+                        chk_step=$(echo $chk_step | bc) # Strip leading zeros
+
+                        for diag in $(find $dir -name "*diag.out");
+                        do
+                            sed -i "/\ $chk_step \ /q" $diag
+                        done
+
+                    fi
+
                 else
                     echoerr "No initial checkpoint available, exiting."
                     exit
@@ -1238,6 +1259,10 @@ amr_check_per="-1.0"
 # Checkpoints should not require plotfiles.
 
 amr_write_plotfile_with_checkpoint="0"
+
+# Set the maximum number of subcycles in a retry.
+
+castro_max_subcycles="128"
 
 # Initial timestep shortening factor.
 
@@ -1556,6 +1581,10 @@ amr_check_per="1.0"
 
 castro_init_shrink="0.1"
 
+# CFL criterion.
+
+castro_cfl="0.5"
+
 # Set the interval for doing diagnostic global sums.
 
 castro_sum_interval="1"
@@ -1667,9 +1696,8 @@ ncell_list=""
 ncell_list="64"
 stop_time="9.0"
 prob_lo="0.0"
-prob_hi="1.6384e9"
+prob_hi="2.0e9"
 stellar_density_threshold_list="5.0d6"
-burning_mode_list="self-heat suppressed"
 castro_T_stopping_criterion="4.0e9"
 castro_dxnuc="1.0e-2"
 
