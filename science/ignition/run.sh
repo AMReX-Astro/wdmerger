@@ -145,10 +145,13 @@ function set_run_opts {
                         nprocs="1024"
                         walltime="2:00:00"
                     elif [ $stellar_refinement -eq 512 ]; then
-                        nprocs="2048"
-                        walltime="6:00:00"
+                        nprocs="1024"
+                        walltime="2:00:00"
                     elif [ $stellar_refinement -eq 1024 ]; then
                         nprocs="2048"
+                        walltime="6:00:00"
+                    elif [ $stellar_refinement -eq 2048 ]; then
+                        nprocs="4096"
                         walltime="6:00:00"
                     fi
                 fi
@@ -1626,7 +1629,6 @@ amr_regrid_int=1
 # to do an EOS call to guard against them.
 
 castro_allow_small_energy="1"
-castro_allow_negative_energy="0"
 
 # The collision papers in the literature all use an equal C/O ratio 
 # by mass in the initial white dwarfs. We will do this too for 
@@ -1703,8 +1705,8 @@ stop_time="9.0"
 prob_lo="0.0"
 prob_hi="2.0e9"
 stellar_density_threshold_list="5.0d6"
-castro_T_stopping_criterion="3.25e9"
 castro_dxnuc="1.0e-2"
+castro_T_stopping_criterion="3.25e9"
 
 for ncell in $ncell_list
 do
@@ -1775,7 +1777,7 @@ do
         stellar_refinement_list=""
 
         if   [ $ncell -eq 64 ]; then
-            stellar_refinement_list="1 2 4 8 16 32 64 128 256 512"
+            stellar_refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048"
         elif [ $ncell -eq 128 ]; then
             stellar_refinement_list="1"
         elif [ $ncell -eq 256 ]; then
@@ -1866,9 +1868,7 @@ do
             refinement_list=1
 
             if [ $ncell -eq 64 ]; then
-                if [ $stellar_refinement -eq 256 ]; then
-                    refinement_list="1 2 4"
-                fi
+                refinement_list="1"
             fi
 
             for refinement in $refinement_list
