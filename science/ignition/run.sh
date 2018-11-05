@@ -1777,7 +1777,7 @@ do
         stellar_refinement_list=""
 
         if   [ $ncell -eq 64 ]; then
-            stellar_refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048"
+            stellar_refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
         elif [ $ncell -eq 128 ]; then
             stellar_refinement_list="1"
         elif [ $ncell -eq 256 ]; then
@@ -1868,7 +1868,9 @@ do
             refinement_list=1
 
             if [ $ncell -eq 64 ]; then
-                refinement_list="1"
+                if [ $stellar_refinement -eq 1024 ]; then
+                    refinement_list="1 2 4 8 16 32 64"
+                fi
             fi
 
             for refinement in $refinement_list
