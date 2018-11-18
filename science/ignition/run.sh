@@ -184,7 +184,7 @@ function set_run_opts {
                 elif [ $refinement -eq 64 ]; then
                     amr_max_level=3
                 elif [ $refinement -eq 256 ]; then
-                amr_max_level=4
+                    amr_max_level=4
                 elif [ $refinement -eq 1024 ]; then
                     amr_max_level=5
                 elif [ $refinement -eq 4096 ]; then
@@ -1276,11 +1276,18 @@ castro_init_shrink="0.1"
 
 # Set the interval for doing diagnostic global sums.
 
-castro_sum_interval="1"
+castro_sum_interval="0"
 
-# Enable reactions.
+# Disable verbosity.
+
+castro_v="0"
+gravity_v="0"
+amr_v="0"
+
+# Enable reactions and gravity.
 
 castro_do_react="1"
+castro_do_grav="1"
 
 # Do not call the EOS in the burner.
 
@@ -1464,7 +1471,7 @@ do
                         # burn to be the same as the stopping time for the self-heating
                         # burn, which requires the latter to have already finished.
 
-                        dir_end=g$g/v$vel/c$cfrac/o$ofrac/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
+                        dir_end=/v$vel/c$cfrac/o$ofrac/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
 
                         if [ $burning_mode -eq 3 ]; then
 
@@ -1595,9 +1602,15 @@ castro_cfl="0.5"
 
 castro_sum_interval="1"
 
-# Enable reactions.
+# Enable verbosity.
+
+castro_v="1"
+amr_v="1"
+
+# Enable reactions and gravity.
 
 castro_do_react="1"
+castro_do_grav="1"
 
 # Disable rotation.
 
