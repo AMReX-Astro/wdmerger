@@ -4,6 +4,8 @@ import matplotlib
 matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import os
+import math
+import yt
 
 linestyles = ['-', '--', ':', '-.']
 markers = ['', '', '', 'o']
@@ -35,13 +37,6 @@ def get_diagfile(results_dir):
 
 def amr_ignition(filename_base, results_base):
     """Plot the effect of the refinement based on the nuclear burning rate on the detonation conditions."""
-
-    import os
-
-    import math
-    import numpy as np
-    from matplotlib import pyplot as plt
-    import yt
 
     if not os.path.isdir(results_base):
         return
@@ -250,23 +245,39 @@ if __name__ == "__main__":
     
     burning_mode = 'self-heat'
 
-    g_list = os.listdir(results_base + '/' + burning_mode)
+    v_list = os.listdir('/'.join([results_base, burning_mode]))
 
-    for g in g_list:
+    for v in v_list:
 
-        v_list = os.listdir(results_base + '/' + burning_mode + '/' + g)
+        cfrac_list = os.listdir('/'.join([results_base, burning_mode, v]))
 
-        for v in v_list:
+        for cfrac in cfrac_list:
 
-            cfrac_list = os.listdir(results_base + '/' + burning_mode + '/' + g + '/' + v)
+            ofrac_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac]))
 
-            for cfrac in cfrac_list:
+            for ofrac in ofrac_list:
 
-                ofrac_list = os.listdir(results_base + '/' + burning_mode + '/' + g + '/' + v + '/' + cfrac)
+                ncell_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac]))
 
-                for ofrac in ofrac_list:
+                for ncell in ncell_list:
 
-                    run_dir = results_base + '/' + burning_mode + '/' + g + '/' + v + '/' + cfrac + '/' + ofrac
-                    run_str = file_base + '_' + burning_mode + '_' + g + '_' + v + '_' + cfrac + '_' + ofrac
+                    tempgrad_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell]))
 
-                    amr_ignition(plots_dir + run_str, run_dir)
+                    for tempgrad in tempgrad_list:
+
+                        dxnuc_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad]))
+
+                        for dxnuc in dxnuc_list:
+
+                            tempgrad_r_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc]))
+
+                            for tempgrad_r in tempgrad_r_list:
+
+                                dxnuc_r_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc, tempgrad_r]))
+
+                                for dxnuc_r in dxnuc_r_list:
+
+                                    run_dir = '/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc, tempgrad_r, dxnuc_r])
+                                    run_str = '_'.join([file_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc, tempgrad_r, dxnuc_r])
+
+                                    amr_ignition(plots_dir + run_str, run_dir)
