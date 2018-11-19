@@ -1448,8 +1448,6 @@ do
                                 stop_time=$(awk 'NR==3' $dir/$checkpoint/Header)
                                 castro_T_stopping_criterion="1.0e200"
                             else
-                                stop_time=3.5
-                                castro_T_stopping_criterion="4.0e9"
                                 continue
                             fi
 
@@ -1463,6 +1461,9 @@ do
                         fi
 
                         to_run=1
+
+                        stop_time=3.5
+                        castro_T_stopping_criterion="4.0e9"
 
                     done # dxnuc_r
 
