@@ -1387,7 +1387,7 @@ do
 
         # Only do refinement for certain ncell values.
 
-        if [ $ncell -ne 4096 ]; then
+        if [ $ncell -gt 4096 ]; then
             tempgrad_r_list="1"
             dxnuc_r_list="1"
         fi
@@ -1412,16 +1412,6 @@ do
 
                     for dxnuc_r in $dxnuc_r_list
                     do
-
-                        # Only do the suppressed burn for certain parameters.
-
-                        if [ $burning_mode -eq 3 ]; then
-
-                            if [ $ncell -gt 8192 ]; then
-                                continue
-                            fi
-
-                        fi
 
                         # We want either dxnuc_r > 1 or tempgrad_r > 1 but not both, since the idea
                         # is to test them both as refinement criteria.
@@ -1457,29 +1447,6 @@ do
                                 checkpoint=$(get_last_checkpoint $dir)
                                 stop_time=$(awk 'NR==3' $dir/$checkpoint/Header)
                                 castro_T_stopping_criterion="1.0e200"
-
-                                # For one particular run, we want to demonstrate
-                                # what happens in the suppressed burn if you let
-                                # it continue to develop. So what we'll do is wait
-                                # until the job has reached the same stop time
-                                # as the self-heating burn, so we can make a fair
-                                # comparison with a plotfile at the same simulation
-                                # time. Then we'll continue the job.
-
-                                if [ $ncell -eq 64 ]; then
-
-                                    dir=$results_dir/suppressed/$dir_end
-
-                                    if [ -d $dir ]; then
-                                        stop_time=$(get_inputs_var "stop_time")
-                                        if [ $(is_dir_done) -eq 1 ] && [ "$stop_time" != "3.5" ]; then
-                                            stop_time=3.5
-                                            replace_inputs_var "stop_time"
-                                            rm -f $dir/jobIsDone
-                                        fi
-                                    fi
-
-                                fi
                             else
                                 stop_time=3.5
                                 castro_T_stopping_criterion="4.0e9"
