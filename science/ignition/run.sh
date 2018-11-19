@@ -1244,11 +1244,11 @@ probin="probin-collision"
 
 # Set plotfile details.
 
-amr_plot_per="-0.01"
+amr_plot_per="0.1"
 amr_plot_vars="ALL"
 amr_derive_plot_vars="ALL"
 
-amr_small_plot_per="-0.01"
+amr_small_plot_per="0.01"
 amr_small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr_derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
@@ -1260,7 +1260,7 @@ castro_small_plot_per_is_exact="1"
 
 # Checkpoint save rate.
 
-amr_check_per="-1.0"
+amr_check_per="0.1"
 
 # Checkpoints should not require plotfiles.
 
@@ -1278,11 +1278,11 @@ castro_init_shrink="0.1"
 
 castro_sum_interval="0"
 
-# Disable verbosity.
+# Set verbosity.
 
 castro_v="0"
 gravity_v="0"
-amr_v="0"
+amr_v="1"
 
 # Enable reactions and gravity.
 
@@ -1331,13 +1331,13 @@ castro_ts_te_stopping_criterion="1.0e200"
 
 amr_subcycling_mode="None"
 
-stop_time="20.0"
+stop_time="3.5"
 max_step="10000000"
 
 geometry_prob_lo="0.0"
-geometry_prob_hi="8.192e8"
+geometry_prob_hi="1.6384e9"
 
-ncell_list="64"
+ncell_list="64 128 256 512 1024 2048 4096 8192 16384 32768 65536 131072 262144"
 
 burning_mode_list="self-heat suppressed"
 
@@ -1350,9 +1350,8 @@ gravity_const_grav="-1.1e8"
 T_l="1.0d7"
 T_r="1.0d7"
 cfrac="0.5"
-ofrac="0.5"
+ofrac="0.45"
 dens="5.0d6"
-gravity_const_grav="-1.1e8"
 vel="2.0d8"
 
 for burning_mode_str in $burning_mode_list
@@ -1362,10 +1361,6 @@ do
         burning_mode="1"
     elif [ $burning_mode_str == "suppressed" ]; then
         burning_mode="3"
-    fi
-
-    if [ $burning_mode -eq 3 ]; then
-        continue
     fi
 
     # Sanity check: X(C) + X(O) <= 1.0.
@@ -1390,21 +1385,11 @@ do
         tempgrad_r_list="1 4 16 64"
         dxnuc_r_list="1 4 16 64"
 
-        tempgrad_r_list="1"
-        dxnuc_r_list="1"
+        # Only do refinement for certain ncell values.
 
-        # Only allow dxnuc_r > tempgrad_r for certain ncell values.
-
-        allow_extra_dxnuc=0
-
-        if [ $ncell -eq 64 ] || [ $ncell -eq 256 ] || [ $ncell -eq 8192 ]; then
-            allow_extra_dxnuc=1
-        fi
-
-        # Only allow tempgrad_r > 1 for certain ncell values.
-
-        if [ $ncell -gt 8192 ]; then
+        if [ $ncell -ne 4096 ]; then
             tempgrad_r_list="1"
+            dxnuc_r_list="1"
         fi
 
         # Only do refinement for the self-heating burns.
@@ -1436,42 +1421,33 @@ do
                                 continue
                             fi
 
-                            if [ "$tempgrad_rel" != "0.5" ]; then
-                                continue
-                            fi
-
                         fi
 
+                        # We want either dxnuc_r > 1 or tempgrad_r > 1 but not both, since the idea
+                        # is to test them both as refinement criteria.
 
-                        # Skip runs where dxnuc_r < tempgrad_r; these add no real extra information.
-
-                        if [ $dxnuc_r -lt $tempgrad_r ]; then
+                        if [ $dxnuc_r -gt 1 ] && [ $tempgrad_r -gt 1 ]; then
                             continue
                         fi
 
-                        # Set the refinement variable so we know how many levels to add.
-                        # We'll make it equal to dxnuc_r since this will always be at
-                        # least as large as tempgrad_r.
+                        refinement=1
 
-                        refinement=$dxnuc_r
-
-                        # Skip runs where dxnuc_r > tempgrad_r except in the cases we've explicitly permitted,
-                        # since we are only intending to demonstrate the benefit from the extra dxnuc
-                        # in a few cases.
-
-                        if [ $dxnuc_r -gt $tempgrad_r ] && [ $allow_extra_dxnuc -eq 0 ]; then
-                            continue
+                        if [ $dxnuc_r -gt $refinement ]; then
+                            refinement=$dxnuc_r
                         fi
 
-                        # For the suppressed burns, we cannot use a temperature
-                        # stopping criterion in the same way as for the self-heating
-                        # burns, since the suppressed burn gives a qualitatively
-                        # different result. To make the comparison between the two
-                        # fair, we will set the stopping time for the suppressed
-                        # burn to be the same as the stopping time for the self-heating
-                        # burn, which requires the latter to have already finished.
+                        if [ $tempgrad_r -gt $refinement ]; then
+                            refinement=$tempgrad_r
+                        fi
 
-                        dir_end=/v$vel/c$cfrac/o$ofrac/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
+                        # For the suppressed burns, the goal is to explicitly compare
+                        # the simulation at a given time with the normal self-heating
+                        # burn. So instead of using the same stopping criterion, we
+                        # set the stopping time for the suppressed  burn to be the
+                        # same as the stopping time for the self-heating burn, which
+                        # requires the latter to have already finished.
+
+                        dir_end=v$vel/c$cfrac/o$ofrac/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
 
                         if [ $burning_mode -eq 3 ]; then
 
@@ -1496,8 +1472,8 @@ do
 
                                     if [ -d $dir ]; then
                                         stop_time=$(get_inputs_var "stop_time")
-                                        if [ $(is_dir_done) -eq 1 ] && [ "$stop_time" != "3.0" ]; then
-                                            stop_time=3.0
+                                        if [ $(is_dir_done) -eq 1 ] && [ "$stop_time" != "3.5" ]; then
+                                            stop_time=3.5
                                             replace_inputs_var "stop_time"
                                             rm -f $dir/jobIsDone
                                         fi
@@ -1505,7 +1481,7 @@ do
 
                                 fi
                             else
-                                stop_time=3.0
+                                stop_time=3.5
                                 castro_T_stopping_criterion="4.0e9"
                                 continue
                             fi
