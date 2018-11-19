@@ -1382,8 +1382,8 @@ do
             castro_cfl="0.5"
         fi
 
-        tempgrad_r_list="1 4 16 64"
-        dxnuc_r_list="1 4 16 64"
+        tempgrad_r_list="1 4 16 64 256 1024"
+        dxnuc_r_list="1 4 16 64 256 1024"
 
         # Only do refinement for certain ncell values.
 
@@ -1397,6 +1397,14 @@ do
         if [ $burning_mode -ne 1 ]; then
             tempgrad_r_list="1"
             dxnuc_r_list="1"
+        fi
+
+        # Only do the suppressed burn for certain resolutions.
+
+        if [ $burning_mode -ne 1 ]; then
+            if [ $ncell -gt 65536 ]; then
+                continue
+            fi
         fi
 
         for tempgrad_rel in $tempgrad_rel_list
@@ -1430,30 +1438,7 @@ do
                             refinement=$tempgrad_r
                         fi
 
-                        # For the suppressed burns, the goal is to explicitly compare
-                        # the simulation at a given time with the normal self-heating
-                        # burn. So instead of using the same stopping criterion, we
-                        # set the stopping time for the suppressed  burn to be the
-                        # same as the stopping time for the self-heating burn, which
-                        # requires the latter to have already finished.
-
-                        dir_end=v$vel/c$cfrac/o$ofrac/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
-
-                        if [ $burning_mode -eq 3 ]; then
-
-                            dir=$results_dir/self-heat/$dir_end
-
-                            if [ $(is_dir_done) -eq 1 ]; then
-                                checkpoint=$(get_last_checkpoint $dir)
-                                stop_time=$(awk 'NR==3' $dir/$checkpoint/Header)
-                                castro_T_stopping_criterion="1.0e200"
-                            else
-                                continue
-                            fi
-
-                        fi
-
-                        dir=$results_dir/$burning_mode_str/$dir_end
+                        dir=$results_dir/$burning_mode_str/v$vel/c$cfrac/o$ofrac/n$ncell/tempgrad$tempgrad_rel/dxnuc$dxnuc/tempgrad_r$tempgrad_r/dxnuc_r$dxnuc_r
                         set_run_opts
 
                         if [ $to_run -eq 1 ]; then
@@ -1461,9 +1446,6 @@ do
                         fi
 
                         to_run=1
-
-                        stop_time=3.5
-                        castro_T_stopping_criterion="4.0e9"
 
                     done # dxnuc_r
 
