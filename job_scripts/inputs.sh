@@ -146,7 +146,7 @@ function replace_inputs_var {
 	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/inputs
 
     # If the inputs variable doesn't exist in the inputs file, but we got to this point,
-    # it had a legitimate BoxLib or CASTRO namespace. We assume the user wants to add 
+    # it had a legitimate AMReX or CASTRO namespace. We assume the user wants to add 
     # this variable to the inputs file, so we'll add it on at the end of the file.
 
     else

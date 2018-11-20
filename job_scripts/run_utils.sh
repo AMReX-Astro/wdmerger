@@ -1095,7 +1095,7 @@ function check_to_stop {
       # We will only delete the second-to-last, not the last, for safety.
       # Only do this if the checkpoint is one of our temporary checkpoints to
       # guard against a crash, not if it's a regularly spaced checkpoint printed
-      # at the request of BoxLib. We can test this by checking if the timestep
+      # at the request of AMReX. We can test this by checking if the timestep
       # number or simulation time is a multiple of amr.check_int or amr.check_per.
 
       checkpoint=$(get_last_checkpoint . 2)
