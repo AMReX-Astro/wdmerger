@@ -1180,8 +1180,8 @@ function check_to_stop {
 		  # Use the same logic as in the Amr class for determining
 		  # if we just wrote a checkpoint using amr.check_per.
 
-		  num_per_old=$(printf "%.0f" $(echo "($chk_time - $coarseDt) / $chk_per" | bc -l))
-		  num_per_new=$(printf "%.0f" $(echo "($chk_time            ) / $chk_per" | bc -l))
+		  num_per_old=$(echo "($chk_time - $coarseDt) / $chk_per" | bc)
+		  num_per_new=$(echo "($chk_time            ) / $chk_per" | bc)
 
 		  if [ "$num_per_old" == "$num_per_new" ]; then
 
