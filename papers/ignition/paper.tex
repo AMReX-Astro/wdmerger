@@ -127,6 +127,40 @@ is required to achieve converged thermonuclear ignitions.
 
 
 
+%==========================================================================
+% 1D collision test problem
+%==========================================================================
+\section{Test Problem}
+\label{sec:collisions}
+
+Our test problem is inspired by \cite{kushnir:2013}, and very loosely approximates the
+conditions of two $0.64\ \msolar$ WDs colliding head-on. The simulation domain is 1D with a
+reflecting boundary at $x = 0$. For $x > 0$ there is a uniform fluid composed (by mass)
+of $50\%\, ^{12}$C, $45\%\, ^{16}$O, and $5\%\, ^{4}$He. The fluid is relatively cold,
+$T = 10^7$ K, has density $\rho = 5 \times 10^6$ g/cm$^3$, and is traveling toward the
+origin with velocity $-2 \times 10^8$ m/s. A uniform constant gravitational acceleration
+is applied, $g = -1.1 \times 10^8$ m/s$^{2}$. This setup causes a sharp initial release
+of energy at $x = 0$, and the primary question is whether a detonation occurs promptly
+near this contact point, or occurs later (possibly at a distance from the contact point).
+The simulated domain has width $1.6384 \times 10^9$ cm, and we apply inflow boundary conditions
+that keep feeding the domain with material that has the same conditions as the initial fluid.
+Simulations are performed with the adaptive mesh refinement (AMR) code \castro\
+\citep{castro, astronum:2017}.
+
+The only parameter we vary in this study is the spatial resolution used for this problem.
+We vary both the base resolution of the grid, and also the amount of refinement allowed.
+AMR is applied on gradients of the temperature: we tag zones for refinement if the temperature
+varies by more than 50\% between two zones. Timesteps are limited only by the hydrodynamic
+stability constraint, with CFL number 0.5. Although this leads to Strang splitting error
+in the coupling of the burning and hydrodynamics for low resolution, we have verified that
+the incorrect results seen at low resolution do not meaningfully depend on the timestep constraint
+(both by applying a timestep limiter based on nuclear burning, and by using the spectral deferred
+corrections driver in \castro, which directly couples the burning and hydrodynamics). At very high
+resolution, the splitting error automatically becomes unimportant as the CFL criterion decreases
+the timestep.
+
+
+
 \section{Numerically Unstable Burning}
 \label{sec:unstable_burning}
 
@@ -254,27 +288,6 @@ cannot solely rely on a low resolution run with AMR based on the
 burning stability criterion for the reason described above, that a
 detonation may be spuriously locked in by the low resolution regardless
 of how much resolution we can practicably add to it.
-
-
-
-%==========================================================================
-% 1D collision test problem
-%==========================================================================
-\section{Numerical Test Problem}
-\label{sec:collisions}
-
-Plotfiles of relevant quantities are created every 0.01 seconds.
-The timesteps are limited to ensure that every multiple of this plotfile interval is
-reached exactly, which means an effective maximum timestep of 0.01 seconds. Timesteps
-are by default limited only by the hydrodynamic stability constraint and this plotfile
-interval constraint. For simulations with resolution better than 64 km, we use a CFL
-number of 0.5. For the simulations with lower resolution, we use a CFL number of 0.01.
-This is because at low resolution, the timestep is so large that the detonation can
-form in a single timestep and represent such a large change that the burning integration
-fails (\autoref{sec:retries}). The timestep retry mechanism can handle this gracefully,
-but the subcycled timestep necessary to do so is usually so small that the full level
-timestep ends up being so long that it just makes more sense to avoid this situation
-entirely and use smaller level advance timesteps.
 
 
 
