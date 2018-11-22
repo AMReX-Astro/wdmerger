@@ -160,6 +160,17 @@ corrections driver in \castro, which directly couples the burning and hydrodynam
 resolution, the splitting error automatically becomes unimportant as the CFL criterion decreases
 the timestep.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.525]{{{plots/amr_ignition_self-heat}}}
+  \caption{Distance from the contact point of the ignition as a function of finest
+           spatial resolution. The solid black curve with circle markers represents
+           the simulations with uniform resolution (no AMR). The other curves represent
+           simulations with a fixed base resolution and varying amounts of AMR.
+           \label{fig:self-heat-distance}}
+\end{figure}
+
+\autoref{fig:self-heat-distance} shows our main results.
 
 
 \section{Numerically Unstable Burning}
