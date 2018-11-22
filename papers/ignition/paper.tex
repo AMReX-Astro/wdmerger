@@ -59,8 +59,7 @@
 \author{Max P. Katz}
 \affiliation
 {
-  NVIDIA Corporation \\
-  2788 San Tomas Expressway, Santa Clara, CA, 95051, USA
+  NVIDIA Corporation, 2788 San Tomas Expressway, Santa Clara, CA, 95051, USA
 }
 
 \author{Michael Zingale}
@@ -76,16 +75,16 @@
 %==========================================================================
 \begin{abstract}
 Some simulations of Type Ia supernovae feature thermonuclear detonations that
-arise naturally during the evolution. It is usually not clear whether these
-detonations occur in the same time and place as they would in a simulation
-that fully resolved the burning length scale (assuming the resolved simulation
-even features a detonation). In this study we explore a number of the algorithmic
-choices that affect the outcome of reacting hydrodynamics simulations, and address
-the question of what is required to ensure that these simulations are properly
-converged. We focus on the spatial and temporal resolution, as well as the coupling
-between the hydrodynamics and the reactions. Adaptive mesh refinement, properly
-targeted at the relevant burning regions, works well for achieving converged simulations
-on a relatively coarse grid.
+arise self-consistently during the evolution. It is not clear whether these
+detonations would occur in a simulation that fully resolved the burning. In this
+study we examine a test detonation problem inspired by collisions of white dwarfs.
+This test problem demonstrates that achieving a converged thermonuclear ignition
+requires spatial resolution finer than 1 km in the burning region, and that
+the simulation as a whole likely needs a base resolution on the order of 1 km.
+Current computational resource constraints place this stringent resolution requirement
+out of reach for almost all multi-dimensional supernova simulations.
+Consequently, contemporary simulations that self-consistently demonstrate
+detonations are very likely not resolved and should not be trusted.
 \end{abstract}
 \keywords{supernovae: general - white dwarfs}
 
