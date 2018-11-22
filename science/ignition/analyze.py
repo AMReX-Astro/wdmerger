@@ -68,6 +68,12 @@ def amr_ignition(filename, results_base):
             if not os.path.isdir(results_dir):
                 continue
 
+            # Only do AMR plots for certain resolutions, to avoid the
+            # plot being too crowded.
+
+            if (int(r[1:]) > 1) and (ncell not in [128, 4096, 16384]):
+                continue
+
             print('Searching in directory ' + results_dir)
 
             prefix = 'det_x_plt'
@@ -109,7 +115,17 @@ def amr_ignition(filename, results_base):
 
     has_plot = False
 
-    # First generate a plot using the base refinement.
+    # First add all plots with refinement.
+
+    plt_count = 0
+    for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
+        if len(res_list) > 1:
+            has_plot = True
+            lbl = '{} km base + AMR'.format(int(base_res_list[i]))
+            plt.plot(res_list, dist_list, linestyle=linestyles[plt_count], marker=markers[plt_count], lw=2.0, label=lbl)
+            plt_count += 1
+
+    # Now add the base refinement cases.
 
     coarse_list = []
     r_list = []
@@ -121,15 +137,7 @@ def amr_ignition(filename, results_base):
 
     if len(coarse_list) > 0:
         lbl = 'Uniform grid'
-        plt.plot(r_list, coarse_list, color='k', label=lbl, marker='o', markersize=12)
-
-    # Now add all plots with refinement.
-
-    for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
-        if len(res_list) > 1:
-            has_plot = True
-            lbl = '{} km base + AMR'.format(int(base_res_list[i]))
-            plt.plot(res_list, dist_list, lw=2.0, label=lbl)
+        plt.plot(r_list, coarse_list, color='k', lw=2.0, label=lbl, marker='o', markersize=12)
 
     if has_plot:
         plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
