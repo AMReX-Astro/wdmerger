@@ -15,212 +15,134 @@ markers = ['', '', '', 'o']
 
 colors = ['#1f78b4', '#33a02c', '#a6cee3', '#b2df8a']
 
-def get_diagfile(results_dir):
-    """Return the name of a diagnostics file in results_dir that is completed.
-
-       Useful for the functions that insert git commits into files and need a 
-       representative diagnostic file to get the git commits from. We arbitrarily
-       pick the last complete directory."""
-
-    dir_list = wdmerger.get_parameter_list(results_dir)
-
-    if (dir_list == []):
-        return
-
-    dir_list = [results_dir + '/' + directory for directory in dir_list]
-
-    for dir in dir_list:
-        if (wdmerger.is_dir_done(dir)):
-            return dir + '/output/species_diag.out'
-
-
-
-def amr_ignition(filename_base, results_base):
-    """Plot the effect of the refinement based on the nuclear burning rate on the detonation conditions."""
+def amr_ignition(filename, results_base):
+    """Plot the effect of the resolution on the detonation conditions."""
 
     if not os.path.isdir(results_base):
         return
 
-    size = 8.192e8
-
-    tempgrad_list = []
-    dxnuc_list = []
-
-    tempgrad_r_list = []
-    dxnuc_r_list = []
-
-    # First we need to loop through the directories and figure out
-    # what values we have for dxnuc and tempgrad, and their refinements.
-    # Then we can reverse the order and loop through those, and make plots
-    # as a function of ncell.
+    size = 1.6384e9
 
     ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
 
+    res_lists = [[]] * len(ncell_list)
+    dist_lists = [[]] * len(ncell_list)
+    time_lists = [[]] * len(ncell_list)
+
+    base_res_list = []
+
     for i, ncell in enumerate(ncell_list):
 
-        tempgrad_list_loc = [tempgrad[8:] for tempgrad in os.listdir(results_base + '/n' + str(ncell))]
+        base_res_list.append(size / ncell / 1.e5)
 
-        for tempgrad in tempgrad_list_loc:
+        dir = results_base + '/n' + str(ncell)
 
-            if tempgrad not in tempgrad_list:
-                tempgrad_list.append(tempgrad)
+        if not os.path.isdir(dir):
+            continue
 
-            dxnuc_list_loc = [dxnuc[5:] for dxnuc in os.listdir(results_base + '/n' + str(ncell) + '/tempgrad' + str(tempgrad))]
+        # Generate a plot of the distance from the center of the ignition point,
+        # and also the time of the ignition.
 
-            for dxnuc in dxnuc_list_loc:
+        # Get the list of refinement values we have tried
 
-                if dxnuc not in dxnuc_list:
-                    dxnuc_list.append(dxnuc)
+        r_list = wdmerger.get_parameter_list(dir)
 
-                tempgrad_r_list_loc = [tempgrad_r[10:] for tempgrad_r in os.listdir(results_base + '/n' + str(ncell) + '/tempgrad' + str(tempgrad) + '/dxnuc' + dxnuc)]
+        if (r_list == []):
+            continue
 
-                for tempgrad_r in tempgrad_r_list_loc:
+        # Sort them numerically.
 
-                    if tempgrad_r not in tempgrad_r_list:
-                        tempgrad_r_list.append(tempgrad_r)
+        r_list = ['r' + str(r) for r in sorted([int(r[1:]) for r in r_list])]
 
-                    dxnuc_r_list_loc = [dxnuc_r[7:] for dxnuc_r in os.listdir(results_base + '/n' + str(ncell) + '/tempgrad' + str(tempgrad) + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r)]
+        # Cycle through the plot files.
+        # Get the distance from the origin of the point where T > 4e9 K, if it exists.
 
-    # Now we can do the actual plot generation.
+        zonesPerDim = []
+        res_list = []
+        dist_list = []
+        time_list = []
 
-    for tempgrad in tempgrad_list:
-        for dxnuc in dxnuc_list:
-            for tempgrad_r in tempgrad_r_list:
+        for r in r_list:
+            results_dir = results_base + '/n' + str(ncell) + '/' + r
 
-                filename = filename_base + '_dxnuc_' + dxnuc + '_tempgrad_' + tempgrad + '_tempgrad_r' + tempgrad_r + '.eps'
+            if not os.path.isdir(results_dir):
+                continue
 
-                if os.path.isfile(filename):
-                    continue
+            print('Searching in directory ' + results_dir)
 
-                res_lists = [[]] * len(ncell_list)
-                dist_lists = [[]] * len(ncell_list)
-                time_lists = [[]] * len(ncell_list)
+            prefix = 'det_x_plt'
+            plot_list = [results_dir + '/output/' + plot for plot in wdmerger.get_plotfiles(results_dir, prefix = prefix)]
 
-                base_res_list = []
+            # Since we'll have stopped after the ignition has occurred,
+            # we'll search through the plotfiles backward.
 
-                for i, ncell in enumerate(ncell_list):
+            T_max = -1.0
+            T_last = -1.0
 
-                    base_res_list.append(size / ncell / 1.e5)
+            for plot in reversed(plot_list):
 
-                    dir = results_base + '/n' + str(ncell) + '/tempgrad' + tempgrad + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r
+                [T_max, x, y, z] = wdmerger.get_maxloc(plot, 'Temp')
 
-                    if not os.path.isdir(dir):
-                        continue
+                if (T_max < 4.0e9 and T_last >= 4.0e9) or (T_max >= 4.0e9 and T_last < 0.0):
+                    dist = abs(x.v) / 1.0e5
+                    time = wdmerger.get_time_from_plotfile(plot)
 
-                    # Generate a plot of the distance from the center of the ignition point,
-                    # and also the time of the ignition.
+                    zonesPerDim.append(ncell * int(r[1:]))
 
-                    # Get the list of refinement values we have tried
+                    ds = yt.load(plot)
+                    problo = ds.domain_left_edge.v
+                    probhi = ds.domain_right_edge.v
+                    size = probhi[0] - problo[0]
 
-                    r_list = wdmerger.get_parameter_list(dir)
+                    res_list.append(size / (ncell * int(r[1:])) / 1.0e5)
+                    dist_list.append(dist)
+                    time_list.append(time)
 
-                    # Strip out the non-refinement directories
+                    break
 
-                    r_list = [r for r in r_list if r[0:7] == 'dxnuc_r']
+                else:
+                    T_last = T_max
 
-                    if (r_list == []):
-                        continue
+            res_lists[i] = res_list
+            dist_lists[i] = dist_list
+            time_lists[i] = time_list
 
-                    # Sort them numerically.
+    has_plot = False
 
-                    r_list = ['r' + str(r) for r in sorted([int(r[7:]) for r in r_list])]
+    # First generate a plot using the base refinement.
 
-                    # Cycle through the plot files.
-                    # Get the distance from the origin of the point where T > 4e9 K, if it exists.
+    coarse_list = []
+    r_list = []
+    for i, ncell in enumerate(ncell_list):
+        if len(dist_lists[i]) > 0:
+            has_plot = True
+            r_list.append(res_lists[i][0])
+            coarse_list.append(dist_lists[i][0])
 
-                    zonesPerDim = []
-                    res_list = []
-                    dist_list = []
-                    time_list = []
+    if len(coarse_list) > 0:
+        lbl = 'Uniform grid'
+        plt.plot(r_list, coarse_list, color='k', label=lbl, marker='o', markersize=12)
 
-                    for r in r_list:
-                        results_dir = results_base + '/n' + str(ncell) + '/tempgrad' + tempgrad + '/dxnuc' + dxnuc + '/tempgrad_r' + tempgrad_r + '/dxnuc_' + r
+    # Now add all plots with refinement.
 
-                        if not os.path.isdir(results_dir):
-                            continue
+    for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
+        if len(res_list) > 1:
+            has_plot = True
+            lbl = '{} km base + AMR'.format(int(base_res_list[i]))
+            plt.plot(res_list, dist_list, lw=2.0, label=lbl)
 
-                        print('Searching in directory ' + results_dir)
+    if has_plot:
+        plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
+        plt.xscale('log', basex=10)
+        plt.xlabel(r"Finest resolution (km)", fontsize=24)
+        plt.ylabel(r"Ignition location (km)", fontsize=24)
+        plt.legend(loc='best', prop={'size':12}, fontsize=12)
+        plt.rcParams["figure.figsize"] = (11, 8.5)
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.savefig(filename.replace('.eps', '.png'))
 
-                        prefix = 'det_x_plt'
-                        plot_list = [results_dir + '/output/' + plot for plot in wdmerger.get_plotfiles(results_dir, prefix = prefix)]
-
-                        # Since most of the time we'll have stopped after the ignition has occurred,
-                        # we'll search through the plotfiles backward.
-
-                        T_max = -1.0
-                        T_last = -1.0
-
-                        for plot in reversed(plot_list):
-
-                            [T_max, x, y, z] = wdmerger.get_maxloc(plot, 'Temp')
-
-                            if (T_max < 4.0e9 and T_last >= 4.0e9) or (T_max >= 4.0e9 and T_last < 0.0):
-                                dist = abs(x.v) / 1.0e5
-                                time = wdmerger.get_time_from_plotfile(plot)
-
-                                zonesPerDim.append(ncell * int(r[1:]))
-
-                                ds = yt.load(plot)
-                                problo = ds.domain_left_edge.v
-                                probhi = ds.domain_right_edge.v
-                                size = probhi[0] - problo[0]
-
-                                res_list.append(size / (ncell * max(int(r[1:]), int(tempgrad_r))) / 1.0e5)
-                                dist_list.append(dist)
-                                time_list.append(time)
-
-                                break
-
-                            else:
-                                T_last = T_max
-
-                    res_lists[i] = res_list
-                    dist_lists[i] = dist_list
-                    time_lists[i] = time_list
-
-                    print('res', res_list)
-                    print('dist', dist_list)
-                    print('time', time_list)
-
-                has_plot = False
-
-                # First generate a plot using the base refinement.
-
-                coarse_list = []
-                r_list = []
-                for i, ncell in enumerate(ncell_list):
-                    if len(dist_lists[i]) > 0:
-                        has_plot = True
-                        r_list.append(res_lists[i][0])
-                        coarse_list.append(dist_lists[i][0])
-
-                if len(coarse_list) > 0:
-                    if int(tempgrad_r) == 1:
-                        lbl = 'Uniform grid'
-                    else:
-                        lbl = tempgrad_r + 'x temperature gradient AMR'
-                    plt.plot(r_list, coarse_list, color='k', label=lbl, marker='o', markersize=12)
-
-                # Now add all plots with dxnuc AMR.
-
-                for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
-                    if len(res_list) > 1:
-                        has_plot = True
-                        lbl = '{} km base + auto-ignition AMR'.format(int(base_res_list[i]))
-                        plt.plot(res_list, dist_list, lw=2.0, label=lbl)
-
-                if has_plot:
-                    plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
-                    plt.xscale('log', basex=10)
-                    plt.xlabel(r"Finest resolution (km)", fontsize=24)
-                    plt.ylabel(r"Ignition location (km)", fontsize=24)
-                    plt.legend(loc='best', prop={'size':12}, fontsize=12)
-                    plt.rcParams["figure.figsize"] = (11, 8.5)
-                    plt.tight_layout()
-                    plt.savefig(filename)
-                    plt.savefig(filename.replace('.eps', '.png'))
-
-                    plt.close()
+        plt.close()
 
 
 
@@ -234,50 +156,11 @@ if __name__ == "__main__":
     plots_dir = 'plots/'
 
     file_base = 'amr_ignition'
-    results_base = 'results/1D'
+    results_base = 'results/'
 
-    dens_list = os.listdir(results_base)
-
-    # Only do the ignition plot for the
-    # self-heating burn, because that's
-    # the only one we actually let
-    # get to ignition.
-    
     burning_mode = 'self-heat'
 
-    v_list = os.listdir('/'.join([results_base, burning_mode]))
+    run_dir = '/'.join([results_base, burning_mode])
+    run_str = '_'.join([file_base, burning_mode])
 
-    for v in v_list:
-
-        cfrac_list = os.listdir('/'.join([results_base, burning_mode, v]))
-
-        for cfrac in cfrac_list:
-
-            ofrac_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac]))
-
-            for ofrac in ofrac_list:
-
-                ncell_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac]))
-
-                for ncell in ncell_list:
-
-                    tempgrad_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell]))
-
-                    for tempgrad in tempgrad_list:
-
-                        dxnuc_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad]))
-
-                        for dxnuc in dxnuc_list:
-
-                            tempgrad_r_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc]))
-
-                            for tempgrad_r in tempgrad_r_list:
-
-                                dxnuc_r_list = os.listdir('/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc, tempgrad_r]))
-
-                                for dxnuc_r in dxnuc_r_list:
-
-                                    run_dir = '/'.join([results_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc, tempgrad_r, dxnuc_r])
-                                    run_str = '_'.join([file_base, burning_mode, v, cfrac, ofrac, ncell, tempgrad, dxnuc, tempgrad_r, dxnuc_r])
-
-                                    amr_ignition(plots_dir + run_str, run_dir)
+    amr_ignition(plots_dir + run_str, run_dir)
