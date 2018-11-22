@@ -97,24 +97,20 @@ detonations are very likely not resolved and should not be trusted.
 Thermonuclear detonations are common to all current likely models of Type Ia
 supernovae (SNe Ia), but how they are actually generated in progenitor systems
 is still an open question. Different models predict different locations for
-the detonation (e.g. in the center of a star or on the edge) and different
-mechanisms for initiating the event (e.g. a prompt detonation in a white dwarf (WD)
-collision versus a deflagration to detonation transition in the single degenerate
-model). Common to all of the cases is a severe lack of numerical resolution in
-the location where the detonation is expected to occur. The length and time scale
-at which a detonation forms is orders of magnitude smaller than the resolution that
-typical hydrodynamic simulations can achieve. Furthemore, the approximate equations
-we use at the resolution that we can achieve are still notoriously difficult to
-solve accurately. The mere presence of a detonation (or lack thereof) in a simulation
-is therefore only weak evidence regarding whether a detonation would truly occur.
+the detonation and different mechanisms for initiating the event. Common to all
+of the cases is a severe lack of numerical resolution in the location where the
+detonation is expected to occur. The length and time scale at which a detonation
+forms is orders of magnitude smaller than the resolution that typical multi-dimensional
+hydrodynamic simulations can achieve. The mere presence of a detonation (or lack thereof)
+in a simulation is therefore only weak evidence regarding whether a detonation would truly occur.
 
-In this study we examine the challenges associated with simulating nuclear detonations.
+In this study we examine the challenges associated with simulating thermonuclear detonations.
 The inspiration for this work comes from the literature on head-on collisions of WDs,
 which can occur, for example, in certain triple star systems \citep{thompson:2011,hamers:2013}.
-This problem is useful for understanding the problem of numerical simulation of nuclear
-burning. Head-on WD collisions rapidly convert a significant amount of kinetic energy
-into thermal energy in a small region and thus set up conditions ripe for a thermonuclear
-detonation.
+WD collisions rapidly convert a significant amount of kinetic energy into thermal energy and
+thus set up conditions ripe for a thermonuclear detonation. Collisions are interesting
+from the simulation perspective because of both this susceptibility to detonation and
+the relative ease in setting them up.
 
 Early studies on WD collisions \citep{rosswog:2009,raskin:2010,loren-aguilar:2010,
 hawley:2012,garcia-senz:2013} typically had effective spatial resolutions in the
@@ -126,184 +122,35 @@ on the final result of the event (see Table 4 of \cite{garcia-senz:2013} for a s
 evolution, ultimately caused by the zone size being significantly larger than the length
 scale over which detonations form. The detonation length scale can vary widely based
 on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally much
-smaller than 100 km. In this paper, we seek to find what numerical methods are required
-to achieve converged detonations.
+smaller than 100 km. In this paper, we attempt to find what simulation length scale
+is required to achieve converged thermonuclear ignitions.
 
 
 
-\section{Coupling Burning and Hydrodynamics}
-\label{sec:hydrocoupling}
-
-The numerical simulations in this paper are performed using the reacting hydrodynamics AMR
-code \castro\ \citep{castro}. \cite{wdmergerI} described updates to the core hydrodynamic
-algorithm since the code's original release. The goal of this section is to describe several
-limitations we found when coupling the hydrodynamics module to the reactions module for detonation
-problems, and the changes we made to the \castro\ code to deal with those limitations (though
-most of the ideas are applicable to any adaptive mesh-based code). The challenge of accurately
-capturing this coupling explains most of the difficulty in obtaining converged detonation
-simulations.
-
-
-
-\subsection{Timestep Size}
-\label{sec:timestep}
-
-In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
-Consider the basic outline of a single-level advance in an advection-reaction system:
-\begin{enumerate}
-  \item Evaluate timestep $\Delta t$ for the current advance
-  \item Advance the nuclear burning network by $\Delta t / 2$
-  \item Advance the hydrodynamics by $\Delta t$
-  \item Advance the nuclear burning network by $\Delta t / 2$
-  \item Return to Step 1
-\end{enumerate}
-The principal drawback of this approach is that the reactions and the hydrodynamics
-can become decoupled from each other. For example, consider the example of a head-on
-collision of white dwarfs. Initial nuclear burning will occur at the contact point
-between the two stars. Because of the staggered updates from splitting, the evolution
-effectively progresses as a cycle between burning for $\Delta t$ and getting fresh
-material advected into the contact point by the hydro update for $\Delta t$.
-When the collision begins, $\Delta t$ is controlled by the hydrodynamic stability
-criterion, and may be large enough that it is possible for the burning advance in
-Step 4 to completely burn the freshly advected material all the way to NSE.
-Consequently the evolution is no longer a good approximation to smooth burning of
-the in-falling material but rather separate discrete burning and hydro steps, and
-the nature of the burning evolution will be quite different. This can have a
-substantial effect on nucleosynthetic yields predicted by white dwarf simulations.
-
-%TODO: add a ``Nonaka plot''
-
-The size of the splitting error is a function of the advance timestep, and it
-decreases as the timestep becomes smaller. When we add AMR in the regions of
-nuclear burning, the hydrodynamic timestep (as set by the CFL criterion)
-automatically becomes smaller due to the increased resolution, which mitigates
-the splitting error. We have found that when we have sufficient refinement to
-achieve a converged simulation, the size of the hydrodynamic timestep is already
-small enough that the splitting error is minimal. For the test problem that we
-will describe later, the operator splitting has no observable effect on the
-physical effect we care about --- the time and location of the detonation --- at
-any resolution. Consequently we do not apply any special timestep limiter based
-on the rate of burning in this paper.
-
-However, for completeness, we describe our implementation of a common approach
-presented in the literature for timestep limiting based on burning, which should
-be used when performing low resolution SN Ia simulations \citep{raskin:2010,hawley:2012}.
-Defining the nuclear energy injection timescale $\tau_e$, and the species evolution
-timescale $\tau_{X_k}$,
-\begin{align}
-  \tau_e &\equiv \frac{e}{|\dot{e}|} \\
-  \tau_{X_k} &\equiv \frac{X_k}{|\dot{X_k}|},
-\end{align}
-where $\dot{e}$ is an estimate of the time rate of change of the internal energy
-from nuclear burning, and $\dot{X_k}$ is an estimate of the time rate of change 
-of the mass fraction of the species with index $k$, we define burning-limited 
-timesteps $\Delta t_{be}$ and $\Delta t_{bX_k}$:
-\begin{align}
-  \Delta t_{be} &= f_{be}\, \tau_e \label{eq:timestep_e}\\
-  \Delta t_{bX_k} &= f_{bX}\, \tau_{X_k}. \label{eq:timestep_X}
-\end{align}
-Given an estimate for $\dot{e}$, the factor $f_{be}$ determines by what 
-fraction we would like to allow the internal energy to change
-in the current timestep, under the assumption that $\dot{e}$ does not change from
-timestep to timestep. Similarly, given an estimate for $\dot{X_k}$, the factor $f_{bX}$ 
-determines the maximum change in the mass fraction of any species. To prevent species
-whose abundances are small in absolute terms from controlling the timestep, we apply
-the limiter based on $f_{bX}$ only to species with abundances in a given zone greater
-than $10^{-3}$ (this abundance threshold can be changed by the user of the code). By making 
-$f_{be}$ and $f_{bX}$ smaller, we can control the magnitude of the decoupling 
-between the reactions and the hydro. A typical choice for $f_{be}$ in the
-literature is in the range of 0.1 to 0.3, while to our knowledge a limiter based on
-$f_{bX}$ has not been used by others performing these types of calculations.
-This limiter is complementary to the limiter based on $f_{be}$, and can catch
-certain burning regimes that limiting only based on changes in energy would miss.
-
-At the start of each advance, we limit the size of the timestep to be the smaller
-of the minimum hydro timestep (limited by the CFL condition), and the minimum of all the
-burning timesteps across all zones. To do this, we need a method for determining 
-$\dot{e}$ and $\dot{X_k}$. We choose to do this with a direct evaluation of the
-right-hand-side of the burning network, given the current state at the time when
-the timestep is evaluated. Other work in the literature has typically evaluated
-this as a finite difference using the change over the last timestep. Our method
-is more accurate in principle, but in practice we find no meaningful difference
-between the limiting we propose and other methods of estimating the time derivatives.
-
-
-
-\subsection{Timestep Retries}
-\label{sec:retries}
-
-There are many circumstances during a timestep of a hydro code where the advance
-fails. As one common example, in \castro\ timesteps can be subcycled on fine levels,
-so that if the refinement factor between levels is 4, we take four timesteps on
-the fine level for every timestep on the coarse level, each with a quarter the
-size of the coarse level timestep. Then the coarse and fine levels can be
-synchronized \citep{bergercolella:1989}, which requires that we set the fine level
-timestep at the beginning of the first fine level advance and have to use the same
-timestep for each of the four advances. But it can occur that the velocity on the
-fine level grows during these timesteps, such that during the second or later of
-the four advances, the CFL criterion is no longer satisfied.
-
-Another example of a failure mode comes from the timestep limiting described in
-\autoref{sec:timestep}. The timestep will only actually satisfy the energy criterion
-$\Delta t \leq f_e \tau_e$ and species criterion $\Delta t \leq f_{X_k} \tau_{X_k}$
-when the estimates for $\dot{e}$ and $\dot{X_k}$ we generate are at least as large
-as the actual rate of change of energy and mass fractions over the timestep. However,
-this can assumption will sometimes fail during periods of runaway burning when the
-rate of change of these quantities is highly nonlinear. We may not want to neglect
-the errors caused by this approximation because they may build up over an extended
-period of nonlinear evolution and perhaps substantially change the final results.
-
-A third, related example comes from the burning module itself. The severe stiffness
-of the nuclear reaction ODEs means that we can sometimes run into integration failures.
-The most common cause of an integration failure is inability to reach the specified
-error tolerance within a specified maximum number of timesteps. These are rare in
-relative terms, but typically we find at least a few occur in any sufficiently long
-simulation, and we either have to deal with these or abort the simulation. In the
-\microphysics\ repository we have constructed a couple of ways of handling these
-failures internal to the burner: we can attempt to loosen the tolerance of the ODEs
-and try again; and, if that repeatedly fails, we can use a different integration method.
-However, we can be a little wiser about this and note that the failures are almost always
-ultimately related to the fact that the advance timestep is so large that the ODE
-integrator has to solve a very challenging problem. For a sufficiently small timestep,
-the size of the change that could occur during the burn would be similarly small,
-and it would be much easier for the integration to succeed.
-
-A natural solution to all of these problems is to be able to detect these failure
-modes, reject the proposed timestep, and subcycle the advance within a level with
-a smaller timestep. To this end, we have implemented a timestep retry option in
-\castro. If a failure is detected, the timestep is cut by a factor of 2 and we
-try again. If this does not work, the timestep is recursively cut until the
-advance succeeds. This approach neatly addresses several different types of
-problems in a single, simple framework.
-
-
-
-\subsection{Numerically Unstable Burning}
+\section{Numerically Unstable Burning}
 \label{sec:unstable_burning}
 
-\citet{kushnir:2013} point out that an inappropriate timestep is 
-not the only way for the numerical discretization to cause 
-severe errors in the burning. Another possible failure mode is when
-the energy injection timescale
-$\tau_e$ is shorter than the sound-crossing time $\tau_s$ in a zone.
+\citet{kushnir:2013} observe an important possible failure mode
+for reacting hydrodynamics simulations. Let us define $\tau_e = e / \dot{e}$
+as the nuclear energy injection timescale, and $\tau_s = \Delta x / c_s$
+as the sound-crossing time in a zone (where $\Delta x$ is the grid
+resolution and $c_s$ is the speed of sound).
 When the sound-crossing time is too long, energy is built up in
 a zone faster than it can be advected away by pressure waves.
 This is of course a problem inherent only to numerically discretized
 systems as the underlying fluid equations are continuous.
 This can lead to a numerically seeded detonation caused by the
 temperature building up too quickly in the zone; the detonation
-may be spurious in this case. If the following condition holds,
-we can be confident that a numerically seeded detonation has not occurred:
+may be spurious in this case. If $\tau_s \ll \tau_e$, we can be
+confident that a numerically seeded detonation has not occurred.
+In practice, we will quantify this as:
 \begin{equation}
   \tau_s \leq f_{s}\, \tau_e \label{eq:burning_limiter_2}
 \end{equation}
-The sound crossing time, $\tau_s$, is given by $\Delta x / c_s$, 
-where $c_s$ is the sound speed and $\Delta x$ is the (minimum) 
-zone width. The parameter $f_{s}$ then determines the minimum
-ratio of the nuclear energy generation timescale to the 
-sound-crossing time. \citet{kushnir:2013} choose $f_{s} = 0.1$ 
-for their simulations. \citet{kushnir:2013} implemented this
-criterion by artificially limiting the magnitude of the energy
+and require that $f_{s}$ is sufficiently smaller than one.
+\citet{kushnir:2013} state that $f_{s} = 0.1$ is a sufficient
+criterion. \citet{kushnir:2013} enforced this criterion on
+their simulations by artificially limiting the magnitude of the energy
 release after a burn.
 
 To understand this choice, consider the outcome of our baseline case.
