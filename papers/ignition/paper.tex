@@ -148,6 +148,14 @@ Simulations are performed with the adaptive mesh refinement (AMR) code \castro\
 \citep{castro, astronum:2017}. For the burning we use the alpha-chain nuclear network
 \texttt{aprox13}. The results we describe below do not strongly depend on the network.
 
+The simulation is terminated when the peak temperature on the domain first reaches
+$4 \times 10^9$ K, which we call a thermonuclear ignition. This stopping criterion is a
+proxy for the beginning of a detonation. Reaching this temperature does not guarantee
+that a detonation will begin, and in this study we do not directly address the question
+of whether a ignition of this kind always leads to a detonation. Rather, the main question
+we investigate here is whether this ignition is numerically converged. A converged ignition
+is a prerequisite to having a converged detonation.
+
 The only parameter we vary in this study is the spatial resolution used for this problem.
 We vary both the base resolution of the grid, and also the amount of refinement allowed.
 AMR is applied on gradients of the temperature: we tag zones for refinement if the temperature
