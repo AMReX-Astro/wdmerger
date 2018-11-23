@@ -298,11 +298,27 @@ limiter should be applied in production simulations.
 \section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
 \label{sec:conclusion}
 
-% Add discussion about how none of the conclusions depend on the microphysics
-% of how ignitions/detonations actually occur -- this paper is simply about
-% self-consistent fluid simulations, i.e. are we even correctly solving
-% the equations we wrote down, and not focusing on the harder question
-% of whether we're solving the right equations.
+Our example detonation problem demonstrates, at least for this class of
+hydrodynamical burning problem, a grid resolution requirement much more stringent
+than 1 km. This does not represent all such burning problems: for example, we
+have tested similar setups with only carbon and oxygen for which a resolution
+in the tens of kilometers is sufficient. However, the fact that it is even
+possible for this type of burning to require a resolution better than 100 m
+should cast significant uncertainty on the results of simulations featuring
+detonations that do not meet this resolution.
+
+This study does not directly address the problem of how, in the detailed
+microphysical sense, a detonation wave actually begins to propagate, as
+we cannot resolve this length scale even in our highest resolution simulations.
+Rather, we are making the point that for simulations in which a macroscopic
+detonation wave appears self-consistently, this is only a valid numerical result
+if the resolution is sufficiently high. This convergence requirement does
+not imply that the detonation itself is physically realistic; but, it does
+imply that we are not even correctly solving the fluid equations we intend
+to solve when the convergence requirement is not met. We believe that our
+test case can be useful in the future for testing algorithmic innovations
+that hope to improve the realism of burning at low resolutions.
+
 
 
 \acknowledgments
