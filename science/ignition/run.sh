@@ -20,6 +20,14 @@ function set_run_opts {
         nprocs="16"
         walltime="2:00:00"
 
+        if [ $ncell -eq 131072 ]; then
+            nprocs="32"
+        elif [ $ncell -eq 262144 ]; then
+            nprocs="64"
+        elif [ $ncell -eq 524288 ]; then
+            nprocs="128"
+        fi
+
         # Set up the geometry and gridding appropriately.
 
         amr_n_cell="$ncell"
@@ -113,7 +121,7 @@ to_run=1
 
 results_dir="results"
 
-ncell_list="64 128 256 512 1024 2048 4096 8192 16384 32768 65536 131072 262144"
+ncell_list="64 128 256 512 1024 2048 4096 8192 16384 32768 65536 131072 262144 524288"
 
 burning_mode_list="self-heat suppressed"
 
@@ -132,30 +140,32 @@ do
         refinement_list="1"
 
         if [ $ncell -eq 64 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096"
+            refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192"
         elif [ $ncell -eq 128 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048"
+            refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096"
         elif [ $ncell -eq 256 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
+            refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048"
         elif [ $ncell -eq 512 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256 512"
+            refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
         elif [ $ncell -eq 1024 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256"
+            refinement_list="1 2 4 8 16 32 64 128 256 512"
         elif [ $ncell -eq 2048 ]; then
-            refinement_list="1 2 4 8 16 32 64 128"
+            refinement_list="1 2 4 8 16 32 64 128 256"
         elif [ $ncell -eq 4096 ]; then
-            refinement_list="1 2 4 8 16 32 64"
+            refinement_list="1 2 4 8 16 32 64 128"
         elif [ $ncell -eq 8192 ]; then
-            refinement_list="1 2 4 8 16 32"
+            refinement_list="1 2 4 8 16 32 64"
         elif [ $ncell -eq 16384 ]; then
-            refinement_list="1 2 4 8 16"
+            refinement_list="1 2 4 8 16 32"
         elif [ $ncell -eq 32768 ]; then
-            refinement_list="1 2 4 8"
+            refinement_list="1 2 4 8 16"
         elif [ $ncell -eq 65536 ]; then
-            refinement_list="1 2 4"
+            refinement_list="1 2 4 8"
         elif [ $ncell -eq 131072 ]; then
-            refinement_list="1 2"
+            refinement_list="1 2 4"
         elif [ $ncell -eq 262144 ]; then
+            refinement_list="1 2"
+        elif [ $ncell -eq 524288 ]; then
             refinement_list="1"
         fi
 
