@@ -180,7 +180,32 @@ the timestep.
            \label{fig:self-heat-distance}}
 \end{figure}
 
-\autoref{fig:self-heat-distance} shows our main results.
+\autoref{fig:self-heat-distance} shows our main results. The lowest resolution we consider,
+256 km, is typical of the early simulations of white dwarf collisions, and demonstrates a
+prompt ignition near the contact point. As the (uniform) resolution increases, the ignition
+tends to occur earlier and nearer to the contact point. This trend is not physically meaningful:
+all simulations with resolution worse than about 1 km represent the same prompt central ignition,
+and as the resolution increases, there are grid points physically closer to the center that can ignite.
+However, when the resolution is better than 1 km, the situation changes dramatically: the prompt
+central ignition does not occur, but rather the ignition is delayed and occurs further from the contact
+point. When we have finally converged, the ignition occurs around 1000 km from the contact point,
+about 1 second after contact (contrast to less than 0.05 seconds for the simulation with 1 km resolution).
+This story contains two important lessons. First, the required resolution for a converged simulation,
+less than 100 m, is out of reach of current 3D supernova simulations. Second, the behavior for
+resolutions worse than 1 km qualitatively appears to be converged, and one could perhaps
+be misled into thinking that there was no reason to try higher resolutions, which is reason
+for caution in interpreting reacting hydrodynamics simulations.
+
+Also in \autoref{fig:self-heat-distance} we show results for a few cases where we add AMR
+using the criterion described above. The main takeaway here is that for coarse grid resolutions
+worse than 1 km, the addition of AMR yields unreliable results: the coarse grid's approximation
+of the physics must simply not be good enough for refinement to do any good. This parallels the
+fact that the trend of convergence towards the correct delayed detonation does not begin until
+resolutions better than 1 km. However, for a coarse grid resolution of 1 km, AMR does yield
+convergence to the correct answer, and at a much cheaper computational cost than the equivalent
+uniform grid simulation\marginpar{quantify this}, so AMR does add value if the resolution on the
+coarse grid is sufficiently high.
+
 
 
 \section{Numerically Unstable Burning}
@@ -319,6 +344,11 @@ of how much resolution we can practicably add to it.
 \section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
 \label{sec:conclusion}
 
+% Add discussion about how none of the conclusions depend on the microphysics
+% of how ignitions/detonations actually occur -- this paper is simply about
+% self-consistent fluid simulations, i.e. are we even correctly solving
+% the equations we wrote down, and not focusing on the harder question
+% of whether we're solving the right equations.
 
 
 \acknowledgments
