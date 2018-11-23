@@ -15,7 +15,7 @@ markers = ['', '', '', 'o']
 
 colors = ['#1f78b4', '#33a02c', '#a6cee3', '#b2df8a']
 
-def amr_ignition(filename, results_base):
+def amr_ignition(file_base, results_base, do_amr = True):
     """Plot the effect of the resolution on the detonation conditions."""
 
     if not os.path.isdir(results_base):
@@ -43,7 +43,7 @@ def amr_ignition(filename, results_base):
         # Generate a plot of the distance from the center of the ignition point,
         # and also the time of the ignition.
 
-        # Get the list of refinement values we have tried
+        # Get the list of refinement values we have tried.
 
         r_list = wdmerger.get_parameter_list(dir)
 
@@ -117,13 +117,14 @@ def amr_ignition(filename, results_base):
 
     # First add all plots with refinement.
 
-    plt_count = 0
-    for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
-        if len(res_list) > 1:
-            has_plot = True
-            lbl = '{} km base + AMR'.format(int(base_res_list[i]))
-            plt.plot(res_list, dist_list, linestyle=linestyles[plt_count], marker=markers[plt_count], lw=2.0, label=lbl)
-            plt_count += 1
+    if do_amr:
+        plt_count = 0
+        for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
+            if len(res_list) > 1:
+                has_plot = True
+                lbl = '{} km base + AMR'.format(int(base_res_list[i]))
+                plt.plot(res_list, dist_list, linestyle=linestyles[plt_count], marker=markers[plt_count], lw=2.0, label=lbl)
+                plt_count += 1
 
     # Now add the base refinement cases.
 
@@ -147,8 +148,8 @@ def amr_ignition(filename, results_base):
         plt.legend(loc='best', prop={'size':12}, fontsize=12)
         plt.rcParams["figure.figsize"] = (11, 8.5)
         plt.tight_layout()
-        plt.savefig(filename)
-        plt.savefig(filename.replace('.eps', '.png'))
+        plt.savefig(file_base + '.eps')
+        plt.savefig(file_base + '.png')
 
         plt.close()
 
@@ -166,9 +167,14 @@ if __name__ == "__main__":
     file_base = 'amr_ignition'
     results_base = 'results/'
 
-    burning_mode = 'self-heat'
+    for burning_mode in ['self-heat', 'suppressed']:
 
-    run_dir = '/'.join([results_base, burning_mode])
-    run_str = '_'.join([file_base, burning_mode])
+        run_dir = '/'.join([results_base, burning_mode])
+        run_str = '_'.join([file_base, burning_mode])
 
-    amr_ignition(plots_dir + run_str, run_dir)
+        if burning_mode == 'self-heat':
+            do_amr = True
+        else:
+            do_amr = False
+
+        amr_ignition(plots_dir + run_str, run_dir, do_amr)
