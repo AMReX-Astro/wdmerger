@@ -950,7 +950,7 @@ function get_safety_factor {
   twoHours=$(hours_to_seconds 2:00:00)
 
   # For small enough jobs we need to introduce a little extra buffer 
-  # if we archiving during this run.
+  # if we are archiving during this run.
 
   if [ $tot_time -le $twoHours ] && [ -z $archive_queue ]; then
       safety_factor=0.2
@@ -1045,15 +1045,24 @@ function check_to_stop {
       # We also use a safety check based on the length of the recent timesteps.
       # If we predict that we're close to the end, break out of here and stop the run.
 
-      num_safety_timesteps=5
       file_to_check=$(get_last_output .)
       predicted_timestep=$(predict_next_timestep $file_to_check 10)
 
       # Make sure that we round up to the nearest second.
       # This relies on the trick that bc will truncate an integer
-      # if you don't use the floating point extension with -l.
+      # if you divide by 1 and don't use the floating point extension with -l.
 
       if [ "$predicted_timestep" != "-1" ]; then
+
+          # For short enough timesteps, use a larger safety factor, since we don't want
+          # to accidentally run into the end of the job. This is arbitrary but works.
+
+          predicted_timestep_int=$(echo "$predicted_timestep / 1" | bc)
+          if [ $predicted_timestep_int -le 60 ]; then
+              num_safety_timesteps=25
+          else
+              num_safety_timesteps=5
+          fi
 
 	  time_to_stop=$(echo "$curr_wall_time + ($num_safety_timesteps * $predicted_timestep + 1) / 1" | bc)
 
