@@ -113,43 +113,55 @@ def amr_ignition(file_base, results_base, do_amr = True):
             dist_lists[i] = dist_list
             time_lists[i] = time_list
 
-    has_plot = False
+    # Make two plots: location of the ignition, and time.
 
-    # First add all plots with refinement.
+    for plot_var in ["distance", "time"]:
 
-    if do_amr:
-        plt_count = 0
-        for i, (res_list, dist_list) in enumerate(zip(res_lists, dist_lists)):
-            if len(res_list) > 1:
+        has_plot = False
+
+        if plot_var is "distance":
+            var_lists = dist_lists
+        else:
+            var_lists = time_lists
+
+        # First add all plots with refinement.
+
+        if do_amr:
+            plt_count = 0
+            for i, (res_list, var_list) in enumerate(zip(res_lists, var_lists)):
+                if len(res_list) > 1:
+                    has_plot = True
+                    lbl = '{} km base + AMR'.format(int(base_res_list[i]))
+                    plt.plot(res_list, var_list, linestyle=linestyles[plt_count], marker=markers[plt_count], lw=2.0, label=lbl)
+                    plt_count += 1
+
+        # Now add the base refinement cases.
+
+        coarse_list = []
+        r_list = []
+        for i, ncell in enumerate(ncell_list):
+            if len(var_lists[i]) > 0:
                 has_plot = True
-                lbl = '{} km base + AMR'.format(int(base_res_list[i]))
-                plt.plot(res_list, dist_list, linestyle=linestyles[plt_count], marker=markers[plt_count], lw=2.0, label=lbl)
-                plt_count += 1
+                r_list.append(res_lists[i][0])
+                coarse_list.append(var_lists[i][0])
 
-    # Now add the base refinement cases.
+        if len(coarse_list) > 0:
+            lbl = 'Uniform grid'
+            plt.plot(r_list, coarse_list, color='k', lw=2.0, label=lbl, marker='o', markersize=12)
 
-    coarse_list = []
-    r_list = []
-    for i, ncell in enumerate(ncell_list):
-        if len(dist_lists[i]) > 0:
-            has_plot = True
-            r_list.append(res_lists[i][0])
-            coarse_list.append(dist_lists[i][0])
-
-    if len(coarse_list) > 0:
-        lbl = 'Uniform grid'
-        plt.plot(r_list, coarse_list, color='k', lw=2.0, label=lbl, marker='o', markersize=12)
-
-    if has_plot:
-        plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
-        plt.xscale('log', basex=10)
-        plt.xlabel(r"Finest resolution (km)", fontsize=24)
-        plt.ylabel(r"Ignition location (km)", fontsize=24)
-        plt.legend(loc='best', prop={'size':12}, fontsize=12)
-        plt.rcParams["figure.figsize"] = (11, 8.5)
-        plt.tight_layout()
-        plt.savefig(file_base + '.eps')
-        plt.savefig(file_base + '.png')
+        if has_plot:
+            plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
+            plt.xscale('log', basex=10)
+            plt.xlabel(r"Finest resolution (km)", fontsize=24)
+            if plot_var is "distance":
+                plt.ylabel(r"Ignition " + plot_var + " (km)", fontsize=24)
+            else:
+                plt.ylabel(r"Ignition " + plot_var + " (s)", fontsize=24)
+            plt.legend(loc='best', prop={'size':12}, fontsize=12)
+            plt.rcParams["figure.figsize"] = (11, 8.5)
+            plt.tight_layout()
+            plt.savefig(file_base + '_' + plot_var + '.eps')
+            plt.savefig(file_base + '_' + plot_var + '.png')
 
         plt.close()
 
