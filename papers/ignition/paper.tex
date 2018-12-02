@@ -215,46 +215,35 @@ coarse grid is sufficiently high.
 for reacting hydrodynamics simulations. Let us define $\tau_e = e / \dot{e}$
 as the nuclear energy injection timescale, and $\tau_s = \Delta x / c_s$
 as the sound-crossing time in a zone (where $\Delta x$ is the grid
-resolution and $c_s$ is the speed of sound).
-When the sound-crossing time is too long, energy is built up in
-a zone faster than it can be advected away by pressure waves.
-This is of course a problem inherent only to numerically discretized
-systems as the underlying fluid equations are continuous.
-This can lead to a numerically seeded detonation caused by the
-temperature building up too quickly in the zone; the detonation
-may be spurious in this case. If $\tau_s \ll \tau_e$, we can be
-confident that a numerically seeded detonation has not occurred.
-In practice, we will quantify this as:
+resolution and $c_s$ is the speed of sound). When the sound-crossing
+time is too long, energy is built up in a zone faster than it can be
+advected away by pressure waves. This is of course a problem inherent
+only to numerically discretized systems as the underlying fluid equations
+are continuous. This can lead to a numerically seeded detonation
+caused by the temperature building up too quickly in the zone; the
+detonation may be spurious in this case. If $\tau_s \ll \tau_e$,
+we can be confident that a numerically seeded detonation has not
+occurred. In practice, we will quantify this requirement as:
 \begin{equation}
-  \tau_s \leq f_{s}\, \tau_e \label{eq:burning_limiter_2}
+  \tau_s \leq f_{s}\, \tau_e \label{eq:burning_limiter}
 \end{equation}
 and require that $f_{s}$ is sufficiently smaller than one.
 \citet{kushnir:2013} state that $f_{s} = 0.1$ is a sufficient
-criterion. \citet{kushnir:2013} enforced this criterion on
-their simulations by artificially limiting the magnitude of the energy
-release after a burn.
+criterion for avoiding premature ignitions. \citeauthor{kushnir:2013}
+enforced this criterion on their simulations by artificially limiting
+the magnitude of the energy release after a burn, and claimed that
+this is resulted in more accurate WD collision simulations.
 
-To understand this choice, consider the outcome of our baseline case.
-When the two WDs collide, there is a prompt detonation
-at the contact point at the center of the domain. This detonation occurs
-when the density is relatively low because the WDs have not had much
-time to collide, and so the nucleosynthetic yield of nickel is low. If
-this is the case, the colliding WDs are not a good candidate for
-normal SNe Ia. However, if this detonation is delayed, material builds
-up at a stalled shock in the center, and the eventual detonation occurs
-on the outer edge of the stalled shock. There will then be much more
-high density material to process into nickel, and the resulting
-explosion creates an amount of nickel potentially sufficient to explain
-normal SNe Ia. The discussion thus centers on whether the prompt detonation
-is physical. \citeauthor{kushnir:2013} argues that it is not, on the basis
-that $\tau_s > \tau_e$ when this detonation occurs. We find the same thing:
-for the baseline case, the sound-crossing time is about five times longer
-than the energy injection time. This means that an ignition is guaranteed
-to occur for numerical reasons. \citeauthor{kushnir:2013} thus argue that
-the suppressed burn is justifiable, as it suppresses this prompt detonation.
+We find that for our test problem (and also the WD collisions we have simulated)
+we do observe $\tau_s > \tau_e$; typically the ratio is a factor of 2--5 at
+low resolution. This means that an ignition is very likely to occur for numerical
+reasons, regardless of whether it would occur for physical reasons. We thus
+investigate whether limiting the energy release of the burn (we will term this
+``suppressing'' the burn) is a useful technique for avoiding the prompt detonation.
 
-This argument is flawed because a physical detonation may \textit{also}
-occur this way. For example, consider a region of WD material at uniformly
+Before we examine the results, consider a flaw in the reasoning behind the limiter:
+a physical detonation may \textit{also} occur with the property that, in the detonating
+zone, $\tau_s > \tau_e$. For example, consider a region of WD material at uniformly
 high temperature, say $5 \times 10^9\ \text{K}$, with an arbitrarily large size,
 say a cube with side length 100 km. This region will very likely ignite,
 even if it is surrounded by much cooler material. By the time the material on
@@ -275,66 +264,31 @@ it would likely detonate. If the results do not match what occurs at higher
 resolution, then the simulation is not converged and the results are not reliable.
 However, it may also be the case that a higher resolution simulation will yield
 similar results, for example because even at the higher resolution, the physical
-size of the hotspot stays the same. Additionally, one might think that simply
-adding adaptive mesh refinement in the burning region could help, because then
-$\Delta x$ decreases, so the ratio of $\tau_s$ to $\tau_e$ should decrease.
-We developed an AMR criterion to do just this: we tag on regions suggested by
-the burning stability criterion, \autoref{eq:burning_limiter_2}. But if a low
-resolution simulation develops a very large hotspot that violates the stability
-criterion, adding refinement inside this region will likely not help, because the
-energy trapped in the center of the region may not be able to escape before ignition
-occurs. So for the simulations with resolution inside the stars that was coarser than
-10 km, even adding a significant amount of refinement (say, refining by a factor of
-64 or 128) did not change the propagation of a detonation.
+size of the hotspot stays the same. For this reason, an appeal to the numerical
+instability criterion alone is insufficient to understand whether a given ignition
+is real.
 
-For the above reasons, an appeal to the numerical instability criterion alone is
-insufficient to understand whether a given ignition is real. We find that \textit{all}
-of the detonations we have seen at any resolution violate the stability criterion,
-even for the finest resolution simulation we performed (150 m, inside the burning region).
-This is true even if the prompt detonation is suppressed:
-the delayed detonation also is numerically unstable. For comparison purposes, we
-developed an option for our burner to use a ``suppressed'' burning mode. In a
-suppressed burn, we limit the changes to the state so that \autoref{eq:burning_limiter_2}
-is always satisfied\footnote{To achieve this we directly multiply the
-right-hand-side vector in the integration by a factor $F$
-for all variables, where $F$ is the multiplicative factor needed to
-be applied to $\dot{e}$ such that the equality in \autoref{eq:burning_limiter_2}
-holds. (If the inequality is already satisfied, then the integration
-vector is not modified.) We fix $\tau_s$ to be the value of the sound
-crossing time at the beginning of the burn (that is, we do not
-update it as the sound speed changes) and we fix the energy $e$
-that goes into the estimate for $\tau_e$ to be the value of the
-internal energy of the zone at the beginning of the burn.}. When we
-evolve the baseline case with this suppressed burner, the prompt detonation
-is indeed suppressed. A later detonation does occur, but this delayed
-detonation also triggers the suppression. The result is that the detonation
-does not get to very high temperatures, and the result is again a ``failed''
-supernova that does not generate nearly enough nickel. Thus we do not
-reproduce the claim of \citeauthor{kushnir:2013} that the suppressed
-burning mode suppresses only the prompt detonation, but allows the
-delayed detonation to occur. We could find some way to turn off the
-suppression and allow the delayed detonation, but without some independent
-confirmation that the delayed detonation is physical (while the prompt
-detonation is not) this would be begging the question.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.30]{{{plots/amr_ignition_suppressed}}}
+  \caption{Similar to \autoref{fig:self-heat-distance}, but for simulations with the
+           suppressed burning limiter applied (\autoref{eq:burning_limiter}). Only
+           simulations without AMR are shown.
+           \label{fig:suppressed-distance}}
+\end{figure}
 
-The upshot of this discussion is that the only way to resolve the
-question is with higher resolution simulations. The semi-analytic
-criterion provided by \cite{garg:2017}, and the numerical calculations
-of \cite{seitenzahl:2009}, give critical radii for spontaneous detonation.
-For the densities we are interested in ($\sim 10^7\ \text{g\,/\,cm}^3$),
-assuming equal C/O material, the critical radii are in the range 1-10 km.
-So this suggests that our simulation needs to do significantly better than
-this if we are likely to make headway on this issue. Detonations observed
-at higher resolution may be physically plausible because the critical
-temperature gradient can be resolved. The high resolution needs to be
-achieved with some combination of high resolution of the collision process
-itself, and AMR based on the stability criterion as described
-above, where we tag for refinement all zones above some $f_{s}$, the
-ratio of the sound crossing time to the energy injection time. We
-cannot solely rely on a low resolution run with AMR based on the
-burning stability criterion for the reason described above, that a
-detonation may be spuriously locked in by the low resolution regardless
-of how much resolution we can practicably add to it.
+\autoref{fig:suppressed-distance} shows the results we obtain for our implementation of
+a ``suppressed'' burning mode. In a suppressed burn, we limit the changes to the state
+so that \autoref{eq:burning_limiter} is always satisfied. This is done by rescaling the
+energy release and species changes from a burn by a common factor such that the equality
+in \autoref{eq:burning_limiter} is satisfied. (If the inequality is already satisfied,
+then the integration vector is not modified.) We find that the suppressed burn
+generally does not yield correct results for low resolutions. The 64 km resolution
+simulation happens to yield approximately the correct ignition distance, but it does
+not occur at the right time, and in any case the incorrectness of the results at neighboring
+resolutions suggests that this is not a robust finding. Because of both the theoretical reasons
+discussed above, and this empirical finding, we do not believe that the suppressed burning
+limiter should be applied in production simulations.
 
 
 
@@ -344,11 +298,27 @@ of how much resolution we can practicably add to it.
 \section{Conclusions and Discussion}\label{Sec:Conclusions and Discussion}
 \label{sec:conclusion}
 
-% Add discussion about how none of the conclusions depend on the microphysics
-% of how ignitions/detonations actually occur -- this paper is simply about
-% self-consistent fluid simulations, i.e. are we even correctly solving
-% the equations we wrote down, and not focusing on the harder question
-% of whether we're solving the right equations.
+Our example detonation problem demonstrates, at least for this class of
+hydrodynamical burning problem, a grid resolution requirement much more stringent
+than 1 km. This does not represent all such burning problems: for example, we
+have tested similar setups with only carbon and oxygen for which a resolution
+in the tens of kilometers is sufficient. However, the fact that it is even
+possible for this type of burning to require a resolution better than 100 m
+should cast significant uncertainty on the results of simulations featuring
+detonations that do not meet this resolution.
+
+This study does not directly address the problem of how, in the detailed
+microphysical sense, a detonation wave actually begins to propagate, as
+we cannot resolve this length scale even in our highest resolution simulations.
+Rather, we are making the point that for simulations in which a macroscopic
+detonation wave appears self-consistently, this is only a valid numerical result
+if the resolution is sufficiently high. This convergence requirement does
+not imply that the detonation itself is physically realistic; but, it does
+imply that we are not even correctly solving the fluid equations we intend
+to solve when the convergence requirement is not met. We believe that our
+test case can be useful in the future for testing algorithmic innovations
+that hope to improve the realism of burning at low resolutions.
+
 
 
 \acknowledgments
@@ -376,8 +346,6 @@ clarification on the nature of the burning limiter used in \cite{kushnir:2013}.
 
 This research has made use of NASA's Astrophysics Data System 
 Bibliographic Services.
-
-\clearpage
 
 \bibliographystyle{../aasjournal}
 \bibliography{../refs}
