@@ -70,7 +70,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
 
             # Only do the plot for a specific resolution.
 
-            if ncell != 16384:
+            if ncell != 4096:
                 continue
 
             print('Searching in directory ' + results_dir)
@@ -118,7 +118,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
     # for capturing multiple plots for potential future use.
 
     fig, ax1 = plt.subplots()
-    ax1.plot(res_lists[8], dist_lists[8], linestyle=linestyles[0], marker=markers[0], color=colors[0], lw=2.0, label='Ignition location')
+    ax1.plot(res_lists[6], dist_lists[6], linestyle=linestyles[0], marker=markers[0], color=colors[0], lw=2.0, label='Ignition location')
 
     ax1.set_xscale('log', basex=10)
     ax1.set_xlabel(r"Finest resolution (km)", fontsize=24)
@@ -128,7 +128,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
     ax1.set_ylim(bottom=0.0)
 
     ax2 = ax1.twinx()
-    ax2.plot(res_lists[8], time_lists[8], linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
+    ax2.plot(res_lists[6], time_lists[6], linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
     ax2.set_ylabel(r"Ignition time (s)", fontsize=24, color=colors[1])
     ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=16)
     ax2.set_ylim(bottom=0.0)
@@ -156,12 +156,9 @@ if __name__ == "__main__":
 
     for burning_mode in ['self-heat', 'suppressed']:
 
-        run_dir = '/'.join([results_base, burning_mode])
-        run_str = '_'.join([file_base, burning_mode])
+        for ofrac in ['o0.0d0', 'o0.45d0']:
 
-        if burning_mode == 'self-heat':
-            do_amr = True
-        else:
-            do_amr = False
+            run_dir = '/'.join([results_base, burning_mode, ofrac])
+            run_str = '_'.join([file_base, burning_mode, ofrac])
 
-        amr_ignition(plots_dir + run_str, run_dir, do_amr)
+            amr_ignition(plots_dir + run_str, run_dir)
