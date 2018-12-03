@@ -68,11 +68,6 @@ def amr_ignition(file_base, results_base, do_amr = True):
             if not os.path.isdir(results_dir):
                 continue
 
-            # Only do the plot for a specific resolution.
-
-            if ncell != 4096:
-                continue
-
             print('Searching in directory ' + results_dir)
 
             prefix = 'det_x_plt'
@@ -113,12 +108,29 @@ def amr_ignition(file_base, results_base, do_amr = True):
             time_lists[i] = time_list
 
     # Plot location of the ignition and time on the same axis.
-    # Note that at this point we should only have one set of
-    # data in our list of lists, but we've kept the machinery
-    # for capturing multiple plots for potential future use.
+    # We want to combine data at low resolution using their coarse
+    # grid runs, with the AMR data at the highest resolution.
+
+    res_list = []
+    dist_list = []
+    time_list = []
+
+    for i in range(len(ncell_list)-1):
+        res_list.append(res_lists[i][0])
+        dist_list.append(dist_lists[i][0])
+        time_list.append(time_lists[i][0])
+
+    for res in res_lists[-1]:
+        res_list.append(res)
+
+    for dist in dist_lists[-1]:
+        dist_list.append(dist)
+
+    for time in time_lists[-1]:
+        time_list.append(time)
 
     fig, ax1 = plt.subplots()
-    ax1.plot(res_lists[6], dist_lists[6], linestyle=linestyles[0], marker=markers[0], color=colors[0], lw=2.0, label='Ignition location')
+    ax1.plot(res_list, dist_list, linestyle=linestyles[0], marker=markers[0], color=colors[0], lw=2.0, label='Ignition location')
 
     ax1.set_xscale('log', basex=10)
     ax1.set_xlabel(r"Finest resolution (km)", fontsize=24)
@@ -128,7 +140,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
     ax1.set_ylim(bottom=0.0)
 
     ax2 = ax1.twinx()
-    ax2.plot(res_lists[6], time_lists[6], linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
+    ax2.plot(res_list, time_list, linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
     ax2.set_ylabel(r"Ignition time (s)", fontsize=24, color=colors[1])
     ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=16)
     ax2.set_ylim(bottom=0.0)
