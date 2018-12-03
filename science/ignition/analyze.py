@@ -68,10 +68,9 @@ def amr_ignition(file_base, results_base, do_amr = True):
             if not os.path.isdir(results_dir):
                 continue
 
-            # Only do AMR plots for certain resolutions, to avoid the
-            # plot being too crowded.
+            # Only do the plot for a specific resolution.
 
-            if (int(r[1:]) > 1) and (ncell not in [128, 4096, 16384]):
+            if ncell != 16384:
                 continue
 
             print('Searching in directory ' + results_dir)
@@ -113,57 +112,33 @@ def amr_ignition(file_base, results_base, do_amr = True):
             dist_lists[i] = dist_list
             time_lists[i] = time_list
 
-    # Make two plots: location of the ignition, and time.
+    # Plot location of the ignition and time on the same axis.
+    # Note that at this point we should only have one set of
+    # data in our list of lists, but we've kept the machinery
+    # for capturing multiple plots for potential future use.
 
-    for plot_var in ["distance", "time"]:
+    fig, ax1 = plt.subplots()
+    ax1.plot(res_lists[8], dist_lists[8], linestyle=linestyles[0], marker=markers[0], color=colors[0], lw=2.0, label='Ignition location')
 
-        has_plot = False
+    ax1.set_xscale('log', basex=10)
+    ax1.set_xlabel(r"Finest resolution (km)", fontsize=24)
+    ax1.set_ylabel(r"Ignition location (km)", fontsize=24, color=colors[0])
+    ax1.tick_params(axis='y', labelcolor=colors[0], labelsize=16)
+    ax1.tick_params(axis='x', labelsize=16)
+    ax1.set_ylim(bottom=0.0)
 
-        if plot_var is "distance":
-            var_lists = dist_lists
-        else:
-            var_lists = time_lists
+    ax2 = ax1.twinx()
+    ax2.plot(res_lists[8], time_lists[8], linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
+    ax2.set_ylabel(r"Ignition time (s)", fontsize=24, color=colors[1])
+    ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=16)
+    ax2.set_ylim(bottom=0.0)
 
-        # First add all plots with refinement.
+    fig.set_size_inches(11, 8.5)
+    fig.tight_layout()
+    plt.savefig(file_base + '.eps')
+    plt.savefig(file_base + '.png')
 
-        if do_amr:
-            plt_count = 0
-            for i, (res_list, var_list) in enumerate(zip(res_lists, var_lists)):
-                if len(res_list) > 1:
-                    has_plot = True
-                    lbl = '{} km base + AMR'.format(int(base_res_list[i]))
-                    plt.plot(res_list, var_list, linestyle=linestyles[plt_count], marker=markers[plt_count], lw=2.0, label=lbl)
-                    plt_count += 1
-
-        # Now add the base refinement cases.
-
-        coarse_list = []
-        r_list = []
-        for i, ncell in enumerate(ncell_list):
-            if len(var_lists[i]) > 0:
-                has_plot = True
-                r_list.append(res_lists[i][0])
-                coarse_list.append(var_lists[i][0])
-
-        if len(coarse_list) > 0:
-            lbl = 'Uniform grid'
-            plt.plot(r_list, coarse_list, color='k', lw=2.0, label=lbl, marker='o', markersize=12)
-
-        if has_plot:
-            plt.tick_params(axis='both', which='major', pad=10, labelsize=16)
-            plt.xscale('log', basex=10)
-            plt.xlabel(r"Finest resolution (km)", fontsize=24)
-            if plot_var is "distance":
-                plt.ylabel(r"Ignition " + plot_var + " (km)", fontsize=24)
-            else:
-                plt.ylabel(r"Ignition " + plot_var + " (s)", fontsize=24)
-            plt.legend(loc='best', prop={'size':12}, fontsize=12)
-            plt.rcParams["figure.figsize"] = (11, 8.5)
-            plt.tight_layout()
-            plt.savefig(file_base + '_' + plot_var + '.eps')
-            plt.savefig(file_base + '_' + plot_var + '.png')
-
-        plt.close()
+    plt.close()
 
 
 
