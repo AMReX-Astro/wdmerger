@@ -83,6 +83,12 @@ function set_run_opts {
             elif [ $refinement -eq 16384 ]; then
                 amr_max_level=7
                 amr_ref_ratio="4 4 4 4 4 4 4"
+            elif [ $refinement -eq 32768 ]; then
+                amr_max_level=8
+                amr_ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $refinement -eq 65536 ]; then
+                amr_max_level=8
+                amr_ref_ratio="4 4 4 4 4 4 4 4"
             else
                 echo "Unknown refinement factor: "$refinement"; exiting."
                 exit
@@ -181,11 +187,11 @@ do
                 elif [ $ncell -eq 2048 ]; then
                     refinement_list="1"
                 elif [ $ncell -eq 4096 ]; then
-                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384"
+                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
                 elif [ $ncell -eq 8192 ]; then
                     refinement_list="1"
                 elif [ $ncell -eq 16384 ]; then
-                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096"
+                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384"
                 fi
 
             fi
