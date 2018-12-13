@@ -168,9 +168,7 @@ if __name__ == "__main__":
 
     for burning_mode in ['self-heat', 'suppressed']:
 
-        for ofrac in ['o0.0d0', 'o0.45d0']:
+        run_dir = '/'.join([results_base, burning_mode])
+        run_str = '_'.join([file_base, burning_mode])
 
-            run_dir = '/'.join([results_base, burning_mode, ofrac])
-            run_str = '_'.join([file_base, burning_mode, ofrac])
-
-            amr_ignition(plots_dir + run_str, run_dir)
+        amr_ignition(plots_dir + run_str, run_dir)

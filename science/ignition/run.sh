@@ -127,11 +127,9 @@ to_run=1
 
 results_dir="results"
 
-ncell_list="64 128 256 512 1024 2048 4096 8192 16384"
+ncell_list="64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
 
 burning_mode_list="self-heat suppressed"
-
-ofrac_list="0.0d0 0.45d0"
 
 for burning_mode_str in $burning_mode_list
 do
@@ -142,76 +140,49 @@ do
         burning_mode="3"
     fi
 
-    for ofrac in $ofrac_list
+    for ncell in $ncell_list
     do
 
-        for ncell in $ncell_list
+        refinement_list="1"
+
+        if [ $ncell -eq 64 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 128 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 256 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 512 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 1024 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 2048 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 4096 ]; then
+            refinement_list="1 2 4 8 16 32 64"
+        elif [ $ncell -eq 8192 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 16384 ]; then
+            refinement_list="1 2 4 8 16"
+        elif [ $ncell -eq 32768 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 65536 ]; then
+            refinement_list="1 2 4 8 16 32 64 128 256"
+        fi
+
+        for refinement in $refinement_list
         do
 
-            refinement_list="1"
+            dir=$results_dir/$burning_mode_str/n$ncell/r$refinement
+            set_run_opts
 
-            if [ "$ofrac" == "0.45d0" ]; then
-
-                if [ $ncell -eq 64 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 128 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 256 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 512 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 1024 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 2048 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 4096 ]; then
-                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096"
-                elif [ $ncell -eq 8192 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 16384 ]; then
-                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
-                fi
-
-            else
-
-                if [ $ncell -eq 64 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 128 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 256 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 512 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 1024 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 2048 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 4096 ]; then
-                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
-                elif [ $ncell -eq 8192 ]; then
-                    refinement_list="1"
-                elif [ $ncell -eq 16384 ]; then
-                    refinement_list="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384"
-                fi
-
+            if [ $to_run -eq 1 ]; then
+                run
             fi
 
-            for refinement in $refinement_list
-            do
+            to_run=1
 
-                dir=$results_dir/$burning_mode_str/o$ofrac/n$ncell/r$refinement
-                set_run_opts
+        done # refinement
 
-                if [ $to_run -eq 1 ]; then
-                    run
-                fi
-
-                to_run=1
-
-            done # refinement
-
-        done # ncell
-
-    done # ofrac
+    done # ncell
 
 done # burning mode
