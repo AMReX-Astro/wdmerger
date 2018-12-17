@@ -166,7 +166,7 @@ do
         elif [ $ncell -eq 32768 ]; then
             refinement_list="1"
         elif [ $ncell -eq 65536 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256"
+            refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
         fi
 
         for refinement in $refinement_list
