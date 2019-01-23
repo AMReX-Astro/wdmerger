@@ -138,12 +138,14 @@ def amr_ignition(file_base, results_base, do_amr = True):
     ax1.tick_params(axis='y', labelcolor=colors[0], labelsize=16)
     ax1.tick_params(axis='x', labelsize=16)
     ax1.set_ylim(bottom=0.0)
+    ax1.set_ylim(top=1100.0)
 
     ax2 = ax1.twinx()
     ax2.plot(res_list, time_list, linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
     ax2.set_ylabel(r"Ignition time (s)", fontsize=24, color=colors[1])
     ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=16)
     ax2.set_ylim(bottom=0.0)
+    ax2.set_ylim(top=1.1)
 
     fig.set_size_inches(11, 8.5)
     fig.tight_layout()
