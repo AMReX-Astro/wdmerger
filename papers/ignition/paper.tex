@@ -79,12 +79,12 @@ arise self-consistently during the evolution. It is not clear whether these
 detonations would occur in a simulation that fully resolved the burning. In this
 study we examine a test detonation problem inspired by collisions of white dwarfs.
 This test problem demonstrates that achieving a converged thermonuclear ignition
-requires spatial resolution finer than 1 km in the burning region, and that
-the simulation as a whole likely needs a base resolution on the order of 1 km.
+requires spatial resolution much finer than 1 km in the burning region, and that
+the simulation as a whole likely needs a base resolution on the order of 1 km or better.
 Current computational resource constraints place this stringent resolution requirement
 out of reach for almost all multi-dimensional supernova simulations.
 Consequently, contemporary simulations that self-consistently demonstrate
-detonations are very likely not resolved and should not be trusted.
+detonations are very likely not resolved and should be treated with caution.
 \end{abstract}
 \keywords{supernovae: general - white dwarfs}
 
@@ -172,7 +172,7 @@ the timestep.
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[scale=0.525]{{{plots/amr_ignition_self-heat}}}
+  \includegraphics[scale=0.30]{{{plots/amr_ignition_self-heat}}}
   \caption{Distance from the contact point of the ignition as a function of finest
            spatial resolution. The solid black curve with circle markers represents
            the simulations with uniform resolution (no AMR). The other curves represent
@@ -188,7 +188,7 @@ all simulations with resolution worse than about 1 km represent the same prompt 
 and as the resolution increases, there are grid points physically closer to the center that can ignite.
 However, when the resolution is better than 1 km, the situation changes dramatically: the prompt
 central ignition does not occur, but rather the ignition is delayed and occurs further from the contact
-point. When we have finally converged, the ignition occurs around 1000 km from the contact point,
+point. When we have finally converged, the ignition occurs around 900 km from the contact point,
 about 1 second after contact (contrast to less than 0.05 seconds for the simulation with 1 km resolution).
 This story contains two important lessons. First, the required resolution for a converged simulation,
 less than 100 m, is out of reach of current 3D supernova simulations. Second, the behavior for
