@@ -108,9 +108,8 @@ In this study we examine the challenges associated with simulating thermonuclear
 The inspiration for this work comes from the literature on head-on collisions of WDs,
 which can occur, for example, in certain triple star systems \citep{thompson:2011,hamers:2013}.
 WD collisions rapidly convert a significant amount of kinetic energy into thermal energy and
-thus set up conditions ripe for a thermonuclear detonation. Collisions are interesting
-from the simulation perspective because of both this susceptibility to detonation and
-the relative ease in setting them up.
+thus set up conditions ripe for a thermonuclear detonation. Since they are easy to set up,
+they are a useful vehicle for studying the properties of detonations.
 
 Early studies on WD collisions \citep{rosswog:2009,raskin:2010,loren-aguilar:2010,
 hawley:2012,garcia-senz:2013} typically had effective spatial resolutions in the
@@ -147,6 +146,9 @@ that keep feeding the domain with material that has the same conditions as the i
 Simulations are performed with the adaptive mesh refinement (AMR) code \castro\
 \citep{castro, astronum:2017}. For the burning we use the alpha-chain nuclear network
 \texttt{aprox13}. The results we describe below do not strongly depend on the network.
+Release 18.12 of the \castro\ code was used. The \amrex\ and \microphysics\ repositories
+that \castro\ depends on were also on release 18.12. The problem is located in the
+\texttt{Exec/science/Detonation} directory, and we used the \texttt{inputs-collision} setup.
 
 The simulation is terminated when the peak temperature on the domain first reaches
 $4 \times 10^9$ K, which we call a thermonuclear ignition. This stopping criterion is a
@@ -159,24 +161,22 @@ the time since the beginning of the simulation required to reach this ignition c
 and the distance from the contact point of the peak temperature.
 
 The only parameter we vary in this study is the spatial resolution used for this problem.
-We vary both the base resolution of the grid, and also the amount of refinement allowed.
-AMR is applied on gradients of the temperature: we tag zones for refinement if the temperature
+For low resolutions we vary only the base resolution of the grid, up to a resolution of
+0.25 km. For resolutions finer than this, we fix the base grid at a resolution of 0.25 km,
+and use AMR applied on gradients of the temperature. We tag zones for refinement if the temperature
 varies by more than 50\% between two zones. Timesteps are limited only by the hydrodynamic
 stability constraint, with CFL number 0.5. Although this leads to Strang splitting error
 in the coupling of the burning and hydrodynamics for low resolution, we have verified that
 the incorrect results seen at low resolution do not meaningfully depend on the timestep constraint
 (both by applying a timestep limiter based on nuclear burning, and by using the spectral deferred
 corrections driver in \castro, which directly couples the burning and hydrodynamics). At very high
-resolution, the splitting error automatically becomes unimportant as the CFL criterion decreases
-the timestep.
+resolution, the splitting error tends to zero as the CFL criterion decreases the timestep.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[scale=0.30]{{{plots/amr_ignition_self-heat}}}
-  \caption{Distance from the contact point of the ignition as a function of finest
-           spatial resolution. The solid black curve with circle markers represents
-           the simulations with uniform resolution (no AMR). The other curves represent
-           simulations with a fixed base resolution and varying amounts of AMR.
+  \caption{Distance from the contact point of the ignition (solid blue), and time of the
+           ignition (dashed green), as a function of finest spatial resolution.
            \label{fig:self-heat-distance}}
 \end{figure}
 
@@ -188,23 +188,13 @@ all simulations with resolution worse than about 1 km represent the same prompt 
 and as the resolution increases, there are grid points physically closer to the center that can ignite.
 However, when the resolution is better than 1 km, the situation changes dramatically: the prompt
 central ignition does not occur, but rather the ignition is delayed and occurs further from the contact
-point. When we have finally converged, the ignition occurs around 900 km from the contact point,
+point. When we have finally (perhaps) converged, the ignition occurs around 900 km from the contact point,
 about 1 second after contact (contrast to less than 0.05 seconds for the simulation with 1 km resolution).
-This story contains two important lessons. First, the required resolution for a converged simulation,
-less than 100 m, is out of reach of current 3D supernova simulations. Second, the behavior for
-resolutions worse than 1 km qualitatively appears to be converged, and one could perhaps
-be misled into thinking that there was no reason to try higher resolutions, which is reason
-for caution in interpreting reacting hydrodynamics simulations.
-
-Also in \autoref{fig:self-heat-distance} we show results for a few cases where we add AMR
-using the criterion described above. The main takeaway here is that for coarse grid resolutions
-worse than 1 km, the addition of AMR yields unreliable results: the coarse grid's approximation
-of the physics must simply not be good enough for refinement to do any good. This parallels the
-fact that the trend of convergence towards the correct delayed detonation does not begin until
-resolutions better than 1 km. However, for a coarse grid resolution of 1 km, AMR does yield
-convergence to the correct answer, and at a much cheaper computational cost than the equivalent
-uniform grid simulation\marginpar{quantify this}, so AMR does add value if the resolution on the
-coarse grid is sufficiently high.
+This story contains two important lessons. First, the required resolution for even a qualitatively
+converged simulation, less than 100 m, is out of reach of current 3D supernova simulations.
+Second, the behavior for resolutions worse than 1 km qualitatively appears to be converged,
+and one could perhaps be misled into thinking that there was no reason to try higher resolutions,
+which is reason for caution in interpreting reacting hydrodynamics simulations.
 
 
 
@@ -239,9 +229,10 @@ we do observe $\tau_s > \tau_e$; typically the ratio is a factor of 2--5 at
 low resolution. This means that an ignition is very likely to occur for numerical
 reasons, regardless of whether it would occur for physical reasons. We thus
 investigate whether limiting the energy release of the burn (we will term this
-``suppressing'' the burn) is a useful technique for avoiding the prompt detonation.
+``suppressing'' the burn), as proposed by \citeauthor{kushnir:2013},
+is a useful technique for avoiding the prompt detonation.
 
-Before we examine the results, consider a flaw in the reasoning behind the limiter:
+Before we examine the results, consider a flaw in the application of the limiter:
 a physical detonation may \textit{also} occur with the property that, in the detonating
 zone, $\tau_s > \tau_e$. For example, consider a region of WD material at uniformly
 high temperature, say $5 \times 10^9\ \text{K}$, with an arbitrarily large size,
@@ -272,8 +263,7 @@ is real.
   \centering
   \includegraphics[scale=0.30]{{{plots/amr_ignition_suppressed}}}
   \caption{Similar to \autoref{fig:self-heat-distance}, but for simulations with the
-           suppressed burning limiter applied (\autoref{eq:burning_limiter}). Only
-           simulations without AMR are shown.
+           suppressed burning limiter applied (\autoref{eq:burning_limiter}).
            \label{fig:suppressed-distance}}
 \end{figure}
 
@@ -286,9 +276,11 @@ then the integration vector is not modified.) We find that the suppressed burn
 generally does not yield correct results for low resolutions. The 64 km resolution
 simulation happens to yield approximately the correct ignition distance, but it does
 not occur at the right time, and in any case the incorrectness of the results at neighboring
-resolutions suggests that this is not a robust finding. Because of both the theoretical reasons
-discussed above, and this empirical finding, we do not believe that the suppressed burning
-limiter should be applied in production simulations.
+resolutions suggests that this is not a robust finding. The suppressed burning simulation
+reaches qualitative convergence at around the same 100 m resolution as the normal self-heating
+burn. Because of both the theoretical reasons discussed above, and this empirical finding that
+the burning suppression does not make low resolution simulations any more accurate, we do not
+believe that the suppressed burning limiter should be applied in production simulations.
 
 
 
