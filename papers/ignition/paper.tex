@@ -113,15 +113,15 @@ they are a useful vehicle for studying the properties of detonations.
 
 Early studies on WD collisions \citep{rosswog:2009,raskin:2010,loren-aguilar:2010,
 hawley:2012,garcia-senz:2013} typically had effective spatial resolutions in the
-range 100--500 km, and observed detonations that convert a large amount of
+range 100--500 km \added{for the grid codes, and 10--100 km for the SPH codes}, and observed detonations that convert a large amount of
 carbon/oxygen material into iron-group elements. These studies varied in methodology
 (Lagrangian versus Eulerian evolution, nuclear network used) and did not closely agree
 on the final result of the event (see Table 4 of \cite{garcia-senz:2013} for a summary).
 \cite{kushnir:2013} argued that many of these simulations featured numerically unstable
 evolution, ultimately caused by the zone size being significantly larger than the length
 scale over which detonations form. The detonation length scale can vary widely based
-on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally much
-smaller than 100 km.
+on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally \replaced{much
+smaller than 100 km}{not larger than 10 km}.
 
 In this paper, we attempt to find what simulation length scale is required to achieve
 converged thermonuclear ignitions. \added{In our two-dimensional axisymmetric simulations
