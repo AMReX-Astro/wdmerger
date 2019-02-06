@@ -166,7 +166,8 @@ that \castro\ depends on were also on release 18.12. The problem is located in t
 \texttt{Exec/science/Detonation} directory, and we used the \texttt{inputs-collision} setup.
 
 The simulation is terminated when the peak temperature on the domain first reaches
-$4 \times 10^9$ K, which we call a thermonuclear ignition. This stopping criterion is a
+$4 \times 10^9$ K, which we call a thermonuclear ignition (\added{for reference, the
+density at the location where the ignition occurs is approximately $1.4\times 10^7\ \text{g / cm}^3$}). This stopping criterion is a
 proxy for the beginning of a detonation. Reaching this temperature does not guarantee
 that a detonation will begin, and in this study we do not directly address the question
 of whether a ignition of this kind always leads to a detonation. \added{Nor are we commenting
@@ -259,7 +260,7 @@ sufficiently high that we can simultaneously resolve the energy release over mul
 timesteps and the advection of energy across multiple zones. Even at the highest resolution
 we could achieve, about 50 cm, $\tau_s / \tau_e$ was 0.8 at ignition, which is not
 sufficiently small to be confident of numerical stability at that resolution. Note
-that merely decreasing the timestep (at fixed resolution) does not help here, as the
+that merely decreasing the timestep (at fixed resolution) does not help here either, as the
 instability criterion is, to first order, independent of the size of the timestep.}
 
 We thus investigate whether limiting the energy release of the burn (we will term this
