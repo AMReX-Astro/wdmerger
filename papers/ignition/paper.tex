@@ -224,36 +224,36 @@ try higher resolutions, which is reason for caution in interpreting reacting hyd
 \label{sec:unstable_burning}
 
 \citet{kushnir:2013} observe an important possible failure mode
-for reacting hydrodynamics simulations. Let us define $\tau_e = e / \dot{e}$
-as the nuclear energy injection timescale, and $\tau_s = \Delta x / c_s$
+for reacting hydrodynamics simulations. Let us define $\tau_{\rm e} = e / \dot{e}$
+as the nuclear energy injection timescale, and $\tau_{\rm s} = \Delta x / c_{\rm s}$
 as the sound-crossing time in a zone (where $\Delta x$ is the grid
-resolution and $c_s$ is the speed of sound). When the sound-crossing
+resolution and $c_{\rm s}$ is the speed of sound). When the sound-crossing
 time is too long, energy is built up in a zone faster than it can be
 advected away by pressure waves. \added{This effect generalizes to
-Langrangian simulations as well, where $\tau_s$ should be understood
+Langrangian simulations as well, where $\tau_{\rm s}$ should be understood
 as the timescale for transport of energy to a neighboring fluid element.}
 This is of course a problem inherent 
 only to numerically discretized systems as the underlying fluid equations
 are continuous. This can lead to a numerically seeded detonation
 caused by the temperature building up too quickly in the zone; the
-detonation may be spurious in this case. If $\tau_s \ll \tau_e$,
+detonation may be spurious in this case. If $\tau_{\rm s} \ll \tau_{\rm e}$,
 we can be confident that a numerically seeded detonation has not
 occurred. In practice, we will quantify this requirement as:
 \begin{equation}
-  \tau_s \leq f_{s}\, \tau_e \label{eq:burning_limiter}
+  \tau_{\rm s} \leq f_{\rm s}\, \tau_{\rm e} \label{eq:burning_limiter}
 \end{equation}
 and require that $f_{s}$ is sufficiently smaller than one.
-\citet{kushnir:2013} state that $f_{s} = 0.1$ is a sufficient
+\citet{kushnir:2013} state that $f_{\rm s} = 0.1$ is a sufficient
 criterion for avoiding premature ignitions. \citeauthor{kushnir:2013}
 enforced this criterion on their simulations by artificially limiting
 the magnitude of the energy release after a burn, and claimed that
 this is resulted in more accurate WD collision simulations.
 
 We find that for our test problem (and also the WD collisions we have simulated)
-we do observe $\tau_s > \tau_e$; typically the ratio is a factor of 2--5 at
-low resolution. This means that an ignition is very likely to occur for numerical
-reasons, regardless of whether it would occur for physical reasons. \added{At low
-resolution, adding more resolution does not meaningfully improve the ratio of
+we do observe $\tau_{\rm s} > \tau_{\rm e}$; typically the ratio is a factor of 2--5 at
+low resolution (\added{see \autoref{fig:self-heat-ts_te}}). This means that an ignition is
+very likely to occur for numerical reasons, regardless of whether it would occur for physical reasons.
+\added{At low resolution, adding more resolution does not meaningfully improve the ratio of
 $\tau_s$ to $\tau_e$ at the point of ignition. The ignition timescale is so short
 that virtually all of the energy release occurs in a single timestep even if the
 timestep gets shorter due to the CFL limiter. It is only when the resolution gets
@@ -263,6 +263,14 @@ we could achieve, about 50 cm, $\tau_s / \tau_e$ was 0.8 at ignition, which is n
 sufficiently small to be confident of numerical stability at that resolution. Note
 that merely decreasing the timestep (at fixed resolution) does not help here either, as the
 instability criterion is, to first order, independent of the size of the timestep.}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.30]{{{plots/amr_ignition_self-heat_ts_te}}}
+  \caption{Ratio of the sound-crossing timescale to the energy injection timescale,
+           for the simulations in \autoref{fig:self-heat-distance}.
+           \label{fig:self-heat-ts_te}}
+\end{figure}
 
 We thus investigate whether limiting the energy release of the burn (we will term this
 ``suppressing'' the burn), as proposed by \citeauthor{kushnir:2013},
