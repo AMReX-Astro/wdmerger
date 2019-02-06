@@ -121,8 +121,13 @@ on the final result of the event (see Table 4 of \cite{garcia-senz:2013} for a s
 evolution, ultimately caused by the zone size being significantly larger than the length
 scale over which detonations form. The detonation length scale can vary widely based
 on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally much
-smaller than 100 km. In this paper, we attempt to find what simulation length scale
-is required to achieve converged thermonuclear ignitions.
+smaller than 100 km.
+
+In this paper, we attempt to find what simulation length scale is required to achieve
+converged thermonuclear ignitions. \added{In our two-dimensional axisymmetric simulations
+of WD collisions, using the Eulerian reactive hydrodynamics code \castro\ \citep{castro, astronum:2017},
+the simulations are unresolved at the highest resolution we could afford to run (0.25 km).
+So, in this paper we turn to a 1D test, which allows us to test at much higher resolution.}
 
 
 
@@ -143,9 +148,11 @@ of energy at $x = 0$, and the primary question is whether a detonation occurs pr
 near this contact point, or occurs later (possibly at a distance from the contact point).
 The simulated domain has width $1.6384 \times 10^9$ cm, and we apply inflow boundary conditions
 that keep feeding the domain with material that has the same conditions as the initial fluid.
-Simulations are performed with the adaptive mesh refinement (AMR) code \castro\
-\citep{castro, astronum:2017}. For the burning we use the alpha-chain nuclear network
-\texttt{aprox13}. The results we describe below do not strongly depend on the network.
+Simulations are performed with the adaptive mesh refinement (AMR) code \castro.
+For the burning we use the alpha-chain nuclear network
+\texttt{aprox13}. \replaced{The results we describe below do not strongly depend on the network.}
+{We have tried with a few (relatively small) networks, and the results we describe below hold
+for all the ones we tested.}
 Release 18.12 of the \castro\ code was used. The \amrex\ and \microphysics\ repositories
 that \castro\ depends on were also on release 18.12. The problem is located in the
 \texttt{Exec/science/Detonation} directory, and we used the \texttt{inputs-collision} setup.
@@ -154,8 +161,11 @@ The simulation is terminated when the peak temperature on the domain first reach
 $4 \times 10^9$ K, which we call a thermonuclear ignition. This stopping criterion is a
 proxy for the beginning of a detonation. Reaching this temperature does not guarantee
 that a detonation will begin, and in this study we do not directly address the question
-of whether a ignition of this kind always leads to a detonation. Rather, the main question
-we investigate here is whether this ignition is numerically converged. A converged ignition
+of whether a ignition of this kind always leads to a detonation. \added{Nor are we commenting
+on the physics of the ignition process itself.} Rather, the main question
+we investigate here is whether this ignition is numerically converged, \added{and for this purpose
+this arbitrary stopping point is sufficient, since in a converged simulation the stopping point
+should be reached at the same time independent of resolution}. A converged ignition
 is a prerequisite to having a converged detonation. We measure two diagnostic quantities:
 the time since the beginning of the simulation required to reach this ignition criterion,
 and the distance from the contact point of the peak temperature.
@@ -188,13 +198,15 @@ all simulations with resolution worse than about 1 km represent the same prompt 
 and as the resolution increases, there are grid points physically closer to the center that can ignite.
 However, when the resolution is better than 1 km, the situation changes dramatically: the prompt
 central ignition does not occur, but rather the ignition is delayed and occurs further from the contact
-point. When we have finally (perhaps) converged, the ignition occurs around 900 km from the contact point,
-about 1 second after contact (contrast to less than 0.05 seconds for the simulation with 1 km resolution).
-This story contains two important lessons. First, the required resolution for even a qualitatively
-converged simulation, less than 100 m, is out of reach of current 3D supernova simulations.
-Second, the behavior for resolutions worse than 1 km qualitatively appears to be converged,
-and one could perhaps be misled into thinking that there was no reason to try higher resolutions,
-which is reason for caution in interpreting reacting hydrodynamics simulations.
+point. When we have finally \replaced{(perhaps) converged}{reached the point where the curves start to flatten},
+the ignition occurs around 900 km from the contact point, about 1 second after contact (contrast to less than
+0.05 seconds for the simulation with 1 km resolution). \added{Even at this resolution, it is not clear if
+the simulation is converged. We were unable to perform higher resolution simulations to check convergence
+due to the length of time that would be required.} This story contains two important lessons. First,
+the required resolution for even a qualitatively converged simulation, less than 100 m, is out of reach
+of current 3D supernova simulations. Second, the behavior for resolutions worse than 1 km qualitatively
+appears to be converged, and one could perhaps be misled into thinking that there was no reason to
+try higher resolutions, which is reason for caution in interpreting reacting hydrodynamics simulations.
 
 
 
@@ -207,7 +219,10 @@ as the nuclear energy injection timescale, and $\tau_s = \Delta x / c_s$
 as the sound-crossing time in a zone (where $\Delta x$ is the grid
 resolution and $c_s$ is the speed of sound). When the sound-crossing
 time is too long, energy is built up in a zone faster than it can be
-advected away by pressure waves. This is of course a problem inherent
+advected away by pressure waves. \added{This effect generalizes to
+Langrangian simulations as well, where $\tau_s$ should be understood
+as the timescale for transport of energy to a neighboring fluid element.}
+This is of course a problem inherent 
 only to numerically discretized systems as the underlying fluid equations
 are continuous. This can lead to a numerically seeded detonation
 caused by the temperature building up too quickly in the zone; the
@@ -227,10 +242,21 @@ this is resulted in more accurate WD collision simulations.
 We find that for our test problem (and also the WD collisions we have simulated)
 we do observe $\tau_s > \tau_e$; typically the ratio is a factor of 2--5 at
 low resolution. This means that an ignition is very likely to occur for numerical
-reasons, regardless of whether it would occur for physical reasons. We thus
-investigate whether limiting the energy release of the burn (we will term this
+reasons, regardless of whether it would occur for physical reasons. \added{At low
+resolution, adding more resolution does not meaningfully improve the ratio of
+$\tau_s$ to $\tau_e$ at the point of ignition. The ignition timescale is so short
+that virtually all of the energy release occurs in a single timestep even if the
+timestep gets shorter due to the CFL limiter. It is only when the resolution gets
+sufficiently high that we can simultaneously resolve the energy release over multiple
+timesteps and the advection of energy across multiple zones. Even at the highest resolution
+we could achieve, about 50 cm, $\tau_s / \tau_e$ was 0.8 at ignition, which is not
+sufficiently small to be confident of numerical stability at that resolution.}
+We thus investigate whether limiting the energy release of the burn (we will term this
 ``suppressing'' the burn), as proposed by \citeauthor{kushnir:2013},
-is a useful technique for avoiding the prompt detonation.
+is a useful technique for avoiding the prompt detonation. \added{Since the limiter ensures
+the inequality in \autoref{eq:burning_limiter} holds by construction, the specific
+question to ask is whether the limiter achieves the correct answer and is converged
+in cases where the simulation would otherwise be uncorrect or unconverged.}
 
 Before we examine the results, consider a flaw in the application of the limiter:
 a physical detonation may \textit{also} occur with the property that, in the detonating
@@ -282,6 +308,13 @@ burn. Because of both the theoretical reasons discussed above, and this empirica
 the burning suppression does not make low resolution simulations any more accurate, we do not
 believe that the suppressed burning limiter should be applied in production simulations.
 
+\added{To summarize, then, satisfying the stability criterion is neither necessary nor
+sufficient, in general, for numerical convergence. It is not necessary because of the
+counter-example provided above of a very large hotspot, and it is not sufficient, as the
+empirical example in \autoref{fig:suppressed-distance} demonstrates. Nevertheless,
+it is a very useful diagnostic metric for understanding simulations, and it is likely
+that in many real cases, violation of the stability criterion is a clear sign of
+the simulation being under-resolved.}
 
 
 %==========================================================================
@@ -292,12 +325,23 @@ believe that the suppressed burning limiter should be applied in production simu
 
 Our example detonation problem demonstrates, at least for this class of
 hydrodynamical burning problem, a grid resolution requirement much more stringent
-than 1 km. This does not represent all such burning problems: for example, we
+than 1 km. This does not represent all such \added{1D} burning problems: for example, we
 have tested similar setups with only carbon and oxygen for which a resolution
-in the tens of kilometers is sufficient. However, the fact that it is even
-possible for this type of burning to require a resolution better than 100 m
-should cast significant uncertainty on the results of simulations featuring
-detonations that do not meet this resolution.
+in the tens of kilometers is sufficient. \added{However, this should not be construed
+as implying that this convergence requirement does not apply to pure C/O WDs.}
+\replaced{However}{First}, the fact that it is even possible for
+\replaced{this type of burning}{burning in white dwarf material} to require a
+resolution better than 100 m should cast significant uncertainty on the results
+of simulations featuring detonations that do not meet this resolution
+\added{(regardless of the specific conditions). Or, at least, should suggest
+that stronger demonstrations of convergence are required. Second, in our real
+multi-dimensional simulations of C/O WD collisions, we see the same effect,
+where the simulation is not converged even for resolutions up to 0.25 km. It
+simply happens to be the case that for the 1D analogue of this problem using pure
+C/O the same effect is not seen, which is not particularly surprising since the 1D
+setup and the 2D setup are very different and the former lacks any multidimensional
+hydrodynamic effects. So we found a related problem that shows a similar
+effect in 1D to test convergence at higher resolutions.}
 
 This study does not directly address the problem of how, in the detailed
 microphysical sense, a detonation wave actually begins to propagate, as
