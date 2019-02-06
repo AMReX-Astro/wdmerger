@@ -258,7 +258,10 @@ timestep gets shorter due to the CFL limiter. It is only when the resolution get
 sufficiently high that we can simultaneously resolve the energy release over multiple
 timesteps and the advection of energy across multiple zones. Even at the highest resolution
 we could achieve, about 50 cm, $\tau_s / \tau_e$ was 0.8 at ignition, which is not
-sufficiently small to be confident of numerical stability at that resolution.}
+sufficiently small to be confident of numerical stability at that resolution. Note
+that merely decreasing the timestep (at fixed resolution) does not help here, as the
+instability criterion is, to first order, independent of the size of the timestep.}
+
 We thus investigate whether limiting the energy release of the burn (we will term this
 ``suppressing'' the burn), as proposed by \citeauthor{kushnir:2013},
 is a useful technique for avoiding the prompt detonation. \added{Since the limiter ensures
