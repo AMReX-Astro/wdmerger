@@ -124,10 +124,14 @@ on physical conditions \citep{seitenzahl:2009,garg:2017} but is generally \repla
 smaller than 100 km}{not larger than 10 km}.
 
 In this paper, we attempt to find what simulation length scale is required to achieve
-converged thermonuclear ignitions. \added{In our two-dimensional axisymmetric simulations
-of WD collisions, using the Eulerian reactive hydrodynamics code \castro\ \citep{castro, astronum:2017},
-the simulations are unresolved at the highest resolution we could afford to run (0.25 km).
-So, in this paper we turn to a 1D test, which allows us to test at much higher resolution.}
+converged thermonuclear ignitions. \added{The inspiration for this work comes from our
+simulations of WD collisions using the reactive hydrodynamics code \castro\
+\citep{castro, astronum:2017}. We have done both 2D axisymmetric and 3D simulations
+of collisions of $0.64\ \msolar$ carbon/oxygen WDs, and we were unable to achieved converged
+simulations at any resolution we could afford to run (the best was an effective zone size of
+0.25 km, using adaptive mesh refinement, for the 2D case). We were therefore forced to
+turn to 1D simulations, where we can achieve much higher resolution (at the cost, of course,
+of not being able to do a test that can be directly compared to multi-dimensional simulations).}
 
 
 
@@ -139,8 +143,14 @@ So, in this paper we turn to a 1D test, which allows us to test at much higher r
 
 Our test problem is inspired by \cite{kushnir:2013}, and very loosely approximates the
 conditions of two $0.64\ \msolar$ WDs colliding head-on. The simulation domain is 1D with a
-reflecting boundary at $x = 0$. For $x > 0$ there is a uniform fluid composed (by mass)
-of $50\%\, ^{12}$C, $45\%\, ^{16}$O, and $5\%\, ^{4}$He. The fluid is relatively cold,
+reflecting boundary at $x = 0$. For $x > 0$ there is a uniform fluid composed\footnote{
+\added{We note that the WD simulations that inspired this were pure carbon/oxygen,
+but for the setup we describe here, pure carbon/oxygen conditions do not detonate at all.
+This is not particularly surprising, since the 1D setup is a very imperfect representation
+of the real multi-dimensional case, and is missing multi-dimensional hydrodynamics that could
+substantially alter the dynamical evolution. So we added a small amount of helium to ensure
+that this setup ignites.}} (by mass)
+of $50\%\, ^{12}$C, $45\%\, ^{16}$O, and $5\%\, ^{4}$He.   The fluid is relatively cold,
 $T = 10^7$ K, has density $\rho = 5 \times 10^6$ g/cm$^3$, and is traveling toward the
 origin with velocity $-2 \times 10^8$ m/s. A uniform constant gravitational acceleration
 is applied, $g = -1.1 \times 10^8$ m/s$^{2}$. This setup causes a sharp initial release
