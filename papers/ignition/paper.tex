@@ -333,23 +333,19 @@ the simulation being under-resolved.}
 
 Our example detonation problem demonstrates, at least for this class of
 hydrodynamical burning problem, a grid resolution requirement much more stringent
-than 1 km. This does not represent all such \added{1D} burning problems: for example, we
+than 1 km. \replaced{This does not represent all such burning problems: for example, we
 have tested similar setups with only carbon and oxygen for which a resolution
-in the tens of kilometers is sufficient. \added{However, this should not be construed
-as implying that this convergence requirement does not apply to pure C/O WDs.}
-\replaced{However}{First}, the fact that it is even possible for
+in the tens of kilometers is sufficient.}{This test does not, of course, represent
+all possible WD burning conditions.}
+However, the fact that it is even possible for
 \replaced{this type of burning}{burning in white dwarf material} to require a
 resolution better than 100 m should cast significant uncertainty on the results
-of simulations featuring detonations that do not meet this resolution
-\added{(regardless of the specific conditions). Or, at least, should suggest
-that stronger demonstrations of convergence are required. Second, in our real
-multi-dimensional simulations of C/O WD collisions, we see the same effect,
-where the simulation is not converged even for resolutions up to 0.25 km. It
-simply happens to be the case that for the 1D analogue of this problem using pure
-C/O the same effect is not seen, which is not particularly surprising since the 1D
-setup and the 2D setup are very different and the former lacks any multidimensional
-hydrodynamic effects. So we found a related problem that shows a similar
-effect in 1D to test convergence at higher resolutions.}
+of simulations featuring detonations that do not meet this resolution,
+\added{regardless of the specific conditions). Or, at least, it should suggest
+that stronger demonstrations of convergence are required (especially bearing in mind
+our observation that the numerical instability can result in simulations that
+appear qualitatively converged when the resolution is increased by a factor of
+one or two orders of magnitude but not three orders of magnitude.}
 
 This study does not directly address the problem of how, in the detailed
 microphysical sense, a detonation wave actually begins to propagate, as
