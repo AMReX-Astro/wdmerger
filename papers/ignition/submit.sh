@@ -1,4 +1,4 @@
-submit_dir="submit"
+submit_dir="submit2"
 
 # Build the PDF so that we have the bibilography
 
