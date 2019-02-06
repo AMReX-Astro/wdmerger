@@ -28,6 +28,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
     res_lists = [[]] * len(ncell_list)
     dist_lists = [[]] * len(ncell_list)
     time_lists = [[]] * len(ncell_list)
+    ts_te_lists = [[]] * len(ncell_list)
 
     base_res_list = []
 
@@ -61,6 +62,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
         res_list = []
         dist_list = []
         time_list = []
+        ts_te_list = []
 
         for r in r_list:
             results_dir = results_base + '/n' + str(ncell) + '/' + r
@@ -98,6 +100,10 @@ def amr_ignition(file_base, results_base, do_amr = True):
                     dist_list.append(dist)
                     time_list.append(time)
 
+                    [ts_te_max, _, _, _] = wdmerger.get_maxloc(plot, 't_sound_t_enuc')
+
+                    ts_te_list.append(ts_te_max)
+
                     break
 
                 else:
@@ -106,6 +112,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
             res_lists[i] = res_list
             dist_lists[i] = dist_list
             time_lists[i] = time_list
+            ts_te_lists[i] = ts_te_list
 
     # Plot location of the ignition and time on the same axis.
     # We want to combine data at low resolution using their coarse
@@ -114,11 +121,13 @@ def amr_ignition(file_base, results_base, do_amr = True):
     res_list = []
     dist_list = []
     time_list = []
+    ts_te_list = []
 
     for i in range(len(ncell_list)-1):
         res_list.append(res_lists[i][0])
         dist_list.append(dist_lists[i][0])
         time_list.append(time_lists[i][0])
+        ts_te_list.append(ts_te_lists[i][0])
 
     for res in res_lists[-1]:
         res_list.append(res)
@@ -128,6 +137,9 @@ def amr_ignition(file_base, results_base, do_amr = True):
 
     for time in time_lists[-1]:
         time_list.append(time)
+
+    for ts_te in ts_te_lists[-1]:
+        ts_te_list.append(ts_te)
 
     fig, ax1 = plt.subplots()
     ax1.plot(res_list, dist_list, linestyle=linestyles[0], marker=markers[0], color=colors[0], lw=2.0, label='Ignition location')
@@ -151,6 +163,23 @@ def amr_ignition(file_base, results_base, do_amr = True):
     fig.tight_layout()
     plt.savefig(file_base + '.eps')
     plt.savefig(file_base + '.png')
+
+    plt.close()
+
+    fig, ax1 = plt.subplots()
+
+    ax1.plot(res_list, ts_te_list, linestyle=linestyles[0], marker=markers[0], color=colors[0], lw=2.0)
+
+    ax1.set_xscale('log', basex=10)
+    ax1.set_xlabel(r"Finest resolution (km)", fontsize=24)
+    ax1.set_ylabel(r"$\tau_{\rm s}\, /\, \tau_{\rm e}$", fontsize=24)
+    ax1.tick_params(axis='y', labelsize=20)
+    ax1.tick_params(axis='x', labelsize=20)
+
+    fig.set_size_inches(11, 8.5)
+    fig.tight_layout()
+    plt.savefig(file_base + '_ts_te.eps')
+    plt.savefig(file_base + '_ts_te.png')
 
     plt.close()
 
