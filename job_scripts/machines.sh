@@ -121,7 +121,7 @@ function set_machine_params {
 
     elif [ $MACHINE == "EDISON" ]; then
 
-	allocation="m1938"
+	allocation="m3018"
 	exec="sbatch"
 	cancel_job="scancel"
 	ppn="24"
@@ -135,7 +135,7 @@ function set_machine_params {
 
     elif [ $MACHINE == "CORI" ]; then
 
-	allocation="m1938"
+	allocation="m3018"
 	exec="sbatch"
 	cancel_job="scancel"
 	ppn="32"
