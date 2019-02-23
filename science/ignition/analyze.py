@@ -21,6 +21,11 @@ def amr_ignition(file_base, results_base, do_amr = True):
     if not os.path.isdir(results_base):
         return
 
+    # Skip this if we've already generated the plots.
+
+    if os.path.isfile(file_base + '.eps'):
+        return
+
     size = 1.6384e9
 
     ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
@@ -150,14 +155,20 @@ def amr_ignition(file_base, results_base, do_amr = True):
     ax1.tick_params(axis='y', labelcolor=colors[0], labelsize=20)
     ax1.tick_params(axis='x', labelsize=20)
     ax1.set_ylim(bottom=0.0)
-    ax1.set_ylim(top=1100.0)
+    if 'co' in file_base:
+        ax1.set_ylim(top=400.0)
+    else:
+        ax1.set_ylim(top=1100.0)
 
     ax2 = ax1.twinx()
     ax2.plot(res_list, time_list, linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
     ax2.set_ylabel(r"Ignition time (s)", fontsize=24, color=colors[1])
     ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=20)
     ax2.set_ylim(bottom=0.0)
-    ax2.set_ylim(top=1.1)
+    if 'co' in file_base:
+        ax2.set_ylim(top=0.4)
+    else:
+        ax2.set_ylim(top=1.1)
 
     fig.set_size_inches(11, 8.5)
     fig.tight_layout()
@@ -194,6 +205,8 @@ if __name__ == "__main__":
         
     plots_dir = 'plots/'
 
+    # First do the main tests with helium.
+    
     file_base = 'amr_ignition'
     results_base = 'results/'
 
@@ -203,3 +216,13 @@ if __name__ == "__main__":
         run_str = '_'.join([file_base, burning_mode])
 
         amr_ignition(plots_dir + run_str, run_dir)
+
+    # Now do the pure C/O plots.
+
+    results_base = 'results_co/'
+    file_base = 'amr_ignition_co'
+
+    run_dir = results_base
+    run_str = file_base
+
+    amr_ignition(plots_dir + run_str, run_dir)

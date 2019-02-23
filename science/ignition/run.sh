@@ -186,3 +186,67 @@ do
     done # ncell
 
 done # burning mode
+
+
+
+# Do a similar run with pure C/O. For this one
+# we'll only use the self-heating burn. Since
+# C/O is less prone to burning than a mix with
+# helium, we'll increase the temperature.
+
+to_run=1
+
+results_dir="results_co"
+
+ofrac="0.5d0"
+T_l="1.d9"
+T_r="1.d9"
+
+ncell_list="64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
+
+burning_mode="1"
+
+for ncell in $ncell_list
+do
+
+    refinement_list="1"
+
+    if [ $ncell -eq 64 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 128 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 256 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 512 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 1024 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 2048 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 4096 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 8192 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 16384 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 32768 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 65536 ]; then
+        refinement_list="1 2 4 8 16 32 64"
+    fi
+
+    for refinement in $refinement_list
+    do
+
+        dir=$results_dir/n$ncell/r$refinement
+        set_run_opts
+
+        if [ $to_run -eq 1 ]; then
+            run
+        fi
+
+        to_run=1
+
+    done # refinement
+
+done # ncell
