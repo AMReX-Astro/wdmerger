@@ -117,11 +117,33 @@ range 100--500 km for the grid codes, and 10--100 km for the SPH codes, and obse
 detonations that convert a large amount of carbon/oxygen material into iron-group elements.
 These studies varied in methodology (Lagrangian versus Eulerian evolution, nuclear network
 used) and did not closely agree on the final result of the event (see Table 4 of
-\cite{garcia-senz:2013} for a summary). \cite{kushnir:2013} argued that many of these
-simulations featured numerically unstable evolution, ultimately caused by the zone size
-being significantly larger than the length scale over which detonations form. The detonation
-length scale can vary widely based on physical conditions \citep{seitenzahl:2009,garg:2017}
-but is generally not larger than 10 km.
+\cite{garcia-senz:2013} for a summary).
+
+\added{There is mixed evidence for simulation convergence presented in these studies.
+\cite{raskin:2010} claim that their simulations are converged in nickel yield up to 2 million
+(constant mass) particles (Figure 11 in that paper), but the nickel yield still appears to be
+trending slightly upward with particle count. The simulations from \cite{raskin:2009} are not
+converged up to 800,000 particles (Figure 4 in that paper), where the smoothing length was kept
+constant instead of the particle mass. \cite{hawley:2012} do not achieve convergence over a
+factor of 2 in spatial resolution (Figure 8 in that paper). \cite{garcia-senz:2013} claim at
+least qualitative (though not strict absolute) convergence in Section 3.2 of their paper, but
+their convergence test is only over a factor of 2 in particle count, which is a factor of 1.26
+in spatial resolution for constant mass particles. \cite{kushnir:2013} test convergence over an
+order of magnitude in spatial resolution, and find results that appear to be reasonably well
+converged for one of the two codes used (VULCAN2D), and results that are not converged for the
+other code (FLASH). \cite{papish:2015} claim convergence in nuclear burning up to 10\% at a
+resolution of 5--10 km, but do not present specific data demonstrating this claim.
+\cite{loren-aguilar:2010} and \cite{rosswog:2009} do not present convergence studies for
+their work.}
+
+\cite{kushnir:2013} argued that many of these simulations featured numerically unstable evolution,
+ultimately caused by the zone size being significantly larger than the length scale over which
+detonations form. The detonation length scale can vary widely based on physical conditions
+\citep{seitenzahl:2009,garg:2017} but is generally not larger than 10 km. \added{\citeauthor{kushnir:2013}
+argue that this numerically unstable evolution is the primary cause of convergence difficulties.
+They further argue that it is possible to apply a burning limiter to achieve converged results,
+which was used in both their work and the simulations of \cite{papish:2015}. We will investigate
+this hypothesis in \autoref{sec:unstable_burning}.}
 
 In this paper, we attempt to find what simulation length scale is required to achieve
 converged thermonuclear ignitions. The inspiration for this work comes from our
