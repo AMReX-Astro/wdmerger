@@ -261,10 +261,17 @@ ignition is central at all resolutions, but the simulation is still clearly unco
 than 100 m.}
 
 This story contains two important lessons. First, the required resolution for even a qualitatively converged
-simulation, less than 100 m, is out of reach of current 3D supernova simulations. Second, the behavior for
+simulation, less than 100 m, is out of reach \replaced{of current 3D supernova simulations}{for an analogous
+simulation done in 3D}. Second, the behavior for 
 resolutions worse than 1 km qualitatively appears to be converged, and one could perhaps be misled into
 thinking that there was no reason to try higher resolutions, which is reason for caution in interpreting
-reacting hydrodynamics simulations.
+reacting hydrodynamics simulations. \added{With that being said, our 1D tests are not directly comparable to
+previous multi-dimensional WD collision simulations. The 1D tests should not be substituted for understanding the
+actual convergence properties of the 2D/3D simulations, which may have different resolution requirements for
+convergence. Our tests suggest only that it is plausible that simulations at kilometer-scale (or worse) resolution
+are unconverged. This observation is, though, consistent with the situation described in \autoref{sec:introduction},
+where our 2D WD collision simulations (not shown here) are unconverged, and many of the previous collision simulations
+presented in the literature have relatively weak evidence for convergence.}
 
 
 
@@ -389,10 +396,11 @@ Our example detonation problem demonstrates, at least for this class of
 hydrodynamical burning problem, a grid resolution requirement much more stringent
 than 1 km. This test does not, of course, represent all possible WD burning conditions.
 However, the fact that it is even possible for burning in white dwarf material to require a
-resolution better than 100 m should cast significant uncertainty on the results
+resolution better than 100 m should \deleted{cast significant uncertainty on the results
 of simulations featuring detonations that do not meet this resolution,
-regardless of the specific conditions. Or, at least, it should suggest
-that stronger demonstrations of convergence are required, especially bearing in mind
+regardless of the specific conditions. Or, at least, it should} suggest
+that stronger demonstrations of convergence are required \added{for simulations that
+do not meet this resolution}. \replaced{especially} {This is especially true} bearing in mind
 our observation that the numerical instability can result in simulations that
 appear qualitatively converged when the resolution is increased by a factor of
 one or two orders of magnitude but not three orders of magnitude.
