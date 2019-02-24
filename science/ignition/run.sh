@@ -202,6 +202,12 @@ ofrac="0.5d0"
 T_l="1.d9"
 T_r="1.d9"
 
+# To compensate for the smaller available
+# absolute dynamic range in temperature,
+# make the refinement criterion stricter.
+
+tempgrad_rel="0.1"
+
 ncell_list="64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
 
 burning_mode="1"
