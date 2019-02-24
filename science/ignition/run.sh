@@ -158,15 +158,15 @@ do
         elif [ $ncell -eq 2048 ]; then
             refinement_list="1"
         elif [ $ncell -eq 4096 ]; then
-            refinement_list="1 2 4 8 16 32 64"
+            refinement_list="1"
         elif [ $ncell -eq 8192 ]; then
             refinement_list="1"
         elif [ $ncell -eq 16384 ]; then
-            refinement_list="1 2 4 8 16"
+            refinement_list="1"
         elif [ $ncell -eq 32768 ]; then
             refinement_list="1"
         elif [ $ncell -eq 65536 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256 512 1024"
+            refinement_list="1 2 4 8 16 32 64 128 256 512"
         fi
 
         for refinement in $refinement_list
@@ -232,7 +232,7 @@ do
     elif [ $ncell -eq 32768 ]; then
         refinement_list="1"
     elif [ $ncell -eq 65536 ]; then
-        refinement_list="1 2 4 8 16 32 64"
+        refinement_list="1 2 4 8 16 32 64 128 256 512"
     fi
 
     for refinement in $refinement_list
