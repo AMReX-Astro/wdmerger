@@ -169,13 +169,13 @@ achieving convergence at the resolutions achievable in multi-dimensional WD coll
 Our test problem is inspired by \cite{kushnir:2013}, and very loosely approximates the
 conditions of two $0.64\ \msolar$ WDs colliding head-on. The simulation domain is 1D with a
 reflecting boundary at $x = 0$. For $x > 0$ there is a uniform fluid composed\footnote{
-We note that the WD simulations that inspired this were pure carbon/oxygen,
+\deleted{We note that the WD simulations that inspired this were pure carbon/oxygen,
 but for the setup we describe here, pure carbon/oxygen conditions do not detonate at all.
 This is not particularly surprising, since the 1D setup is a very imperfect representation
 of the real multi-dimensional case, and is missing multi-dimensional hydrodynamics that could
 substantially alter the dynamical evolution. So we added a small amount of helium to ensure
 that this setup ignites. Of course, there will likely be a small amount of helium present in
-C/O white dwarfs as a remnant of the prior stellar evolution.} (by mass)
+C/O white dwarfs as a remnant of the prior stellar evolution.}} (by mass)
 of $50\%\, ^{12}$C, $45\%\, ^{16}$O, and $5\%\, ^{4}$He.   The fluid is relatively cold,
 $T = 10^7$ K, has density $\rho = 5 \times 10^6$ g/cm$^3$, and is traveling toward the
 origin with velocity $-2 \times 10^8$ m/s. A uniform constant gravitational acceleration
@@ -236,11 +236,42 @@ point. When we have finally reached the point where the curves start to flatten 
 the ignition occurs around 900 km from the contact point, about 1 second after contact (contrast to less than
 0.05 seconds for the simulation with 1 km resolution). Even at this resolution, it is not clear if
 the simulation is converged. We were unable to perform higher resolution simulations to check convergence
-due to the length of time that would be required. This story contains two important lessons. First,
-the required resolution for even a qualitatively converged simulation, less than 100 m, is out of reach
-of current 3D supernova simulations. Second, the behavior for resolutions worse than 1 km qualitatively
-appears to be converged, and one could perhaps be misled into thinking that there was no reason to
-try higher resolutions, which is reason for caution in interpreting reacting hydrodynamics simulations.
+due to the length of time that would be required.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.30]{{{plots/amr_ignition_co}}}
+  \caption{Similar to \autoref{fig:self-heat-distance}, but with pure C/O material.
+           \label{fig:self-heat-distance-co}}
+\end{figure}
+
+\added{We also tested a similar configuration made of pure carbon/oxygen material (equal fraction by mass).
+This is closer to the configuration used in the $0.64\ \msolar$ WD collision simulations that previous
+papers have focused on. However, for the setup described above, pure carbon/oxygen conditions do not
+detonate at all. This is not particularly surprising, since the 1D setup is a very imperfect representation
+of the real multi-dimensional case, and is missing multi-dimensional hydrodynamics that could substantially
+alter the dynamical evolution. So the small amount of helium we added above ensured that the setup ignited.
+(Of course, there will likely be a small amount of helium present in C/O white dwarfs as a remnant of the prior
+stellar evolution.) However, we can prompt the C/O setup to ignite by starting the initial temperature
+at $10^9$ K instead of $10^7$ K. This loosely mimics the effect from the first test, where helium burning
+drives the temperature to the conditions necessary to begin substantial burning in C/O material. But since
+no helium is present in this case, it allows us to test whether it is easier to obtain convergence for pure
+C/O burning. The results for this case are shown in \autoref{fig:self-heat-distance-co}. In this case, the
+ignition is central at all resolutions, but the simulation is still clearly unconverged at resolutions worse
+than 100 m.}
+
+This story contains two important lessons. First, the required resolution for even a qualitatively converged
+simulation, less than 100 m, is out of reach \replaced{of current 3D supernova simulations}{for an analogous
+simulation done in 3D}. Second, the behavior for 
+resolutions worse than 1 km qualitatively appears to be converged, and one could perhaps be misled into
+thinking that there was no reason to try higher resolutions, which is reason for caution in interpreting
+reacting hydrodynamics simulations. \added{With that being said, our 1D tests are not directly comparable to
+previous multi-dimensional WD collision simulations. The 1D tests should not be substituted for understanding the
+actual convergence properties of the 2D/3D simulations, which may have different resolution requirements for
+convergence. Our tests suggest only that it is plausible that simulations at kilometer-scale (or worse) resolution
+are unconverged. This observation is, though, consistent with the situation described in \autoref{sec:introduction},
+where our 2D WD collision simulations (not shown here) are unconverged, and many of the previous collision simulations
+presented in the literature have relatively weak evidence for convergence.}
 
 
 
@@ -283,7 +314,7 @@ that virtually all of the energy release occurs in a single timestep even if the
 timestep gets shorter due to the CFL limiter. It is only when the resolution gets
 sufficiently high that we can simultaneously resolve the energy release over multiple
 timesteps and the advection of energy across multiple zones. Even at the highest resolution
-we could achieve, about 50 cm, $\tau_s / \tau_e$ was 0.8 at ignition, which is not
+we could achieve \added{for the test including helium}, about 50 cm, $\tau_s / \tau_e$ was 0.8 at ignition, which is not
 sufficiently small to be confident of numerical stability at that resolution. Note
 that merely decreasing the timestep (at fixed resolution) does not help here either, as the
 instability criterion is, to first order, independent of the size of the timestep.
@@ -365,10 +396,11 @@ Our example detonation problem demonstrates, at least for this class of
 hydrodynamical burning problem, a grid resolution requirement much more stringent
 than 1 km. This test does not, of course, represent all possible WD burning conditions.
 However, the fact that it is even possible for burning in white dwarf material to require a
-resolution better than 100 m should cast significant uncertainty on the results
+resolution better than 100 m should \deleted{cast significant uncertainty on the results
 of simulations featuring detonations that do not meet this resolution,
-regardless of the specific conditions). Or, at least, it should suggest
-that stronger demonstrations of convergence are required (especially bearing in mind
+regardless of the specific conditions. Or, at least, it should} suggest
+that stronger demonstrations of convergence are required \added{for simulations that
+do not meet this resolution}. \replaced{especially} {This is especially true} bearing in mind
 our observation that the numerical instability can result in simulations that
 appear qualitatively converged when the resolution is increased by a factor of
 one or two orders of magnitude but not three orders of magnitude.
