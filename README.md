@@ -6,7 +6,8 @@ white dwarf mergers (and related events) in CASTRO. It also contains
 the Python scripts used for analysis, and LaTeX documents
 for journal submission.
 
-Please contact Max Katz (maximilian.katz@stonybrook.edu) with questions.
+Specific issues with this software should be posted as an issue here.
 General `CASTRO` and `AMReX` questions should be directed
 to the `CASTRO` user's mailing list/Google group,
-castro-help@googlegroups.com.
+castro-help@googlegroups.com, or by filing an issue in their
+respective repositories.
