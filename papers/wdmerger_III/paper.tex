@@ -188,8 +188,8 @@ advective velocity $\mathbf{u}$. When we update the normal momenta with an
 external forcing $\mathbf{F}$ such as gravity, with $x$ and $y$
 components $F_x$ and $F_y$, we apply the update to the hybrid momenta as well:
 \begin{align}
-  \left.\frac{\partial(s_R)}{\partial t}\right|_{F} &= -F_x \frac{x}{R} - F_y\frac{y}{R} \label{eq:force-radial}\\
-  \left.\frac{\partial(\ell_z)}{\partial t}\right|_{F} &= F_x\, y - F_y\, x.\label{eq:force-angular}
+  \left.\frac{\partial(s_R)}{\partial t}\right|_{F} &= F_x \frac{x}{R} + F_y\frac{y}{R} \label{eq:force-radial}\\
+  \left.\frac{\partial(\ell_z)}{\partial t}\right|_{F} &= F_y\, x - F_x\, y.\label{eq:force-angular}
   \end{align}
 
 If in addition to evolving these variables we want to use them in place of the
