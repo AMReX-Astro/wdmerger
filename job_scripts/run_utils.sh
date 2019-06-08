@@ -84,6 +84,10 @@ function get_submitted_jobs {
 
       showq -u $USER | grep $USER | awk '{ print $1 }' > $job_file
 
+  elif [ $batch_system == "LSF" ]; then
+
+      bjobs -u $USER 2>/dev/null | grep $USER | awk '{ print $1 }' > $job_file
+
   elif [ $batch_system == "SLURM" ]; then
 
       squeue -u $USER | grep $USER | awk '{ print $1 }' > $job_file
@@ -431,6 +435,13 @@ function get_remaining_walltime {
       if [ ! -z $total_time ]; then
 	  total_time=$(hours_to_seconds $total_time)
       fi
+
+   elif [ $batch_system == "LSF" ]; then
+
+      # For LSF we can use the -WL option to get the time remaining.
+
+      total_time=$(bjobs -u $USER -noheader -WL -hms | grep $job_number | awk '{ print $11 }')
+      total_time=$(hours_to_seconds $total_time)
 
   elif [ $batch_system == "SLURM" ]; then
 
@@ -1507,6 +1518,8 @@ function submit_job {
 
   if [ $batch_system == "PBS" ]; then
       submitted_job_number=`$exec $job_script`
+  elif [ $batch_system == "LSF" ]; then
+      submitted_job_number=`$exec $job_script`
   elif [ $batch_system == "SLURM" ]; then
       submitted_job_number=`$exec $job_script`
   elif [ $batch_system == "COBALT" ]; then
@@ -1518,10 +1531,14 @@ function submit_job {
 
   submitted_job_number=${submitted_job_number%%.*}
 
-  # The sbatch output is "Submitted job number XXX"
-
   if [ $batch_system == "SLURM" ]; then
+      # The sbatch output is "Submitted job number XXX"
       submitted_job_number=$(echo $submitted_job_number | awk '{ print $NF }')
+  elif [ $batch_system == "LSF" ]; then
+      # The LSF output is "Job <#> is submitted to queue <batch>."
+      submitted_job_number=$(echo $submitted_job_number | awk '{ print $2 }')
+      submitted_job_number=${submitted_job_number#"<"}
+      submitted_job_number=${submitted_job_number%">"}
   fi
 
   if [ ! -z "$submitted_job_number" ]; then
@@ -1867,6 +1884,120 @@ function create_job_script {
 	  fi
 	  echo "archive_all >> archive_log.out" >> $dir/output/$archive_script
 	  echo "" >> $dir/output/$archive_script
+
+      fi
+
+  elif [ $batch_system == "LSF" ]; then
+
+      # Select the project allocation we're charging this job to
+      if [ ! -z $allocation ]; then
+	  echo "#BSUB -P $allocation" >> $dir/$job_script
+      fi
+
+      # Set the name of the job
+      echo "#BSUB -J $job_name" >> $dir/$job_script
+
+      # Set the output file
+      echo "#BSUB -o $job_name.o%J" >> $dir/$job_script
+
+      # Amount of wall time for the simulation
+      echo "#BSUB -W $(hours_to_minutes $walltime)" >> $dir/$job_script
+
+      # Number of nodes, the number of MPI tasks per node, and the node type to use
+      echo "#BSUB -nnodes $nodes" >> $dir/$job_script
+
+      # Queue to submit to. This is required for some systems.
+      if [ ! -z $queue ]; then
+	  echo "#BSUB -q $queue" >> $dir/$job_script
+      fi
+
+      echo "" >> $dir/$job_script
+
+      # Insert machine-specific preload statements.
+
+      echo "$job_prepend" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Set name of problem directory, if applicable.
+
+      if [ ! -z $problem_dir ]; then
+	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to continue the run.
+
+      if [ ! -z $no_continue ]; then
+	  echo "no_continue=$no_continue" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Indicate if we don't want to archive the data.
+
+      if [ ! -z $do_storage ]; then
+	  echo "do_storage=$do_storage" >> $dir/$job_script
+	  echo "" >> $dir/$job_script
+      fi
+
+      # Store the job number.
+
+      echo "job_number=\$LSB_JOBID" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # We assume that the directory we submitted from is eligible to 
+      # work in, so cd to that directory.
+
+      echo "cd \$LSB_OUTDIR" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Load up our helper functions.
+
+      echo "source job_scripts/run_utils.sh" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Number of OpenMP threads
+
+      echo "export OMP_NUM_THREADS=$OMP_NUM_THREADS" >> $dir/$job_script
+
+      # Amount of memory allocated to each OpenMP thread.
+
+      echo "export OMP_STACKSIZE=64M" >> $dir/$job_script
+
+      # OpenMP binding
+
+      echo "export OMP_PLACES=\"threads\"" >> $dir/$job_script
+      echo "export OMP_SCHEDULE=\"dynamic\"" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Set the jsrun options.
+
+      launcher_opts="-n $num_mpi_tasks -r $tasks_per_node -c $OMP_NUM_THREADS -a 1 -g 1 -X 1 -brs"
+      redirect="> $job_name.OU"
+
+      # Main job execution.
+
+      echo "$launcher $launcher_opts $CASTRO inputs \$(get_restart_string) $redirect &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "pid=\$!" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # Call the function that determines when we're going to stop the run.
+      # It should run in the background, to allow the main job to execute.
+
+      echo "check_to_stop &" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      echo "wait" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
+      # With jsrun we redirect the output to a file; let's move that to a file 
+      # named by the job number so that we retain it later.
+
+      if [ $launcher == "jsrun" ]; then
+
+	echo "mv $job_name.OU \$job_number.out" >> $dir/$job_script
+	echo "" >> $dir/$job_script
 
       fi
 

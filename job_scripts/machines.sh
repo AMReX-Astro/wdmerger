@@ -23,12 +23,14 @@ function get_machine {
 
   else
 
-      UNAMEN=$(uname -n)
+      UNAMEN=$(uname -n)$(hostname -f)
 
       if   [[ $UNAMEN == *"h2o"*    ]]; then
           MACHINE=BLUE_WATERS
       elif [[ $UNAMEN == *"titan"*  ]]; then
           MACHINE=TITAN
+      elif [[ $UNAMEN == *"summit"* ]]; then
+          MACHINE=SUMMIT
       elif [[ $UNAMEN == *"hopper"* ]]; then
           MACHINE=HOPPER
       elif [[ $UNAMEN == *"edison"* ]]; then
@@ -101,6 +103,21 @@ function set_machine_params {
 	archive_method="htar"
 	archive_queue="dtn"
 	archive_wclimit="24:00:00"
+
+    # Summit at OLCF
+
+    elif [ $MACHINE == "SUMMIT" ]; then
+
+        allocation="ast106"
+        exec="bsub"
+        cancel_job="bkill"
+        pause_job="bstop"
+        resume_job="bresume"
+        ppn="4"
+        run_ext=".OU"
+        batch_system="LSF"
+        queue="batch"
+        launcher="jsrun"
 
     # Hopper at NERSC
 
