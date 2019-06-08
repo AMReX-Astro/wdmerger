@@ -13,7 +13,7 @@ function set_run_opts {
 
     # The following assumes we are using Titan.
 
-    if [ $MACHINE == "TITAN" ]; then
+    if [ "$MACHINE" == "TITAN" ]; then
 
         queue="batch"
 
@@ -101,6 +101,12 @@ function set_run_opts {
             fi
 
         fi
+
+    elif [ "$MACHINE" == "SUMMIT" ]; then
+
+        queue="batch"
+        nprocs=4
+        walltime="00:30:00"
 
     else
 
@@ -1061,6 +1067,8 @@ function copy_checkpoint() {
 # Specify the problem directory.
 
 problem_dir=$CASTRO_HOME/Exec/science/wdmerger
+
+use_first_castro_ex="1"
 
 # Needed for the makefile: we want to compile in 2D for these tests.
 
