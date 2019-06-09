@@ -1106,13 +1106,13 @@ mass_S=$mass
 
 stop_time="9.0"
 castro_react_rho_min="1.0e6"
-prob_lo="-4e9"
-prob_hi="4e9"
+prob_lo="-2.56e9"
+prob_hi="2.56e9"
 
-ncell="256"
+ncell="512"
 
-stellar_refinement_list="1 2"
-tempgrad_rel_refinement_list="1 2"
+stellar_refinement_list="1 2 4"
+tempgrad_rel_refinement_list="1 2 4"
 probin_tagging_tempgrad_rel="0.25d0"
 
 for stellar_refinement in $stellar_refinement_list
