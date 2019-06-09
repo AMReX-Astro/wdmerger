@@ -38,15 +38,15 @@ function set_run_opts {
     elif [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
-        nprocs=4
+        nprocs=6
 
         walltime="2:00:00"
 
-        if   [ $nprocs -gt 180 ]; then
+        if   [ $nprocs -gt 270 ]; then
             walltime="6:00:00"
-        elif [ $nprocs -gt 364 ]; then
+        elif [ $nprocs -gt 546 ]; then
             walltime="12:00:00"
-        elif [ $nprocs -gt 3684 ]; then
+        elif [ $nprocs -gt 5526 ]; then
             walltime="24:00:00"
         fi
 
