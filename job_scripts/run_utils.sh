@@ -2001,6 +2001,9 @@ function create_job_script {
 
       fi
 
+      echo "bkill \$job_number" >> $dir/$job_script
+      echo "" >> $dir/$job_script
+
   elif [ $batch_system == "SLURM" ]; then
 
       # Select the project allocation we're charging this job to
