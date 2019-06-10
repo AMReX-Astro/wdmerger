@@ -11,7 +11,7 @@ function set_run_opts {
 
     to_run=1
 
-    # The following assumes we are using Titan.
+    # Set the processor count and walltime.
 
     if [ "$MACHINE" == "TITAN" ]; then
 
@@ -39,6 +39,12 @@ function set_run_opts {
 
         queue="batch"
         nprocs=6
+
+        if [ $stellar_refinement -eq 32 ]; then
+            nprocs=12
+        elif [ $stellar_refinement -eq 64 ]; then
+            nprocs=24
+        fi
 
         walltime="2:00:00"
 
@@ -1094,6 +1100,8 @@ atol_temp=$temp_tol_default
 rtol_enuc=$enuc_tol_default
 atol_enuc=$enuc_tol_default
 
+castro_T_stopping_criterion="4.0e9"
+
 # The flag we will use to determine whether to run the job.
 
 to_run=1
@@ -1111,8 +1119,8 @@ prob_hi="2.56e9"
 
 ncell="512"
 
-stellar_refinement_list="1 2 4"
-tempgrad_rel_refinement_list="1 2 4"
+stellar_refinement_list="1 2 4 8 16 32 64"
+tempgrad_rel_refinement_list="1"
 probin_tagging_tempgrad_rel="0.25d0"
 
 for stellar_refinement in $stellar_refinement_list
