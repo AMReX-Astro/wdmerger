@@ -113,7 +113,7 @@ function set_machine_params {
         cancel_job="bkill"
         pause_job="bstop"
         resume_job="bresume"
-        ppn="4"
+        ppn="6"
         run_ext=".OU"
         batch_system="LSF"
         queue="batch"
