@@ -1050,8 +1050,8 @@ co_wd_o_frac="0.5d0"
 # the colliding white dwarfs create.
 
 castro_do_sponge="1"
-sponge_lower_density="1.0d-1"
-sponge_upper_density="1.0d0"
+sponge_lower_density="1.0d1"
+sponge_upper_density="1.0d2"
 
 # The timesteps can get quite small if you're fully 
 # resolving the burning, so allow for this.
@@ -1120,6 +1120,7 @@ prob_hi="2.56e9"
 ncell="512"
 
 stellar_refinement_list="1 2 4 8 16 32 64"
+stellar_refinement_list="1 2 4"
 tempgrad_rel_refinement_list="1"
 probin_tagging_tempgrad_rel="0.25d0"
 
