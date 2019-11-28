@@ -108,6 +108,7 @@ DIM=1
 
 # Specify the problem directory.
 
+compile_dir=$CASTRO_HOME/Exec/science/Detonation
 problem_dir=$CASTRO_HOME/Exec/science/Detonation
 
 use_first_castro_ex="1"
