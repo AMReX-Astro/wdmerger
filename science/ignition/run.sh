@@ -20,14 +20,6 @@ function set_run_opts {
         nodes="1"
         walltime="2:00:00"
 
-        if [ $ncell -eq 131072 ]; then
-            nodes="2"
-        elif [ $ncell -eq 262144 ]; then
-            nodes="4"
-        elif [ $ncell -eq 524288 ]; then
-            nodes="8"
-        fi
-
         # Set up the geometry and gridding appropriately.
 
         amr_n_cell="$ncell"
@@ -127,9 +119,11 @@ probin="probin-collision"
 
 to_run=1
 
-results_dir="results"
+results_dir="results/he_co"
 
-ncell_list="128 256 512 1024 2048 4096 8192 16384 32768 65536"
+ofrac="0.45d0"
+
+ncell_list="128 256 512 1024 2048 4096 8192 16384 32768 65536 131072"
 
 burning_mode="1"
 
@@ -138,9 +132,7 @@ do
 
     refinement_list="1"
 
-    if [ $ncell -eq 64 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 128 ]; then
+    if [ $ncell -eq 128 ]; then
         refinement_list="1"
     elif [ $ncell -eq 256 ]; then
         refinement_list="1"
@@ -159,6 +151,8 @@ do
     elif [ $ncell -eq 32768 ]; then
         refinement_list="1"
     elif [ $ncell -eq 65536 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 131072 ]; then
         refinement_list="1 2 4 8 16 32 64 128 256 512"
     fi
 
@@ -180,37 +174,20 @@ done # ncell
 
 
 
-# Do a similar run with pure C/O. For this one
-# we'll only use the self-heating burn. Since
-# C/O is less prone to burning than a mix with
-# helium, we'll increase the temperature.
+# Do a similar run with pure C/O.
 
 to_run=1
 
-results_dir="results_co"
+results_dir="results/co"
 
 ofrac="0.5d0"
-T_l="1.d9"
-T_r="1.d9"
-
-# To compensate for the smaller available
-# absolute dynamic range in temperature,
-# make the refinement criterion stricter.
-
-tempgrad_rel="0.25"
-
-ncell_list="64 128 256 512 1024 2048 4096 8192 16384 32768 65536"
-
-burning_mode="1"
 
 for ncell in $ncell_list
 do
 
     refinement_list="1"
 
-    if [ $ncell -eq 64 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 128 ]; then
+    if [ $ncell -eq 128 ]; then
         refinement_list="1"
     elif [ $ncell -eq 256 ]; then
         refinement_list="1"
@@ -229,6 +206,8 @@ do
     elif [ $ncell -eq 32768 ]; then
         refinement_list="1"
     elif [ $ncell -eq 65536 ]; then
+        refinement_list="1"
+    elif [ $ncell -eq 131072 ]; then
         refinement_list="1 2 4 8 16 32 64 128 256 512"
     fi
 

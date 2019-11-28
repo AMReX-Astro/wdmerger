@@ -26,7 +26,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
     if os.path.isfile(file_base + '.eps'):
         return
 
-    size = 1.6384e9
+    size = 3.2768e9
 
     ncell_list = sorted([int(n[1:]) for n in os.listdir(results_base)])
 
@@ -205,21 +205,19 @@ if __name__ == "__main__":
         
     plots_dir = 'plots/'
 
-    # First do the main tests with helium.
-    
-    file_base = 'amr_ignition'
-    results_base = 'results/'
+    # First do the tests with helium.
 
-    for burning_mode in ['self-heat', 'suppressed']:
+    results_base = 'results/he_co'
+    file_base = 'amr_ignition_he_co'
 
-        run_dir = '/'.join([results_base, burning_mode])
-        run_str = '_'.join([file_base, burning_mode])
+    run_dir = results_base
+    run_str = file_base
 
-        amr_ignition(plots_dir + run_str, run_dir)
+    amr_ignition(plots_dir + run_str, run_dir)
 
     # Now do the pure C/O plots.
 
-    results_base = 'results_co/'
+    results_base = 'results/co/'
     file_base = 'amr_ignition_co'
 
     run_dir = results_base
