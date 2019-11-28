@@ -31,6 +31,8 @@ function get_machine {
           MACHINE=TITAN
       elif [[ $UNAMEN == *"summit"* ]]; then
           MACHINE=SUMMIT
+      elif [[ $UNAMEN == *"lassen"* ]]; then
+          MACHINE=LASSEN
       elif [[ $UNAMEN == *"hopper"* ]]; then
           MACHINE=HOPPER
       elif [[ $UNAMEN == *"edison"* ]]; then
@@ -114,6 +116,21 @@ function set_machine_params {
         pause_job="bstop"
         resume_job="bresume"
         ppn="6"
+        run_ext=".OU"
+        batch_system="LSF"
+        queue="batch"
+        launcher="jsrun"
+
+    # Lassen at LLNL
+
+    elif [ $MACHINE == "LASSEN" ]; then
+
+        allocation="lcstaff"
+        exec="bsub"
+        cancel_job="bkill"
+        pause_job="bstop"
+        resume_job="bresume"
+        ppn="4"
         run_ext=".OU"
         batch_system="LSF"
         queue="batch"
