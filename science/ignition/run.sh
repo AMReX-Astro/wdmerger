@@ -119,110 +119,60 @@ probin="probin-collision"
 
 to_run=1
 
-results_dir="results/he_co"
-
-ofrac="0.45d0"
+results_dir="results"
 
 ncell_list="128 256 512 1024 2048 4096 8192 16384 32768 65536 131072"
 
 burning_mode="1"
 
-for ncell in $ncell_list
+ofrac_list="0.00d0 0.45d0 0.50d0"
+
+for ofrac in $ofrac_list
 do
 
-    refinement_list="1"
-
-    if [ $ncell -eq 128 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 256 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 512 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 1024 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 2048 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 4096 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 8192 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 16384 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 32768 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 65536 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 131072 ]; then
-        refinement_list="1 2 4 8 16 32 64 128 256 512"
-    fi
-
-    for refinement in $refinement_list
+    for ncell in $ncell_list
     do
 
-        dir=$results_dir/n$ncell/r$refinement
-        set_run_opts
+        refinement_list="1"
 
-        if [ $to_run -eq 1 ]; then
-            run
+        if [ $ncell -eq 128 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 256 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 512 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 1024 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 2048 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 4096 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 8192 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 16384 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 32768 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 65536 ]; then
+            refinement_list="1"
+        elif [ $ncell -eq 131072 ]; then
+            refinement_list="1 2 4 8 16 32 64 128 256 512"
         fi
 
-        to_run=1
+        for refinement in $refinement_list
+        do
 
-    done # refinement
+            dir=$results_dir/ofrac$ofrac/n$ncell/r$refinement
+            set_run_opts
 
-done # ncell
+            if [ $to_run -eq 1 ]; then
+                run
+            fi
 
+            to_run=1
 
+        done # refinement
 
-# Do a similar run with pure C/O.
+    done # ncell
 
-to_run=1
-
-results_dir="results/co"
-
-ofrac="0.5d0"
-
-for ncell in $ncell_list
-do
-
-    refinement_list="1"
-
-    if [ $ncell -eq 128 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 256 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 512 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 1024 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 2048 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 4096 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 8192 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 16384 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 32768 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 65536 ]; then
-        refinement_list="1"
-    elif [ $ncell -eq 131072 ]; then
-        refinement_list="1 2 4 8 16 32 64 128 256 512"
-    fi
-
-    for refinement in $refinement_list
-    do
-
-        dir=$results_dir/n$ncell/r$refinement
-        set_run_opts
-
-        if [ $to_run -eq 1 ]; then
-            run
-        fi
-
-        to_run=1
-
-    done # refinement
-
-done # ncell
+done # ofrac

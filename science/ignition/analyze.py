@@ -155,20 +155,26 @@ def amr_ignition(file_base, results_base, do_amr = True):
     ax1.tick_params(axis='y', labelcolor=colors[0], labelsize=20)
     ax1.tick_params(axis='x', labelsize=20)
     ax1.set_ylim(bottom=0.0)
-    if 'co' in file_base:
-        ax1.set_ylim(top=6000.0)
-    else:
-        ax1.set_ylim(top=1100.0)
+
+    # Round up to the nearest 500 km.
+
+    round_target = 500.0
+    max_ignition_loc = max(dist_list)
+    ylim = round_target * np.ceil(max_ignition_loc / round_target)
+    ax1.set_ylim(top=ylim)
 
     ax2 = ax1.twinx()
     ax2.plot(res_list, time_list, linestyle=linestyles[1], marker=markers[1], color=colors[1], lw=2.0, label='Ignition time')
     ax2.set_ylabel(r"Ignition time (s)", fontsize=24, color=colors[1])
     ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=20)
     ax2.set_ylim(bottom=0.0)
-    if 'co' in file_base:
-        ax2.set_ylim(top=4.0)
-    else:
-        ax2.set_ylim(top=1.1)
+
+    # Round up to the nearest 0.1 s.
+
+    round_target = 0.1
+    max_ignition_time = max(time_list)
+    ylim = round_target * np.ceil(max_ignition_time / round_target)
+    ax2.set_ylim(top=ylim)
 
     fig.set_size_inches(11, 8.5)
     fig.tight_layout()
@@ -205,22 +211,16 @@ if __name__ == "__main__":
         
     plots_dir = 'plots/'
 
-    # First do the tests with helium.
+    # Loop over composition.
 
-    results_base = 'results/he_co'
-    file_base = 'amr_ignition_he_co'
+    ofrac_list = [x[5:] for x in os.listdir('results')]
 
-    run_dir = results_base
-    run_str = file_base
+    for ofrac in ofrac_list:
 
-    amr_ignition(plots_dir + run_str, run_dir)
+        results_base = 'results/ofrac' + str(ofrac)
+        file_base = 'amr_ignition_ofrac_' + str(ofrac)
 
-    # Now do the pure C/O plots.
+        run_dir = results_base
+        run_str = file_base
 
-    results_base = 'results/co/'
-    file_base = 'amr_ignition_co'
-
-    run_dir = results_base
-    run_str = file_base
-
-    amr_ignition(plots_dir + run_str, run_dir)
+        amr_ignition(plots_dir + run_str, run_dir)
