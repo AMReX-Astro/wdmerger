@@ -9,23 +9,23 @@ function set_run_opts {
         exit
     fi
 
-    # The following assumes we are using Titan.
+    # The following assumes we are using Lassen.
 
-    if [ $MACHINE == "TITAN" ]; then
+    if [ $MACHINE == "LASSEN" ]; then
 
-        queue="batch"
+        queue="pbatch"
 
-        threads_per_task=4
+        threads_per_task=1
 
-        nprocs="16"
+        nodes="1"
         walltime="2:00:00"
 
         if [ $ncell -eq 131072 ]; then
-            nprocs="32"
+            nodes="2"
         elif [ $ncell -eq 262144 ]; then
-            nprocs="64"
+            nodes="4"
         elif [ $ncell -eq 524288 ]; then
-            nprocs="128"
+            nodes="8"
         fi
 
         # Set up the geometry and gridding appropriately.
@@ -33,6 +33,7 @@ function set_run_opts {
         amr_n_cell="$ncell"
         amr_ref_ratio="4"
         amr_blocking_factor="64"
+        amr_max_grid_size="1048576"
 
         if [ ! -z $refinement ]; then
 
