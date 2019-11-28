@@ -156,7 +156,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
     ax1.tick_params(axis='x', labelsize=20)
     ax1.set_ylim(bottom=0.0)
     if 'co' in file_base:
-        ax1.set_ylim(top=150.0)
+        ax1.set_ylim(top=6000.0)
     else:
         ax1.set_ylim(top=1100.0)
 
@@ -166,7 +166,7 @@ def amr_ignition(file_base, results_base, do_amr = True):
     ax2.tick_params(axis='y', labelcolor=colors[1], labelsize=20)
     ax2.set_ylim(bottom=0.0)
     if 'co' in file_base:
-        ax2.set_ylim(top=0.4)
+        ax2.set_ylim(top=4.0)
     else:
         ax2.set_ylim(top=1.1)
 
