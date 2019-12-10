@@ -1512,7 +1512,9 @@ function submit_job {
       fi
   fi
 
-  nodes=$(compute_num_nodes)
+  if [ -z $nodes ]; then
+      nodes=$(compute_num_nodes)
+  fi
 
   # If we made it to this point, now actually submit the job.
 
@@ -1596,7 +1598,9 @@ function create_job_script {
       return
   fi
 
-  nodes=$(compute_num_nodes)
+  if [ -z $nodes ]; then
+      nodes=$(compute_num_nodes)
+  fi
 
   # Number of threads for OpenMP. This will be equal to 
   # what makes the most sense for the machine architecture 
