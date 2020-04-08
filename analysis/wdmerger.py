@@ -1272,6 +1272,8 @@ def rho_T_sliceplot(output_filename, pltfile,
 def slice_plot(field, output_filename, pltfile, idir = 3):
     """Create an axis-aligned slice plot over a given field with yt."""
 
+    import matplotlib
+    matplotlib.use('agg')
     import yt
     import matplotlib.pyplot as plt
 
