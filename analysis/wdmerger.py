@@ -1186,15 +1186,27 @@ def rho_T_sliceplot(output_filename, pltfile,
     if negate_left:
         dens_axis.set_xticks([-x_ticks[1] / scale, -x_ticks[0] / scale])
     else:
-        dens_axis.set_xticks([x_ticks[1] / scale, x_ticks[0] / scale])
+        if dim == 2:
+            dens_axis.set_xticks([x_ticks[1] / scale, x_ticks[0] / scale])
+        else:
+            dens_axis.set_xticks([-x_ticks[1] / scale, -x_ticks[0] / scale,
+                                   0.0,
+                                   x_ticks[0] / scale,  x_ticks[1] / scale])
+
     dens_axis.set_yticks([-y_ticks[1] / scale, -y_ticks[0] / scale, 
                            0.0, 
                            y_ticks[0] / scale,  y_ticks[1] / scale])
 
-    temp_axis.set_xticks([0.0, x_ticks[0] / scale, x_ticks[1] / scale])
+    if dim == 2:
+        temp_axis.set_xticks([0.0, x_ticks[0] / scale, x_ticks[1] / scale])
+    else:
+        temp_axis.set_xticks([-x_ticks[1] / scale, -x_ticks[0] / scale,
+                               0.0,
+                               x_ticks[0] / scale,  x_ticks[1] / scale])
+
     temp_axis.set_yticks([-y_ticks[1] / scale, -y_ticks[0] / scale, 
-                           0.0, 
-                           y_ticks[0] / scale,  y_ticks[1] / scale])
+                          0.0, 
+                          y_ticks[0] / scale,  y_ticks[1] / scale])
 
     dens_axis.yaxis.tick_left()
     dens_axis.yaxis.set_label_position("left")
@@ -1237,19 +1249,34 @@ def rho_T_sliceplot(output_filename, pltfile,
     cb_temp.solids.set_rasterized(True)
     cb_temp.set_label(r'$\mathrm{Temperature}\ (\mathrm{K})$')
 
-    dens_axis.set_xlim(dens_axis.get_xlim()[::-1])
+    if dim == 2:
+        dens_axis.set_xlim(dens_axis.get_xlim()[::-1])
 
-    dens_axis.set_position([0.125+0.0575, 0.075, 0.375, 0.75])
-    temp_axis.set_position([0.500-0.0575, 0.075, 0.375, 0.75])
+    if dim == 2:
+        dens_axis.set_position([0.125+0.0575, 0.075, 0.375, 0.75])
+        temp_axis.set_position([0.500-0.0575, 0.075, 0.375, 0.75])
 
-    colorbars[0].set_position([0.275, 0.92, 0.2, 0.075])
-    colorbars[1].set_position([0.525, 0.92, 0.2, 0.075])
+        colorbars[0].set_position([0.275, 0.92, 0.2, 0.075])
+        colorbars[1].set_position([0.525, 0.92, 0.2, 0.075])
+    else:
+        dens_axis.set_position([0.125, 0.075, 0.375, 0.75])
+        temp_axis.set_position([0.500, 0.075, 0.375, 0.75])
 
-    dens_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
-    temp_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+        colorbars[0].set_position([0.2125, 0.92, 0.2, 0.075])
+        colorbars[1].set_position([0.5875, 0.92, 0.2, 0.075])
 
-    dens_axis.set_ylabel(r'$z\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
-    temp_axis.set_ylabel(r'$z\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+    if dim == 2:
+        dens_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+        temp_axis.set_xlabel(r'$r\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+
+        dens_axis.set_ylabel(r'$z\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+        temp_axis.set_ylabel(r'$z\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+    else:
+        dens_axis.set_xlabel(r'$x\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+        temp_axis.set_xlabel(r'$x\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+
+        dens_axis.set_ylabel(r'$y\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
+        temp_axis.set_ylabel(r'$y\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
 
     matplotlib.rcParams.update({'font.size': 20})
 
