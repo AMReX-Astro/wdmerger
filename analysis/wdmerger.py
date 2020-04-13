@@ -1519,8 +1519,8 @@ def make_movie(output_dir, img_list, mpg_filename):
 
 
 
-def vol_render_density(outfile, ds):
-    """Volume render the density given a yt dataset."""
+def vol_render_density(outfile, plotfile):
+    """Volume render the density given a plotfile."""
 
     import numpy as np
     import yt
@@ -1528,6 +1528,11 @@ def vol_render_density(outfile, ds):
     matplotlib.use('agg')
     from yt.visualization.volume_rendering.api import Scene, VolumeSource
     import matplotlib.pyplot as plt
+
+    if ".png" not in outfile:
+        raise Exception("Output file name must end with .png")
+
+    ds = yt.load(plotfile)
 
     ds.periodicity = (True, True, True)
 
@@ -1552,7 +1557,7 @@ def vol_render_density(outfile, ds):
 
     tf.clear()
 
-    cm = "spectral"
+    cm = "nipy_spectral"
 
     for v in vals:
         if v < 3:
