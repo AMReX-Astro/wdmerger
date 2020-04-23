@@ -1519,7 +1519,7 @@ def make_movie(output_dir, img_list, mpg_filename):
 
 
 
-def vol_render_density(outfile, plotfile):
+def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False):
     """Volume render the density given a plotfile."""
 
     import numpy as np
@@ -1550,7 +1550,7 @@ def vol_render_density(outfile, plotfile):
 
     # Transfer function
 
-    vals = [-1, 0, 1, 2, 3, 4, 5, 6, 7]
+    vals = [1, 2, 3, 4, 5, 6, 7]
     sigma = 0.1
 
     tf =  yt.ColorTransferFunction((min(vals), max(vals)))
@@ -1580,8 +1580,6 @@ def vol_render_density(outfile, plotfile):
     # on the left along the x-axis). We'll scale the camera position based
     # on a zoom factor proportional to the width of the domain.
 
-    zoom_factor = 0.75
-
     cam_position = np.array([center[0], center[1] - zoom_factor * width[1], center[2] + zoom_factor * width[2]])
 
     cam.position = zoom_factor * ds.arr(cam_position, 'cm')
@@ -1597,6 +1595,11 @@ def vol_render_density(outfile, plotfile):
     # Render the image.
 
     sc.render()
+
+    # Add AMR grids, if requested.
+
+    if annotate_grids:
+        sc.annotate_grids(ds, alpha=0.005)
 
     # Save the image without annotation.
 
