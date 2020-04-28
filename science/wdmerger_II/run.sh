@@ -13,29 +13,7 @@ function set_run_opts {
 
     # Set the processor count and walltime.
 
-    if [ "$MACHINE" == "TITAN" ]; then
-
-        queue="batch"
-
-        threads_per_task=4
-
-        nprocs="32"
-        walltime="2:00:00"
-
-        if [ ! -z $stellar_refinement ]; then
-            if [ $stellar_refinement -eq 16 ]; then
-                nprocs="128"
-                walltime="2:00:00"
-            elif [ $stellar_refinement -eq 32 ]; then
-                nprocs="256"
-                walltime="2:00:00"
-            fi
-        fi
-
-        amr_blocking_factor="32"
-        amr_max_grid_size="64 64 64 64 128 128 256 256 512 512"
-
-    elif [ "$MACHINE" == "SUMMIT" ]; then
+    if [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
         nprocs=6
@@ -1026,10 +1004,6 @@ amr_check_per="1.0"
 
 castro_init_shrink="0.1"
 
-# Set the interval for doing diagnostic global sums.
-
-castro_sum_interval="1"
-
 # Enable reactions.
 
 castro_do_react="1"
@@ -1038,35 +1012,20 @@ castro_do_react="1"
 
 castro_do_rotation="0"
 
-# The collision papers in the literature all use an equal C/O ratio 
-# by mass in the initial white dwarfs. We will do this too for 
-# comparison purposes.
+# Many of the collision papers in the literature use an equal
+# C/O ratio  by mass in the initial white dwarfs. We will do
+# this too for comparison purposes.
 
 co_wd_c_frac="0.5d0"
 co_wd_o_frac="0.5d0"
 
-# Use the sponge to damp out noise in the ambient medium,
-# which can be rather violent due to how much churn
-# the colliding white dwarfs create.
+# Use post-timestep regrids.
 
-castro_do_sponge="1"
-sponge_lower_density="1.0d1"
-sponge_upper_density="1.0d2"
+castro_use_post_step_regrid="1"
 
-# The timesteps can get quite small if you're fully 
-# resolving the burning, so allow for this.
+# Allow the timestep to change by up to 25% per advance.
 
-castro_dt_cutoff="1.0e-12"
-
-# No need for post-timestep regrids.
-
-castro_use_post_step_regrid="0"
-
-# Allow the timestep to change by up to 5% per advance.
-# We don't need to be super strict on the timestep control
-# for this problem, we have empirically found.
-
-castro_change_max="1.05"
+castro_change_max="1.25"
 
 # Some defaults.
 
@@ -1085,20 +1044,8 @@ castro_dtnuc_e=$dtnuc_e_default
 castro_dtnuc_X=$dtnuc_X_default
 castro_dxnuc=$dxnuc_default
 castro_dxnuc_max=$dxnuc_max_default
-castro_react_T_min="1.0e8"
+castro_react_T_min="5.0e8"
 castro_react_rho_min="1.0e6"
-castro_small_temp="1.0e7"
-
-spec_tol_default="1.d-6"
-temp_tol_default="1.d-6"
-enuc_tol_default="1.d-6"
-
-rtol_spec=$spec_tol_default
-atol_spec=$spec_tol_default
-rtol_temp=$temp_tol_default
-atol_temp=$temp_tol_default
-rtol_enuc=$enuc_tol_default
-atol_enuc=$enuc_tol_default
 
 castro_T_stopping_criterion="4.0e9"
 
@@ -1113,9 +1060,8 @@ mass_P=$mass
 mass_S=$mass
 
 stop_time="9.0"
-castro_react_rho_min="1.0e6"
-prob_lo="-2.56e9"
-prob_hi="2.56e9"
+prob_lo="-5.12e9"
+prob_hi="5.12e9"
 
 ncell="512"
 
