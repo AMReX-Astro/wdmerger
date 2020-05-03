@@ -1521,7 +1521,7 @@ function submit_job {
   if [ $batch_system == "PBS" ]; then
       submitted_job_number=`$exec $job_script`
   elif [ $batch_system == "LSF" ]; then
-      submitted_job_number=`$exec -P $allocation -W $walltime_in_minutes $job_script`
+      submitted_job_number=`$exec -P $allocation -W $walltime_in_minutes -nnodes $nodes $job_script`
   elif [ $batch_system == "SLURM" ]; then
       submitted_job_number=`$exec $job_script`
   elif [ $batch_system == "COBALT" ]; then
