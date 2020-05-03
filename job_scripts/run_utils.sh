@@ -1512,8 +1512,15 @@ function submit_job {
       fi
   fi
 
+  # Compute the number of nodes needed for this job, if not
+  # explicitly specified already. Take note of whether we
+  # had to compute this; we'll use that information later.
+
+  nodes_automatically_set=0
+
   if [ -z $nodes ]; then
       nodes=$(compute_num_nodes)
+      nodes_automatically_set=1
   fi
 
   # If we made it to this point, now actually submit the job.
@@ -1545,6 +1552,10 @@ function submit_job {
 
   if [ ! -z "$submitted_job_number" ]; then
       echo "$submitted_job_number $current_date $walltime_in_seconds $nprocs" >> jobs_submitted.txt
+  fi
+
+  if [ $nodes_automatically_set -eq 1 ]; then
+      unset nodes
   fi
 
 }
@@ -1598,8 +1609,15 @@ function create_job_script {
       return
   fi
 
+  # Compute the number of nodes needed for this job, if not
+  # explicitly specified already. Take note of whether we
+  # had to compute this; we'll use that information later.
+
+  nodes_automatically_set=0
+
   if [ -z $nodes ]; then
       nodes=$(compute_num_nodes)
+      nodes_automatically_set=1
   fi
 
   # Number of threads for OpenMP. This will be equal to 
@@ -2193,6 +2211,12 @@ function create_job_script {
    # Restore the number of processors per node in case we changed it.
 
    ppn=$old_ppn
+
+   # Unset the number of nodes in case we computed it for the user.
+
+   if [ $nodes_automatically_set -eq 1 ]; then
+       unset nodes
+   fi
 
 }
 
