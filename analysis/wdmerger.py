@@ -1519,14 +1519,14 @@ def make_movie(output_dir, img_list, mpg_filename):
 
 
 
-def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False):
+def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False, annotate_max_T=False):
     """Volume render the density given a plotfile."""
 
     import numpy as np
     import yt
     import matplotlib
     matplotlib.use('agg')
-    from yt.visualization.volume_rendering.api import Scene, VolumeSource
+    from yt.visualization.volume_rendering.api import Scene, VolumeSource, PointSource
     import matplotlib.pyplot as plt
 
     if ".png" not in outfile:
@@ -1535,6 +1535,8 @@ def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False
     ds = yt.load(plotfile)
 
     ds.periodicity = (True, True, True)
+
+    dd = ds.all_data()
 
     field = ('boxlib', 'density')
     ds._get_field_info(field).take_log = True
@@ -1546,18 +1548,16 @@ def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False
     vol = VolumeSource(ds, field=field)
     vol.use_ghost_zones = True
 
-    sc.add_source(vol)
-
     # Transfer function
 
-    vals = [1, 2, 3, 4, 5, 6, 7]
+    vals = [3, 4, 5, 6, 7]
     sigma = 0.1
 
     tf =  yt.ColorTransferFunction((min(vals), max(vals)))
 
     tf.clear()
 
-    cm = "nipy_spectral"
+    cm = "winter"
 
     for v in vals:
         if v < 3:
@@ -1566,7 +1566,27 @@ def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False
             alpha = 0.5
         tf.sample_colormap(v, sigma**2, colormap=cm, alpha=alpha)
 
-    sc.get_source(0).transfer_function = tf
+    vol.set_transfer_function(tf)
+    sc.add_source(vol)
+
+    # Optionally, add point of maximum temperature
+    if annotate_max_T:
+        x, y, z = dd.argmax(('boxlib', 'Temp'))
+
+        vertices = np.zeros((1, 3))
+        colors = np.zeros((1, 4))
+        colors[0,:] = (0.2, 0.002, 0.0, 0.1)
+
+        radii = np.zeros((1), dtype=np.int64)
+
+        radii[0] = 5
+
+        vertices[0,0] = x
+        vertices[0,1] = y
+        vertices[0,2] = z
+
+        points = PointSource(vertices, radii=radii, colors=colors)
+        sc.add_source(points)
 
     cam = sc.add_camera(ds, lens_type="perspective")
     cam.resolution = (1920, 1080)
