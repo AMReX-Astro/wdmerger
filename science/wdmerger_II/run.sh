@@ -16,26 +16,22 @@ function set_run_opts {
     if [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
-        nprocs=6
+        nprocs=12
 
-        if [ $stellar_refinement -eq 32 ]; then
-            nprocs=12
-        elif [ $stellar_refinement -eq 64 ]; then
+        if [ $stellar_refinement -eq 2 ]; then
+            nprocs=18
+        elif [ $stellar_refinement -eq 4 ]; then
             nprocs=24
+        elif [ $stellar_refinement -eq 8 ]; then
+            nprocs=36
+        elif [ $stellar_refinement -eq 16 ]; then
+            nprocs=48
         fi
 
         walltime="2:00:00"
 
-        if   [ $nprocs -gt 270 ]; then
-            walltime="6:00:00"
-        elif [ $nprocs -gt 546 ]; then
-            walltime="12:00:00"
-        elif [ $nprocs -gt 5526 ]; then
-            walltime="24:00:00"
-        fi
-
-        amr_blocking_factor="128"
-        amr_max_grid_size="128 256 512 1024 2048 4096"
+        amr_blocking_factor="128 128 256 256 512"
+        amr_max_grid_size="256 512 1024"
 
     else
 
@@ -845,13 +841,13 @@ function set_run_opts {
 
         fi
 
-        # Allow stellar refinement all the way up to the max level.
+        # Only solve gravity up to the stellar refinement level.
 
-        if [ ! -z $full_stellar_refinement ]; then
-            if [ $full_stellar_refinement -eq 1 ]; then
-                max_stellar_tagging_level=$amr_max_level
-            fi
-        fi
+        gravity_max_solve_level=$max_stellar_tagging_level
+
+        # Only do reactions up to the stellar refinement level.
+
+        castro_reactions_max_solve_level=$max_stellar_tagging_level
 
     fi
 
@@ -986,15 +982,12 @@ amr_derive_plot_vars="ALL"
 
 # Make small plotfiles rapidly.
 
-amr_small_plot_per="0.01"
+amr_small_plot_per="0.1"
 amr_small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr_derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
-# Ensure that plotting intervals are hit exactly.
-# This helps in resolving the detonation point.
-
-castro_plot_per_is_exact="1"
-castro_small_plot_per_is_exact="1"
+castro_plot_per_is_exact="0"
+castro_small_plot_per_is_exact="0"
 
 # Save checkpoints every second.
 
@@ -1003,6 +996,14 @@ amr_check_per="1.0"
 # Initial timestep shortening factor.
 
 castro_init_shrink="0.1"
+
+# CFL number.
+
+castro_cfl="0.8"
+
+# Maximum number of subcycles.
+
+castro_max_subcycles="128"
 
 # Enable reactions.
 
@@ -1019,21 +1020,15 @@ castro_do_rotation="0"
 co_wd_c_frac="0.5d0"
 co_wd_o_frac="0.5d0"
 
-# Use post-timestep regrids.
-
-castro_use_post_step_regrid="1"
-
 # Allow the timestep to change by up to 25% per advance.
 
 castro_change_max="1.25"
 
 # Some defaults.
 
-ncell_default="256"
+ncell_default="1024"
 dtnuc_e_default="1.e200"
 dtnuc_X_default="1.e200"
-dxnuc_default="1.0e200"
-dxnuc_max_default="1.0e200"
 mass_P_default="0.64"
 mass_S_default="0.64"
 
@@ -1042,12 +1037,8 @@ mass_P=$mass_P_default
 mass_S=$mass_S_default
 castro_dtnuc_e=$dtnuc_e_default
 castro_dtnuc_X=$dtnuc_X_default
-castro_dxnuc=$dxnuc_default
-castro_dxnuc_max=$dxnuc_max_default
 castro_react_T_min="5.0e8"
 castro_react_rho_min="1.0e6"
-
-castro_T_stopping_criterion="4.0e9"
 
 # The flag we will use to determine whether to run the job.
 
@@ -1063,12 +1054,11 @@ stop_time="9.0"
 prob_lo="-5.12e9"
 prob_hi="5.12e9"
 
-ncell="512"
+stellar_refinement_list="1 2 4 8 16"
 
-stellar_refinement_list="1 2 4 8 16 32 64"
-stellar_refinement_list="1 2 4"
-tempgrad_rel_refinement_list="1"
-probin_tagging_tempgrad_rel="0.25d0"
+burning_refinement_list="1 2 4 8 16 32 64"
+
+probin_tagging_dxnuc_min="1.d-16"
 
 for stellar_refinement in $stellar_refinement_list
 do
@@ -1089,7 +1079,7 @@ do
 
         refinement=1
 
-        probin_tagging_max_tempgrad_rel_lev=0
+        probin_tagging_max_dxnuc_lev=0
 
         dir=$start_dir
         set_run_opts
@@ -1097,7 +1087,11 @@ do
         # First, we need to do the initial run, up to the point
         # when burning starts.
 
-        castro_ts_te_stopping_criterion="1.0e-6"
+        castro_ts_te_stopping_criterion="1.0e-16"
+
+        # No need for post-step regrids in the initial phase.
+
+        castro_use_post_step_regrid="0"
 
         if [ $to_run -eq 1 ]; then
             run
@@ -1105,25 +1099,29 @@ do
 
         unset castro_ts_te_stopping_criterion
         unset refinement
-        unset probin_tagging_max_tempgrad_rel_lev
+        unset probin_tagging_max_dxnuc_lev
 
     else
 
-        for refinement in $tempgrad_rel_refinement_list
+        for refinement in $burning_refinement_list
         do
 
             dir=$base_dir/r$refinement
             set_run_opts
 
-            probin_tagging_max_tempgrad_rel_lev=$amr_max_level
+            probin_tagging_max_dxnuc_lev=$amr_max_level
 
             copy_checkpoint
+
+            # Use post-timestep regrids.
+
+            castro_use_post_step_regrid="1"
 
             if [ $to_run -eq 1 ]; then
                 run
             fi
 
-            unset probin_tagging_max_tempgrad_rel_lev
+            unset probin_tagging_max_dxnuc_lev
 
         done
 
