@@ -1060,7 +1060,7 @@ prob_hi="5.12e9"
 
 stellar_refinement_list="1 2 4 8 16"
 
-burning_refinement_list="1 2 4 8 16 32 64"
+burning_refinement_list="1 2 4 8 16 32 64 128 256"
 
 probin_tagging_dxnuc_min="1.d-16"
 
