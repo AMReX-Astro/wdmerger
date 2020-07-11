@@ -74,7 +74,7 @@ function fix_inputs_var_name {
     elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] || 
 	   [ $namespace == "geometry" ] || [ $namespace == "gravity" ] || 
 	   [ $namespace == "mg" ] || [ $namespace == "DistributionMapping" ] ||
-	   [ $namespace == "fab" ] )
+	   [ $namespace == "fab" ] || [ $namespace == "amrex" ] )
     then
 
 	# Remove the namespace from the variable, then

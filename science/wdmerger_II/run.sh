@@ -961,6 +961,10 @@ NETWORK_DIR="aprox13"
 inputs="inputs_2d"
 probin="probin"
 
+# Abort if we run out of GPU memory.
+
+amrex_abort_on_out_of_gpu_memory="1"
+
 # Variables we need to set up the collision.
 
 problem="0"
