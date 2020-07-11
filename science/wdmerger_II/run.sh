@@ -16,14 +16,14 @@ function set_run_opts {
     if [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
-        nprocs=12
+        nprocs=24
 
         if [ $stellar_refinement -eq 2 ]; then
-            nprocs=18
+            nprocs=30
         elif [ $stellar_refinement -eq 4 ]; then
-            nprocs=24
-        elif [ $stellar_refinement -eq 8 ]; then
             nprocs=36
+        elif [ $stellar_refinement -eq 8 ]; then
+            nprocs=42
         elif [ $stellar_refinement -eq 16 ]; then
             nprocs=48
         fi
