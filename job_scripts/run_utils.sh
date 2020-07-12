@@ -2009,7 +2009,7 @@ function create_job_script {
 
       # Set the jsrun options.
 
-      launcher_opts="-n $num_mpi_tasks -r $tasks_per_node -c $threads_per_task -a 1 -g 1 -X 1 -brs"
+      launcher_opts="-n $num_mpi_tasks -c $threads_per_task -a 1 -g 1 -X 1 -brs"
       redirect="> $job_name.OU"
 
       # Main job execution.
