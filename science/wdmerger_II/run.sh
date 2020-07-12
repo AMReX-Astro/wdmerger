@@ -16,22 +16,22 @@ function set_run_opts {
     if [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
-        nprocs=48
+        nprocs=64
 
-        if [ $reactions_refinement -eq 2 ]; then
+        if [ $burn_refinement -eq 2 ]; then
             nprocs=96
-        elif [ $reactions_refinement -eq 4 ]; then
+        elif [ $burn_refinement -eq 4 ]; then
+            nprocs=128
+        elif [ $burn_refinement -eq 8 ]; then
+            nprocs=160
+        elif [ $burn_refinement -eq 16 ]; then
             nprocs=192
-        elif [ $reactions_refinement -eq 8 ]; then
-            nprocs=384
-        elif [ $reactions_refinement -eq 16 ]; then
-            nprocs=768
         fi
 
         walltime="2:00:00"
 
-        amr_blocking_factor="128 128 256 256 512"
-        amr_max_grid_size="256 512 1024"
+        amr_blocking_factor="128"
+        amr_max_grid_size="1024"
 
     else
 
@@ -45,11 +45,11 @@ function set_run_opts {
     geometry_prob_lo="0.0 $prob_lo"
     geometry_prob_hi="$prob_hi $prob_hi"
 
-    if [ ! -z $reactions_refinement ]; then
+    if [ ! -z $burn_refinement ]; then
 
-        if [ $reactions_refinement -eq 1 ]; then
+        if [ $burn_refinement -eq 1 ]; then
 
-            castro_reactions_max_solve_level="0"
+            probin_tagging_max_dxnuc_lev="0"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -125,9 +125,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 2 ]; then
+        elif [ $burn_refinement -eq 2 ]; then
 
-            castro_reactions_max_solve_level="1"
+            probin_tagging_max_dxnuc_lev="1"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -201,9 +201,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 4 ]; then
+        elif [ $burn_refinement -eq 4 ]; then
 
-            castro_reactions_max_solve_level="1"
+            probin_tagging_max_dxnuc_lev="1"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -274,9 +274,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 8 ]; then
+        elif [ $burn_refinement -eq 8 ]; then
 
-            castro_reactions_max_solve_level="2"
+            probin_tagging_max_dxnuc_lev="2"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -344,9 +344,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 16 ]; then
+        elif [ $burn_refinement -eq 16 ]; then
 
-            castro_reactions_max_solve_level="2"
+            probin_tagging_max_dxnuc_lev="2"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -411,9 +411,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 32 ]; then
+        elif [ $burn_refinement -eq 32 ]; then
 
-            castro_reactions_max_solve_level="3"
+            probin_tagging_max_dxnuc_lev="3"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -475,9 +475,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 64 ]; then
+        elif [ $burn_refinement -eq 64 ]; then
 
-            castro_reactions_max_solve_level="3"
+            probin_tagging_max_dxnuc_lev="3"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -536,9 +536,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 128 ]; then
+        elif [ $burn_refinement -eq 128 ]; then
 
-            castro_reactions_max_solve_level="4"
+            probin_tagging_max_dxnuc_lev="4"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -594,9 +594,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 256 ]; then
+        elif [ $burn_refinement -eq 256 ]; then
 
-            castro_reactions_max_solve_level="4"
+            probin_tagging_max_dxnuc_lev="4"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -649,9 +649,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 512 ]; then
+        elif [ $burn_refinement -eq 512 ]; then
 
-            castro_reactions_max_solve_level="5"
+            probin_tagging_max_dxnuc_lev="5"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -701,9 +701,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 1024 ]; then
+        elif [ $burn_refinement -eq 1024 ]; then
 
-            castro_reactions_max_solve_level="5"
+            probin_tagging_max_dxnuc_lev="5"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -750,9 +750,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 2048 ]; then
+        elif [ $burn_refinement -eq 2048 ]; then
 
-            castro_reactions_max_solve_level="6"
+            probin_tagging_max_dxnuc_lev="6"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -796,9 +796,9 @@ function set_run_opts {
 
             fi
 
-        elif [ $reactions_refinement -eq 4096 ]; then
+        elif [ $burn_refinement -eq 4096 ]; then
 
-            castro_reactions_max_solve_level="6"
+            probin_tagging_max_dxnuc_lev="6"
 
             if [ ! -z $hydro_refinement ]; then
 
@@ -846,9 +846,16 @@ function set_run_opts {
 
         gravity_max_solve_level=0
 
-        # Tag all zones in the star for maximum refinement.
+        # Allow reactions up to the level we're refining for reactions on.
+        # On levels above this, where we're effectively subcycling the hydro,
+        # we just interpolate the reactions source rather than calculate it.
 
-        max_stellar_tagging_level=$amr_max_level
+        castro_reactions_max_solve_level=$probin_tagging_max_dxnuc_lev
+
+        # Tag to the maximum level wherever reactions are happening.
+
+        probin_tagging_dxnuc_min="1.0d-15"
+        probin_tagging_max_dxnuc_lev=$amr_max_level
 
     fi
 
@@ -1018,9 +1025,9 @@ castro_cfl="0.8"
 
 castro_max_subcycles="128"
 
-# Use post-timestep regrids.
+# Enable efficient regridding (don't actually regrid if the grids haven't changed.)
 
-castro_use_post_step_regrid="1"
+amr_use_efficient_regrid="1"
 
 # Enable reactions.
 
@@ -1043,18 +1050,14 @@ castro_change_max="1.25"
 
 # Some defaults.
 
-ncell_default="1024"
+ncell_default="4096"
 dtnuc_e_default="1.e200"
 dtnuc_X_default="1.e200"
-mass_P_default="0.64"
-mass_S_default="0.64"
 
 ncell=$ncell_default
-mass_P=$mass_P_default
-mass_S=$mass_S_default
 castro_dtnuc_e=$dtnuc_e_default
 castro_dtnuc_X=$dtnuc_X_default
-castro_react_T_min="5.0e8"
+castro_react_T_min="1.0e8"
 castro_react_rho_min="1.0e6"
 
 # The flag we will use to determine whether to run the job.
@@ -1075,7 +1078,7 @@ stop_time="4.0"
 prob_lo="-5.12e9"
 prob_hi="5.12e9"
 
-reactions_refinement_list="1 2 4 8 16"
+burn_refinement_list="1 2 4 8 16"
 
 hydro_refinement_list="1 4 16 64"
 
@@ -1090,15 +1093,13 @@ do
 
         co_wd_he_shell_mass=$helium_shell_mass
 
-        for reactions_refinement in $reactions_refinement_list
+        for burn_refinement in $burn_refinement_list
         do
-
-            effective_ncell=$(echo "$ncell * $reactions_refinement" | bc)
 
             for hydro_refinement in $hydro_refinement_list
             do
 
-                dir=$results_dir/m$mass/he$helium_shell_mass/reactions_r$reactions_refinement/hydro_r$hydro_refinement
+                dir=$results_dir/m$mass/he$helium_shell_mass/r$burn_refinement/r$hydro_refinement
                 set_run_opts
 
                 if [ $to_run -eq 1 ]; then
