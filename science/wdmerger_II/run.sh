@@ -16,17 +16,7 @@ function set_run_opts {
     if [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
-        nprocs=64
-
-        if [ $burn_refinement -eq 2 ]; then
-            nprocs=96
-        elif [ $burn_refinement -eq 4 ]; then
-            nprocs=128
-        elif [ $burn_refinement -eq 8 ]; then
-            nprocs=160
-        elif [ $burn_refinement -eq 16 ]; then
-            nprocs=192
-        fi
+        nprocs=128
 
         walltime="2:00:00"
 
@@ -1080,8 +1070,6 @@ prob_hi="5.12e9"
 
 burn_refinement_list="1 2 4 8 16"
 
-hydro_refinement_list="1 4 16 64"
-
 for mass in $mass_list
 do
 
@@ -1095,6 +1083,20 @@ do
 
         for burn_refinement in $burn_refinement_list
         do
+
+            if [ $burn_refinement -eq 1 ]; then
+                hydro_refinement_list="1 2 4 8 16 32 64 128 256"
+            elif [ $burn_refinement -eq 2 ]; then
+                hydro_refinement_list="1 2 4 8 16 32 64 128"
+            elif [ $burn_refinement -eq 4 ]; then
+                hydro_refinement_list="1 2 4 8 16 32 64"
+            elif [ $burn_refinement -eq 8 ]; then
+                hydro_refinement_list="1 2 4 8 16 32"
+            elif [ $burn_refinement -eq 16 ]; then
+                hydro_refinement_list="1 2 4 8 16"
+            else
+                break
+            fi
 
             for hydro_refinement in $hydro_refinement_list
             do
