@@ -1033,6 +1033,10 @@ castro_do_react="1"
 
 castro_do_rotation="0"
 
+# Ease up on the gravity tolerance since we're in axisymmetric and at high resolution.
+
+gravity_abs_tol="1.e-9"
+
 # Many of the collision papers in the literature use an equal
 # C/O ratio  by mass in the initial white dwarfs. We will do
 # this too for comparison purposes.
