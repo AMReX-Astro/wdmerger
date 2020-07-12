@@ -1632,13 +1632,9 @@ function create_job_script {
   # we'll use two OpenMP threads for small problems and four
   # threads for bigger problems.
 
-  if [ -z $OMP_NUM_THREADS ]; then
+  if [ -z $OMP_NUM_THREADS ] && [ -z $threads_per_task ]; then
 
-      if [ -z $threads_per_task ]; then
-	  threads_per_task=1
-      fi
-
-      OMP_NUM_THREADS=$threads_per_task
+      OMP_NUM_THREADS=1
 
       # First, get the maximum grid size. If this has been
       # set by the including script, we use that; otherwise, 
@@ -1690,6 +1686,26 @@ function create_job_script {
       if [ $do_omp == "FALSE" ]; then
 	  OMP_NUM_THREADS=1
       fi
+
+      threads_per_task=$OMP_NUM_THREADS
+
+  elif [ -z $OMP_NUM_THREADS ]; then
+
+      # We specified number of threads, so set OpenMP accordingly.
+
+      do_omp=$(get_make_var USE_OMP)
+      if [ $do_omp == "FALSE" ]; then
+	  OMP_NUM_THREADS=1
+      else
+          OMP_NUM_THREADS=$threads_per_task
+      fi
+
+  else
+
+      # We didn't specify either, so just ignore them by setting to one.
+
+      OMP_NUM_THREADS=1
+      threads_per_task=1
 
   fi
 
@@ -1814,7 +1830,7 @@ function create_job_script {
       # Set the aprun options.
 
       if [ $launcher == "aprun" ]; then
-	  launcher_opts="-n $num_mpi_tasks -N $tasks_per_node -d $OMP_NUM_THREADS"
+	  launcher_opts="-n $num_mpi_tasks -N $tasks_per_node -d $threads_per_task"
 	  redirect=""
       elif [ $launcher == "mpirun" ]; then
 	  launcher_opts="-np $num_mpi_tasks"
@@ -1993,7 +2009,7 @@ function create_job_script {
 
       # Set the jsrun options.
 
-      launcher_opts="-n $num_mpi_tasks -r $tasks_per_node -c $OMP_NUM_THREADS -a 1 -g 1 -X 1 -brs"
+      launcher_opts="-n $num_mpi_tasks -r $tasks_per_node -c $threads_per_task -a 1 -g 1 -X 1 -brs"
       redirect="> $job_name.OU"
 
       # Main job execution.

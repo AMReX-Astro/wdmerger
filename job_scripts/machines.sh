@@ -116,6 +116,7 @@ function set_machine_params {
         pause_job="bstop"
         resume_job="bresume"
         ppn="6"
+        threads_per_task="7"
         run_ext=".OU"
         batch_system="LSF"
         queue="batch"
