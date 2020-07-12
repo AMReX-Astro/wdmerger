@@ -18,14 +18,14 @@ function set_run_opts {
         queue="batch"
         nprocs=48
 
-        if [ $stellar_refinement -eq 2 ]; then
-            nprocs=72
-        elif [ $stellar_refinement -eq 4 ]; then
+        if [ $reactions_refinement -eq 2 ]; then
             nprocs=96
-        elif [ $stellar_refinement -eq 8 ]; then
-            nprocs=120
-        elif [ $stellar_refinement -eq 16 ]; then
-            nprocs=168
+        elif [ $reactions_refinement -eq 4 ]; then
+            nprocs=192
+        elif [ $reactions_refinement -eq 8 ]; then
+            nprocs=384
+        elif [ $reactions_refinement -eq 16 ]; then
+            nprocs=768
         fi
 
         walltime="2:00:00"
@@ -45,795 +45,795 @@ function set_run_opts {
     geometry_prob_lo="0.0 $prob_lo"
     geometry_prob_hi="$prob_hi $prob_hi"
 
-    if [ ! -z $stellar_refinement ]; then
+    if [ ! -z $reactions_refinement ]; then
 
-        if [ $stellar_refinement -eq 1 ]; then
+        if [ $reactions_refinement -eq 1 ]; then
 
-            max_stellar_tagging_level="0"
+            castro_reactions_max_solve_level="0"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=0
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=1
                     amr_ref_ratio="2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=1
                     amr_ref_ratio="4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=2
                     amr_ref_ratio="4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=2
                     amr_ref_ratio="4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32768 ]; then
+                elif [ $hydro_refinement -eq 32768 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 65536 ]; then
+                elif [ $hydro_refinement -eq 65536 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 131072 ]; then
+                elif [ $hydro_refinement -eq 131072 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 262144 ]; then
+                elif [ $hydro_refinement -eq 262144 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 524288 ]; then
+                elif [ $hydro_refinement -eq 524288 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 1048576 ]; then
+                elif [ $hydro_refinement -eq 1048576 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 2097152 ]; then
+                elif [ $hydro_refinement -eq 2097152 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 2 ]; then
+        elif [ $reactions_refinement -eq 2 ]; then
 
-            max_stellar_tagging_level="1"
+            castro_reactions_max_solve_level="1"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=1
                     amr_ref_ratio="2"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=2
                     amr_ref_ratio="2 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=2
                     amr_ref_ratio="2 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=3
                     amr_ref_ratio="2 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=3
                     amr_ref_ratio="2 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=4
                     amr_ref_ratio="2 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=4
                     amr_ref_ratio="2 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=5
                     amr_ref_ratio="2 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=5
                     amr_ref_ratio="2 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=6
                     amr_ref_ratio="2 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=6
                     amr_ref_ratio="2 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=7
                     amr_ref_ratio="2 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=7
                     amr_ref_ratio="2 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=8
                     amr_ref_ratio="2 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=8
                     amr_ref_ratio="2 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32768 ]; then
+                elif [ $hydro_refinement -eq 32768 ]; then
                     amr_max_level=9
                     amr_ref_ratio="2 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 65536 ]; then
+                elif [ $hydro_refinement -eq 65536 ]; then
                     amr_max_level=9
                     amr_ref_ratio="2 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 131072 ]; then
+                elif [ $hydro_refinement -eq 131072 ]; then
                     amr_max_level=10
                     amr_ref_ratio="2 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 262144 ]; then
+                elif [ $hydro_refinement -eq 262144 ]; then
                     amr_max_level=10
                     amr_ref_ratio="2 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 524288 ]; then
+                elif [ $hydro_refinement -eq 524288 ]; then
                     amr_max_level=11
                     amr_ref_ratio="2 4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 1048576 ]; then
+                elif [ $hydro_refinement -eq 1048576 ]; then
                     amr_max_level=11
                     amr_ref_ratio="2 4 4 4 4 4 4 4 4 4 4"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 4 ]; then
+        elif [ $reactions_refinement -eq 4 ]; then
 
-            max_stellar_tagging_level="1"
+            castro_reactions_max_solve_level="1"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=1
                     amr_ref_ratio="4"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=2
                     amr_ref_ratio="4 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=2
                     amr_ref_ratio="4 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32768 ]; then
+                elif [ $hydro_refinement -eq 32768 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 65536 ]; then
+                elif [ $hydro_refinement -eq 65536 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 131072 ]; then
+                elif [ $hydro_refinement -eq 131072 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 262144 ]; then
+                elif [ $hydro_refinement -eq 262144 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 524288 ]; then
+                elif [ $hydro_refinement -eq 524288 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 8 ]; then
+        elif [ $reactions_refinement -eq 8 ]; then
 
-            max_stellar_tagging_level="2"
+            castro_reactions_max_solve_level="2"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=2
                     amr_ref_ratio="4 2"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 2 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 2 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 2 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 2 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 2 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 2 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 2 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 2 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 2 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 2 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 2 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 2 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 2 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 2 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32768 ]; then
+                elif [ $hydro_refinement -eq 32768 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 2 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 65536 ]; then
+                elif [ $hydro_refinement -eq 65536 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 2 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 131072 ]; then
+                elif [ $hydro_refinement -eq 131072 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 2 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 262144 ]; then
+                elif [ $hydro_refinement -eq 262144 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 2 4 4 4 4 4 4 4 4 4"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 16 ]; then
+        elif [ $reactions_refinement -eq 16 ]; then
 
-            max_stellar_tagging_level="2"
+            castro_reactions_max_solve_level="2"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=2
                     amr_ref_ratio="4 4"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32768 ]; then
+                elif [ $hydro_refinement -eq 32768 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 65536 ]; then
+                elif [ $hydro_refinement -eq 65536 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 131072 ]; then
+                elif [ $hydro_refinement -eq 131072 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 32 ]; then
+        elif [ $reactions_refinement -eq 32 ]; then
 
-            max_stellar_tagging_level="3"
+            castro_reactions_max_solve_level="3"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 2"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 2 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 2 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 2 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 2 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 2 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 2 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 2 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 2 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 2 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 2 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 2 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 2 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 2 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 2 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32768 ]; then
+                elif [ $hydro_refinement -eq 32768 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 2 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 65536 ]; then
+                elif [ $hydro_refinement -eq 65536 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 2 4 4 4 4 4 4 4 4"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 64 ]; then
+        elif [ $reactions_refinement -eq 64 ]; then
 
-            max_stellar_tagging_level="3"
+            castro_reactions_max_solve_level="3"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=3
                     amr_ref_ratio="4 4 4"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32768 ]; then
+                elif [ $hydro_refinement -eq 32768 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 128 ]; then
+        elif [ $reactions_refinement -eq 128 ]; then
 
-            max_stellar_tagging_level="4"
+            castro_reactions_max_solve_level="4"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 2"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 2 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 2 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 2 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 2 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 2 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 2 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 2 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 2 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 2 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 2 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 2 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 2 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 2 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16384 ]; then
+                elif [ $hydro_refinement -eq 16384 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 2 4 4 4 4 4 4 4"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 256 ]; then
+        elif [ $reactions_refinement -eq 256 ]; then
 
-            max_stellar_tagging_level="4"
+            castro_reactions_max_solve_level="4"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=4
                     amr_ref_ratio="4 4 4 4"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 8192 ]; then
+                elif [ $hydro_refinement -eq 8192 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 512 ]; then
+        elif [ $reactions_refinement -eq 512 ]; then
 
-            max_stellar_tagging_level="5"
+            castro_reactions_max_solve_level="5"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 2"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 2 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 2 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 2 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 2 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 2 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 2 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 2 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 2 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 2 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 2 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 2 4 4 4 4 4 2"
-                elif [ $refinement -eq 4096 ]; then
+                elif [ $hydro_refinement -eq 4096 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 2 4 4 4 4 4 4"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 1024 ]; then
+        elif [ $reactions_refinement -eq 1024 ]; then
 
-            max_stellar_tagging_level="5"
+            castro_reactions_max_solve_level="5"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=5
                     amr_ref_ratio="4 4 4 4 4"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 2048 ]; then
+                elif [ $hydro_refinement -eq 2048 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 2048 ]; then
+        elif [ $reactions_refinement -eq 2048 ]; then
 
-            max_stellar_tagging_level="6"
+            castro_reactions_max_solve_level="6"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 2"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 2 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 2 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 2 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 2 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 2 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 2 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 2 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 2 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 2 4 4 4 4 2"
-                elif [ $refinement -eq 1024 ]; then
+                elif [ $hydro_refinement -eq 1024 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 2 4 4 4 4 4"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
             fi
 
-        elif [ $stellar_refinement -eq 4096 ]; then
+        elif [ $reactions_refinement -eq 4096 ]; then
 
-            max_stellar_tagging_level="6"
+            castro_reactions_max_solve_level="6"
 
-            if [ ! -z $refinement ]; then
+            if [ ! -z $hydro_refinement ]; then
 
-                if [ $refinement -eq 1 ]; then
+                if [ $hydro_refinement -eq 1 ]; then
                     amr_max_level=6
                     amr_ref_ratio="4 4 4 4 4 4"
-                elif [ $refinement -eq 2 ]; then
+                elif [ $hydro_refinement -eq 2 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 2"
-                elif [ $refinement -eq 4 ]; then
+                elif [ $hydro_refinement -eq 4 ]; then
                     amr_max_level=7
                     amr_ref_ratio="4 4 4 4 4 4 4"
-                elif [ $refinement -eq 8 ]; then
+                elif [ $hydro_refinement -eq 8 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 16 ]; then
+                elif [ $hydro_refinement -eq 16 ]; then
                     amr_max_level=8
                     amr_ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 32 ]; then
+                elif [ $hydro_refinement -eq 32 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 64 ]; then
+                elif [ $hydro_refinement -eq 64 ]; then
                     amr_max_level=9
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 128 ]; then
+                elif [ $hydro_refinement -eq 128 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $refinement -eq 256 ]; then
+                elif [ $hydro_refinement -eq 256 ]; then
                     amr_max_level=10
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $refinement -eq 512 ]; then
+                elif [ $hydro_refinement -eq 512 ]; then
                     amr_max_level=11
                     amr_ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
                 else
-                    echo "Unknown refinement factor: "$refinement"; exiting."
+                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
                     exit
                 fi
 
@@ -841,13 +841,14 @@ function set_run_opts {
 
         fi
 
-        # Only solve gravity up to the stellar refinement level.
+        # Only solve gravity on the coarse level. The additional accuracy
+        # from solving on the fine levels would provide no benefit on this problem.
 
-        gravity_max_solve_level=$max_stellar_tagging_level
+        gravity_max_solve_level=0
 
-        # Only do reactions up to the stellar refinement level.
+        # Tag all zones in the star for maximum refinement.
 
-        castro_reactions_max_solve_level=$max_stellar_tagging_level
+        max_stellar_tagging_level=$amr_max_level
 
     fi
 
@@ -968,7 +969,7 @@ amrex_abort_on_out_of_gpu_memory="1"
 # Variables we need to set up the collision.
 
 problem="0"
-collision_separation="4.0"
+collision_separation="2.0"
 collision_impact_parameter="0.0"
 
 # Disable refinement based on non-burning criteria.
@@ -977,6 +978,10 @@ collision_impact_parameter="0.0"
 max_stellar_tagging_level="0"
 max_temperature_tagging_level="0"
 max_center_tagging_level="0"
+
+# Allow first-order interpolations to fine levels.
+
+castro_state_interp_order="1"
 
 # Make a full plotfile every second.
 
@@ -1008,6 +1013,10 @@ castro_cfl="0.8"
 # Maximum number of subcycles.
 
 castro_max_subcycles="128"
+
+# Use post-timestep regrids.
+
+castro_use_post_step_regrid="1"
 
 # Enable reactions.
 
@@ -1048,87 +1057,54 @@ castro_react_rho_min="1.0e6"
 
 to_run=1
 
-# List of WD masses to use.
+# Simulate 0.64 + 0.64 M_solar WDs.
 
-mass="0.64"
-mass_P=$mass
-mass_S=$mass
+mass_list="0.64"
 
-stop_time="9.0"
+# Run four helium shell mass cases. These are the same
+# values from Holcomb and Kushnir (2016), so that we
+# can make a direct comparison (see Figure 2).
+
+helium_shell_mass_list="0.00 0.04 0.08 0.16"
+
+stop_time="4.0"
 prob_lo="-5.12e9"
 prob_hi="5.12e9"
 
-stellar_refinement_list="1 2 4 8 16"
+reactions_refinement_list="1 2 4 8 16"
 
-burning_refinement_list="1 2 4 8 16 32 64 128 256"
+hydro_refinement_list="1 4 16 64"
 
-probin_tagging_dxnuc_min="1.d-16"
-
-for stellar_refinement in $stellar_refinement_list
+for mass in $mass_list
 do
 
-    effective_ncell=$(echo "$ncell * $stellar_refinement" | bc)
+    mass_P=$mass
+    mass_S=$mass
 
-    base_dir=$results_dir/n$effective_ncell
-    start_dir=$base_dir/start
+    for helium_shell_mass in $helium_shell_mass_list
+    do
 
-    start_done="0"
+        co_wd_he_shell_mass=$helium_shell_mass
 
-    if [ -d $start_dir ]; then
-        dir=$start_dir
-        start_done=$(is_dir_done)
-    fi
-
-    if [ $start_done -ne 1 ]; then
-
-        refinement=1
-
-        probin_tagging_max_dxnuc_lev=0
-
-        dir=$start_dir
-        set_run_opts
-
-        # First, we need to do the initial run, up to the point
-        # when burning starts.
-
-        castro_ts_te_stopping_criterion="1.0e-16"
-
-        # No need for post-step regrids in the initial phase.
-
-        castro_use_post_step_regrid="0"
-
-        if [ $to_run -eq 1 ]; then
-            run
-        fi
-
-        unset castro_ts_te_stopping_criterion
-        unset refinement
-        unset probin_tagging_max_dxnuc_lev
-
-    else
-
-        for refinement in $burning_refinement_list
+        for reactions_refinement in $reactions_refinement_list
         do
 
-            dir=$base_dir/r$refinement
-            set_run_opts
+            effective_ncell=$(echo "$ncell * $reactions_refinement" | bc)
 
-            probin_tagging_max_dxnuc_lev=$amr_max_level
+            for hydro_refinement in $hydro_refinement_list
+            do
 
-            copy_checkpoint
+                dir=$results_dir/m$mass/he$helium_shell_mass/reactions_r$reactions_refinement/hydro_r$hydro_refinement
+                set_run_opts
 
-            # Use post-timestep regrids.
+                if [ $to_run -eq 1 ]; then
+                    run
+                fi
 
-            castro_use_post_step_regrid="1"
-
-            if [ $to_run -eq 1 ]; then
-                run
-            fi
-
-            unset probin_tagging_max_dxnuc_lev
+            done
 
         done
 
-    fi
+    done
 
 done
