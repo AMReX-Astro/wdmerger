@@ -966,6 +966,10 @@ probin="probin"
 
 amrex_abort_on_out_of_gpu_memory="1"
 
+# Use AMReX async I/O.
+
+amrex_async_out="1"
+
 # Variables we need to set up the collision.
 
 problem="0"
