@@ -1089,15 +1089,15 @@ do
         do
 
             if [ $burn_refinement -eq 1 ]; then
-                hydro_refinement_list="1 2 4 8 16 32 64 128 256"
-            elif [ $burn_refinement -eq 2 ]; then
                 hydro_refinement_list="1 2 4 8 16 32 64 128"
-            elif [ $burn_refinement -eq 4 ]; then
+            elif [ $burn_refinement -eq 2 ]; then
                 hydro_refinement_list="1 2 4 8 16 32 64"
-            elif [ $burn_refinement -eq 8 ]; then
+            elif [ $burn_refinement -eq 4 ]; then
                 hydro_refinement_list="1 2 4 8 16 32"
-            elif [ $burn_refinement -eq 16 ]; then
+            elif [ $burn_refinement -eq 8 ]; then
                 hydro_refinement_list="1 2 4 8 16"
+            elif [ $burn_refinement -eq 16 ]; then
+                hydro_refinement_list="1 2 4 8"
             else
                 break
             fi
