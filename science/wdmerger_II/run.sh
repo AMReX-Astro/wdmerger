@@ -963,6 +963,10 @@ probin="probin"
 
 amrex_abort_on_out_of_gpu_memory="1"
 
+# Disable flux limiting.
+
+castro_limit_fluxes_on_small_dens="0"
+
 # Variables we need to set up the collision.
 
 problem="0"
