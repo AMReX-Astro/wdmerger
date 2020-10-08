@@ -49,7 +49,7 @@ function get_inputs_var {
 
 # If a variable corresponds to a valid CASTRO inputs variable,
 # return the name of this variable with the proper formatting:
-# replace the underscore after the namespace with a period.
+# replace double underscores with periods.
 
 function fix_inputs_var_name {
 
@@ -77,11 +77,12 @@ function fix_inputs_var_name {
 	   [ $namespace == "fab" ] || [ $namespace == "amrex" ] )
     then
 
-	# Remove the namespace from the variable, then
-	# replace it with the correct period.
+	# Replace double underscores with periods.
 
-	inputs_var_end=$(echo ${var#$namespace\_})
-	inputs_var_name="$namespace.$inputs_var_end"
+        search_string="__"
+        replace_string="."
+
+        inputs_var_name=${inputs_var_name//$search_string/$replace_string}
 
     fi
 
