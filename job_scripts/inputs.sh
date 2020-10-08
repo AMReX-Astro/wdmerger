@@ -82,7 +82,7 @@ function fix_inputs_var_name {
         search_string="__"
         replace_string="."
 
-        inputs_var_name=${inputs_var_name//$search_string/$replace_string}
+        inputs_var_name=${var//$search_string/$replace_string}
 
     fi
 
