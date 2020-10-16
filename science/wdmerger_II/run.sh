@@ -834,7 +834,7 @@ function set_run_opts {
         # Only solve gravity on the coarse level. The additional accuracy
         # from solving on the fine levels would provide no benefit on this problem.
 
-        gravity_max_solve_level=0
+        gravity__max_solve_level=0
 
         # Allow reactions up to the level we're refining for reactions on.
         # On levels above this, where we're effectively subcycling the hydro,
@@ -1029,7 +1029,7 @@ castro__do_rotation="0"
 
 # Ease up on the gravity tolerance since we're in axisymmetric and at high resolution.
 
-gravity_abs_tol="1.e-9"
+gravity__abs_tol="1.e-9"
 
 # Many of the collision papers in the literature use an equal
 # C/O ratio  by mass in the initial white dwarfs. We will do
