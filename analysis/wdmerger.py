@@ -1157,6 +1157,10 @@ def rho_T_sliceplot(output_filename, pltfile,
         print("Error: expecting an EPS output file.")
         return
 
+    # Update font size as first action so that it takes effect immediately
+
+    matplotlib.rcParams.update({'font.size': 20})
+
     fig, axes, colorbars = get_multi_plot(2, 1, colorbar = 'horizontal', bw = 6)
 
     ds = yt.load(pltfile)
@@ -1277,8 +1281,6 @@ def rho_T_sliceplot(output_filename, pltfile,
 
         dens_axis.set_ylabel(r'$y\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
         temp_axis.set_ylabel(r'$y\ (10^{}\ \mathrm{{cm}})$'.format('{' + str(scale_exp) + '}'))
-
-    matplotlib.rcParams.update({'font.size': 20})
 
     # Save as EPS
 
