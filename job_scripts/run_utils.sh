@@ -794,7 +794,8 @@ function archive_all {
       mkdir $directory/output/
   fi
 
-  archivelist=""
+  archive_mv_list=""
+  archive_cp_list=""
 
   # Archive the plotfiles and checkpoint files.
   # Make sure that they have been completed by checking if
@@ -803,10 +804,9 @@ function archive_all {
   pltlist=$(find $directory -maxdepth 1 -type d -name "*plt*" | sort)
   chklist=$(find $directory -maxdepth 1 -type d -name "*chk*" | sort)
 
-  # Move all completed plotfiles and checkpoints to the output
-  # directory, and add them to the list of things to archive.
-  # It is possible that a plotfile or checkpoint of the same name
-  # will be duplicated if we started from an earlier checkpoint;
+  # Add all completed plotfiles and checkpoints to the list of things
+  # to archive. It is possible that a plotfile or checkpoint of the
+  # same name will be duplicated if we started from an earlier checkpoint;
   # in this case, delete the old one and replace it with the new.
 
   for file in $pltlist
@@ -815,9 +815,8 @@ function archive_all {
 	  if [ -e output/$file ]; then
 	      rm -rf output/$file
 	  fi
-	  mv $file $directory/output/
 	  f=$(basename $file)
-	  archivelist=$archivelist" "$f
+	  archive_mv_list=$archive_mv_list" "$f
       fi
   done
 
@@ -837,8 +836,7 @@ function archive_all {
 	      if [ -e output/$file ]; then
 		  rm -rf output/$file
 	      fi
-	      mv $file $directory/output/
-	      archivelist=$archivelist" "$f
+	      archive_mv_list=$archive_mv_list" "$f
 	  fi
       fi
   done
@@ -860,9 +858,8 @@ function archive_all {
 	      continue
 	  fi
       fi
-      cp $file $directory/output/
 
-      archivelist=$archivelist" "$f
+      archive_cp_list=$archive_cp_list" "$f
   done
 
   # Same thing for the runtime stdout files.
@@ -877,8 +874,8 @@ function archive_all {
 	      continue
 	  fi
       fi
-      cp $file $directory/output/
-      archivelist=$archivelist" "$f
+
+      archive_cp_list=$archive_cp_list" "$f
   done
 
   # Same strategy for the inputs and probin files.
@@ -893,8 +890,8 @@ function archive_all {
 	      continue
 	  fi
       fi
-      cp $file $directory/output/
-      archivelist=$archivelist" "$f
+
+      archive_cp_list=$archive_cp_list" "$f
   done
 
   probin_list=$(find -L $directory -maxdepth 1 -name "probin")
@@ -907,30 +904,39 @@ function archive_all {
 	      continue
 	  fi
      fi
-     cp $file $directory/output/
-     archivelist=$archivelist" "$f
+
+     archive_cp_list=$archive_cp_list" "$f
   done
 
   # If there is nothing to archive,
   # then assume we have completed the run and exit.
 
-  if [[ -z $archivelist ]]; then
+  if [[ -z $archive_cp_list ]] && [[ -z $archive_mv_list ]]; then
       return
   fi
 
-  # Now we'll do the archiving for all files in $archivelist.
+  # Now we'll do the archiving for all files in the archive lists.
   # Determine the archiving method based on machine.
 
   if [ $do_storage -eq 1 ]; then
 
-    if   [ $MACHINE == "TITAN"       ]; then
+    if   [ $MACHINE == "SUMMIT"      ]; then
 
-	# For Titan, just loop over every file we're archiving and htar it.
+	# For Summit, just loop over every file we're archiving and htar it.
 
-	for file in $archivelist
+	for file in $archive_cp_list
 	do
+            cp $directory/$file $directory/output
+            echoerr "Archiving " $file
 	    archive $directory/output/$file
 	done
+
+        for file in $archive_mv_list
+        do
+            mv $directory/$file $directory/output
+            echoerr "Archiving " $file
+            archive $directory/output/$file
+        done
 
     elif [ $MACHINE == "BLUE_WATERS" ]; then
 
@@ -1299,7 +1305,7 @@ function check_to_stop {
 
   else
 
-      if [ $do_storage -ne 0 ]; then
+      if [ $do_storage_in_job -ne 0 ]; then
 	  archive_all
       fi
 
@@ -2675,6 +2681,7 @@ archive_script="archive_script"
 archive_method="none"
 
 do_storage=1
+do_storage_in_job=0
 
 # Directory to compile the executable in
 

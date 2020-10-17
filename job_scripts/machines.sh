@@ -121,6 +121,7 @@ function set_machine_params {
         batch_system="LSF"
         queue="batch"
         launcher="jsrun"
+        archive_method="htar"
 
     # Lassen at LLNL
 

@@ -1131,6 +1131,7 @@ do
 
                 if [ $to_run -eq 1 ]; then
                     run
+                    archive_all $(pwd)/$dir
                 fi
 
             done
