@@ -1005,24 +1005,24 @@ max_center_tagging_level="0"
 
 castro__state_interp_order="1"
 
-# Make a full plotfile every second.
+# Make a full plotfile every tenth of a second.
 
-amr__plot_per="1.0"
+amr__plot_per="0.1"
 amr__plot_vars="ALL"
 amr__derive_plot_vars="ALL"
 
 # Make small plotfiles rapidly.
 
-amr__small_plot_per="0.1"
+amr__small_plot_per="0.01"
 amr__small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr__derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
 castro__plot_per_is_exact="0"
 castro__small_plot_per_is_exact="0"
 
-# Save checkpoints every second.
+# Save checkpoints every tenth of a second.
 
-amr__check_per="1.0"
+amr__check_per="0.1"
 
 # Initial timestep shortening factor.
 
