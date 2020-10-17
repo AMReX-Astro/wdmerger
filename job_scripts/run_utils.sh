@@ -799,10 +799,12 @@ function archive_all {
 
   # Archive the plotfiles and checkpoint files.
   # Make sure that they have been completed by checking if
-  # the Header file exists, which is the last thing created.
+  # the Header file exists (which is the last thing created)
+  # and it doesn't have temp in the name (which is what AMReX
+  # uses while the file is being created).
 
-  pltlist=$(find $directory -maxdepth 1 -type d -name "*plt*" | sort)
-  chklist=$(find $directory -maxdepth 1 -type d -name "*chk*" | sort)
+  pltlist=$(find $directory -maxdepth 1 -type d -name "*plt*" | grep -v "temp" | sort)
+  chklist=$(find $directory -maxdepth 1 -type d -name "*chk*" | grep -v "temp" | sort)
 
   # Add all completed plotfiles and checkpoints to the list of things
   # to archive. It is possible that a plotfile or checkpoint of the
