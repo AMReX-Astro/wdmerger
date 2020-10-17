@@ -264,576 +264,6 @@ def write_ni56_table(results_dir, out_filename, v_list, n_list, comment, col1tit
 
 
 
-def burning_limiter_e(eps_filename, results_base, do_ni56 = True):
-    """Plot the effect of the burning timestep factor castro.dtnuc_e."""
-
-    if (os.path.isfile(eps_filename)):
-        return
-    else:
-        print("Generating file %s" % eps_filename)
-
-    results_dir = results_base + 'burning_limiter_e/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    dtnuc_list = wdmerger.get_parameter_list(results_dir)
-
-    if (dtnuc_list == []):
-        return
-
-    # We have two options: plot the total amount of nickel generated,
-    # or plot the average atomic mass number at the end of the simulation.
-
-    if (do_ni56):
-        result_arr = np.array(get_ni56(results_dir))
-    else:
-        result_arr = np.array(get_abar(results_dir))
-
-    # Don't make the plot if we have fewer than two data points.
-
-    if len(result_arr) < 2:
-        return
-
-    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
-
-    # Sort the lists
-
-    result_arr = np.array([x for _,x in sorted(zip(dtnuc_list,result_arr))])
-    dtnuc_list = sorted(dtnuc_list)
-
-    plt.plot(dtnuc_list, result_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
-
-    plt.xscale('log')
-    plt.xlabel(r"Nuclear burning timestep factor $f_{be}$", fontsize=20)
-    if (do_ni56):
-        plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    else:
-        plt.ylabel(r"$\overline{A}$", fontsize=20)
-    plt.tick_params(labelsize=16)
-    plt.tight_layout()
-    plt.savefig(eps_filename)
-    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
-    png_filename = eps_filename[0:-3] + "png"
-    plt.savefig(png_filename)
-
-    plt.close()
-
-
-
-def burning_limiter_X(eps_filename, results_base, do_ni56 = True):
-    """Plot the effect of the burning timestep limiter castro.dtnuc_X."""
-
-    if (os.path.isfile(eps_filename)):
-        return
-    else:
-        print("Generating file %s" % eps_filename)
-
-    results_dir = results_base + 'burning_limiter_X/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    dtnuc_list = wdmerger.get_parameter_list(results_dir)
-
-    if (dtnuc_list == []):
-        return
-
-    if (do_ni56):
-        result_arr = np.array(get_ni56(results_dir))
-    else:
-        result_arr = np.array(get_abar(results_dir))
-
-    # Don't make the plot if we have fewer than two data points.
-
-    if len(result_arr) < 2:
-        return
-
-    dtnuc_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_list])
-
-    # Sort the lists
-
-    result_arr = np.array([x for _,x in sorted(zip(dtnuc_list,result_arr))])
-    dtnuc_list = sorted(dtnuc_list)
-
-    plt.plot(dtnuc_list, result_arr, linestyle=linestyles[0], lw = 4.0, color = colors[0])
-
-    plt.xscale('log')
-    plt.xlabel(r"Nuclear burning timestep factor $f_{bX}$", fontsize=20)
-    if (do_ni56):
-        plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    else:
-        plt.ylabel(r"$\overline{A}$", fontsize=20)
-    plt.tick_params(labelsize=16)
-    plt.tight_layout()
-    plt.savefig(eps_filename)
-    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
-    png_filename = eps_filename[0:-3] + "png"
-    plt.savefig(png_filename)
-
-    plt.close()
-
-
-
-# Combined plot of both burning timestep factors
-
-def burning_limiter(eps_filename, results_base, do_ni56 = True):
-    """Plot the effects of both burning timestep limiters (castro.dtnuc_e and castro.dtnuc_X)."""
-
-    if (os.path.isfile(eps_filename)):
-        return
-    else:
-        print("Generating file %s" % eps_filename)
-
-    results_dir = results_base + 'burning_limiter_e/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    dtnuc_e_list = wdmerger.get_parameter_list(results_dir)
-
-    if (dtnuc_e_list == []):
-        return
-
-    if (do_ni56):
-        result_e_arr = np.array(get_ni56(results_dir))
-    else:
-        result_e_arr = np.array(get_abar(results_dir))
-
-    # Don't make the plot if we have fewer than two data points.
-
-    if len(result_e_arr) < 2:
-        return
-
-    dtnuc_e_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_e_list])
-
-    # Sort the lists
-
-    result_e_arr = np.array([x for _,x in sorted(zip(dtnuc_e_list,result_e_arr))])
-    dtnuc_e_list = sorted(dtnuc_e_list)
-
-
-
-    results_dir = results_base + 'burning_limiter_X/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    dtnuc_X_list = wdmerger.get_parameter_list(results_dir)
-
-    if (dtnuc_X_list == []):
-        return
-
-    if (do_ni56):
-        result_X_arr = np.array(get_ni56(results_dir))
-    else:
-        result_X_arr = np.array(get_abar(results_dir))
-
-    # Don't make the plot if we have fewer than two data points.
-
-    if len(result_X_arr) < 2:
-        return
-
-    dtnuc_X_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_X_list])
-
-    # Sort the lists
-
-    result_X_arr = np.array([x for _,x in sorted(zip(dtnuc_X_list,result_X_arr))])
-    dtnuc_X_list = sorted(dtnuc_X_list)
-
-
-
-    results_dir = results_base + 'burning_limiter_eX/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    dtnuc_eX_list = wdmerger.get_parameter_list(results_dir)
-
-    if (dtnuc_eX_list == []):
-        return
-
-    if (do_ni56):
-        result_eX_arr = np.array(get_ni56(results_dir))
-    else:
-        result_eX_arr = np.array(get_abar(results_dir))
-
-    # Don't make the plot if we have fewer than two data points.
-
-    if len(result_eX_arr) < 2:
-        return
-
-    dtnuc_eX_list = np.array([float(dtnuc[len('dt'):]) for dtnuc in dtnuc_eX_list])
-
-    # Sort the lists
-
-    result_eX_arr = np.array([x for _,x in sorted(zip(dtnuc_eX_list,result_eX_arr))])
-    dtnuc_eX_list = sorted(dtnuc_X_list)
-
-
-
-    plt.plot(dtnuc_e_list, result_e_arr, linestyle=linestyles[2], lw = 4.0, label='Energy limiting', color = colors[0])
-    plt.plot(dtnuc_X_list, result_X_arr, linestyle=linestyles[0], lw = 4.0, label='Species limiting', color = colors[1])
-    plt.plot(dtnuc_eX_list, result_eX_arr, linestyle=linestyles[1], lw = 4.0, label='Combined limiting', color = colors[2])
-
-    plt.xscale('log')
-    plt.xlabel(r"Nuclear burning timestep factor", fontsize=20)
-    if (do_ni56):
-        plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    else:
-        plt.ylabel(r"$\overline{A}$", fontsize=20)
-    plt.tick_params(labelsize=16)
-    plt.legend(loc='best', prop={'size':20})
-    plt.tight_layout()
-    plt.savefig(eps_filename)
-    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
-    png_filename = eps_filename[0:-3] + "png"
-    plt.savefig(png_filename)
-
-    plt.close()
-
-
-
-# Effect of burning timestep limiter mode
-
-def burning_limiter_mode(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the mode used for timestep limiting."""
-
-    import os
-
-    if os.path.isfile(out_filename):
-        return
-    else:
-        print("Generating file %s" % out_filename)
-
-    # Get the list of parameter values we have tried
-
-    results_dir = results_base + '/burning_limiter_mode'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    param_list = wdmerger.get_parameter_list(results_dir)
-
-    if (param_list == []):
-        return
-
-    mode_list = [param[4:] for param in param_list]
-
-    ni56_list = get_ni56(results_dir)
-
-    comment = '%\n' + \
-              '% Summary of the effect of the timestep limiting mode \n' + \
-              '% on 56Ni yield in a white dwarf collision.\n' + \
-              '% The first column is the limiter mode \n' + \
-              '% and the second is the final nickel \n' + \
-              '% mass produced, in solar masses.\n' + \
-              '%\n'
-
-    caption = 'The burning limiter modes are explained in \\autoref{sec:hydrocoupling}.'
-
-    col1title = 'Mode'
-
-    title = 'Burning Limiter Mode'
-
-    label = 'burninglimitermode'
-
-    write_ni56_table(results_dir, out_filename, mode_list, ni56_list, comment, col1title, label, title = title, caption = caption)
-
-
-
-# Combined plot of effect of ODE tolerances
-
-def ode_tolerances(eps_filename, results_base):
-    """Plot the effects of all ODE tolerance options."""
-
-    if (os.path.isfile(eps_filename)):
-        return
-    else:
-        print("Generating file %s" % eps_filename)
-
-    results_dir = results_base + 'spec_tol/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    s_tol_list = wdmerger.get_parameter_list(results_dir)
-
-    if (s_tol_list == []):
-        return
-
-    ni56_s_arr = np.array(get_ni56(results_dir))
-
-    tol_s_list = [tol[len('tol'):] for tol in tol_s_list]
-    tol_s_list = np.array([float(tol.replace('d','e')) for tol in tol_s_list])
-
-    # Sort the lists
-
-    ni56_s_arr = np.array([x for _,x in sorted(zip(tol_s_list,ni56_s_arr))])
-    tol_s_list = sorted(tol_s_list)
-
-
-
-    results_dir = results_base + 'temp_tol/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    tol_t_list = wdmerger.get_parameter_list(results_dir)
-
-    if (tol_t_list == []):
-        return
-
-    ni56_t_arr = np.array(get_ni56(results_dir))
-
-    tol_t_list = [tol[len('tol'):] for tol in tol_t_list]
-    tol_t_list = np.array([float(tol.replace('d','e')) for tol in tol_t_list])
-
-    # Sort the lists
-
-    ni56_t_arr = np.array([x for _,x in sorted(zip(tol_t_list,ni56_t_arr))])
-    tol_t_list = sorted(tol_t_list)
-
-
-
-    results_dir = results_base + 'enuc_tol/'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    # Get the list of parameter values we have tried
-
-    tol_e_list = wdmerger.get_parameter_list(results_dir)
-
-    if (tol_e_list == []):
-        return
-
-    ni56_e_arr = np.array(get_ni56(results_dir))
-
-    tol_e_list = [tol[len('tol'):] for tol in tol_e_list]
-    tol_e_list = np.array([float(tol.replace('d','e')) for tol in tol_e_list])
-
-    # Sort the lists
-
-    ni56_e_arr = np.array([x for _,x in sorted(zip(tol_e_list,ni56_e_arr))])
-    tol_e_list = sorted(tol_e_list)
-
-
-
-    plt.plot(tol_s_list, ni56_s_arr, linestyle=linestyles[0], lw = 4.0, label=r'Species Tolerance')
-    plt.plot(tol_t_list, ni56_t_arr, linestyle=linestyles[1], lw = 4.0, label=r'Temperature Tolerance')
-    plt.plot(tol_e_list, ni56_e_arr, linestyle=linestyles[2], lw = 4.0, label=r'Energy Tolerance')
-    plt.xscale('log')
-    plt.xlabel(r"ODE Error Tolerance", fontsize=20)
-    plt.ylabel(r"$^{56}$Ni generated (M$_{\odot}$)", fontsize=20)
-    plt.tick_params(labelsize=16)
-    plt.legend(loc='best')
-    plt.tight_layout()
-    plt.savefig(eps_filename)
-    wdmerger.insert_commits_into_eps(eps_filename, get_diagfile(results_dir), 'diag')
-    png_filename = eps_filename[0:-3] + "png"
-    plt.savefig(png_filename)
-
-    plt.close()
-
-
-
-# Effect of the minimum temperature for reactions
-
-def t_min(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the minimum temperature for reactions."""
-
-    if (os.path.isfile(out_filename)):
-        return
-    else:
-        print("Generating file %s" % out_filename)
-
-    # Get the list of parameter values we have tried
-
-    results_dir = results_base + '/T_min'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    param_list = wdmerger.get_parameter_list(results_dir)
-
-    if (param_list == []):
-        return
-
-    temp_list = [float(param[1:]) for param in param_list]
-
-    ni56_list = get_ni56(results_dir)
-
-    # Sort the lists
-
-    ni56_list = np.array([x for _,x in sorted(zip(temp_list,ni56_list))])
-    temp_list = sorted(temp_list)
-
-    # Return temp_list to scientific notation
-
-    temp_list = np.array(["{:.1e}".format(t) for t in temp_list])
-
-    comment = '%\n' + \
-              '% Summary of the effect of the minimum temperature\n' + \
-              '% for reactions on 56Ni yield in a white \n' + \
-              '% dwarf collision.\n' + \
-              '% The first column is the temperature minimum and the \n' + \
-              '% second is the final nickel mass produced, in solar masses.\n' + \
-              '%\n'
-
-    title = 'Effect of the temperature floor for reactions'
-
-    col1title = '$T_{\\text{min}}$'
-
-    label = 'tmin'
-
-    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, col1title, label, title = title)
-
-
-
-# Effect of the minimum temperature for reactions
-
-def rho_min(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the minimum density for reactions."""
-
-    if (os.path.isfile(out_filename)):
-        return
-    else:
-        print("Generating file %s" % out_filename)
-
-    # Get the list of parameter values we have tried
-
-    results_dir = results_base + '/rho_min'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    param_list = wdmerger.get_parameter_list(results_dir)
-
-    if (param_list == []):
-        return
-
-    temp_list = [float(param[3:]) for param in param_list]
-
-    ni56_list = get_ni56(results_dir)
-
-    # Sort the lists
-
-    ni56_list = np.array([x for _,x in sorted(zip(temp_list,ni56_list))])
-    temp_list = sorted(temp_list)
-
-    # Return temp_list to scientific notation
-
-    temp_list = np.array(["{:.1e}".format(t) for t in temp_list])
-
-
-    comment = '%\n' + \
-              '% Summary of the effect of the minimum density\n' + \
-              '% for reactions on 56Ni yield in a white \n' + \
-              '% dwarf collision.\n' + \
-              '% The first column is the density minimum and the \n' + \
-              '% second is the final nickel mass produced, in solar masses.\n' + \
-              '%\n'
-
-    title = 'Effect of the density floor for reactions'
-
-    col1title = '$\\rho_{\\text{min}}$'
-
-    label = 'tmin'
-
-    write_ni56_table(results_dir, out_filename, temp_list, ni56_list, comment, col1title, label, title = title)
-
-
-
-# Effect of the method for integrating the energy/temperature equations
-
-def burning_mode(out_filename, results_base):
-    """Create a table with the nickel generation as a function of the burning_mode parameter."""
-
-    if (os.path.isfile(out_filename)):
-        return
-    else:
-        print("Generating file %s" % out_filename)
-
-    # Get the list of parameter values we have tried
-
-    results_dir = results_base + '/burning_mode'
-
-    if not os.path.isdir(results_dir):
-        return
-
-    param_list = wdmerger.get_parameter_list(results_dir)
-
-    if (param_list == []):
-        return
-
-    mode_list = [param for param in param_list]
-
-    ni56_list = get_ni56(results_dir)
-
-    # Sort the lists
-
-    ni56_list = np.array([x for _,x in sorted(zip(mode_list,ni56_list))])
-    mode_list = sorted(mode_list)
-
-    # Replace the burning mode numbers with names for output purposes
-
-    try:
-        mode_list[mode_list.index('0')] = 'Hydrostatic'
-    except:
-        pass
-
-    try:
-        mode_list[mode_list.index('1')] = 'Self-heating'
-    except:
-        pass
-
-    try:
-        mode_list[mode_list.index('2')] = 'Hybrid'
-    except:
-        pass
-
-    try:
-        mode_list[mode_list.index('3')] = 'Suppressed'
-    except:
-        pass
-
-    comment = '%\n' + \
-              '% Summary of the effect of the burning mode \n' + \
-              '% for reactions on 56Ni yield in a white \n' + \
-              '% dwarf collision.\n' + \
-              '% The first column is the density minimum and the \n' + \
-              '% second is the final nickel mass produced, in solar masses.\n' + \
-              '%\n'
-
-    caption = 'The burning modes are explained in \\autoref{sec:burner}.'
-
-    col1title = 'Burning Mode'
-
-    title = 'Burning Mode'
-
-    label = 'burningmode'
-
-    precision = 5 # Because the suppressed burning mode creates so little nickel
-
-    write_ni56_table(results_dir, out_filename, mode_list, ni56_list, comment, col1title, label, precision = precision, title = title, caption = caption)
-
-
-
 def amr_nickel(eps_filename, results_base):
     """Plot the effect of the refinement based on the nuclear burning rate on the nickel generation."""
 
@@ -989,63 +419,43 @@ def amr_detonation(eps_filename, results_base):
 
 
 
-def rho_T_sliceplots(output_base, results_base, smallplt = True, prefix = "",
-                     domain_frac = 1.0, x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9], scale_exp = 9):
+def rho_T_sliceplots(output_dir, results_dir, smallplt = True, domain_frac = 1.0,
+                     x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9], scale_exp = 9):
     """Create a rho/T sliceplot for every plotfile in a given directory."""
 
     import os
 
-    if not os.path.isdir(output_base):
-        os.makedirs(output_base)
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
 
     from PIL import Image
 
     if (smallplt):
         plt_prefix = 'smallplt'
 
-    r_list = wdmerger.get_parameter_list(results_base)
+    plt_list = wdmerger.get_plotfiles(results_dir, plt_prefix)
+    eps_list = [output_dir + "/rho_T_slice" + "_t_" + str("%.2f" % wdmerger.get_time_from_plotfile(results_dir + '/output/' + pltfile)) + '.eps' for pltfile in plt_list]
 
-    # Strip out the non-refinement directories
+    for eps_file, pltfile in zip(eps_list, plt_list):
 
-    r_list = [r for r in r_list if r[0] == 'r']
+        if os.path.isfile(eps_file):
+            continue
 
-    if (r_list == []):
-        return
+        print("Generating plot with filename " + eps_file)
 
-    dir_list = [results_base + r + '/output/' for r in r_list]
+        wdmerger.rho_T_sliceplot(eps_file, results_dir + '/output/' + pltfile,
+                                 domain_frac = domain_frac,
+                                 x_ticks = x_ticks,
+                                 y_ticks = y_ticks,
+                                 scale_exp = scale_exp)
 
-    for param, directory in zip(r_list, dir_list):
+    jpg_list = [eps.replace('eps', 'jpg') for eps in eps_list]
 
-        output_dir = output_base + param
+    mpg_filename = output_dir + "/rho_T_slice" + prefix + "_" + param + ".mpg"
 
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
-
-        plt_list = wdmerger.get_plotfiles(directory, plt_prefix)
-        eps_list = [output_dir + "/rho_T_slice" + prefix + "_" + param + "_t_" + str("%.2f" % wdmerger.get_time_from_plotfile(directory + pltfile)) + '.eps' for pltfile in plt_list]
-
-        # Generate the plot
-
-        for eps_file, pltfile in zip(eps_list, plt_list):
-
-            if os.path.isfile(eps_file):
-                continue
-
-            print("Generating plot with filename " + eps_file)
-
-            wdmerger.rho_T_sliceplot(eps_file, directory + pltfile,
-                                     domain_frac = domain_frac,
-                                     x_ticks = x_ticks,
-                                     y_ticks = y_ticks,
-                                     scale_exp = scale_exp)
-
-        jpg_list = [eps.replace('eps', 'jpg') for eps in eps_list]
-
-        mpg_filename = output_dir + "/rho_T_slice" + prefix + "_" + param + ".mpg"
-
-        if not os.path.isfile(mpg_filename):
-            print("Generating file %s" % mpg_filename)
-            wdmerger.make_movie(output_dir, jpg_list, mpg_filename)
+    if not os.path.isfile(mpg_filename):
+        print("Generating file %s" % mpg_filename)
+        wdmerger.make_movie(output_dir, jpg_list, mpg_filename)
 
 
 
@@ -1113,51 +523,21 @@ if __name__ == "__main__":
 
     import os
 
-    mass_P = '0.64'
-    mass_S = '0.64'
+    mass = '0.64'
+    he = '0.16'
 
-    results_base = 'results/collision_2D/mass_P_' + mass_P + '/mass_S_' + mass_S + '/'
+    results_base = 'results/m' + mass + '/he' + he + '/'
     plots_dir = 'plots/'
 
-    ncell_list = os.listdir(results_base)
+    burning_r_list = os.listdir(results_base)
 
-    for ncell in ncell_list:
+    for burning_r in sorted(burning_r_list):
 
-        r_list = os.listdir(results_base + ncell)
+        hydro_r_list = os.listdir(results_base + burning_r)
 
-        for r in r_list:
+        for hydro_r in sorted(hydro_r_list):
 
-            results_dir = results_base + ncell + '/' + r + '/self-heat/'
+            results_dir = results_base + burning_r + '/' + hydro_r + '/'
+            plot_dir = plots_dir + 'slices/' + burning_r + '/' + hydro_r + '/'
 
-            # Plot the effect of the burning timestep limiters
-
-            for do_ni56 in [True, False]:
-
-                if (do_ni56):
-                    label = 'max_Ni56'
-                else:
-                    label = 'abar'
-
-                out_file_base = label + '_m_P_' + mass_P + '_m_S_' + mass_S + '_' + ncell + '_' + r + '.eps'
-
-                burning_limiter_e(plots_dir + 'dtnuc_e_' + out_file_base, results_dir, do_ni56 = do_ni56)
-                burning_limiter_X(plots_dir + 'dtnuc_X_' + out_file_base, results_dir, do_ni56 = do_ni56)
-                burning_limiter(plots_dir + 'dtnuc_' + out_file_base, results_dir, do_ni56 = do_ni56)
-
-
-
-            # Calculate the collision time
-
-            results_dir = results_base + ncell + '/' + r + '/start/'
-
-            collision_time(results_dir)
-
-
-
-    #amr_nickel(plots_dir + 'amr_nickel.eps', results_base)
-    #amr_detonation(plots_dir + 'amr_detonation.eps', results_base)
-
-    #for n in ncell_list:
-        #plot_dir = plots_dir + 'slices/dxnuc/' + n + '/'
-        #prefix = '_' + n
-        #rho_T_sliceplots(plot_dir, results_dir, prefix = prefix)
+            rho_T_sliceplots(plot_dir, results_dir)
