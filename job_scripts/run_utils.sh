@@ -929,14 +929,12 @@ function archive_all {
 	for file in $archive_cp_list
 	do
             cp $directory/$file $directory/output
-            echoerr "Archiving " $file
 	    archive $directory/output/$file
 	done
 
         for file in $archive_mv_list
         do
             mv $directory/$file $directory/output
-            echoerr "Archiving " $file
             archive $directory/output/$file
         done
 
