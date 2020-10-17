@@ -731,7 +731,7 @@ function archive {
   # to preserve when moving things over to the storage system.
 
   cd $d 
-  abs_path=$(pwd)
+  abs_path=$(pwd -P)
   cd - > /dev/null
 
   local_path=$abs_path
