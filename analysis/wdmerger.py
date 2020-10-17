@@ -1232,6 +1232,9 @@ def rho_T_sliceplot(output_filename, pltfile,
     plots[-1].set_clim(dens_range[0], dens_range[1])
     plots[-1].set_cmap('bone')
 
+    dens_axis.annotate("t = {:.2f} s".format(float(ds.current_time.d)), [0.15, 0.785],
+                       xycoords='figure fraction', color='white', fontsize=20)
+
     right_bound = [ bounds[0].v / scale, bounds[1].v / scale, bounds[2].v / scale, bounds[3].v / scale ]
     plots.append(temp_axis.imshow(temp, norm=LogNorm(), extent=right_bound, aspect=aspect))
     plots[-1].set_clim(temp_range[0], temp_range[1])
