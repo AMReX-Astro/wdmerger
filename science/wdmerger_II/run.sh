@@ -1129,16 +1129,8 @@ do
                 dir=$results_dir/m$mass/he$helium_shell_mass/r$burn_refinement/r$hydro_refinement
                 set_run_opts
 
-                # Note that we need to run this script again after the runs have completed so that
-                # the archive script can operate. As a side effect, this will move simulation output
-                # to the output/ directory of each run directory, which will then allow us to proceed
-                # with the analysis step. (Doing it in this order forces us to remember to archive the
-                # data, at the cost of having to potentially run the script multiple times to ensure
-                # the archiving is complete).
-
                 if [ $to_run -eq 1 ]; then
                     run
-                    archive_all $(pwd)/$dir
                 fi
 
             done

@@ -1286,7 +1286,7 @@ function check_to_stop {
 
   # Run the archive script at the end of the simulation.
 
-  if [ ! -z $archive_queue ]; then
+  if [ ! -z $archive_queue ] && [ $do_storage_in_job -eq 1 ]; then
 
       # We want to submit the archive job from the output/ directory.
       # The point is that our job software gets confused if there are
@@ -1299,15 +1299,13 @@ function check_to_stop {
       fi
 
       cd output/
-      archive_job_number=`$exec $archive_script`
+      archive_job_number=`$archive_exec $archive_script`
       cd - > /dev/null
       echo "Submitted an archive job with job number $archive_job_number."
 
   else
 
-      if [ $do_storage_in_job -ne 0 ]; then
-	  archive_all
-      fi
+      archive_all
 
   fi
 
@@ -2042,6 +2040,65 @@ function create_job_script {
 
 	echo "mv $job_name.OU \$job_number.out" >> $dir/$job_script
 	echo "" >> $dir/$job_script
+
+      fi
+
+      # Create an archive job script which is called at the end of
+      # the run if this system is eligible
+
+      if [ ! -z $archive_queue ] && [ $do_storage_in_job -eq 1 ]; then
+
+          if [ "$archive_exec" == "sbatch" ]; then
+
+              echo "#!/bin/bash" > $dir/output/$archive_script
+
+              # Select the project allocation we're charging this job to
+              if [ ! -z $allocation ]; then
+                  echo "#SBATCH -A $allocation" >> $dir/output/$archive_script
+              fi
+
+              # Amount of wall time for the simulation
+              echo "#SBATCH -t $archive_wclimit" >> $dir/output/$archive_script
+
+              # Number of nodes
+              echo "#SBATCH -N 1" >> $dir/output/$archive_script
+
+              # Archive cluster, if it exists
+              if [ ! -z "$archive_cluster" ]; then
+                  echo "#SBATCH --cluster $archive_cluster" >> $dir/output/$archive_script
+              fi
+
+              echo "" >> $dir/output/$archive_script
+
+              # Set the location of some variables.
+
+              echo "WDMERGER_HOME=$WDMERGER_HOME" >> $dir/output/$archive_script
+              echo "MACHINE=$MACHINE" >> $dir/output/$archive_script
+              echo "" >> $dir/output/$archive_script
+
+              # We assume that the directory we submitted from is eligible to
+              # work in, so cd to that directory. We submit from the output
+              # directory, so move up one level before actually executing the
+              # scripts.
+
+              echo "cd \$SLURM_SUBMIT_DIR" >> $dir/output/$archive_script
+              echo "cd ../" >> $dir/output/$archive_script
+              echo "" >> $dir/output/$archive_script
+
+              # Load up our helper functions.
+
+              echo "source job_scripts/run_utils.sh" >> $dir/output/$archive_script
+              echo "" >> $dir/output/$archive_script
+
+              # Main job execution.
+
+              if [ $do_storage -ne 1 ]; then
+                  echo "do_storage=$do_storage" >> $dir/output/$archive_script
+              fi
+              echo "archive_all >> archive_log.out" >> $dir/output/$archive_script
+              echo "" >> $dir/output/$archive_script
+
+          fi
 
       fi
 
