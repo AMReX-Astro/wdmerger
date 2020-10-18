@@ -418,12 +418,45 @@ def amr_detonation(eps_filename, results_base):
         i += 1
 
 
+def rho_T_sliceplots_eps_rename(pltfile, output_dir, results_dir):
+
+    eps_file = output_dir + "/rho_T_slice" + "_t_" + str("%.2f" % wdmerger.get_time_from_plotfile(results_dir + '/output/' + pltfile)) + '.eps'
+
+    return eps_file
+
+
+
+def rho_T_sliceplots_doit(inputs): #output_dir, results_dir, domain_frac, x_ticks, y_ticks, scale_exp):
+
+    pltfile     = inputs[0]
+    output_dir  = inputs[1]
+    results_dir = inputs[2]
+    domain_frac = inputs[3]
+    x_ticks     = inputs[4]
+    y_ticks     = inputs[5]
+    scale_exp   = inputs[6]
+
+    eps_file = rho_T_sliceplots_eps_rename(pltfile, output_dir, results_dir)
+
+    if os.path.isfile(eps_file) and os.path.isfile(eps_file.replace('eps','png')):
+        return
+
+    print("Generating plot with filename " + eps_file)
+
+    wdmerger.rho_T_sliceplot(eps_file, results_dir + '/output/' + pltfile,
+                             domain_frac = domain_frac,
+                             x_ticks = x_ticks,
+                             y_ticks = y_ticks,
+                             scale_exp = scale_exp)
+
+
 
 def rho_T_sliceplots(output_dir, results_dir, smallplt = True, domain_frac = 1.0,
                      x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9], scale_exp = 9):
     """Create a rho/T sliceplot for every plotfile in a given directory."""
 
     import os
+    from multiprocessing import Pool
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
@@ -434,24 +467,15 @@ def rho_T_sliceplots(output_dir, results_dir, smallplt = True, domain_frac = 1.0
         plt_prefix = 'smallplt'
 
     plt_list = wdmerger.get_plotfiles(results_dir, plt_prefix)
-    eps_list = [output_dir + "/rho_T_slice" + "_t_" + str("%.2f" % wdmerger.get_time_from_plotfile(results_dir + '/output/' + pltfile)) + '.eps' for pltfile in plt_list]
+    inputs_list = [[pltfile, output_dir, results_dir, domain_frac, x_ticks, y_ticks, scale_exp] for pltfile in plt_list]
 
-    for eps_file, pltfile in zip(eps_list, plt_list):
+    with Pool() as p:
+        p.map(rho_T_sliceplots_doit, inputs_list)
 
-        if os.path.isfile(eps_file) and os.path.isfile(eps_file.replace('eps','png')):
-            continue
-
-        print("Generating plot with filename " + eps_file)
-
-        wdmerger.rho_T_sliceplot(eps_file, results_dir + '/output/' + pltfile,
-                                 domain_frac = domain_frac,
-                                 x_ticks = x_ticks,
-                                 y_ticks = y_ticks,
-                                 scale_exp = scale_exp)
-
+    eps_list = [rho_T_sliceplots_eps_rename(pltfile, output_dir, results_dir) for pltfile in plt_list]
     jpg_list = [eps.replace('eps', 'jpg') for eps in eps_list]
 
-    mpg_filename = output_dir + "/rho_T_slice" + prefix + "_" + param + ".mpg"
+    mpg_filename = output_dir + "/rho_T_slice.mpg"
 
     if not os.path.isfile(mpg_filename):
         print("Generating file %s" % mpg_filename)
