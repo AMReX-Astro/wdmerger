@@ -438,7 +438,7 @@ def rho_T_sliceplots(output_dir, results_dir, smallplt = True, domain_frac = 1.0
 
     for eps_file, pltfile in zip(eps_list, plt_list):
 
-        if os.path.isfile(eps_file):
+        if os.path.isfile(eps_file) and os.path.isfile(eps_file.replace('eps','png')):
             continue
 
         print("Generating plot with filename " + eps_file)
