@@ -1089,9 +1089,18 @@ mass_list="0.64"
 
 helium_shell_mass_list="0.00 0.04 0.08 0.16"
 
-stop_time="4.0"
-prob_lo="-5.12e9"
-prob_hi="5.12e9"
+# We expect for all cases in question, ignition will
+# happen within three seconds, so we stop there. The
+# domain is just large enough to include the stars;
+# as a result, we could not track the simulation long
+# past detonation anyway. This means we cannot track
+# things like total nickel yields, but that is OK because
+# we are more interested in understanding the physics
+# and numerics of the ignition process itself.
+
+stop_time="3.0"
+prob_lo="-2.56e9"
+prob_hi="2.56e9"
 
 burn_refinement_list="1 2 4 8 16"
 
