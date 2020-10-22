@@ -844,31 +844,14 @@ function set_run_opts {
 
         castro__reactions_max_solve_level=$probin_tagging_max_dxnuc_lev
 
-        # The refinement strategy is to pick a base level of t_sound/t_enuc
-        # (which is a tracer of where burning is happening), and tag level 0
-        # above that threshold. On higher levels, the threshold value increases
-        # by the refinement ratio relative to the coarse level (up to a maximum
-        # value). This is a simple and arbitrary refinement scheme; the main
-        # concern is keeping the number of zones from growing too far out of
-        # control.
+        # The refinement strategy is to maximally refine above a given temperature.
 
-        dxnuc_min=".000001"
-        dxnuc_max=".1"
+        temp_min="1.0e9"
 
         amr__refinement_indicators="burning"
-        amr__refine__burning__field_name="t_sound_t_enuc"
+        amr__refine__burning__field_name="Temp"
         amr__refine__burning__max_level="$amr__max_level"
-        amr__refine__burning__value_greater="$dxnuc_min"
-
-        dxnuc=$dxnuc_min
-        for ratio in $amr__ref_ratio
-        do
-            dxnuc=$(echo "$dxnuc * $ratio" | bc -l)
-            if [ $(echo "$dxnuc > $dxnuc_max" | bc -l) -eq 1 ]; then
-                dxnuc=$dxnuc_max
-            fi
-            amr__refine__burning__value_greater+=" $dxnuc"
-        done
+        amr__refine__burning__value_greater="$temp_min"
 
     fi
 
