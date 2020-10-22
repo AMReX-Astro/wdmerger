@@ -16,7 +16,7 @@ function set_run_opts {
     if [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
-        nprocs=192
+        nprocs=1024
 
         walltime="2:00:00"
 
@@ -31,9 +31,11 @@ function set_run_opts {
 
     # Set up the geometry appropriately.
 
-    amr__n_cell="$(echo "$ncell / 2" | bc) $ncell"
-    geometry__prob_lo="0.0 $prob_lo"
+    amr__n_cell="$ncell $ncell"
+    geometry__prob_lo="$prob_lo $prob_lo"
     geometry__prob_hi="$prob_hi $prob_hi"
+
+    castro__lo_bc="3 3"
 
     if [ ! -z $burn_refinement ]; then
 
@@ -1050,7 +1052,7 @@ castro__do_rotation="0"
 
 # Ease up on the gravity tolerance since we're in axisymmetric and at high resolution.
 
-gravity__abs_tol="1.e-9"
+gravity__abs_tol="5.e-8"
 
 # Many of the collision papers in the literature use an equal
 # C/O ratio  by mass in the initial white dwarfs. We will do
@@ -1065,7 +1067,7 @@ castro__change_max="1.25"
 
 # Some defaults.
 
-ncell_default="4096"
+ncell_default="16384"
 dtnuc_e_default="1.e200"
 dtnuc_X_default="1.e200"
 
@@ -1099,7 +1101,7 @@ helium_shell_mass_list="0.00 0.04 0.08 0.16"
 # and numerics of the ignition process itself.
 
 stop_time="3.0"
-prob_lo="-2.56e9"
+prob_lo="0.00e9"
 prob_hi="2.56e9"
 
 burn_refinement_list="1 2 4 8 16"
