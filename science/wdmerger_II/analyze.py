@@ -553,15 +553,23 @@ if __name__ == "__main__":
     results_base = 'results/m' + mass + '/he' + he + '/'
     plots_dir = 'plots/'
 
-    burning_r_list = os.listdir(results_base)
+    integrate_T_list = os.listdir(results_base)
 
-    for burning_r in sorted(burning_r_list):
+    for integrate_T in sorted(integrate_T_list):
 
-        hydro_r_list = os.listdir(results_base + burning_r)
+        ncell_list = os.listdir(results_base + '/' + integrate_T)
 
-        for hydro_r in sorted(hydro_r_list):
+        for ncell in ncell_list:
 
-            results_dir = results_base + burning_r + '/' + hydro_r + '/'
-            plot_dir = plots_dir + 'slices/' + burning_r + '/' + hydro_r + '/'
+            burning_r_list = os.listdir(results_base + '/' + integrate_T + '/' + ncell)
 
-            rho_T_sliceplots(plot_dir, results_dir)
+            for burning_r in sorted(burning_r_list):
+
+                hydro_r_list = os.listdir(results_base + '/' + integrate_T + '/' + ncell + '/' + burning_r)
+
+                for hydro_r in sorted(hydro_r_list):
+
+                    results_dir = results_base + '/' + integrate_T + '/' + ncell + '/' + burning_r + '/' + hydro_r + '/'
+                    plot_dir = plots_dir + 'slices/' + integrate_T + '/' + ncell + '/' + burning_r + '/' + hydro_r + '/'
+
+                    rho_T_sliceplots(plot_dir, results_dir)

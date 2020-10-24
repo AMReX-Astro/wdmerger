@@ -16,7 +16,18 @@ function set_run_opts {
     if [ "$MACHINE" == "SUMMIT" ]; then
 
         queue="batch"
-        nprocs=1024
+
+        if [ $ncell -le 1024 ]; then
+            nprocs=48
+        elif [ $ncell -le 2048 ]; then
+            nprocs=96
+        elif [ $ncell -le 4096 ]; then
+            nprocs=192
+        elif [ $ncell -le 8192 ]; then
+            nprocs=384
+        elif [ $ncell -le 16384 ]; then
+            nprocs=768
+        fi
 
         walltime="2:00:00"
 
@@ -1050,11 +1061,9 @@ castro__change_max="1.25"
 
 # Some defaults.
 
-ncell_default="16384"
 dtnuc_e_default="1.e200"
 dtnuc_X_default="1.e200"
 
-ncell=$ncell_default
 castro__dtnuc_e=$dtnuc_e_default
 castro__dtnuc_X=$dtnuc_X_default
 castro__react_T_min="1.0e8"
@@ -1083,11 +1092,16 @@ helium_shell_mass_list="0.00 0.04 0.08 0.16"
 # we are more interested in understanding the physics
 # and numerics of the ignition process itself.
 
-stop_time="3.0"
+stop_time="4.0"
 prob_lo="0.00e9"
-prob_hi="2.56e9"
+prob_hi="5.12e9"
+
+ncell_list="256 512 1024 2048 4096"
 
 burn_refinement_list="1 2 4 8 16"
+burn_refinement_list="1"
+
+integrate_temperature_list="T F"
 
 for mass in $mass_list
 do
@@ -1100,32 +1114,47 @@ do
 
         co_wd_he_shell_mass=$helium_shell_mass
 
-        for burn_refinement in $burn_refinement_list
+        for probin_extern_integrate_temperature in $integrate_temperature_list
         do
 
-            if [ $burn_refinement -eq 1 ]; then
-                hydro_refinement_list="1 2 4 8 16 32 64"
-            elif [ $burn_refinement -eq 2 ]; then
-                hydro_refinement_list="1 2 4 8 16 32"
-            elif [ $burn_refinement -eq 4 ]; then
-                hydro_refinement_list="1 2 4 8 16"
-            elif [ $burn_refinement -eq 8 ]; then
-                hydro_refinement_list="1 2 4 8"
-            elif [ $burn_refinement -eq 16 ]; then
-                hydro_refinement_list="1 2 4"
-            else
-                break
-            fi
-
-            for hydro_refinement in $hydro_refinement_list
+            for ncell in $ncell_list
             do
 
-                dir=$results_dir/m$mass/he$helium_shell_mass/r$burn_refinement/r$hydro_refinement
-                set_run_opts
+                for burn_refinement in $burn_refinement_list
+                do
 
-                if [ $to_run -eq 1 ]; then
-                    run
-                fi
+                    if [ $burn_refinement -eq 1 ]; then
+                        hydro_refinement_list="1 2 4 8 16 32 64 128 256 512"
+                        hydro_refinement_list="1"
+                    elif [ $burn_refinement -eq 2 ]; then
+                        hydro_refinement_list="1 2 4 8 16 32 64"
+                        hydro_refinement_list="1"
+                    elif [ $burn_refinement -eq 4 ]; then
+                        hydro_refinement_list="1 2 4 8 16 32"
+                        hydro_refinement_list="1"
+                    elif [ $burn_refinement -eq 8 ]; then
+                        hydro_refinement_list="1 2 4 8 16"
+                        hydro_refinement_list="1"
+                    elif [ $burn_refinement -eq 16 ]; then
+                        hydro_refinement_list="1 2 4 8"
+                        hydro_refinement_list="1"
+                    else
+                        break
+                    fi
+
+                    for hydro_refinement in $hydro_refinement_list
+                    do
+
+                        dir=$results_dir/m$mass/he$helium_shell_mass/integrate_temperature_$probin_extern_integrate_temperature/n$ncell/r$burn_refinement/r$hydro_refinement
+                        set_run_opts
+
+                        if [ $to_run -eq 1 ]; then
+                            run
+                        fi
+
+                    done
+
+                done
 
             done
 
