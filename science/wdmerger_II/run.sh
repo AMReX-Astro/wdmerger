@@ -17,16 +17,12 @@ function set_run_opts {
 
         queue="batch"
 
-        if [ $ncell -le 1024 ]; then
-            nprocs=48
-        elif [ $ncell -le 2048 ]; then
-            nprocs=96
-        elif [ $ncell -le 4096 ]; then
-            nprocs=192
+        if [ $ncell -le 4096 ]; then
+            nprocs=64
         elif [ $ncell -le 8192 ]; then
-            nprocs=384
+            nprocs=256
         elif [ $ncell -le 16384 ]; then
-            nprocs=768
+            nprocs=1024
         fi
 
         walltime="2:00:00"
