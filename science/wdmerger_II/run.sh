@@ -300,6 +300,10 @@ castro__init_shrink="0.1"
 
 castro__cfl="0.8"
 
+# Set a maximum dt to ensure that we don't jump too far ahead of the plotfile interval.
+
+castro__max_dt="0.0025"
+
 # Maximum number of subcycles.
 
 castro__max_subcycles="128"
