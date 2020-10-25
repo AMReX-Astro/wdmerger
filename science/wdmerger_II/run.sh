@@ -17,11 +17,17 @@ function set_run_opts {
 
         queue="batch"
 
-        if [ $ncell -le 4096 ]; then
-            nprocs=64
-        elif [ $ncell -le 8192 ]; then
+        if [ $stellar_refinement -eq 1 ]; then
+            nprocs=48
+        elif [ $stellar_refinement -eq 2 ]; then
+            nprocs=96
+        elif [ $stellar_refinement -eq 4 ]; then
+            nprocs=192
+        elif [ $stellar_refinement -eq 8 ]; then
             nprocs=256
-        elif [ $ncell -le 16384 ]; then
+        elif [ $stellar_refinement -eq 16 ]; then
+            nprocs=512
+        elif [ $stellar_refinement -eq 32 ]; then
             nprocs=1024
         fi
 
@@ -44,74 +50,798 @@ function set_run_opts {
 
     castro__lo_bc="3 3"
 
-    if [ $hydro_refinement -eq 1 ]; then
-        amr__max_level=0
-    elif [ $hydro_refinement -eq 2 ]; then
-        amr__max_level=1
-        amr__ref_ratio="2"
-    elif [ $hydro_refinement -eq 4 ]; then
-        amr__max_level=1
-        amr__ref_ratio="4"
-    elif [ $hydro_refinement -eq 8 ]; then
-        amr__max_level=2
-        amr__ref_ratio="4 2"
-    elif [ $hydro_refinement -eq 16 ]; then
-        amr__max_level=2
-        amr__ref_ratio="4 4"
-    elif [ $hydro_refinement -eq 32 ]; then
-        amr__max_level=3
-        amr__ref_ratio="4 4 2"
-    elif [ $hydro_refinement -eq 64 ]; then
-        amr__max_level=3
-        amr__ref_ratio="4 4 4"
-    elif [ $hydro_refinement -eq 128 ]; then
-        amr__max_level=4
-        amr__ref_ratio="4 4 4 2"
-    elif [ $hydro_refinement -eq 256 ]; then
-        amr__max_level=4
-        amr__ref_ratio="4 4 4 4"
-    elif [ $hydro_refinement -eq 512 ]; then
-        amr__max_level=5
-        amr__ref_ratio="4 4 4 4 2"
-    elif [ $hydro_refinement -eq 1024 ]; then
-        amr__max_level=5
-        amr__ref_ratio="4 4 4 4 4"
-    elif [ $hydro_refinement -eq 2048 ]; then
-        amr__max_level=6
-        amr__ref_ratio="4 4 4 4 4 2"
-    elif [ $hydro_refinement -eq 4096 ]; then
-        amr__max_level=6
-        amr__ref_ratio="4 4 4 4 4 4"
-    elif [ $hydro_refinement -eq 8192 ]; then
-        amr__max_level=7
-        amr__ref_ratio="4 4 4 4 4 4 2"
-    elif [ $hydro_refinement -eq 16384 ]; then
-        amr__max_level=7
-        amr__ref_ratio="4 4 4 4 4 4 4"
-    elif [ $hydro_refinement -eq 32768 ]; then
-        amr__max_level=8
-        amr__ref_ratio="4 4 4 4 4 4 4 2"
-    elif [ $hydro_refinement -eq 65536 ]; then
-        amr__max_level=8
-        amr__ref_ratio="4 4 4 4 4 4 4 4"
-    elif [ $hydro_refinement -eq 131072 ]; then
-        amr__max_level=9
-        amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-    elif [ $hydro_refinement -eq 262144 ]; then
-        amr__max_level=9
-        amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-    elif [ $hydro_refinement -eq 524288 ]; then
-        amr__max_level=10
-        amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-    elif [ $hydro_refinement -eq 1048576 ]; then
-        amr__max_level=10
-        amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-    elif [ $hydro_refinement -eq 2097152 ]; then
-        amr__max_level=11
-        amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-    else
-        echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-        exit
+    if [ $stellar_refinement -eq 1 ]; then
+
+        max_stellar_tagging_level="0"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=0
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=1
+                amr__ref_ratio="2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=1
+                amr__ref_ratio="4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=2
+                amr__ref_ratio="4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=2
+                amr__ref_ratio="4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32768 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 65536 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 131072 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 262144 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 524288 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1048576 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2097152 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 2 ]; then
+
+        max_stellar_tagging_level="1"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=1
+                amr__ref_ratio="2"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=2
+                amr__ref_ratio="2 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=2
+                amr__ref_ratio="2 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=3
+                amr__ref_ratio="2 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=3
+                amr__ref_ratio="2 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=4
+                amr__ref_ratio="2 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=4
+                amr__ref_ratio="2 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=5
+                amr__ref_ratio="2 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=5
+                amr__ref_ratio="2 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=6
+                amr__ref_ratio="2 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=6
+                amr__ref_ratio="2 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=7
+                amr__ref_ratio="2 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=7
+                amr__ref_ratio="2 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=8
+                amr__ref_ratio="2 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=8
+                amr__ref_ratio="2 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32768 ]; then
+                amr__max_level=9
+                amr__ref_ratio="2 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 65536 ]; then
+                amr__max_level=9
+                amr__ref_ratio="2 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 131072 ]; then
+                amr__max_level=10
+                amr__ref_ratio="2 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 262144 ]; then
+                amr__max_level=10
+                amr__ref_ratio="2 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 524288 ]; then
+                amr__max_level=11
+                amr__ref_ratio="2 4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1048576 ]; then
+                amr__max_level=11
+                amr__ref_ratio="2 4 4 4 4 4 4 4 4 4 4"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 4 ]; then
+
+        max_stellar_tagging_level="1"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=1
+                amr__ref_ratio="4"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=2
+                amr__ref_ratio="4 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=2
+                amr__ref_ratio="4 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32768 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 65536 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 131072 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 262144 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 524288 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 8 ]; then
+
+        max_stellar_tagging_level="2"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=2
+                amr__ref_ratio="4 2"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 2 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 2 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 2 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 2 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 2 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 2 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 2 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 2 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 2 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 2 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 2 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 2 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 2 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 2 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32768 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 2 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 65536 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 2 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 131072 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 2 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 262144 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 2 4 4 4 4 4 4 4 4 4"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 16 ]; then
+
+        max_stellar_tagging_level="2"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=2
+                amr__ref_ratio="4 4"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32768 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 65536 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 131072 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 32 ]; then
+
+        max_stellar_tagging_level="3"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 2"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 2 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 2 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 2 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 2 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 2 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 2 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 2 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 2 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 2 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 2 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 2 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 2 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 2 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 2 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32768 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 2 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 65536 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 2 4 4 4 4 4 4 4 4"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 64 ]; then
+
+        max_stellar_tagging_level="3"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=3
+                amr__ref_ratio="4 4 4"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32768 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 128 ]; then
+
+        max_stellar_tagging_level="4"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 2"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 2 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 2 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 2 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 2 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 2 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 2 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 2 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 2 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 2 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 2 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 2 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 2 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 2 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16384 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 2 4 4 4 4 4 4 4"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 256 ]; then
+
+        max_stellar_tagging_level="4"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 4"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8192 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 512 ]; then
+
+        max_stellar_tagging_level="5"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 2"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 2 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 2 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 2 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 2 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 2 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 2 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 2 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 2 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 2 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 2 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 2 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4096 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 2 4 4 4 4 4 4"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 1024 ]; then
+
+        max_stellar_tagging_level="5"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 4"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2048 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 2048 ]; then
+
+        max_stellar_tagging_level="6"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 2 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 2 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 2 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 2 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 2 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 2 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 2 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 2 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 2 4 4 4 4 2"
+            elif [ $burning_refinement -eq 1024 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 2 4 4 4 4 4"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
+    elif [ $stellar_refinement -eq 4096 ]; then
+
+        max_stellar_tagging_level="6"
+
+        if [ ! -z $burning_refinement ]; then
+
+            if [ $burning_refinement -eq 1 ]; then
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 2 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 4 ]; then
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 8 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 16 ]; then
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 32 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 64 ]; then
+                amr__max_level=9
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 128 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+            elif [ $burning_refinement -eq 256 ]; then
+                amr__max_level=10
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+            elif [ $burning_refinement -eq 512 ]; then
+                amr__max_level=11
+                amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+            else
+                echo "Unknown refinement factor: "$burning_refinement"; exiting."
+                exit
+            fi
+
+        fi
+
     fi
 
     # Only solve gravity on the coarse level. The additional accuracy
@@ -119,108 +849,31 @@ function set_run_opts {
 
     gravity__max_solve_level=0
 
-    # Only solve reactions on the coarse level. On levels above this,
-    # where we're effectively subcycling the hydro, we just interpolate
-    # the reactions source rather than calculate it.
+    if [ $amr__max_level -gt $max_stellar_tagging_level ]; then
 
-    castro__reactions_max_solve_level=0
+        # Allow reactions up to the stellar refinement level.
+        # On levels above this, where we're effectively subcycling the hydro,
+        # we just interpolate the reactions source rather than calculate it.
 
-    # The refinement strategy is to maximally refine above a given temperature.
+        castro__reactions_max_solve_level=$max_stellar_tagging_level
 
-    temp_min="1.0e9"
+        # The burning refinement strategy is to maximally refine above a given temperature.
 
-    amr__refinement_indicators="burning"
-    amr__refine__burning__field_name="Temp"
-    amr__refine__burning__max_level="$amr__max_level"
-    amr__refine__burning__value_greater="$temp_min"
+        temp_min="1.0e9"
 
-}
+        amr__refinement_indicators="burning"
+        amr__refine__burning__field_name="Temp"
+        amr__refine__burning__max_level="$amr__max_level"
+        amr__refine__burning__value_greater="$temp_min"
 
-function copy_checkpoint() {
+    else
 
-    # Copy the initial checkpoint to the directory if it's not there yet.
+        unset castro__reactions_max_solve_level
+        unset amr__refinement_indicators
+        unset amr__refine__burning__field_name
+        unset amr__refine__burning__max_level
+        unset amr__refine__burning__value_greater
 
-    if [ -e "$dir/jobIsDone" ]; then
-        return
-    fi
-
-    job_flag=$(is_job_running $dir)
-
-    if [ $job_flag -ne 1 ]; then
-
-        done_flag=$(is_dir_done)
-
-        if [ $done_flag -ne 1 ]; then
-
-            no_submit=1
-
-            if [ $to_run -eq 1 ]; then
-                run
-            fi
-
-            unset no_submit
-
-            # Skip the saved checkpoint copy if there's already a checkpoint
-            # in the target directory (either it's the saved checkpoint, or it
-            # is a later one because we've already started the run).
-
-            checkpoint=$(get_last_checkpoint $dir)
-
-            if [ "$checkpoint" == "" ]; then
-
-                # By default the starting checkpoint is the last checkpoint
-                # from the start directory, but this can be overridden if
-                # the user prefers a different starting checkpoint.
-
-                if [ -z $start_checkpoint ]; then
-                    start_checkpoint=$(get_last_checkpoint $start_dir)
-                fi
-
-                if [ -z $checkpoint_dir ]; then
-                    checkpoint_dir=$start_dir
-                fi
-
-                echo "Copying initial checkpoint to" $dir"."
-
-                if [ -d "$checkpoint_dir/$start_checkpoint" ]; then
-
-                    cp -r "$checkpoint_dir/$start_checkpoint" $dir
-                    rm -f "$dir/$start_checkpoint/jobIsDone"
-
-                    # Also, copy the diagnostic output files
-                    # so there is an apparently continuous record.
-
-                    cp $checkpoint_dir/*diag.out $dir
-
-                    # Strip out any data in the diagnostics files
-                    # that is after the copied checkpoint, to
-                    # ensure apparent continuity.
-
-                    chk_step=$(echo $start_checkpoint | cut -d"k" -f2)
-                    chk_step=$(echo $chk_step | bc) # Strip leading zeros
-
-                    for diag in $(find $dir -name "*diag.out");
-                    do
-                        sed -i "/\ $chk_step \ /q" $diag
-                    done
-
-                else
-                    echoerr "No initial checkpoint available, exiting."
-                    exit
-                fi
-
-            fi
-
-        fi
-
-    fi
-
-    if [ ! -z $start_checkpoint ]; then
-        unset start_checkpoint
-    fi
-
-    if [ ! -z $checkpoint_dir ]; then
-        unset checkpoint_dir
     fi
 
 }
@@ -352,28 +1005,31 @@ mass_S="0.64"
 # can make a direct comparison (see Figure 2).
 
 helium_shell_mass_list="0.00 0.04 0.08 0.16"
-helium_shell_mass_list="0.16"
+helium_shell_mass_list="0.00 0.16"
 
 stop_time="4.0"
 prob_lo="0.00e9"
 prob_hi="5.12e9"
 
-ncell_list="256 512 1024 2048 4096"
+# Start with a base resolution of 100 km, and refine from there.
+
+ncell="512"
+stellar_refinement_list="1 2 4 8 16 32"
 
 for helium_shell_mass in $helium_shell_mass_list
 do
 
     co_wd_he_shell_mass=$helium_shell_mass
 
-    for ncell in $ncell_list
+    for stellar_refinement in $stellar_refinement_list
     do
 
-        hydro_refinement_list="1 2 4 8 16 32 64 128 256 512"
+        burning_refinement_list="1"
 
-        for hydro_refinement in $hydro_refinement_list
+        for burning_refinement in $burning_refinement_list
         do
 
-            dir=$results_dir/he$helium_shell_mass/n$ncell/r$hydro_refinement
+            dir=$results_dir/he$helium_shell_mass/r$stellar_refinement/r$burning_refinement
             set_run_opts
 
             if [ $to_run -eq 1 ]; then
