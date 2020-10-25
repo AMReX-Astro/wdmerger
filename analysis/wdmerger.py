@@ -1185,32 +1185,42 @@ def rho_T_sliceplot(output_filename, pltfile,
     dens_axis = axes[0][0]
     temp_axis = axes[0][1]
 
-    scale = 10**scale_exp
+    scale = domain_frac / 10**scale_exp
 
     if negate_left:
-        dens_axis.set_xticks([-x_ticks[1] / scale, -x_ticks[0] / scale])
+        dens_axis.set_xticks([-x_ticks[1] * scale, -x_ticks[0] * scale])
     else:
         if dim == 2:
-            dens_axis.set_xticks([x_ticks[1] / scale, x_ticks[0] / scale])
+            dens_axis.set_xticks([x_ticks[1] * scale, x_ticks[0] * scale])
         else:
-            dens_axis.set_xticks([-x_ticks[1] / scale, -x_ticks[0] / scale,
+            dens_axis.set_xticks([-x_ticks[1] * scale, -x_ticks[0] * scale,
                                    0.0,
-                                   x_ticks[0] / scale,  x_ticks[1] / scale])
+                                   x_ticks[0] * scale,  x_ticks[1] * scale])
 
-    dens_axis.set_yticks([-y_ticks[1] / scale, -y_ticks[0] / scale, 
-                           0.0, 
-                           y_ticks[0] / scale,  y_ticks[1] / scale])
+    if dim == 2 and ds.parameters["-y"] == "symmetry":
+        dens_axis.set_yticks([0.0 * scale,
+                              y_ticks[0] * scale,
+                              y_ticks[1] * scale])
+    else:
+        dens_axis.set_yticks([-y_ticks[1] * scale, -y_ticks[0] * scale, 
+                               0.0 * scale,
+                               y_ticks[0] * scale,  y_ticks[1] * scale])
 
     if dim == 2:
-        temp_axis.set_xticks([0.0, x_ticks[0] / scale, x_ticks[1] / scale])
+        temp_axis.set_xticks([0.0 * scale,
+                              x_ticks[0] * scale,
+                              x_ticks[1] * scale])
     else:
-        temp_axis.set_xticks([-x_ticks[1] / scale, -x_ticks[0] / scale,
+        temp_axis.set_xticks([-x_ticks[1] * scale, -x_ticks[0] * scale,
                                0.0,
-                               x_ticks[0] / scale,  x_ticks[1] / scale])
+                               x_ticks[0] * scale,  x_ticks[1] * scale])
 
-    temp_axis.set_yticks([-y_ticks[1] / scale, -y_ticks[0] / scale, 
-                          0.0, 
-                          y_ticks[0] / scale,  y_ticks[1] / scale])
+    if dim == 2 and ds.parameters["-y"] == "symmetry":
+        temp_axis.set_yticks([0.0 * scale, y_ticks[0] * scale, y_ticks[1] * scale])
+    else:
+        temp_axis.set_yticks([-y_ticks[1] * scale, -y_ticks[0] * scale, 
+                               0.0 * scale,
+                               y_ticks[0] * scale,  y_ticks[1] * scale])
 
     dens_axis.yaxis.tick_left()
     dens_axis.yaxis.set_label_position("left")
@@ -1225,17 +1235,28 @@ def rho_T_sliceplot(output_filename, pltfile,
     aspect = 1.0
 
     if negate_left:
-        left_bound = [ bounds[0].v / scale, -bounds[1].v / scale, bounds[2].v / scale, bounds[3].v / scale]
+        left_bound = [bounds[0].v * scale, -bounds[1].v * scale, bounds[2].v * scale, bounds[3].v * scale]
     else:
-        left_bound = [ bounds[0].v / scale, bounds[1].v / scale, bounds[2].v / scale, bounds[3].v / scale]
+        if dim == 2 and ds.parameters["-y"] == "symmetry":
+            left_bound = [bounds[0].v * scale,  bounds[1].v * scale, bounds[3].v * scale, bounds[2].v * scale]
+        else:
+            left_bound = [bounds[0].v * scale,  bounds[1].v * scale, bounds[2].v * scale, bounds[3].v * scale]
     plots.append(dens_axis.imshow(dens, norm=LogNorm(), extent=left_bound, aspect=aspect))
     plots[-1].set_clim(dens_range[0], dens_range[1])
     plots[-1].set_cmap('bone')
 
-    dens_axis.annotate("t = {:.2f} s".format(float(ds.current_time.d)), [0.15, 0.785],
+    if dim == 2 and ds.parameters["-y"] == "symmetry":
+        time_position = [0.078, 0.725]
+    else:
+        time_position = [0.150, 0.785]
+
+    dens_axis.annotate("t = {:.2f} s".format(float(ds.current_time.d)), time_position,
                        xycoords='figure fraction', color='white', fontsize=20)
 
-    right_bound = [ bounds[0].v / scale, bounds[1].v / scale, bounds[2].v / scale, bounds[3].v / scale ]
+    if dim == 2 and ds.parameters["-y"] == "symmetry":
+        right_bound = [bounds[0].v * scale, bounds[1].v * scale, bounds[3].v * scale, bounds[2].v * scale]
+    else:
+        right_bound = [bounds[0].v * scale, bounds[1].v * scale, bounds[2].v * scale, bounds[3].v * scale]
     plots.append(temp_axis.imshow(temp, norm=LogNorm(), extent=right_bound, aspect=aspect))
     plots[-1].set_clim(temp_range[0], temp_range[1])
     plots[-1].set_cmap("hot")
@@ -1259,12 +1280,25 @@ def rho_T_sliceplot(output_filename, pltfile,
     if dim == 2:
         dens_axis.set_xlim(dens_axis.get_xlim()[::-1])
 
-    if dim == 2:
-        dens_axis.set_position([0.125+0.0575, 0.075, 0.375, 0.75])
-        temp_axis.set_position([0.500-0.0575, 0.075, 0.375, 0.75])
+        if ds.parameters["-y"] == "symmetry":
+            # Only simulating one star; flip the axis
+            dens_axis.set_ylim(dens_axis.get_ylim()[::-1])
+            temp_axis.set_ylim(temp_axis.get_ylim()[::-1])
 
-        colorbars[0].set_position([0.275, 0.92, 0.2, 0.075])
-        colorbars[1].set_position([0.525, 0.92, 0.2, 0.075])
+    if dim == 2:
+        if ds.parameters["-y"] == "symmetry":
+            dens_axis.set_position([0.125, 0.075, 0.375, 0.75])
+            temp_axis.set_position([0.500, 0.075, 0.375, 0.75])
+
+            colorbars[0].set_position([0.2125, 0.825, 0.2, 0.075])
+            colorbars[1].set_position([0.5875, 0.825, 0.2, 0.075])
+        else:
+            dens_axis.set_position([0.125 + 0.0575, 0.075, 0.375, 0.75])
+            temp_axis.set_position([0.500 + 0.0575, 0.075, 0.375, 0.75])
+
+            colorbars[0].set_position([0.275, 0.92, 0.2, 0.075])
+            colorbars[1].set_position([0.525, 0.92, 0.2, 0.075])
+
     else:
         dens_axis.set_position([0.125, 0.075, 0.375, 0.75])
         temp_axis.set_position([0.500, 0.075, 0.375, 0.75])
