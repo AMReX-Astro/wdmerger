@@ -48,823 +48,95 @@ function set_run_opts {
 
     castro__lo_bc="3 3"
 
-    if [ ! -z $burn_refinement ]; then
-
-        if [ $burn_refinement -eq 1 ]; then
-
-            probin_tagging_max_dxnuc_lev="0"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=0
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=1
-                    amr__ref_ratio="2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=1
-                    amr__ref_ratio="4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32768 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 65536 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 131072 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 262144 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 524288 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1048576 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2097152 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 2 ]; then
-
-            probin_tagging_max_dxnuc_lev="1"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=1
-                    amr__ref_ratio="2"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="2 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="2 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="2 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="2 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="2 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="2 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="2 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="2 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="2 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="2 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="2 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="2 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="2 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="2 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32768 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="2 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 65536 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="2 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 131072 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="2 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 262144 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="2 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 524288 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="2 4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1048576 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="2 4 4 4 4 4 4 4 4 4 4"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 4 ]; then
-
-            probin_tagging_max_dxnuc_lev="1"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=1
-                    amr__ref_ratio="4"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="4 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="4 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32768 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 65536 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 131072 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 262144 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 524288 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 8 ]; then
-
-            probin_tagging_max_dxnuc_lev="2"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="4 2"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 2 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 2 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 2 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 2 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 2 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 2 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 2 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 2 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 2 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 2 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 2 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 2 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 2 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 2 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32768 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 2 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 65536 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 2 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 131072 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 2 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 262144 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 2 4 4 4 4 4 4 4 4 4"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 16 ]; then
-
-            probin_tagging_max_dxnuc_lev="2"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=2
-                    amr__ref_ratio="4 4"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32768 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 65536 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 131072 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 32 ]; then
-
-            probin_tagging_max_dxnuc_lev="3"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 2"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 2 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 2 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 2 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 2 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 2 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 2 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 2 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 2 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 2 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 2 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 2 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 2 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 2 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 2 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32768 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 2 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 65536 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 2 4 4 4 4 4 4 4 4"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 64 ]; then
-
-            probin_tagging_max_dxnuc_lev="3"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=3
-                    amr__ref_ratio="4 4 4"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32768 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 128 ]; then
-
-            probin_tagging_max_dxnuc_lev="4"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 2"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 2 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 2 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 2 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 2 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 2 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 2 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 2 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 2 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 2 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 2 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 2 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 2 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 2 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16384 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 2 4 4 4 4 4 4 4"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 256 ]; then
-
-            probin_tagging_max_dxnuc_lev="4"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=4
-                    amr__ref_ratio="4 4 4 4"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8192 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 512 ]; then
-
-            probin_tagging_max_dxnuc_lev="5"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 2"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 2 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 2 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 2 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 2 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 2 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 2 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 2 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 2 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 2 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 2 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 2 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4096 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 2 4 4 4 4 4 4"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 1024 ]; then
-
-            probin_tagging_max_dxnuc_lev="5"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=5
-                    amr__ref_ratio="4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2048 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 2048 ]; then
-
-            probin_tagging_max_dxnuc_lev="6"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 2 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 2 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 2 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 2 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 2 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 2 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 2 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 2 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 2 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 1024 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 2 4 4 4 4 4"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        elif [ $burn_refinement -eq 4096 ]; then
-
-            probin_tagging_max_dxnuc_lev="6"
-
-            if [ ! -z $hydro_refinement ]; then
-
-                if [ $hydro_refinement -eq 1 ]; then
-                    amr__max_level=6
-                    amr__ref_ratio="4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 2 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 4 ]; then
-                    amr__max_level=7
-                    amr__ref_ratio="4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 8 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 16 ]; then
-                    amr__max_level=8
-                    amr__ref_ratio="4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 32 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 64 ]; then
-                    amr__max_level=9
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 128 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
-                elif [ $hydro_refinement -eq 256 ]; then
-                    amr__max_level=10
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
-                elif [ $hydro_refinement -eq 512 ]; then
-                    amr__max_level=11
-                    amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
-                else
-                    echo "Unknown refinement factor: "$hydro_refinement"; exiting."
-                    exit
-                fi
-
-            fi
-
-        fi
-
-        # Only solve gravity on the coarse level. The additional accuracy
-        # from solving on the fine levels would provide no benefit on this problem.
-
-        gravity__max_solve_level=0
-
-        # Allow reactions up to the level we're refining for reactions on.
-        # On levels above this, where we're effectively subcycling the hydro,
-        # we just interpolate the reactions source rather than calculate it.
-
-        castro__reactions_max_solve_level=$probin_tagging_max_dxnuc_lev
-
-        # The refinement strategy is to maximally refine above a given temperature.
-
-        temp_min="1.0e9"
-
-        amr__refinement_indicators="burning"
-        amr__refine__burning__field_name="Temp"
-        amr__refine__burning__max_level="$amr__max_level"
-        amr__refine__burning__value_greater="$temp_min"
-
+    if [ $hydro_refinement -eq 1 ]; then
+        amr__max_level=0
+    elif [ $hydro_refinement -eq 2 ]; then
+        amr__max_level=1
+        amr__ref_ratio="2"
+    elif [ $hydro_refinement -eq 4 ]; then
+        amr__max_level=1
+        amr__ref_ratio="4"
+    elif [ $hydro_refinement -eq 8 ]; then
+        amr__max_level=2
+        amr__ref_ratio="4 2"
+    elif [ $hydro_refinement -eq 16 ]; then
+        amr__max_level=2
+        amr__ref_ratio="4 4"
+    elif [ $hydro_refinement -eq 32 ]; then
+        amr__max_level=3
+        amr__ref_ratio="4 4 2"
+    elif [ $hydro_refinement -eq 64 ]; then
+        amr__max_level=3
+        amr__ref_ratio="4 4 4"
+    elif [ $hydro_refinement -eq 128 ]; then
+        amr__max_level=4
+        amr__ref_ratio="4 4 4 2"
+    elif [ $hydro_refinement -eq 256 ]; then
+        amr__max_level=4
+        amr__ref_ratio="4 4 4 4"
+    elif [ $hydro_refinement -eq 512 ]; then
+        amr__max_level=5
+        amr__ref_ratio="4 4 4 4 2"
+    elif [ $hydro_refinement -eq 1024 ]; then
+        amr__max_level=5
+        amr__ref_ratio="4 4 4 4 4"
+    elif [ $hydro_refinement -eq 2048 ]; then
+        amr__max_level=6
+        amr__ref_ratio="4 4 4 4 4 2"
+    elif [ $hydro_refinement -eq 4096 ]; then
+        amr__max_level=6
+        amr__ref_ratio="4 4 4 4 4 4"
+    elif [ $hydro_refinement -eq 8192 ]; then
+        amr__max_level=7
+        amr__ref_ratio="4 4 4 4 4 4 2"
+    elif [ $hydro_refinement -eq 16384 ]; then
+        amr__max_level=7
+        amr__ref_ratio="4 4 4 4 4 4 4"
+    elif [ $hydro_refinement -eq 32768 ]; then
+        amr__max_level=8
+        amr__ref_ratio="4 4 4 4 4 4 4 2"
+    elif [ $hydro_refinement -eq 65536 ]; then
+        amr__max_level=8
+        amr__ref_ratio="4 4 4 4 4 4 4 4"
+    elif [ $hydro_refinement -eq 131072 ]; then
+        amr__max_level=9
+        amr__ref_ratio="4 4 4 4 4 4 4 4 2"
+    elif [ $hydro_refinement -eq 262144 ]; then
+        amr__max_level=9
+        amr__ref_ratio="4 4 4 4 4 4 4 4 4"
+    elif [ $hydro_refinement -eq 524288 ]; then
+        amr__max_level=10
+        amr__ref_ratio="4 4 4 4 4 4 4 4 4 2"
+    elif [ $hydro_refinement -eq 1048576 ]; then
+        amr__max_level=10
+        amr__ref_ratio="4 4 4 4 4 4 4 4 4 4"
+    elif [ $hydro_refinement -eq 2097152 ]; then
+        amr__max_level=11
+        amr__ref_ratio="4 4 4 4 4 4 4 4 4 4 2"
+    else
+        echo "Unknown refinement factor: "$hydro_refinement"; exiting."
+        exit
     fi
+
+    # Only solve gravity on the coarse level. The additional accuracy
+    # from solving on the fine levels would provide no benefit on this problem.
+
+    gravity__max_solve_level=0
+
+    # Only solve reactions on the coarse level. On levels above this,
+    # where we're effectively subcycling the hydro, we just interpolate
+    # the reactions source rather than calculate it.
+
+    castro__reactions_max_solve_level=0
+
+    # The refinement strategy is to maximally refine above a given temperature.
+
+    temp_min="1.0e9"
+
+    amr__refinement_indicators="burning"
+    amr__refine__burning__field_name="Temp"
+    amr__refine__burning__max_level="$amr__max_level"
+    amr__refine__burning__value_greater="$temp_min"
 
 }
 
@@ -1061,11 +333,8 @@ castro__change_max="1.25"
 
 # Some defaults.
 
-dtnuc_e_default="1.e200"
-dtnuc_X_default="1.e200"
-
-castro__dtnuc_e=$dtnuc_e_default
-castro__dtnuc_X=$dtnuc_X_default
+castro__dtnuc_e="1.e200"
+castro__dtnuc_X="1.e200"
 castro__react_T_min="1.0e8"
 castro__react_rho_min="1.0e6"
 
@@ -1075,22 +344,15 @@ to_run=1
 
 # Simulate 0.64 + 0.64 M_solar WDs.
 
-mass_list="0.64"
+mass_P="0.64"
+mass_S="0.64"
 
 # Run four helium shell mass cases. These are the same
 # values from Holcomb and Kushnir (2016), so that we
 # can make a direct comparison (see Figure 2).
 
 helium_shell_mass_list="0.00 0.04 0.08 0.16"
-
-# We expect for all cases in question, ignition will
-# happen within three seconds, so we stop there. The
-# domain is just large enough to include the stars;
-# as a result, we could not track the simulation long
-# past detonation anyway. This means we cannot track
-# things like total nickel yields, but that is OK because
-# we are more interested in understanding the physics
-# and numerics of the ignition process itself.
+helium_shell_mass_list="0.16"
 
 stop_time="4.0"
 prob_lo="0.00e9"
@@ -1098,65 +360,25 @@ prob_hi="5.12e9"
 
 ncell_list="256 512 1024 2048 4096"
 
-burn_refinement_list="1 2 4 8 16"
-burn_refinement_list="1"
-
-integrate_temperature_list="T F"
-
-for mass in $mass_list
+for helium_shell_mass in $helium_shell_mass_list
 do
 
-    mass_P=$mass
-    mass_S=$mass
+    co_wd_he_shell_mass=$helium_shell_mass
 
-    for helium_shell_mass in $helium_shell_mass_list
+    for ncell in $ncell_list
     do
 
-        co_wd_he_shell_mass=$helium_shell_mass
+        hydro_refinement_list="1 2 4 8 16 32 64 128 256 512"
 
-        for probin_extern_integrate_temperature in $integrate_temperature_list
+        for hydro_refinement in $hydro_refinement_list
         do
 
-            for ncell in $ncell_list
-            do
+            dir=$results_dir/he$helium_shell_mass/n$ncell/r$hydro_refinement
+            set_run_opts
 
-                for burn_refinement in $burn_refinement_list
-                do
-
-                    if [ $burn_refinement -eq 1 ]; then
-                        hydro_refinement_list="1 2 4 8 16 32 64 128 256 512"
-                        hydro_refinement_list="1"
-                    elif [ $burn_refinement -eq 2 ]; then
-                        hydro_refinement_list="1 2 4 8 16 32 64"
-                        hydro_refinement_list="1"
-                    elif [ $burn_refinement -eq 4 ]; then
-                        hydro_refinement_list="1 2 4 8 16 32"
-                        hydro_refinement_list="1"
-                    elif [ $burn_refinement -eq 8 ]; then
-                        hydro_refinement_list="1 2 4 8 16"
-                        hydro_refinement_list="1"
-                    elif [ $burn_refinement -eq 16 ]; then
-                        hydro_refinement_list="1 2 4 8"
-                        hydro_refinement_list="1"
-                    else
-                        break
-                    fi
-
-                    for hydro_refinement in $hydro_refinement_list
-                    do
-
-                        dir=$results_dir/m$mass/he$helium_shell_mass/integrate_temperature_$probin_extern_integrate_temperature/n$ncell/r$burn_refinement/r$hydro_refinement
-                        set_run_opts
-
-                        if [ $to_run -eq 1 ]; then
-                            run
-                        fi
-
-                    done
-
-                done
-
-            done
+            if [ $to_run -eq 1 ]; then
+                run
+            fi
 
         done
 
