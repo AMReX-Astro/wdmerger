@@ -451,7 +451,7 @@ def rho_T_sliceplots_doit(inputs):
 
 
 
-def rho_T_sliceplots(output_dir, results_dir, smallplt = True, domain_frac = 1.0,
+def rho_T_sliceplots(output_dir, results_dir, smallplt = True, domain_frac = 0.375,
                      x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9], scale_exp = 9):
     """Create a rho/T sliceplot for every plotfile in a given directory."""
 
