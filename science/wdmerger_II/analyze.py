@@ -426,7 +426,7 @@ def rho_T_sliceplots_eps_rename(pltfile, output_dir, results_dir):
 
 
 
-def rho_T_sliceplots_doit(inputs): #output_dir, results_dir, domain_frac, x_ticks, y_ticks, scale_exp):
+def rho_T_sliceplots_doit(inputs):
 
     pltfile     = inputs[0]
     output_dir  = inputs[1]
@@ -559,7 +559,7 @@ if __name__ == "__main__":
 
         ncell_list = os.listdir(results_base + '/' + integrate_T)
 
-        for ncell in ncell_list:
+        for ncell in sorted(ncell_list):
 
             burning_r_list = os.listdir(results_base + '/' + integrate_T + '/' + ncell)
 
