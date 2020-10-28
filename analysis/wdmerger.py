@@ -1246,7 +1246,7 @@ def rho_T_sliceplot(output_filename, pltfile,
     plots[-1].set_cmap('bone')
 
     if dim == 2 and ds.parameters["-y"] == "symmetry":
-        time_position = [0.078, 0.725]
+        time_position = [0.115, 0.725]
     else:
         time_position = [0.150, 0.785]
 
