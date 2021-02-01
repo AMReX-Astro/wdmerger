@@ -1145,13 +1145,13 @@ function check_to_stop {
 
 	  # Now get the I/O parameters from the inputs file.
 
-	  chk_int=$(get_inputs_var "amr_check_int" .)
+	  chk_int=$(get_inputs_var "amr__check_int" .)
           if [ -z "$chk_int" ]; then
               chk_int="-1"
           fi
           chk_int=$(echo $chk_int | bc)
 
-          chk_per=$(get_inputs_var "amr_check_per" .)
+          chk_per=$(get_inputs_var "amr__check_per" .)
           if [ -z "$chk_per" ]; then
               chk_per="-1.0"
           fi
@@ -1361,7 +1361,7 @@ function copy_files {
       # that we update this in the inputs file. It will be updated
       # in the variable replacement loop below.
 
-      amr_probin_file="probin"
+      amr__probin_file="probin"
   fi
 
   new_probin="F"
@@ -1644,13 +1644,13 @@ function create_job_script {
       # set by the including script, we use that; otherwise, 
       # we read in the value from the main inputs file.
 
-      if [ -z "$amr_max_grid_size" ]; then
-	  amr_max_grid_size=$(get_inputs_var "amr_max_grid_size" $dir)
+      if [ -z "$amr__max_grid_size" ]; then
+	  amr__max_grid_size=$(get_inputs_var "amr__max_grid_size" $dir)
       fi
 
       max_level_grid_size=0
 
-      for grid_size in $amr_max_grid_size
+      for grid_size in $amr__max_grid_size
       do
 	  if [ $grid_size -gt $max_level_grid_size ]; then
 	      max_level_grid_size=$grid_size
