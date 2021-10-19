@@ -1,7 +1,7 @@
 # inputs.sh: functions for working with inputs files.
 
 # Obtain the value of a variable in the main inputs file.
-# Optionally we can provide a second argument to look 
+# Optionally we can provide a second argument to look
 # in the inputs file in another directory.
 
 function get_inputs_var {
@@ -9,35 +9,35 @@ function get_inputs_var {
     # Check to make sure that the variable name was given to us.
 
     if [ ! -z $1 ]; then
-	var_name=$1
+        var_name=$1
     else
-	return
+        return
     fi
 
     if [ ! -z $2 ]; then
-	directory=$2
+        directory=$2
     elif [ ! -z $dir ]; then
-	directory=$dir
+        directory=$dir
     else
-	echo "No directory found in replace_inputs_var; exiting."
-	return
+        echo "No directory found in replace_inputs_var; exiting."
+        return
     fi
 
     if [ ! -e $directory/inputs ]; then
-	echo "No inputs file exists in directory "$dir"; exiting."
-	return
+        echo "No inputs file exists in directory "$dir"; exiting."
+        return
     fi
 
     inputs_var_name=$(fix_inputs_var_name $var_name)
 
     var=""
 
-    # To get the value of the inputs variable, 
+    # To get the value of the inputs variable,
     # we need to get everything after the equals sign.
 
     if (grep -q "$inputs_var_name[[:space:]]*=" $directory/inputs); then
 
-	var=$(grep "$inputs_var_name" $directory/inputs | awk -F"=" '{print $2}')
+        var=$(grep "$inputs_var_name" $directory/inputs | awk -F"=" '{print $2}')
 
     fi
 
@@ -54,9 +54,9 @@ function get_inputs_var {
 function fix_inputs_var_name {
 
     if [ ! -z $1 ]; then
-	var=$1
+        var=$1
     else
-	return
+        return
     fi
 
     namespace=$(echo $var | cut -d _ -f 1)
@@ -69,15 +69,16 @@ function fix_inputs_var_name {
     if ([ $var == "stop_time" ] || [ $var == "max_step" ])
     then
 
-	inputs_var_name=$var	    
+        inputs_var_name=$var
 
-    elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] || 
-	   [ $namespace == "geometry" ] || [ $namespace == "gravity" ] || 
-	   [ $namespace == "mg" ] || [ $namespace == "DistributionMapping" ] ||
-	   [ $namespace == "fab" ] || [ $namespace == "amrex" ] )
+    elif ( [ $namespace == "amr" ] || [ $namespace == "castro" ] ||
+           [ $namespace == "geometry" ] || [ $namespace == "gravity" ] ||
+           [ $namespace == "mg" ] || [ $namespace == "DistributionMapping" ] ||
+           [ $namespace == "fab" ] || [ $namespace == "amrex" ] ||
+           [ $namespace == "problem" ] )
     then
 
-	# Replace double underscores with periods.
+        # Replace double underscores with periods.
 
         search_string="__"
         replace_string="."
@@ -92,8 +93,8 @@ function fix_inputs_var_name {
 
 
 
-# Given an inputs variable name (in bash-friendly form) in argument 1 
-# and a directory in argument 2, replace the inputs variable 
+# Given an inputs variable name (in bash-friendly form) in argument 1
+# and a directory in argument 2, replace the inputs variable
 # with the value of argument 1 using indirect references.
 
 function replace_inputs_var {
@@ -102,49 +103,49 @@ function replace_inputs_var {
     # as well as the inputs file in that directory.
 
     if [ ! -z $1 ]; then
-	var=$1
+        var=$1
     else
-	echo "No variable found in arguments list for replace_inputs_var; exiting."
-	return
+        echo "No variable found in arguments list for replace_inputs_var; exiting."
+        return
     fi
 
     if [ -z $dir ]; then
-	echo "No directory found in replace_inputs_var; exiting."
-	return
+        echo "No directory found in replace_inputs_var; exiting."
+        return
     fi
 
     if [ ! -e $dir/inputs ]; then
-	echo "No inputs file exists in directory "$dir"; exiting."
-	return
+        echo "No inputs file exists in directory "$dir"; exiting."
+        return
     fi
 
     inputs_var_name=$(fix_inputs_var_name $var)
 
     if [ -z $inputs_var_name ]; then
-	return
+        return
     fi
 
     # Make sure this inputs variable actually exists in the inputs file.
-    # The -q option to grep means be quiet and only 
+    # The -q option to grep means be quiet and only
     # return a flag indicating whether $var is in inputs.
-    # The [[:space:]]* tells grep to ignore any whitespace between the 
+    # The [[:space:]]* tells grep to ignore any whitespace between the
     # variable and the equals sign. See:
     # http://www.linuxquestions.org/questions/programming-9/grep-ignoring-spaces-or-tabs-817034/
 
     if (grep -q "$inputs_var_name[[:space:]]*=" $dir/inputs)
     then
 
-	# OK, so the parameter name does exist in the inputs file;
-	# now we just need to get its value in there. We can do this using
-	# bash indirect references -- if $var is a variable name, then
-	# ${!var} is the value held by that variable. See:
-	# http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
-	# http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
+        # OK, so the parameter name does exist in the inputs file;
+        # now we just need to get its value in there. We can do this using
+        # bash indirect references -- if $var is a variable name, then
+        # ${!var} is the value held by that variable. See:
+        # http://www.tldp.org/LDP/abs/html/bashver2.html#EX78
+        # http://stackoverflow.com/questions/10955479/name-of-variable-passed-to-function-in-bash
 
-	old_string=$(grep "$inputs_var_name[[:space:]]" $dir/inputs)
-	new_string="$inputs_var_name = ${!var}"
+        old_string=$(grep "$inputs_var_name[[:space:]]" $dir/inputs)
+        new_string="$inputs_var_name = ${!var}"
 
-	sed -i "s/$inputs_var_name.*/$new_string/g" $dir/inputs
+        sed -i "s/$inputs_var_name.*/$new_string/g" $dir/inputs
 
     # If the inputs variable doesn't exist in the inputs file, but we got to this point,
     # it had a legitimate AMReX or CASTRO namespace. We assume the user wants to add 
@@ -152,8 +153,8 @@ function replace_inputs_var {
 
     else
 
-	string="$inputs_var_name = ${!var}"
-	echo $string >> $dir/inputs
+        string="$inputs_var_name = ${!var}"
+        echo $string >> $dir/inputs
 
     fi
 
