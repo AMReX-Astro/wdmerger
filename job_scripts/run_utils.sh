@@ -2101,6 +2101,16 @@ function create_job_script {
           echo "#SBATCH -L $resource" >> $dir/$job_script
       fi
 
+      # Number of GPUs per MPI rank.
+      if [ ! -z $gpus_per_task ]; then
+          echo "#SBATCH --gpus-per-task $gpus_per_task" >> $dir/$job_script
+      fi
+
+      # Task binding to GPUs within a node.
+      if [ ! -z $gpu_bind ]; then
+          echo "#SBATCH --gpu-bind $gpu_bind" >> $dir/$job_script
+      fi
+
       echo "" >> $dir/$job_script
 
       # Insert machine-specific preload statements.
