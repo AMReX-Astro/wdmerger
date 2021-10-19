@@ -433,7 +433,7 @@ function copy_checkpoint() {
 
 # Specify the problem directory.
 
-problem_dir=$CASTRO_HOME/Exec/science/wdmerger
+exec_dir=$CASTRO_HOME/Exec/science/wdmerger
 
 DIM="3"
 

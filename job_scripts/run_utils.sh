@@ -1339,7 +1339,7 @@ function copy_files {
       if [ -e "$compile_dir/$inputs" ]; then
           cp $compile_dir/$inputs $dir/inputs
       else
-	  cp $problem_dir/$inputs $dir/inputs
+	  cp $exec_dir/$inputs $dir/inputs
       fi
 
   fi
@@ -1748,8 +1748,8 @@ function create_job_script {
 
       # Set name of problem directory, if applicable.
 
-      if [ ! -z $problem_dir ]; then
-	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+      if [ ! -z $exec_dir ]; then
+	  echo "exec_dir=$exec_dir" >> $dir/$job_script
 	  echo "" >> $dir/$job_script
       fi
 
@@ -1924,8 +1924,8 @@ function create_job_script {
 
       # Set name of problem directory, if applicable.
 
-      if [ ! -z $problem_dir ]; then
-	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+      if [ ! -z $exec_dir ]; then
+	  echo "exec_dir=$exec_dir" >> $dir/$job_script
 	  echo "" >> $dir/$job_script
       fi
 
@@ -2120,8 +2120,8 @@ function create_job_script {
 
       # Set name of problem directory, if applicable.
 
-      if [ ! -z $problem_dir ]; then
-	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+      if [ ! -z $exec_dir ]; then
+	  echo "exec_dir=$exec_dir" >> $dir/$job_script
 	  echo "" >> $dir/$job_script
       fi
 
@@ -2206,8 +2206,8 @@ function create_job_script {
 
       # Set name of problem directory, if applicable.
 
-      if [ ! -z $problem_dir ]; then
-	  echo "problem_dir=$problem_dir" >> $dir/$job_script
+      if [ ! -z $exec_dir ]; then
+	  echo "exec_dir=$exec_dir" >> $dir/$job_script
 	  echo "" >> $dir/$job_script
       fi
 
@@ -2414,7 +2414,7 @@ function run {
 
   # Require the user to tell us where the source files and inputs are coming from.
 
-  if [ -z $problem_dir ]; then
+  if [ -z $exec_dir ]; then
       echo "No problem directory specified; exiting."
       return
   fi
@@ -2658,7 +2658,7 @@ function compile_in_job_directory {
   fi
 
   if [ ! -e $1/$compile_dir/GNUmakefile ]; then
-      cp $problem_dir/GNUmakefile $1/$compile_dir
+      cp $exec_dir/GNUmakefile $1/$compile_dir
   fi
 
   if [ ! -e $1/$compile_dir/$CASTRO ]; then

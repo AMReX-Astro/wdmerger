@@ -871,7 +871,7 @@ function set_run_opts {
 
 # Specify the problem directory.
 
-problem_dir=$CASTRO_HOME/Exec/science/wdmerger
+exec_dir=$CASTRO_HOME/Exec/science/wdmerger
 
 use_first_castro_ex="1"
 

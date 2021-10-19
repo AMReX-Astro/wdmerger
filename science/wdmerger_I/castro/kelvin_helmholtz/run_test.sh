@@ -3,7 +3,7 @@ source $WDMERGER_HOME/job_scripts/run_utils.sh
 inputs=inputs.2d
 probin=probin
 
-problem_dir=$CASTRO_HOME/Exec/KH
+exec_dir=$CASTRO_HOME/Exec/hydro_tests/KH
 
 DIM=2
 
