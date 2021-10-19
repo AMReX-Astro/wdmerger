@@ -897,16 +897,16 @@ castro__limit_fluxes_on_small_dens="0"
 
 # Variables we need to set up the collision.
 
-problem="0"
-collision_separation="2.0"
-collision_impact_parameter="0.0"
+problem__problem="0"
+problem__collision_separation="2.0"
+problem__collision_impact_parameter="0.0"
 
 # Disable refinement based on non-burning criteria.
 # These can be re-enabled later for specific tests.
 
-max_stellar_tagging_level="0"
-max_temperature_tagging_level="0"
-max_center_tagging_level="0"
+problem__max_stellar_tagging_level="0"
+problem__max_temperature_tagging_level="0"
+problem__max_center_tagging_level="0"
 
 # Allow first-order interpolations to fine levels.
 
@@ -967,8 +967,8 @@ gravity__abs_tol="5.e-8"
 # C/O ratio  by mass in the initial white dwarfs. We will do
 # this too for comparison purposes.
 
-co_wd_c_frac="0.5d0"
-co_wd_o_frac="0.5d0"
+problem__co_wd_c_frac="0.5d0"
+problem__co_wd_o_frac="0.5d0"
 
 # Allow the timestep to change by up to 25% per advance.
 
@@ -987,8 +987,8 @@ to_run=1
 
 # Simulate 0.64 + 0.64 M_solar WDs.
 
-mass_P="0.64"
-mass_S="0.64"
+problem__mass_P="0.64"
+problem__mass_S="0.64"
 
 # Run four helium shell mass cases. These are the same
 # values from Holcomb and Kushnir (2016), so that we
