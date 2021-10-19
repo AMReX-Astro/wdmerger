@@ -13,9 +13,7 @@ function set_run_opts {
 
     # Set the processor count and walltime.
 
-    if [ "$MACHINE" == "SUMMIT" ]; then
-
-        queue="batch"
+    if [[ "$MACHINE" == "PERLMUTTER" || "$MACHINE" == "SUMMIT" ]]; then
 
         if [ $stellar_refinement -eq 1 ]; then
             nprocs=48
@@ -33,7 +31,7 @@ function set_run_opts {
 
         walltime="2:00:00"
 
-        amr__blocking_factor="128"
+        amr__blocking_factor="64"
         amr__max_grid_size="1024"
 
     else
