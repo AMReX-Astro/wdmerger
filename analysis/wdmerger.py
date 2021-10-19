@@ -88,52 +88,6 @@ def get_inputs_var(inputs, var):
 
 
 
-# Get a variable value from a probin file.
-
-def get_probin_var(probin, var):
-    """Retrieve a variable value from a probin file."""
-
-    import numpy as np
-
-    # Read in all the probin file lines and search for the one
-    # that starts with the desired variable name.
-
-    probin_file = open(probin, 'r')
-    lines = probin_file.readlines()
-
-    lines = filter(lambda s: s.split() != [], lines)
-    line = filter(lambda s: s.split()[0] == var, lines)
-
-    # The variable is the last item in a line before the comment.
-    # This should work correctly even if there is no comment.
-
-    var = (line[0].split('=')[1]).split('!')[0]
-    var = var.strip()
-
-    # Now, convert it into a list if it has multiple entries.
-
-    if (var.split() != []):
-        var = var.split()
-
-    # Convert this to a floating point array, if possible.
-    # If this fails, we'll just leave it as a string.
-
-    try:
-        var = np.array(var,dtype='float')    
-
-        # Now convert this to an integer array, if possible.
-
-        if (var[0].is_integer()):
-            var = np.array(var,dtype='int')
-    except:
-        pass
-
-    probin_file.close()
-
-    return var
-
-
-
 #
 # Given a plotfile directory, return the git commit hashes.
 #

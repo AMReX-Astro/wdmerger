@@ -15,9 +15,8 @@ fi
 # Utility shell functions.
 source $script_dir/util.sh
 
-# Functions for working with inputs and probin files.
+# Functions for working with inputs files.
 source $script_dir/inputs.sh
-source $script_dir/probin.sh
 
 # Basic mathematical routines.
 source $script_dir/math.sh
@@ -880,7 +879,7 @@ function archive_all {
       archive_cp_list=$archive_cp_list" "$f
   done
 
-  # Same strategy for the inputs and probin files.
+  # Same strategy for the inputs files.
 
   inputs_list=$(find -L $directory -maxdepth 1 -name "inputs")
 
@@ -894,20 +893,6 @@ function archive_all {
       fi
 
       archive_cp_list=$archive_cp_list" "$f
-  done
-
-  probin_list=$(find -L $directory -maxdepth 1 -name "probin")
-
-  for file in $probin_list
-  do
-      f=$(basename $file)
-      if [ -e $directory/output/$f ]; then
-	  if [ $directory/output/$f -nt $directory/$f ]; then
-	      continue
-	  fi
-     fi
-
-     archive_cp_list=$archive_cp_list" "$f
   done
 
   # If there is nothing to archive,
@@ -1317,7 +1302,7 @@ function check_to_stop {
 
 
 # Copies all relevant files needed for a CASTRO run into the target directory,
-# and updates the inputs and probin according to any shell variables we set.
+# and updates the inputs according to any shell variables we set.
 
 function copy_files {
 
@@ -1357,24 +1342,6 @@ function copy_files {
 	  cp $problem_dir/$inputs $dir/inputs
       fi
 
-      # Since we are renaming the probin (see below), make sure
-      # that we update this in the inputs file. It will be updated
-      # in the variable replacement loop below.
-
-      amr__probin_file="probin"
-  fi
-
-  new_probin="F"
-
-  if [ ! -e "$dir/probin" ]; then
-
-      new_probin="T"
-
-      if [ -e "$compile_dir/$probin" ]; then
-	  cp $compile_dir/$probin $dir/probin
-      else
-	  cp $problem_dir/$probin $dir/probin
-      fi
   fi
 
   # Copy over all the helper scripts, so that these are 
@@ -1406,20 +1373,15 @@ function copy_files {
 
   input_vars=$(comm -3 <( echo $shell_list | tr " " "\n" | sort) <( echo $shell_list_new | tr " " "\n" | sort))
 
-  # Loop through all new variables and call both replace_inputs_var and 
-  # replace_probin_var. These will only take action if the variable exists
-  # in the respective files, and there should not be any common variables,
-  # so there is no harm in the redundancy.
+  # Loop through all new variables and call replace_inputs_var. This will
+  # only take action if the variable exists in the file, and there should
+  # not be any common variables, so there is no harm in the redundancy.
 
   for var in $input_vars
   do
 
       if [ $new_inputs == "T" ] || (([ $var == "stop_time" ] || [ $var == "max_step" ]) && [ ! -z "$update_stopping_criteria" ]); then
 	  replace_inputs_var $var
-      fi
-
-      if [ $new_probin == "T" ]; then
-	  replace_probin_var $var
       fi
 
   done
@@ -2754,10 +2716,6 @@ plots_dir="plots"
 
 if [ -z $inputs ]; then
     inputs=inputs
-fi
-
-if [ -z $probin ]; then
-    probin=probin
 fi
 
 # Get current machine and set preferences accordingly.

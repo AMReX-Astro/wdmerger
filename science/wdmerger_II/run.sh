@@ -892,10 +892,9 @@ DIM="2"
 
 NETWORK_DIR="aprox13"
 
-# Get the right inputs and probin files.
+# Get the right inputs file.
 
-inputs="inputs_2d"
-probin="probin"
+inputs="inputs"
 
 # Abort if we run out of GPU memory.
 
