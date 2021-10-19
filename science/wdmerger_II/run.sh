@@ -849,12 +849,6 @@ function set_run_opts {
 
     if [ $amr__max_level -gt $max_stellar_tagging_level ]; then
 
-        # Allow reactions up to the stellar refinement level.
-        # On levels above this, where we're effectively subcycling the hydro,
-        # we just interpolate the reactions source rather than calculate it.
-
-        castro__reactions_max_solve_level=$max_stellar_tagging_level
-
         # The burning refinement strategy is to maximally refine above a given temperature.
 
         temp_min="1.0e9"
@@ -866,7 +860,6 @@ function set_run_opts {
 
     else
 
-        unset castro__reactions_max_solve_level
         unset amr__refinement_indicators
         unset amr__refine__burning__field_name
         unset amr__refine__burning__max_level
