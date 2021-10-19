@@ -47,6 +47,14 @@ function get_machine {
           MACHINE=MIRA
       fi
 
+      if [ ! -z $NERSC_HOST ]; then
+          if   [ $NERSC_HOST == "perlmutter" ]; then
+              MACHINE=PERLMUTTER
+          elif [ $NERSC_HOST == "cori" ]; then
+              MACHINE=CORI
+          fi
+      fi
+
   fi
 
   echo $MACHINE
@@ -189,6 +197,23 @@ function set_machine_params {
         resource="SCRATCH"
 
         job_prepend="export OMP_PROC_BIND=spread; export OMP_PLACES=threads"
+
+    # Perlmutter at NERSC
+
+    elif [ $MACHINE == "PERLMUTTER" ]; then
+
+        allocation="m3018_g"
+        exec="sbatch"
+        cancel_job="scancel"
+        ppn="4"
+        logical_ppn="4"
+        run_ext=".OU"
+        batch_system="SLURM"
+        launcher="srun"
+        queue="regular"
+        constraint="gpu"
+        gpus_per_task="1"
+        gpu_bind="map_gpu:0,1,2,3"
 
     # LIRED at Stony Brook University
 
