@@ -50,7 +50,7 @@ function set_run_opts {
 
     if [ $stellar_refinement -eq 1 ]; then
 
-        max_stellar_tagging_level="0"
+        problem__max_stellar_tagging_level="0"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -128,7 +128,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 2 ]; then
 
-        max_stellar_tagging_level="1"
+        problem__max_stellar_tagging_level="1"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -204,7 +204,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 4 ]; then
 
-        max_stellar_tagging_level="1"
+        problem__max_stellar_tagging_level="1"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -277,7 +277,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 8 ]; then
 
-        max_stellar_tagging_level="2"
+        problem__max_stellar_tagging_level="2"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -347,7 +347,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 16 ]; then
 
-        max_stellar_tagging_level="2"
+        problem__max_stellar_tagging_level="2"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -414,7 +414,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 32 ]; then
 
-        max_stellar_tagging_level="3"
+        problem__max_stellar_tagging_level="3"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -478,7 +478,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 64 ]; then
 
-        max_stellar_tagging_level="3"
+        problem__max_stellar_tagging_level="3"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -539,7 +539,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 128 ]; then
 
-        max_stellar_tagging_level="4"
+        problem__max_stellar_tagging_level="4"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -597,7 +597,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 256 ]; then
 
-        max_stellar_tagging_level="4"
+        problem__max_stellar_tagging_level="4"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -652,7 +652,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 512 ]; then
 
-        max_stellar_tagging_level="5"
+        problem__max_stellar_tagging_level="5"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -704,7 +704,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 1024 ]; then
 
-        max_stellar_tagging_level="5"
+        problem__max_stellar_tagging_level="5"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -753,7 +753,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 2048 ]; then
 
-        max_stellar_tagging_level="6"
+        problem__max_stellar_tagging_level="6"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -799,7 +799,7 @@ function set_run_opts {
 
     elif [ $stellar_refinement -eq 4096 ]; then
 
-        max_stellar_tagging_level="6"
+        problem__max_stellar_tagging_level="6"
 
         if [ ! -z $burning_refinement ]; then
 
@@ -847,7 +847,7 @@ function set_run_opts {
 
     gravity__max_solve_level=0
 
-    if [ $amr__max_level -gt $max_stellar_tagging_level ]; then
+    if [ $amr__max_level -gt $problem__max_stellar_tagging_level ]; then
 
         # The burning refinement strategy is to maximally refine above a given temperature.
 
