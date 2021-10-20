@@ -967,8 +967,8 @@ gravity__abs_tol="5.e-8"
 # C/O ratio  by mass in the initial white dwarfs. We will do
 # this too for comparison purposes.
 
-problem__co_wd_c_frac="0.5d0"
-problem__co_wd_o_frac="0.5d0"
+problem__co_wd_c_frac="0.5e0"
+problem__co_wd_o_frac="0.5e0"
 
 # Allow the timestep to change by up to 25% per advance.
 
