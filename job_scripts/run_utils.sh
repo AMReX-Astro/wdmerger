@@ -2096,6 +2096,11 @@ function create_job_script {
           echo "#SBATCH -C $constraint" >> $dir/$job_script
       fi
 
+      # Quality of service.
+      if [ ! -z $qos ]; then
+          echo "#SBATCH -q $qos" >> $dir/$job_script
+      fi
+
       # Resources to use.
       if [ ! -z $resource ]; then
           echo "#SBATCH -L $resource" >> $dir/$job_script
