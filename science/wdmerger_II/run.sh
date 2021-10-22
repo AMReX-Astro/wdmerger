@@ -984,6 +984,10 @@ castro__do_rotation="0"
 
 gravity__abs_tol="5.e-8"
 
+# We do not need to calculate the gravitational wave signature for this science.
+
+castro__gw_dist="-1.e0"
+
 # Many of the collision papers in the literature use an equal
 # C/O ratio  by mass in the initial white dwarfs. We will do
 # this too for comparison purposes.
