@@ -162,7 +162,6 @@ problem__collision_impact_parameter="0.0"
 
 problem__max_stellar_tagging_level="0"
 problem__max_temperature_tagging_level="0"
-problem__max_center_tagging_level="0"
 
 # Allow first-order interpolations to fine levels.
 
