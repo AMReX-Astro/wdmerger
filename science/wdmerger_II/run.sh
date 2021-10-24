@@ -20,16 +20,18 @@ function set_run_opts {
         elif [ $stellar_refinement -eq 2 ]; then
             nprocs=12
         elif [ $stellar_refinement -eq 4 ]; then
-            nprocs=32
+            nprocs=16
         elif [ $stellar_refinement -eq 8 ]; then
-            nprocs=64
+            nprocs=24
         elif [ $stellar_refinement -eq 16 ]; then
-            nprocs=192
+            nprocs=64
+        elif [ $stellar_refinement -eq 32 ]; then
+            nprocs=256
         fi
 
-        walltime="4:00:00"
+        walltime="6:00:00"
 
-        amr__blocking_factor="64"
+        amr__blocking_factor="32"
         amr__max_grid_size="1024"
 
     else
@@ -50,7 +52,7 @@ function set_run_opts {
 
     amr__refinement_indicators="density"
     amr__refine__density__field_name="density"
-    amr__refine__density__value_greater="1.e0"
+    amr__refine__density__value_greater="1.e5"
 
     if [ $stellar_refinement -eq 1 ]; then
 
@@ -206,6 +208,12 @@ castro__max_subcycles="128"
 
 amr__use_efficient_regrid="1"
 
+# Don't regrid on the fine levels.
+
+amr__regrid_int="4 -1 -1 -1 -1 -1 -1 -1 -1 -1"
+
+amr__error_buf="4 0 0 0 0 0 0 0 0 0"
+
 # Enable reactions.
 
 castro__do_react="1"
@@ -262,8 +270,8 @@ prob_hi="5.12e9"
 
 # Start with a base resolution of 100 km, and refine from there.
 
-ncell="512"
-stellar_refinement_list="1 2 4 8 16 32"
+ncell="8192"
+stellar_refinement_list="1 2 4 8 16 32 64"
 
 for helium_shell_mass in $helium_shell_mass_list
 do
