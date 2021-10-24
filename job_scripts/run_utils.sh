@@ -1800,7 +1800,7 @@ function create_job_script {
 	  redirect=""
       elif [ $launcher == "mpirun" ]; then
 	  launcher_opts="-np $num_mpi_tasks"
-	  redirect="> $job_name.OU"
+	  redirect="&> $job_name.OU"
       fi
 
       # Main job execution.
