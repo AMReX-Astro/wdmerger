@@ -656,7 +656,7 @@ def get_star_locs(plotfile):
     import yt
     import string
 
-    ds = yt.load(plotfile)
+    ds = yt.frontends.boxlib.CastroDataset(plotfile)
 
     # Get a numpy array corresponding to the density.
 
@@ -749,7 +749,7 @@ def get_maxloc(plotfile, field):
 
     import yt
 
-    ds = yt.load(plotfile)
+    ds = yt.frontends.boxlib.CastroDataset(plotfile)
     ad = ds.all_data()
 
     return ad.quantities.max_location(field)
@@ -985,7 +985,7 @@ def rho_T_scatterplot(output_filename, pltfile):
     import yt
     import matplotlib.pyplot as plt
 
-    ds = yt.load(pltfile)
+    ds = yt.frontends.boxlib.CastroDataset(pltfile)
 
     grid = ds.covering_grid(level=0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
 
@@ -1117,7 +1117,7 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     fig, axes, colorbars = get_multi_plot(2, 1, colorbar = 'horizontal', bw = 6)
 
-    ds = yt.load(pltfile)
+    ds = yt.frontends.boxlib.CastroDataset(pltfile)
 
     dim = ds.dimensionality
 
@@ -1297,7 +1297,7 @@ def slice_plot(field, output_filename, pltfile, idir = 3):
     import yt
     import matplotlib.pyplot as plt
 
-    ds = yt.load(pltfile)
+    ds = yt.frontends.boxlib.CastroDataset(pltfile)
 
     dim = ds.dimensionality
 
@@ -1393,7 +1393,7 @@ def multipanel_slice_plot(field, output_filename, pltfiles, idir = 3,
 
     for i, pltfile in enumerate(pltfiles):
 
-        ds = yt.load(pltfile)
+        ds = yt.frontends.boxlib.CastroDataset(pltfile)
 
         dim = ds.dimensionality
 
@@ -1525,7 +1525,7 @@ def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False
     if ".png" not in outfile:
         raise Exception("Output file name must end with .png")
 
-    ds = yt.load(plotfile)
+    ds = yt.frontends.boxlib.CastroDataset(plotfile)
 
     ds.periodicity = (True, True, True)
 
