@@ -75,7 +75,8 @@ function fix_inputs_var_name {
            [ $namespace == "geometry" ] || [ $namespace == "gravity" ] ||
            [ $namespace == "mg" ] || [ $namespace == "DistributionMapping" ] ||
            [ $namespace == "fab" ] || [ $namespace == "amrex" ] ||
-           [ $namespace == "problem" ] )
+           [ $namespace == "problem" ] || [ $namespace == "integrator" ] ||
+           [ $namespace == "network" ] || [ $namespace == "eos" ])
     then
 
         # Replace double underscores with periods.
