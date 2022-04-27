@@ -1181,7 +1181,7 @@ def rho_T_sliceplot(output_filename, pltfile,
     temp_axis.yaxis.tick_right()
     temp_axis.yaxis.set_label_position("right")
 
-    dens = np.array(frb['density'])
+    dens = np.array(frb[('gas', 'density')])
     temp = np.array(frb['Temp'])
 
     plots = []
