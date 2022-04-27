@@ -144,10 +144,6 @@ amrex__abort_on_out_of_gpu_memory="1"
 problem__problem="1"
 problem__roche_radius_factor="1.0"
 
-# Allow first-order interpolations to fine levels.
-
-castro__state_interp_order="1"
-
 # Full plotfiles.
 
 amr__plot_per="-1.0"
