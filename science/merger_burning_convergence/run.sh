@@ -16,11 +16,11 @@ function set_run_opts {
     if [[ "$MACHINE" == "SUMMIT" ]]; then
 
         if [ $stellar_refinement -eq 1 ]; then
-            nprocs=16
+            nprocs=36
         elif [ $stellar_refinement -eq 2 ]; then
-            nprocs=16
+            nprocs=36
         elif [ $stellar_refinement -eq 4 ]; then
-            nprocs=16
+            nprocs=36
         fi
 
         walltime="2:00:00"
