@@ -135,10 +135,6 @@ NETWORK_DIR="aprox19"
 
 inputs="inputs"
 
-# Abort if we run out of GPU memory.
-
-amrex__abort_on_out_of_gpu_memory="1"
-
 # Variables we need to set up the merger.
 
 problem__problem="1"
