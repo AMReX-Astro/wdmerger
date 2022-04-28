@@ -179,6 +179,10 @@ amr__use_efficient_regrid="1"
 
 castro__do_react="1"
 
+# Limit maximum number of reaction integration steps.
+
+integrator__ode_max_steps="15000"
+
 # Disable rotation.
 
 castro__do_rotation="0"
