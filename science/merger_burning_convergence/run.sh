@@ -179,11 +179,6 @@ castro__max_subcycles="128"
 
 amr__use_efficient_regrid="1"
 
-# Set regridding buffer.
-
-amr__regrid_int="4"
-amr__error_buf="4"
-
 # Enable reactions.
 
 castro__do_react="1"
