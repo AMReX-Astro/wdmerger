@@ -649,11 +649,11 @@ function is_dir_done {
 
           chk_step=$(echo $checkpoint | cut -d"k" -f2)
 
-          if [ ! -z $stop_time ]; then
+          if [ ! -z "$stop_time" ]; then
 	      time_flag=$(echo "$chk_time >= $trunc_stop_time" | bc -l)
           fi
 
-          if [ ! -z $max_step ]; then
+          if [ ! -z "$max_step" ]; then
 	      step_flag=$(echo "$chk_step >= $max_step" | bc)
           fi
 
