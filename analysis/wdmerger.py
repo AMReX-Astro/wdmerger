@@ -1238,6 +1238,10 @@ def rho_T_sliceplot(output_filename, pltfile,
             # Only simulating one star; flip the axis
             dens_axis.set_ylim(dens_axis.get_ylim()[::-1])
             temp_axis.set_ylim(temp_axis.get_ylim()[::-1])
+    else:
+        # In 3D, invert the y-axis to match the simulation coordinates
+        dens_axis.set_ylim(dens_axis.get_ylim()[::-1])
+        temp_axis.set_ylim(temp_axis.get_ylim()[::-1])
 
     if dim == 2:
         if ds.parameters["-y"] == "symmetry":
