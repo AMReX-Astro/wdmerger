@@ -37,7 +37,7 @@ function get_inputs_var {
 
     if (grep -q "$inputs_var_name[[:space:]]*=" $directory/inputs); then
 
-        var=$(grep "$inputs_var_name" $directory/inputs | awk -F"=" '{print $2}')
+        var=$(grep -w "$inputs_var_name" $directory/inputs | awk -F"=" '{print $2}')
 
     fi
 
