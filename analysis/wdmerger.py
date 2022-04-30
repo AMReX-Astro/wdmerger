@@ -1258,8 +1258,8 @@ def rho_T_sliceplot(output_filename, pltfile,
             colorbars[1].set_position([0.525, 0.92, 0.2, 0.075])
 
     else:
-        dens_axis.set_position([0.125, 0.075, 0.375, 0.75])
-        temp_axis.set_position([0.500, 0.075, 0.375, 0.75])
+        dens_axis.set_position([0.125, 0.175, 0.375, 0.75])
+        temp_axis.set_position([0.500, 0.175, 0.375, 0.75])
 
         colorbars[0].set_position([0.2125, 0.92, 0.2, 0.075])
         colorbars[1].set_position([0.5875, 0.92, 0.2, 0.075])
