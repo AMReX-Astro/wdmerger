@@ -16,11 +16,11 @@ function set_run_opts {
     if [[ "$MACHINE" == "SUMMIT" ]]; then
 
         if [ $stellar_refinement -eq 1 ]; then
-            nprocs=36
+            nprocs=64
         elif [ $stellar_refinement -eq 2 ]; then
-            nprocs=36
+            nprocs=64
         elif [ $stellar_refinement -eq 4 ]; then
-            nprocs=36
+            nprocs=64
         fi
 
         walltime="2:00:00"
@@ -138,7 +138,11 @@ inputs="inputs"
 # Variables we need to set up the merger.
 
 problem__problem="1"
-problem__roche_radius_factor="1.0"
+problem__roche_radius_factor="1.25"
+
+# Limit GPU memory footprint.
+
+castro__hydro_memory_footprint_ratio="3.0"
 
 # Full plotfiles.
 
