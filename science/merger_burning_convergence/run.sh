@@ -21,12 +21,16 @@ function set_run_opts {
             nprocs=64
         elif [ $stellar_refinement -eq 4 ]; then
             nprocs=64
+        elif [ $stellar_refinement -eq 8 ]; then
+            nprocs=96
+        elif [ $stellar_refinement -eq 16 ]; then
+            nprocs=120
         fi
 
         walltime="2:00:00"
 
-        amr__blocking_factor="16"
-        amr__max_grid_size="128"
+        amr__blocking_factor="32"
+        amr__max_grid_size="64"
 
     else
 
@@ -245,7 +249,7 @@ prob_hi="7.0e9"
 # Start with a base resolution of 546.9 km, and refine from there.
 
 ncell="256"
-stellar_refinement_list="4"
+stellar_refinement_list="16"
 
 for stellar_refinement in $stellar_refinement_list
 do
