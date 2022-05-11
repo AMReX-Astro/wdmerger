@@ -358,18 +358,17 @@ def get_column_data(diag_filename):
 
     diag_file = open(diag_filename, 'r')
 
-    vc_line = 'git'
+    # The first line is the column numbers; skip this
 
-    # Skip the first few lines, they store the version control information
+    number_line = diag_file.readline()
 
-    line = diag_file.readline()
+    # The next line is the column headers
 
-    while (line.split()[2] == vc_line):
-        line = diag_file.readline()
+    header_line = diag_file.readline()
 
-    # The very next line will be the column headers
+    col_names = header_line.split('  ')
 
-    col_names = line.split('  ')
+    print(col_names)
 
     # Now read in the data
 
