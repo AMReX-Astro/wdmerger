@@ -182,6 +182,7 @@ castro__max_subcycles="16"
 # Burning timestep limiter.
 
 castro__dtnuc_e="0.1"
+castro__dtnuc_X="1.e200"
 
 # Enable efficient regridding (don't actually regrid if the grids haven't changed.)
 
@@ -221,10 +222,8 @@ problem__co_wd_he_shell_mass="0.01e0"
 
 castro__change_max="1.25"
 
-# Some defaults.
+# Set when burning turns on.
 
-castro__dtnuc_e="1.e200"
-castro__dtnuc_X="1.e200"
 castro__react_T_min="1.0e8"
 castro__react_rho_min="1.0e6"
 
