@@ -142,7 +142,7 @@ inputs="inputs"
 # Variables we need to set up the merger.
 
 problem__problem="1"
-problem__roche_radius_factor="1.25"
+problem__roche_radius_factor="0.90"
 
 # Limit GPU memory footprint.
 
@@ -156,7 +156,7 @@ amr__derive_plot_vars="ALL"
 
 # Small plotfiles.
 
-amr__small_plot_per="0.01"
+amr__small_plot_per="0.1"
 amr__small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr__derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
@@ -177,7 +177,11 @@ castro__cfl="0.8"
 
 # Maximum number of subcycles.
 
-castro__max_subcycles="128"
+castro__max_subcycles="16"
+
+# Burning timestep limiter.
+
+castro__dtnuc_e="0.1"
 
 # Enable efficient regridding (don't actually regrid if the grids haven't changed.)
 
@@ -190,10 +194,6 @@ castro__do_react="1"
 # Limit maximum number of reaction integration steps.
 
 integrator__ode_max_steps="15000"
-
-# Disable rotation.
-
-castro__do_rotation="0"
 
 # Set ambient density and temperature.
 
@@ -249,7 +249,7 @@ prob_hi="7.0e9"
 # Start with a base resolution of 546.9 km, and refine from there.
 
 ncell="256"
-stellar_refinement_list="16"
+stellar_refinement_list="1"
 
 for stellar_refinement in $stellar_refinement_list
 do
