@@ -16,11 +16,11 @@ function set_run_opts {
     if [[ "$MACHINE" == "SUMMIT" ]]; then
 
         if [ $stellar_refinement -eq 1 ]; then
-            nprocs=64
+            nprocs=16
         elif [ $stellar_refinement -eq 2 ]; then
-            nprocs=64
+            nprocs=16
         elif [ $stellar_refinement -eq 4 ]; then
-            nprocs=64
+            nprocs=32
         elif [ $stellar_refinement -eq 8 ]; then
             nprocs=96
         elif [ $stellar_refinement -eq 16 ]; then
@@ -46,10 +46,11 @@ function set_run_opts {
 
     # Set up refinement.
 
-    amr__refinement_indicators="density temperature"
+    amr__refinement_indicators="mass temperature"
 
-    amr__refine__density__field_name="density"
-    amr__refine__density__value_greater="1.e3"
+    amr__refine__mass__field_name="density"
+    amr__refine__mass__value_greater="5.e26"
+    amr__refine__mass__volume_weighting="1"
 
     amr__refine__temperature__field_name="Temp"
     amr__refine__temperature__value_greater="1.e9"
@@ -148,6 +149,10 @@ problem__roche_radius_factor="0.90"
 
 castro__hydro_memory_footprint_ratio="3.0"
 
+# Make it easier to see the real memory footprint.
+
+amrex__the_arena_init_size="0"
+
 # Full plotfiles.
 
 amr__plot_per="-1.0"
@@ -156,7 +161,7 @@ amr__derive_plot_vars="ALL"
 
 # Small plotfiles.
 
-amr__small_plot_per="0.1"
+amr__small_plot_per="1.0"
 amr__small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
 amr__derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
@@ -165,7 +170,7 @@ castro__small_plot_per_is_exact="0"
 
 # Checkpoints.
 
-amr__check_per="0.5"
+amr__check_per="10.0"
 
 # Initial timestep shortening factor.
 
@@ -177,12 +182,16 @@ castro__cfl="0.8"
 
 # Maximum number of subcycles.
 
-castro__max_subcycles="16"
+castro__max_subcycles="128"
 
 # Burning timestep limiter.
 
-castro__dtnuc_e="0.1"
+castro__dtnuc_e="1.0"
 castro__dtnuc_X="1.e200"
+
+# Don't retry at the end of the timestep.
+
+castro__check_dt_after_advance="0"
 
 # Enable efficient regridding (don't actually regrid if the grids haven't changed.)
 
@@ -238,7 +247,7 @@ problem__mass_S="0.60"
 
 # Stop final stopping time.
 
-stop_time="100.0"
+stop_time="300.0"
 
 # Set geometry.
 
@@ -248,7 +257,7 @@ prob_hi="7.0e9"
 # Start with a base resolution of 546.9 km, and refine from there.
 
 ncell="256"
-stellar_refinement_list="1"
+stellar_refinement_list="4"
 
 for stellar_refinement in $stellar_refinement_list
 do
