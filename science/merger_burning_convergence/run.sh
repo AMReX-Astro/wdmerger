@@ -15,16 +15,10 @@ function set_run_opts {
 
     if [[ "$MACHINE" == "SUMMIT" ]]; then
 
-        if [ $stellar_refinement -eq 1 ]; then
-            nprocs=16
-        elif [ $stellar_refinement -eq 2 ]; then
-            nprocs=16
-        elif [ $stellar_refinement -eq 4 ]; then
-            nprocs=32
-        elif [ $stellar_refinement -eq 8 ]; then
-            nprocs=96
-        elif [ $stellar_refinement -eq 16 ]; then
-            nprocs=120
+        if [ $mass_refinement == "1.0e31" ]; then
+            nprocs=18
+        elif [ $mass_refinement == "1.0e28" ]; then
+            nprocs=36
         fi
 
         walltime="2:00:00"
@@ -46,80 +40,18 @@ function set_run_opts {
 
     # Set up refinement.
 
-    amr__refinement_indicators="mass temperature"
+    amr__refinement_indicators="mass tste"
 
     amr__refine__mass__field_name="density"
-    amr__refine__mass__value_greater="5.e26"
+    amr__refine__mass__value_greater=$mass_refinement
     amr__refine__mass__volume_weighting="1"
 
-    amr__refine__temperature__field_name="Temp"
-    amr__refine__temperature__value_greater="1.e9"
+    amr__refine__tste__field_name="t_sound_t_enuc"
+    amr__refine__tste__value_greater="0.1"
 
-    if [ $stellar_refinement -eq 1 ]; then
+    amr__max_level="12"
+    amr__ref_ratio="2"
 
-        amr__max_level="0"
-
-    elif [ $stellar_refinement -eq 2 ]; then
-
-        amr__max_level="1"
-        amr__ref_ratio="2"
-
-    elif [ $stellar_refinement -eq 4 ]; then
-
-        amr__max_level="1"
-        amr__ref_ratio="4"
-
-    elif [ $stellar_refinement -eq 8 ]; then
-
-        amr__max_level="2"
-        amr__ref_ratio="4 2"
-
-    elif [ $stellar_refinement -eq 16 ]; then
-
-        amr__max_level="2"
-        amr__ref_ratio="4 4"
-
-    elif [ $stellar_refinement -eq 32 ]; then
-
-        amr__max_level="3"
-        amr__ref_ratio="4 4 2"
-
-    elif [ $stellar_refinement -eq 64 ]; then
-
-        amr__max_level="3"
-        amr__ref_ratio="4 4 4"
-
-    elif [ $stellar_refinement -eq 128 ]; then
-
-        amr__max_level="4"
-        amr__ref_ratio="4 4 4 2"
-
-    elif [ $stellar_refinement -eq 256 ]; then
-
-        amr__max_level="4"
-        amr__ref_ratio="4 4 4 4"
-
-    elif [ $stellar_refinement -eq 512 ]; then
-
-        amr__max_level="5"
-        amr__ref_ratio="4 4 4 4 2"
-
-    elif [ $stellar_refinement -eq 1024 ]; then
-
-        amr__max_level="5"
-        amr__ref_ratio="4 4 4 4 4"
-
-    elif [ $stellar_refinement -eq 2048 ]; then
-
-        amr__max_level="6"
-        amr__ref_ratio="4 4 4 4 4 2"
-
-    elif [ $stellar_refinement -eq 4096 ]; then
-
-        amr__max_level="6"
-        amr__ref_ratio="4 4 4 4 4 4"
-
-    fi
 }
 
 # Specify the problem directory.
@@ -132,9 +64,9 @@ use_first_castro_ex="1"
 
 DIM="3"
 
-# Use the aprox19 network for all following tests.
+# Use the aprox13 network for all following tests.
 
-NETWORK_DIR="aprox19"
+NETWORK_DIR="aprox13"
 
 # Get the right inputs file.
 
@@ -143,7 +75,7 @@ inputs="inputs"
 # Variables we need to set up the merger.
 
 problem__problem="1"
-problem__roche_radius_factor="0.90"
+problem__roche_radius_factor="1.00"
 
 # Limit GPU memory footprint.
 
@@ -186,7 +118,7 @@ castro__max_subcycles="128"
 
 # Burning timestep limiter.
 
-castro__dtnuc_e="1.0"
+castro__dtnuc_e="0.1"
 castro__dtnuc_X="1.e200"
 
 # Don't retry at the end of the timestep.
@@ -218,11 +150,6 @@ castro__ambient_safety_factor="1.e4"
 
 castro__gw_dist="-1.e0"
 
-# Set the C/O ratio.
-
-problem__co_wd_c_frac="0.4e0"
-problem__co_wd_o_frac="0.6e0"
-
 # Add a helium shell.
 
 problem__co_wd_he_shell_mass="0.01e0"
@@ -236,37 +163,35 @@ castro__change_max="1.25"
 castro__react_T_min="1.0e8"
 castro__react_rho_min="1.0e6"
 
+# Simulate 1.1 + 0.9 M_solar WDs.
+
+problem__mass_P="1.10"
+problem__mass_S="0.90"
+
+# Stop final stopping time.
+
+stop_time="250.0"
+
+# Set geometry.
+
+prob_lo="-5.12e9"
+prob_hi="5.12e9"
+
+# Start with a base resolution of 400 km, and refine from there.
+
+ncell="256"
+mass_refinement_list="1.0e31"
+
 # The flag we will use to determine whether to run the job.
 
 to_run=1
 
-# Simulate 1.0 + 0.6 M_solar WDs.
-
-problem__mass_P="1.00"
-problem__mass_S="0.60"
-
-# Stop final stopping time.
-
-stop_time="300.0"
-
-# Set geometry.
-
-prob_lo="-7.0e9"
-prob_hi="7.0e9"
-
-# Start with a base resolution of 546.9 km, and refine from there.
-
-ncell="256"
-stellar_refinement_list="4"
-
-for stellar_refinement in $stellar_refinement_list
+for mass_refinement in $mass_refinement_list
 do
-
-    dir=$results_dir/r$stellar_refinement
+    dir=$results_dir/m_$mass_refinement
     set_run_opts
 
     if [ $to_run -eq 1 ]; then
         run
     fi
-
 done
