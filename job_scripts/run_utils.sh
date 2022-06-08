@@ -274,6 +274,95 @@ function get_last_checkpoint {
 }
 
 
+# Copy the last checkpoint from a previous directory to start a new one.
+
+function copy_checkpoint() {
+
+    if [ -e "$dir/jobIsDone" ]; then
+        return
+    fi
+
+    job_flag=$(is_job_running $dir)
+
+    if [ $job_flag -ne 1 ]; then
+
+        done_flag=$(is_dir_done)
+
+        if [ $done_flag -ne 1 ]; then
+
+            no_submit=1
+
+            if [ $to_run -eq 1 ]; then
+                run
+            fi
+
+            unset no_submit
+
+            # Skip the saved checkpoint copy if there's already a checkpoint
+            # in the target directory (either it's the saved checkpoint, or it
+            # is a later one because we've already started the run).
+
+            checkpoint=$(get_last_checkpoint $dir)
+
+            if [ "$checkpoint" == "" ]; then
+
+                # By default the starting checkpoint is the last checkpoint
+                # from the start directory, but this can be overridden if
+                # the user prefers a different starting checkpoint.
+
+                if [ -z $start_checkpoint ]; then
+                    start_checkpoint=$(get_last_checkpoint $start_dir)
+                fi
+
+                if [ -z $checkpoint_dir ]; then
+                    checkpoint_dir=$start_dir
+                fi
+
+                echo "Creating symbolic link for initial checkpoint in directory" $dir"."
+
+                if [ -d "$checkpoint_dir/$start_checkpoint" ]; then
+
+                    ln -s "$(pwd)/$checkpoint_dir/$start_checkpoint" $dir
+                    rm -f "$dir/$start_checkpoint/jobIsDone"
+
+                    # Also, copy the diagnostic output files
+                    # so there is an apparently continuous record.
+
+                    cp $checkpoint_dir/*diag.out $dir
+
+                    # Strip out any data in the diagnostics files
+                    # that is after the copied checkpoint, to
+                    # ensure apparent continuity.
+
+                    chk_step=$(echo $start_checkpoint | cut -d"k" -f2)
+                    chk_step=$(echo $chk_step | bc) # Strip leading zeros
+
+                    for diag in $(find $dir -name "*diag.out");
+                    do
+                        sed -i "/\ $chk_step \ /q" $diag
+                    done
+
+                else
+                    echoerr "No initial checkpoint available, exiting."
+                    exit
+                fi
+
+            fi
+
+        fi
+
+    fi
+
+    if [ ! -z $start_checkpoint ]; then
+        unset start_checkpoint
+    fi
+
+    if [ ! -z $checkpoint_dir ]; then
+        unset checkpoint_dir
+    fi
+
+}
+
 
 # Obtain the median coarse timestep length from a given output file.
 
@@ -1144,7 +1233,14 @@ function check_to_stop {
 
 	  if [ $chk_int -le 0 ] && [ $(echo "$chk_per <= 0" | bc -l) -eq 1 ]; then
 
-	      rm -rf $checkpoint
+              # Remove the checkpoint (though if it's a symbolic link, we only remove
+              # the symlink and not the actual source directory).
+
+              if [[ ! -L $checkpoint ]]; then
+                  rm -rf $checkpoint
+              else
+                  rm -f $checkpoint
+              fi
 
 	  elif [ $chk_int -gt 0 ]; then
 
@@ -1154,7 +1250,11 @@ function check_to_stop {
 
               if [ $chk_int -gt 1 ] && [ $(( $chk_step % $chk_int )) -eq 0 ]; then
 
-		  rm -rf $checkpoint
+                  if [[ ! -L $checkpoint ]]; then
+                      rm -rf $checkpoint
+                  else
+                      rm -f $checkpoint
+                  fi
 
 	      fi
 
@@ -1162,7 +1262,11 @@ function check_to_stop {
 
 	      if [ $(echo "$chk_per <= 0" | bc -l) -eq 1 ]; then
 
-		  rm -rf $checkpoint
+                  if [[ ! -L $checkpoint ]]; then
+                      rm -rf $checkpoint
+                  else
+                      rm -f $checkpoint
+                  fi
 
 	      else
 
@@ -1196,7 +1300,11 @@ function check_to_stop {
 
 		  if [ "$num_per_old" == "$num_per_new" ]; then
 
-		      rm -rf $checkpoint
+                      if [[ ! -L $checkpoint ]]; then
+                          rm -rf $checkpoint
+                      else
+                          rm -f $checkpoint
+                      fi
 
 		  fi
 
