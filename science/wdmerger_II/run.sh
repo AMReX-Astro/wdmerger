@@ -16,9 +16,9 @@ function set_run_opts {
     if [[ "$MACHINE" == "SUMMIT" ]]; then
 
         if [ $mass_refinement == "1.0e31" ]; then
-            nprocs=18
+            nprocs=24
         elif [ $mass_refinement == "1.0e30" ]; then
-            nprocs=18
+            nprocs=24
         elif [ $mass_refinement == "1.0e29" ]; then
             nprocs=36
         elif [ $mass_refinement == "1.0e28" ]; then
@@ -157,6 +157,10 @@ castro__gw_dist="-1.e0"
 # Add a helium shell.
 
 problem__co_wd_he_shell_mass="0.01e0"
+
+# Disable artificial viscosity since it causes problems with sharp composition gradients.
+
+castro__difmag="0.0"
 
 # Allow the timestep to change by up to 25% per advance.
 
