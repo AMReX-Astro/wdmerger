@@ -17,8 +17,16 @@ function set_run_opts {
 
         if [ $mass_refinement == "1.0e31" ]; then
             nprocs=18
+        elif [ $mass_refinement == "1.0e30" ]; then
+            nprocs=18
+        elif [ $mass_refinement == "1.0e29" ]; then
+            nprocs=36
         elif [ $mass_refinement == "1.0e28" ]; then
             nprocs=36
+        elif [ $mass_refinement == "1.0e27" ]; then
+            nprocs=72
+        elif [ $mass_refinement == "1.0e26" ]; then
+            nprocs=108
         fi
 
         walltime="2:00:00"
@@ -47,7 +55,7 @@ function set_run_opts {
     amr__refine__mass__volume_weighting="1"
 
     amr__refine__tste__field_name="t_sound_t_enuc"
-    amr__refine__tste__value_greater="0.1"
+    amr__refine__tste__value_greater=$tste_refinement
 
     amr__max_level="12"
     amr__ref_ratio="2"
@@ -121,10 +129,6 @@ castro__max_subcycles="128"
 castro__dtnuc_e="0.1"
 castro__dtnuc_X="1.e200"
 
-# Don't retry at the end of the timestep.
-
-castro__check_dt_after_advance="0"
-
 # Enable efficient regridding (don't actually regrid if the grids haven't changed.)
 
 amr__use_efficient_regrid="1"
@@ -170,7 +174,7 @@ problem__mass_S="0.90"
 
 # Stop final stopping time.
 
-stop_time="250.0"
+stop_time="200.0"
 
 # Set geometry.
 
@@ -180,7 +184,7 @@ prob_hi="5.12e9"
 # Start with a base resolution of 400 km, and refine from there.
 
 ncell="256"
-mass_refinement_list="1.0e31"
+mass_refinement_list="1.0e31 1.0e30 1.0e29 1.0e28 1.0e27 1.0e26"
 
 # The flag we will use to determine whether to run the job.
 
@@ -188,10 +192,56 @@ to_run=1
 
 for mass_refinement in $mass_refinement_list
 do
-    dir=$results_dir/m_$mass_refinement
-    set_run_opts
+    base_dir=$results_dir/m_$mass_refinement
+    start_dir=$base_dir/start
 
-    if [ $to_run -eq 1 ]; then
-        run
+    start_done="0"
+
+    if [ -d $start_dir ]; then
+        dir=$start_dir
+        start_done=$(is_dir_done)
     fi
+
+    if [ $start_done -ne 1 ]; then
+
+        # First, run up until significant burning starts.
+
+        castro__stopping_criterion_field="t_sound_t_enuc"
+        castro__stopping_criterion_value="0.01"
+
+        tste_refinement="0.1"
+
+        dir=$start_dir
+        set_run_opts
+
+        if [ $to_run -eq 1 ]; then
+            run
+        fi
+
+        unset castro__stopping_criterion_field
+        unset castro__stopping_criterion_value
+        unset tste_refinement
+
+    else
+
+        # Now, run with varying resolutions on t_sound / t_enuc.
+
+        tste_refinement_list="1.0e200 1.0e-1"
+
+        for tste_refinement in $tste_refinement_list
+        do
+            dir=$base_dir/t_$tste_refinement
+            set_run_opts
+
+            copy_checkpoint
+
+            if [ $to_run -eq 1 ]; then
+                run
+            fi
+        done
+
+        unset tste_refinement
+
+    fi
+
 done
