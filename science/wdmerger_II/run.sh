@@ -124,9 +124,13 @@ castro__cfl="0.8"
 
 castro__max_subcycles="128"
 
-# Burning timestep limiter.
+# Use simplified SDC timestepper.
 
-castro__dtnuc_e="0.1"
+castro__time_integration_method="3"
+
+# Burning timestep limiter is not as important when using SDC.
+
+castro__dtnuc_e="1.e200"
 castro__dtnuc_X="1.e200"
 
 # Enable efficient regridding (don't actually regrid if the grids haven't changed.)
