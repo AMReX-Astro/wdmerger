@@ -54,7 +54,7 @@ function set_run_opts {
     amr__refine__tste__value_greater=$tste_refinement
 
     amr__max_level="12"
-    amr__ref_ratio="2"
+    amr__ref_ratio="4"
 
 }
 
@@ -228,9 +228,9 @@ do
         # First, run up until significant burning starts.
 
         castro__stopping_criterion_field="t_sound_t_enuc"
-        castro__stopping_criterion_value="0.05"
+        castro__stopping_criterion_value="0.1"
 
-        tste_refinement="0.1"
+        tste_refinement="1.0e-1"
 
         dir=$start_dir
         set_run_opts
