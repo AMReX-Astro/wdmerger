@@ -15,12 +15,8 @@ function set_run_opts {
 
     if [[ "$MACHINE" == "SUMMIT" ]]; then
 
-        if [ $mass_refinement == "1.0e31" ]; then
-            nprocs=24
-        elif [ $mass_refinement == "1.0e30" ]; then
-            nprocs=24
-        elif [ $mass_refinement == "1.0e29" ]; then
-            nprocs=36
+        if [ $mass_refinement == "1.0e200" ]; then
+            nprocs=18
         elif [ $mass_refinement == "1.0e28" ]; then
             nprocs=36
         elif [ $mass_refinement == "1.0e27" ]; then
