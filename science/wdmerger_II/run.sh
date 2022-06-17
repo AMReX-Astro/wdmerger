@@ -146,6 +146,10 @@ castro__dtnuc_X="1.0e200"
 
 amr__use_efficient_regrid="1"
 
+# Regrid every step to limit missing important burning.
+
+amr__regrid_int="1"
+
 # Enable reactions.
 
 castro__do_react="1"
