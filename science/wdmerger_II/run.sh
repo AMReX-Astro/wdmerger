@@ -224,7 +224,7 @@ do
         # First, run up until significant burning starts.
 
         castro__stopping_criterion_field="t_sound_t_enuc"
-        castro__stopping_criterion_value="0.01"
+        castro__stopping_criterion_value="0.05"
 
         tste_refinement="0.1"
 
