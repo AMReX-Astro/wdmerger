@@ -121,9 +121,13 @@ castro__init_shrink="0.01"
 
 castro__cfl="0.8"
 
-# Maximum number of subcycles.
+# Maximum number of subcycles for retries.
 
 castro__max_subcycles="128"
+
+# Don't do subcycling at the AMR level.
+
+amr__subcycling_mode="None"
 
 # Use simplified SDC timestepper.
 
