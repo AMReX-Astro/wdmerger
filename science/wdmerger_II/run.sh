@@ -104,6 +104,11 @@ amr__derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t
 castro__plot_per_is_exact="0"
 castro__small_plot_per_is_exact="0"
 
+# Only plot level 0 in the plotfiles to save space.
+
+amr__plot_max_level="0"
+amr__small_plot_max_level="0"
+
 # Checkpoints.
 
 amr__check_per="10.0"
@@ -124,10 +129,14 @@ castro__max_subcycles="128"
 
 castro__time_integration_method="3"
 
+# Since there will be explosive burns, add another iteration to SDC.
+
+castro__sdc_iters="3"
+
 # Burning timestep limiter is not as important when using SDC.
 
-castro__dtnuc_e="1.e200"
-castro__dtnuc_X="1.e200"
+castro__dtnuc_e="1.0e200"
+castro__dtnuc_X="1.0e200"
 
 # Enable efficient regridding (don't actually regrid if the grids haven't changed.)
 
