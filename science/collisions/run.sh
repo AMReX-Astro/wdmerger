@@ -34,6 +34,16 @@ function set_run_opts {
         amr__blocking_factor="32"
         amr__max_grid_size="1024"
 
+    elif [[ "$MACHINE" == "PERLMUTTER" ]]; then
+
+        if [ $stellar_refinement -eq 16 ]; then
+            nprocs=4
+
+        walltime="2:00:00"
+
+        amr__blocking_factor="32"
+        amr__max_grid_size="64"
+
     else
 
         echoerr "This machine is not set up for this job."
