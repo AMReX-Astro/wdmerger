@@ -1127,11 +1127,20 @@ def rho_T_sliceplot(output_filename, pltfile,
 
     if dim == 1:
         print("This slice plot routine is not implemented in one dimension.")
-        exit
+        return
     elif dim == 2:
         slc = ds.slice(2, 0.0)
     elif dim == 3:
         slc = ds.slice(2, 0.0)
+
+    # Don't continue if the plotfile doesn't have the required fields
+
+    if ('boxlib', 'Temp') not in ds.field_list:
+        print(f"This sliceplot routine requires a plotfile that includes the Temp field, but no such field was found in {pltfile}")
+        return
+    if ('boxlib', 'density') not in ds.field_list:
+        print(f"This sliceplot routine requires a plotfile that includes the density field, but no such field was found in {pltfile}")
+        return
 
     frb = yt.visualization.fixed_resolution.FixedResolutionBuffer(slc, bounds=bounds, buff_size=buff)
 
