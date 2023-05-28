@@ -1082,7 +1082,7 @@ def rho_T_scatterplot(output_filename, pltfile):
 def rho_T_sliceplot(output_filename, pltfile,
                     negate_left = False, scale_exp = 9, npix = 2000,
                     dens_range = [1.e-4, 1.e8], temp_range = [1.e7, 1.e10],
-                    x_ticks = [2.0e9, 4.0e9], y_ticks = [2.0e9, 4.0e9],
+                    x_ticks = [], y_ticks = [],
                     n_dens_ticks = 4, n_temp_ticks = 4,
                     do_ts_te_contours = False, ts_te_contours = [0.1],
                     domain_frac = 1.0):
@@ -1139,6 +1139,24 @@ def rho_T_sliceplot(output_filename, pltfile,
     temp_axis = axes[0][1]
 
     scale = domain_frac / 10**scale_exp
+
+    if not x_ticks:
+        x_size = bounds[1] - bounds[0]
+        if x_size > 8.0e9:
+            x_ticks = [4.0e9, 8.0e9]
+        elif x_size > 4.0e9:
+            x_ticks = [2.0e9, 4.0e9]
+        else:
+            x_ticks = [1.0e9, 2.0e9]
+
+    if not y_ticks:
+        y_size = bounds[3] - bounds[2]
+        if y_size > 8.0e9:
+            y_ticks = [4.0e9, 8.0e9]
+        elif y_size > 4.0e9:
+            y_ticks = [2.0e9, 4.0e9]
+        else:
+            y_ticks = [1.0e9, 2.0e9]
 
     if negate_left:
         dens_axis.set_xticks([-x_ticks[1] * scale, -x_ticks[0] * scale])
