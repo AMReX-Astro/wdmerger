@@ -25,20 +25,10 @@ function get_machine {
 
       UNAMEN=$(uname -n)$(hostname -f)
 
-      if   [[ $UNAMEN == *"h2o"*    ]]; then
-          MACHINE=BLUE_WATERS
-      elif [[ $UNAMEN == *"titan"*  ]]; then
-          MACHINE=TITAN
-      elif [[ $UNAMEN == *"summit"* ]]; then
+      if [[ $UNAMEN == *"summit"* ]]; then
           MACHINE=SUMMIT
       elif [[ $UNAMEN == *"lassen"* ]]; then
           MACHINE=LASSEN
-      elif [[ $UNAMEN == *"hopper"* ]]; then
-          MACHINE=HOPPER
-      elif [[ $UNAMEN == *"edison"* ]]; then
-          MACHINE=EDISON
-      elif [[ $UNAMEN == *"cori"* ]]; then
-          MACHINE=CORI
       elif [[ $UNAMEN == *"lired"*  ]]; then
           MACHINE=LIRED
       elif [[ $UNAMEN == "login"  ]]; then
@@ -50,8 +40,6 @@ function get_machine {
       if [ ! -z $NERSC_HOST ]; then
           if   [ $NERSC_HOST == "perlmutter" ]; then
               MACHINE=PERLMUTTER
-          elif [ $NERSC_HOST == "cori" ]; then
-              MACHINE=CORI
           fi
       fi
 
@@ -75,44 +63,6 @@ function set_machine_params {
 	batch_system="batch"
 	launcher="aprun"
 	run_ext=".OU"
-
-    # Blue Waters at NCSA
-
-    elif [ $MACHINE == "BLUE_WATERS" ]; then
-
-	allocation="jni"
-	exec="qsub"
-	cancel_job="qdel"
-	pause_job="qhold"
-	resume_job="qrls"
-	ppn="32"
-	threads_per_task="8"
-	node_type="xe"
-	run_ext=".OU"
-	batch_system="PBS"
-	launcher="aprun"
-	archive_method="globus"
-	globus_src_endpoint="ncsa#BlueWaters"
-	globus_dst_endpoint="ncsa#Nearline/projects/sciteam/$allocation/$USER"
-
-    # Titan at OLCF
-
-    elif [ $MACHINE == "TITAN" ]; then
-
-	allocation="ast106"
-	exec="qsub"
-	cancel_job="qdel"
-	pause_job="qhold"
-	resume_job="qrls"
-	ppn="16"
-	threads_per_task="8"
-	run_ext=".OU"
-	batch_system="PBS"
-	queue="batch"
-	launcher="aprun"
-	archive_method="htar"
-	archive_queue="dtn"
-	archive_wclimit="24:00:00"
 
     # Summit at OLCF
 
@@ -150,53 +100,6 @@ function set_machine_params {
         batch_system="LSF"
         queue="batch"
         launcher="jsrun"
-
-    # Hopper at NERSC
-
-    elif [ $MACHINE == "HOPPER" ]; then
-	
-	allocation="m1400"
-	exec="qsub"
-	cancel_job="qdel"
-	pause_job="qhold"
-	resume_job="qrls"
-	ppn="24"
-	run_ext=".OU"
-	batch_system="PBS"
-	launcher="aprun"
-	queue="regular"
-
-    # Edison at NERSC
-
-    elif [ $MACHINE == "EDISON" ]; then
-
-	allocation="m3018"
-	exec="sbatch"
-	cancel_job="scancel"
-	ppn="24"
-	run_ext=".OU"
-	batch_system="SLURM"
-	launcher="srun"
-	queue="regular"
-        resource="SCRATCH"
-
-    # Cori at NERSC (phase I)
-
-    elif [ $MACHINE == "CORI" ]; then
-
-	allocation="m3018"
-	exec="sbatch"
-	cancel_job="scancel"
-	ppn="32"
-        logical_ppn="64"
-	run_ext=".OU"
-	batch_system="SLURM"
-	launcher="srun"
-	queue="regular"
-        constraint="haswell"
-        resource="SCRATCH"
-
-        job_prepend="export OMP_PROC_BIND=spread; export OMP_PLACES=threads"
 
     # Perlmutter at NERSC
 
@@ -246,21 +149,6 @@ function set_machine_params {
 	queue="medium"
 	run_ext=".OU"
 	job_prepend="module load shared; module load torque; module load maui; module load mvapich2; module load gcc"
-
-    # Mira at ALCF
-
-    elif [ $MACHINE == "MIRA" ]; then
-
-	exec="qsub"
-	cancel_job="qdel"
-	pause_job="qhold"
-	resume_job="qrls"
-	ppn="16"
-	queue="prod"
-	run_ext=".OU"
-	batch_system="COBALT"
-	launcher="runjob"
-	allocation="wdmerger"
 
     fi
 
