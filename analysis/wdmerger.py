@@ -1542,14 +1542,14 @@ def make_movie(output_dir, img_list, mpg_filename):
 
 
 
-def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False, annotate_max_T=False):
+def vol_render_density(outfile, plotfile, zoom_factor=1.0, annotate_grids=False, annotate_max_T=False):
     """Volume render the density given a plotfile."""
 
     import numpy as np
     import yt
     import matplotlib
     matplotlib.use('agg')
-    from yt.visualization.volume_rendering.api import Scene, VolumeSource, PointSource
+    from yt.visualization.volume_rendering.api import Scene, create_volume_source, PointSource
     import matplotlib.pyplot as plt
 
     if ".png" not in outfile:
@@ -1557,7 +1557,7 @@ def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False
 
     ds = yt.frontends.boxlib.CastroDataset(plotfile)
 
-    ds.periodicity = (True, True, True)
+    ds.force_periodicity()
 
     dd = ds.all_data()
 
@@ -1568,7 +1568,7 @@ def vol_render_density(outfile, plotfile, zoom_factor=0.75, annotate_grids=False
 
     # Add a volume: select a sphere
 
-    vol = VolumeSource(ds, field=field)
+    vol = create_volume_source(ds, field=field)
     vol.use_ghost_zones = True
 
     # Transfer function
