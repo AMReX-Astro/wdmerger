@@ -98,7 +98,7 @@ amr__derive_plot_vars="ALL"
 # Small plotfiles.
 
 amr__small_plot_per="1.0"
-amr__small_plot_vars="density Temp rho_e rho_c12 rho_o16 rho_si28 rho_ni56 enuc"
+amr__small_plot_vars="density Temp rho_e rho_He4 rho_C12 rho_O16 rho_Si28 rho_Ni56 enuc"
 amr__derive_small_plot_vars="pressure soundspeed x_velocity y_velocity t_sound_t_enuc"
 
 castro__plot_per_is_exact="0"
