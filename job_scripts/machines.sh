@@ -113,7 +113,7 @@ function set_machine_params {
         run_ext=".OU"
         batch_system="SLURM"
         launcher="srun"
-        queue="regular"
+        qos="regular"
         constraint="gpu"
         gpus_per_task="1"
         gpu_bind="map_gpu:0,1,2,3"
