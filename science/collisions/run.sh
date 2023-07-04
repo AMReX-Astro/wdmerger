@@ -29,20 +29,10 @@ function set_run_opts {
             nprocs=256
         fi
 
-        walltime="6:00:00"
-
-        amr__blocking_factor="32"
-        amr__max_grid_size="1024"
-
-    elif [[ "$MACHINE" == "PERLMUTTER" ]]; then
-
-        if [ $stellar_refinement -eq 16 ]; then
-            nprocs=4
-
         walltime="2:00:00"
 
         amr__blocking_factor="32"
-        amr__max_grid_size="64"
+        amr__max_grid_size="1024"
 
     else
 
@@ -130,11 +120,6 @@ function set_run_opts {
 
     fi
 
-    # Only solve gravity on the coarse level. The additional accuracy
-    # from solving on the fine levels would provide no benefit on this problem.
-
-    gravity__max_solve_level=0
-
 }
 
 # Specify the problem directory.
@@ -169,11 +154,9 @@ problem__problem="0"
 problem__collision_separation="2.0"
 problem__collision_impact_parameter="0.0"
 
-# Disable refinement based on non-burning criteria.
-# These can be re-enabled later for specific tests.
+# Disable AMR subcycling.
 
-problem__max_stellar_tagging_level="0"
-problem__max_temperature_tagging_level="0"
+amr__subcycling_mode="None"
 
 # Allow first-order interpolations to fine levels.
 
