@@ -16,17 +16,19 @@ function set_run_opts {
     if [[ "$MACHINE" == "PERLMUTTER" ]]; then
 
         if [ $stellar_refinement -eq 1 ]; then
-            nprocs=8
+            nprocs=4
         elif [ $stellar_refinement -eq 2 ]; then
-            nprocs=12
+            nprocs=4
         elif [ $stellar_refinement -eq 4 ]; then
-            nprocs=16
+            nprocs=4
         elif [ $stellar_refinement -eq 8 ]; then
-            nprocs=24
+            nprocs=16
         elif [ $stellar_refinement -eq 16 ]; then
-            nprocs=64
+            nprocs=32
         elif [ $stellar_refinement -eq 32 ]; then
-            nprocs=256
+            nprocs=64
+        elif [ $stellar_refinement -eq 64 ]; then
+            nprocs=128
         fi
 
         walltime="2:00:00"
@@ -52,7 +54,7 @@ function set_run_opts {
 
     amr__refinement_indicators="density"
     amr__refine__density__field_name="density"
-    amr__refine__density__value_greater="1.e5"
+    amr__refine__density__value_greater="1.e3"
 
     if [ $stellar_refinement -eq 1 ]; then
 
@@ -143,6 +145,14 @@ inputs="inputs"
 # Abort if we run out of GPU memory.
 
 amrex__abort_on_out_of_gpu_memory="1"
+
+# Limit GPU memory footprint.
+
+castro__hydro_memory_footprint_ratio="3.0"
+
+# Make it easier to see the real memory footprint.
+
+amrex__the_arena_init_size="0"
 
 # Disable flux limiting.
 
@@ -261,9 +271,9 @@ stop_time="4.0"
 prob_lo="0.00e9"
 prob_hi="5.12e9"
 
-# Start with a base resolution of 100 km, and refine from there.
+# Start with a base resolution of 400 km, and refine from there.
 
-ncell="8192"
+ncell="2048"
 stellar_refinement_list="1 2 4 8 16 32 64"
 
 for helium_shell_mass in $helium_shell_mass_list
