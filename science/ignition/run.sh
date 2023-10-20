@@ -11,77 +11,71 @@ function set_run_opts {
 
     # The following assumes we are using Lassen.
 
-    if [ $MACHINE == "LASSEN" ]; then
+    if [ $MACHINE == "PERLMUTTER" ]; then
 
-        queue="pbatch"
-
-        threads_per_task=1
-
-        nodes="1"
-        walltime="2:00:00"
+        nprocs=4
+        walltime="120"
 
         # Set up the geometry and gridding appropriately.
 
-        amr_n_cell="$ncell"
-        amr_ref_ratio="4"
-        amr_blocking_factor="64"
-        amr_max_grid_size="1048576"
+        amr__n_cell="$ncell"
+        amr__ref_ratio="4"
+        amr__blocking_factor="64"
+        amr__max_grid_size="1048576"
 
         if [ ! -z $refinement ]; then
 
-            # Only refinement factors of 4 are allowed.
-
             if [ $refinement -eq 1 ]; then
-                amr_max_level=0
-                amr_ref_ratio="2"
+                amr__max_level=0
+                amr__ref_ratio="2"
             elif [ $refinement -eq 2 ]; then
-                amr_max_level=1
-                amr_ref_ratio="2"
+                amr__max_level=1
+                amr__ref_ratio="2"
             elif [ $refinement -eq 4 ]; then
-                amr_max_level=1
-                amr_ref_ratio="4"
+                amr__max_level=1
+                amr__ref_ratio="4"
             elif [ $refinement -eq 8 ]; then
-                amr_max_level=2
-                amr_ref_ratio="4 2"
+                amr__max_level=2
+                amr__ref_ratio="4 2"
             elif [ $refinement -eq 16 ]; then
-                amr_max_level=2
-                amr_ref_ratio="4 4"
+                amr__max_level=2
+                amr__ref_ratio="4 4"
             elif [ $refinement -eq 32 ]; then
-                amr_max_level=3
-                amr_ref_ratio="4 4 2"
+                amr__max_level=3
+                amr__ref_ratio="4 4 2"
             elif [ $refinement -eq 64 ]; then
-                amr_max_level=3
-                amr_ref_ratio="4 4 4"
+                amr__max_level=3
+                amr__ref_ratio="4 4 4"
             elif [ $refinement -eq 128 ]; then
-                amr_max_level=4
-                amr_ref_ratio="4 4 4 2"
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 2"
             elif [ $refinement -eq 256 ]; then
-                amr_max_level=4
-                amr_ref_ratio="4 4 4 4"
+                amr__max_level=4
+                amr__ref_ratio="4 4 4 4"
             elif [ $refinement -eq 512 ]; then
-                amr_max_level=5
-                amr_ref_ratio="4 4 4 4 2"
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 2"
             elif [ $refinement -eq 1024 ]; then
-                amr_max_level=5
-                amr_ref_ratio="4 4 4 4 4"
+                amr__max_level=5
+                amr__ref_ratio="4 4 4 4 4"
             elif [ $refinement -eq 2048 ]; then
-                amr_max_level=6
-                amr_ref_ratio="4 4 4 4 4 2"
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 2"
             elif [ $refinement -eq 4096 ]; then
-                amr_max_level=6
-                amr_ref_ratio="4 4 4 4 4 4"
+                amr__max_level=6
+                amr__ref_ratio="4 4 4 4 4 4"
             elif [ $refinement -eq 8192 ]; then
-                amr_max_level=7
-                amr_ref_ratio="4 4 4 4 4 4 2"
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 2"
             elif [ $refinement -eq 16384 ]; then
-                amr_max_level=7
-                amr_ref_ratio="4 4 4 4 4 4 4"
+                amr__max_level=7
+                amr__ref_ratio="4 4 4 4 4 4 4"
             elif [ $refinement -eq 32768 ]; then
-                amr_max_level=8
-                amr_ref_ratio="4 4 4 4 4 4 4 2"
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 2"
             elif [ $refinement -eq 65536 ]; then
-                amr_max_level=8
-                amr_ref_ratio="4 4 4 4 4 4 4 4"
+                amr__max_level=8
+                amr__ref_ratio="4 4 4 4 4 4 4 4"
             else
                 echo "Unknown refinement factor: "$refinement"; exiting."
                 exit
@@ -114,6 +108,15 @@ NETWORK_DIR="aprox13"
 
 inputs="inputs-collision"
 probin="probin-collision"
+
+# Don't subcycle.
+
+amr__subcycling_mode="None"
+castro__use_post_step_regrid=0
+
+# Limit where we refine.
+
+amr__refine__dxnucerr__value_greater="1.e-8"
 
 # The flag we will use to determine whether to run the job.
 

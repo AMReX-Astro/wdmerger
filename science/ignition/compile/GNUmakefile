@@ -1,0 +1,10 @@
+DIM := 1
+TINY_PROFILE := TRUE
+NETWORK_DIR := aprox13
+USE_MPI := TRUE
+USE_CUDA := TRUE
+USE_OMP := FALSE
+
+PROBLEM_DIR := $(CASTRO_HOME)/Exec/science/Detonation
+
+include $(PROBLEM_DIR)/GNUmakefile
