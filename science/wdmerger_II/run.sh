@@ -13,22 +13,24 @@ function set_run_opts {
 
     # Set the processor count and walltime.
 
-    if [[ "$MACHINE" == "SUMMIT" ]]; then
+    if [[ "$MACHINE" == "PERLMUTTER" ]]; then
 
-        if [ $mass_refinement == "1.0e200" ]; then
-            nprocs=18
-        elif [ $mass_refinement == "1.0e28" ]; then
-            nprocs=36
-        elif [ $mass_refinement == "1.0e27" ]; then
-            nprocs=72
-        elif [ $mass_refinement == "1.0e26" ]; then
-            nprocs=108
+        if [ $mass_refinement == "2.0e31" ]; then
+            nprocs=4
+        elif [ $mass_refinement == "2.0e30" ]; then
+            nprocs=4
+        elif [ $mass_refinement == "2.0e29" ]; then
+            nprocs=4
+        elif [ $mass_refinement == "2.0e28" ]; then
+            nprocs=32
+        elif [ $mass_refinement == "2.0e27" ]; then
+            nprocs=64
         fi
 
-        walltime="2:00:00"
+        walltime="120"
 
         amr__blocking_factor="32"
-        amr__max_grid_size="64"
+        amr__max_grid_size="256"
 
     else
 
@@ -54,7 +56,7 @@ function set_run_opts {
     amr__refine__tste__value_greater=$tste_refinement
 
     amr__max_level="12"
-    amr__ref_ratio="4"
+    amr__ref_ratio="2"
 
 }
 
