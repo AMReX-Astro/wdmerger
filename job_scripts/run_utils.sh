@@ -1438,6 +1438,12 @@ function copy_files {
         fi
     fi
 
+    if [ ! -e "$dir/nse.tbl" ] && [ -z "$inputs_only" ]; then
+        if [ -e "$compile_dir/nse.tbl" ]; then
+            cp $compile_dir/nse.tbl $dir
+        fi
+    fi
+
     new_inputs="F"
 
     if [ ! -e "$dir/inputs" ]; then
