@@ -2736,10 +2736,15 @@ function set_up_problem_dir {
         get_submitted_jobs
 
         # We can either just grab the first CASTRO executable
-        # we find in the directory, or we can ask make to give
-        # us the executable name.
+        # we find in the directory, or we can copy based on a
+        # keyword we expect to be in the executable filename,
+        # or we can ask make to give us the executable name.
 
-        if [ ! -z $use_first_castro_ex ]; then
+        if [ ! -z $executable_keyword ]; then
+
+            CASTRO=$(ls $compile_dir/ | grep $executable_keyword | head -n 1)
+
+        elif [ ! -z $use_first_castro_ex ]; then
 
             CASTRO=$(ls $compile_dir/ | grep Castro$DIM | head -n 1)
 
