@@ -111,7 +111,9 @@ function get_submitted_jobs {
 
     fi
 
-    rm $job_file
+    if [ -e $job_file ]; then
+        rm $job_file
+    fi
 
 }
 
