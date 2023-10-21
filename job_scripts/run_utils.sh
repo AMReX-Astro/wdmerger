@@ -1434,11 +1434,12 @@ function copy_files {
         fi
     fi
 
-    if [ ! -e "$dir/helm_table.dat" ] && [ -z "$inputs_only" ]; then
-        if [ -e "$compile_dir/helm_table.dat" ]; then
-            cp $compile_dir/helm_table.dat $dir
+    table_data_files=$(find $compile_dir -name "*.dat" -exec basename {} \;)
+    for table_data_file in $table_data_files; do
+        if [ ! -e "$dir/$table_data_file" ] && [ -z "$inputs_only" ]; then
+            cp $compile_dir/$table_data_file $dir
         fi
-    fi
+    done
 
     if [ ! -e "$dir/nse.tbl" ] && [ -z "$inputs_only" ]; then
         if [ -e "$compile_dir/nse.tbl" ]; then
