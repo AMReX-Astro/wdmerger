@@ -7,4 +7,6 @@ USE_OMP := FALSE
 
 PROBLEM_DIR := $(CASTRO_HOME)/Exec/science/Detonation
 
+USERSuffix := .$(NETWORK_DIR)
+
 include $(PROBLEM_DIR)/GNUmakefile

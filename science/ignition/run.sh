@@ -100,10 +100,6 @@ exec_dir=$CASTRO_HOME/Exec/science/Detonation
 
 use_first_castro_ex="1"
 
-# Use the aprox13 network for all the tests.
-
-NETWORK_DIR="aprox13"
-
 # Get the right inputs and probin files.
 
 inputs="inputs-collision"
@@ -125,57 +121,68 @@ to_run=1
 results_dir="results"
 
 ncell_list="128 256 512 1024 2048 4096 8192 16384 32768 65536 131072"
+ncell_list="128 256 512 1024 2048 4096 8192 16384 32768 65536"
 
 burning_mode="1"
 
 ofrac_list="0.00d0 0.45d0 0.50d0"
+ofrac_list="0.50d0"
 
-for ofrac in $ofrac_list
+network_list="aprox13 He-C-Fe-group"
+
+for NETWORK_DIR in $network_list
 do
 
-    for ncell in $ncell_list
+    executable_keyword=$NETWORK_DIR
+
+    for ofrac in $ofrac_list
     do
 
-        refinement_list="1"
-
-        if [ $ncell -eq 128 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 256 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 512 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 1024 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 2048 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 4096 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 8192 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 16384 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 32768 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 65536 ]; then
-            refinement_list="1"
-        elif [ $ncell -eq 131072 ]; then
-            refinement_list="1 2 4 8 16 32 64 128 256 512"
-        fi
-
-        for refinement in $refinement_list
+        for ncell in $ncell_list
         do
 
-            dir=$results_dir/ofrac$ofrac/n$ncell/r$refinement
-            set_run_opts
+            refinement_list="1"
 
-            if [ $to_run -eq 1 ]; then
-                run
+            if [ $ncell -eq 128 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 256 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 512 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 1024 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 2048 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 4096 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 8192 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 16384 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 32768 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 65536 ]; then
+                refinement_list="1"
+            elif [ $ncell -eq 131072 ]; then
+                refinement_list="1 2 4 8 16 32 64 128 256 512"
             fi
 
-            to_run=1
+            for refinement in $refinement_list
+            do
 
-        done # refinement
+                dir=$results_dir/$NETWORK_DIR/ofrac$ofrac/n$ncell/r$refinement
+                set_run_opts
 
-    done # ncell
+                if [ $to_run -eq 1 ]; then
+                    run
+                fi
 
-done # ofrac
+                to_run=1
+
+            done # refinement
+
+        done # ncell
+
+    done # ofrac
+
+done # network
