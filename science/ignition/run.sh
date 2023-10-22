@@ -16,76 +16,76 @@ function set_run_opts {
         nprocs=4
         walltime="120"
 
-        # Set up the geometry and gridding appropriately.
-
-        amr__n_cell="$ncell"
-        amr__ref_ratio="4"
-        amr__blocking_factor="64"
-        amr__max_grid_size="1048576"
-
-        if [ ! -z $refinement ]; then
-
-            if [ $refinement -eq 1 ]; then
-                amr__max_level=0
-                amr__ref_ratio="2"
-            elif [ $refinement -eq 2 ]; then
-                amr__max_level=1
-                amr__ref_ratio="2"
-            elif [ $refinement -eq 4 ]; then
-                amr__max_level=1
-                amr__ref_ratio="4"
-            elif [ $refinement -eq 8 ]; then
-                amr__max_level=2
-                amr__ref_ratio="4 2"
-            elif [ $refinement -eq 16 ]; then
-                amr__max_level=2
-                amr__ref_ratio="4 4"
-            elif [ $refinement -eq 32 ]; then
-                amr__max_level=3
-                amr__ref_ratio="4 4 2"
-            elif [ $refinement -eq 64 ]; then
-                amr__max_level=3
-                amr__ref_ratio="4 4 4"
-            elif [ $refinement -eq 128 ]; then
-                amr__max_level=4
-                amr__ref_ratio="4 4 4 2"
-            elif [ $refinement -eq 256 ]; then
-                amr__max_level=4
-                amr__ref_ratio="4 4 4 4"
-            elif [ $refinement -eq 512 ]; then
-                amr__max_level=5
-                amr__ref_ratio="4 4 4 4 2"
-            elif [ $refinement -eq 1024 ]; then
-                amr__max_level=5
-                amr__ref_ratio="4 4 4 4 4"
-            elif [ $refinement -eq 2048 ]; then
-                amr__max_level=6
-                amr__ref_ratio="4 4 4 4 4 2"
-            elif [ $refinement -eq 4096 ]; then
-                amr__max_level=6
-                amr__ref_ratio="4 4 4 4 4 4"
-            elif [ $refinement -eq 8192 ]; then
-                amr__max_level=7
-                amr__ref_ratio="4 4 4 4 4 4 2"
-            elif [ $refinement -eq 16384 ]; then
-                amr__max_level=7
-                amr__ref_ratio="4 4 4 4 4 4 4"
-            elif [ $refinement -eq 32768 ]; then
-                amr__max_level=8
-                amr__ref_ratio="4 4 4 4 4 4 4 2"
-            elif [ $refinement -eq 65536 ]; then
-                amr__max_level=8
-                amr__ref_ratio="4 4 4 4 4 4 4 4"
-            else
-                echo "Unknown refinement factor: "$refinement"; exiting."
-                exit
-            fi
-
-        fi
-
     else
 
         echoerr "This machine is not set up for this job."
+
+    fi
+
+    # Set up the geometry and gridding appropriately.
+
+    amr__n_cell="$ncell"
+    amr__ref_ratio="4"
+    amr__blocking_factor="64"
+    amr__max_grid_size="1048576"
+
+    if [ ! -z $refinement ]; then
+
+        if [ $refinement -eq 1 ]; then
+            amr__max_level=0
+            amr__ref_ratio="2"
+        elif [ $refinement -eq 2 ]; then
+            amr__max_level=1
+            amr__ref_ratio="2"
+        elif [ $refinement -eq 4 ]; then
+            amr__max_level=1
+            amr__ref_ratio="4"
+        elif [ $refinement -eq 8 ]; then
+            amr__max_level=2
+            amr__ref_ratio="4 2"
+        elif [ $refinement -eq 16 ]; then
+            amr__max_level=2
+            amr__ref_ratio="4 4"
+        elif [ $refinement -eq 32 ]; then
+            amr__max_level=3
+            amr__ref_ratio="4 4 2"
+        elif [ $refinement -eq 64 ]; then
+            amr__max_level=3
+            amr__ref_ratio="4 4 4"
+        elif [ $refinement -eq 128 ]; then
+            amr__max_level=4
+            amr__ref_ratio="4 4 4 2"
+        elif [ $refinement -eq 256 ]; then
+            amr__max_level=4
+            amr__ref_ratio="4 4 4 4"
+        elif [ $refinement -eq 512 ]; then
+            amr__max_level=5
+            amr__ref_ratio="4 4 4 4 2"
+        elif [ $refinement -eq 1024 ]; then
+            amr__max_level=5
+            amr__ref_ratio="4 4 4 4 4"
+        elif [ $refinement -eq 2048 ]; then
+            amr__max_level=6
+            amr__ref_ratio="4 4 4 4 4 2"
+        elif [ $refinement -eq 4096 ]; then
+            amr__max_level=6
+            amr__ref_ratio="4 4 4 4 4 4"
+        elif [ $refinement -eq 8192 ]; then
+            amr__max_level=7
+            amr__ref_ratio="4 4 4 4 4 4 2"
+        elif [ $refinement -eq 16384 ]; then
+            amr__max_level=7
+            amr__ref_ratio="4 4 4 4 4 4 4"
+        elif [ $refinement -eq 32768 ]; then
+            amr__max_level=8
+            amr__ref_ratio="4 4 4 4 4 4 4 2"
+        elif [ $refinement -eq 65536 ]; then
+            amr__max_level=8
+            amr__ref_ratio="4 4 4 4 4 4 4 4"
+        else
+            echo "Unknown refinement factor: "$refinement"; exiting."
+            exit
+        fi
 
     fi
 
