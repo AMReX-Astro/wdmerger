@@ -95,10 +95,7 @@ DIM=1
 
 # Specify the problem directory.
 
-compile_dir=$CASTRO_HOME/Exec/science/Detonation
 exec_dir=$CASTRO_HOME/Exec/science/Detonation
-
-use_first_castro_ex="1"
 
 # Get the right inputs and probin files.
 
@@ -128,9 +125,9 @@ burning_mode="1"
 ofrac_list="0.00d0 0.45d0 0.50d0"
 ofrac_list="0.50d0"
 
-network_list="aprox13 He-C-Fe-group"
+net_list="aprox13 He-C-Fe-group"
 
-for NETWORK_DIR in $network_list
+for NETWORK_DIR in $net_list
 do
 
     executable_keyword=$NETWORK_DIR
