@@ -25,8 +25,8 @@ function get_machine {
 
       UNAMEN=$(uname -n)$(hostname -f)
 
-      if [[ $UNAMEN == *"summit"* ]]; then
-          MACHINE=SUMMIT
+      if [[ $UNAMEN == *"frontier"* ]]; then
+          MACHINE=FRONTIER
       elif [[ $UNAMEN == *"lassen"* ]]; then
           MACHINE=LASSEN
       elif [[ $UNAMEN == *"lired"*  ]]; then
@@ -64,27 +64,26 @@ function set_machine_params {
 	launcher="aprun"
 	run_ext=".OU"
 
-    # Summit at OLCF
+    # Frontier at OLCF
 
-    elif [ $MACHINE == "SUMMIT" ]; then
+    elif [ $MACHINE == "FRONTIER" ]; then
 
         allocation="ast106"
-        exec="bsub"
-        cancel_job="bkill"
-        pause_job="bstop"
-        resume_job="bresume"
-        ppn="6"
+        exec="sbatch"
+        cancel_job="scancel"
+        ppn="8"
         threads_per_task="7"
         run_ext=".OU"
-        batch_system="LSF"
+        batch_system="SLURM"
         queue="batch"
-        launcher="jsrun"
-        archive_exec="sbatch"
-        archive_method="htar"
-        archive_queue="batch"
-        archive_wclimit="24:00:00"
-        archive_cluster="dtn"
-        do_storage_in_job=1
+        launcher="srun"
+        #TODO
+        #archive_exec="sbatch"
+        #archive_method="htar"
+        #archive_queue="batch"
+        #archive_wclimit="24:00:00"
+        #archive_cluster="dtn"
+        #do_storage_in_job=0
 
     # Lassen at LLNL
 

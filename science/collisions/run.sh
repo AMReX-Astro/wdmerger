@@ -36,6 +36,29 @@ function set_run_opts {
         amr__blocking_factor="32"
         amr__max_grid_size="1024"
 
+    elif [[ "$MACHINE" == "FRONTIER" ]]; then
+
+        if [ $stellar_refinement -eq 1 ]; then
+            nprocs=8
+        elif [ $stellar_refinement -eq 2 ]; then
+            nprocs=8
+        elif [ $stellar_refinement -eq 4 ]; then
+            nprocs=8
+        elif [ $stellar_refinement -eq 8 ]; then
+            nprocs=16
+        elif [ $stellar_refinement -eq 16 ]; then
+            nprocs=32
+        elif [ $stellar_refinement -eq 32 ]; then
+            nprocs=64
+        elif [ $stellar_refinement -eq 64 ]; then
+            nprocs=128
+        fi
+
+        walltime="2:00:00"
+
+        amr__blocking_factor="32"
+        amr__max_grid_size="1024"
+
     else
 
         echoerr "This machine is not set up for this job."
