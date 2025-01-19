@@ -1532,7 +1532,7 @@ def make_movie(output_dir, img_list, mpg_filename):
             pass
 
     try:
-        os.system('ffmpeg -i ' + output_dir + '/temp_\%05d' + file_format + ' -b:v 20M ' + mpg_filename)
+        os.system(r"ffmpeg -i " + output_dir + r"/temp_\%05d" + file_format + r" -b:v 20M " + mpg_filename)
     except:
         print("Error: could not successfully make a movie with ffmpeg.")
         pass
