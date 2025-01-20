@@ -302,7 +302,7 @@ stellar_refinement_list="1 2 4 8 16 32 64"
 for helium_shell_mass in $helium_shell_mass_list
 do
 
-    co_wd_he_shell_mass=$helium_shell_mass
+    problem__co_wd_he_shell_mass=$helium_shell_mass
 
     for stellar_refinement in $stellar_refinement_list
     do
