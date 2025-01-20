@@ -11,7 +11,7 @@ USE_HIP=FALSE
 
 ifneq ($(ROCM_PATH),)
   USE_HIP=TRUE
-else ifneq ($(CUDA_PATH),)
+else ifneq ($(CUDA_PATH)$(CUDA_HOME),)
   USE_CUDA=TRUE
 endif
 
