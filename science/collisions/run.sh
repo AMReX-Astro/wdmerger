@@ -226,6 +226,10 @@ castro__cfl="0.8"
 
 castro__max_dt="0.0025"
 
+# Simplified SDC evolution.
+
+castro__time_integration_method="3"
+
 # Maximum number of subcycles.
 
 castro__max_subcycles="1024"
