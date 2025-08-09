@@ -228,7 +228,7 @@ castro__max_dt="0.0025"
 
 # Maximum number of subcycles.
 
-castro__max_subcycles="128"
+castro__max_subcycles="1024"
 
 # Enable efficient regridding (don't actually regrid if the grids haven't changed.)
 
@@ -243,6 +243,10 @@ amr__error_buf="4 0 0 0 0 0 0 0 0 0"
 # Enable reactions.
 
 castro__do_react="1"
+
+# Limit the number of reaction steps we take before declaring failure.
+
+integrator__ode_max_steps="500"
 
 # Disable rotation.
 
@@ -263,9 +267,9 @@ castro__gw_dist="-1.e0"
 problem__co_wd_c_frac="0.5e0"
 problem__co_wd_o_frac="0.5e0"
 
-# Allow the timestep to change by up to 25% per advance.
+# Allow the timestep to change by up to 100% per advance.
 
-castro__change_max="1.25"
+castro__change_max="2.0"
 
 # Some defaults.
 
